@@ -9,11 +9,24 @@
 ## Règles de lancement
 
 1. **Lancer en parallèle dans un seul message** — utiliser plusieurs `Agent()` tool calls dans le même tool use pour maximiser la concurrence.
-2. **Prérequis** : `main` contient le commit W0 mergé avec tous les packages socle (`packages/shared`, `packages/design-tokens`, `packages/core`, `packages/legal`, `packages/db`, `packages/config`, `apps/desktop`). Les agents partent de main HEAD en worktree isolé.
+2. **Prérequis** : `main` contient le commit W0 mergé avec tous les packages socle (`packages/shared`, `packages/design-tokens`, `packages/core`, `packages/legal`, `packages/db`, `packages/config`, `apps/desktop`).
 3. **Model mix :** opus uniquement pour Track D (crypto complexe). Sonnet pour A, B, C, E.
-4. **Isolation :** `worktree` obligatoire pour tous (collisions fichiers minimes mais réelles).
-5. **Au bout de ~5 jours calendaires**, Tom merge les 5 worktrees séquentiellement dans main après review de chaque rapport agent + tests locaux. Si merge conflict → résolution humaine, jamais délégué agent.
-6. **Track D est le chemin critique.** Si l'agent D remonte un blocker crypto cross-OS à J+3, escalader immédiatement (fallback wrapper OpenSSL C# via P/Invoke).
+4. **Isolation :** `worktree` recommandé pour concurrence, mais **chaque agent commit DIRECTEMENT sur `main`** (voir règle git ci-dessous).
+5. **Track D est le chemin critique.** Si l'agent D remonte un blocker crypto cross-OS à J+3, escalader immédiatement (fallback wrapper OpenSSL C# via P/Invoke).
+
+## ⚠️ Règle git — commit sur main (mise à jour 2026-04-21)
+
+**Règle remplacée.** Avant : chaque agent commit sur sa branche worktree, Tom merge après review. **Désormais :**
+
+> **Chaque agent commit son travail atomique DIRECTEMENT sur la branche `main` du repo principal.**
+> - Peu importe si l'agent tourne dans un worktree isolé ou non.
+> - Depuis un worktree : écrire les fichiers livrés dans le **repo main** (`C:\Users\andri\IdeaProjects\AlphaLuppi\facture-devis\`) via chemins absolus, puis `git -C <main_repo> add <files> && git -C <main_repo> commit -s -m "..."` **en ciblant main**. Le worktree peut rester vide ou servir uniquement de sandbox exploratoire.
+> - Depuis main (sans worktree) : directement `git add` + `git commit -s` sur main.
+> - **Ne JAMAIS push.** Tom push lui-même a posteriori après review.
+> - Message de commit et body : inchangés vs brief initial de chaque track (`feat(track-x): ...` + DCO).
+> - Si deux agents commit en parallèle : git gère le lock, l'un attend l'autre. En cas de conflit de fichier (peu probable car tracks disjoints), l'agent retry ou escalade.
+
+**Raison du changement :** simplicité workflow, review directe sur main sans merge steps, un seul historique linéaire.
 
 ### Signature Agent() commune
 
@@ -119,13 +132,13 @@ Tu construis **packages/ui** pour FAKT — la bibliothèque de composants Brutal
   Wave: 1 · Track: A · Points: 13
   ```
 - **Avant `git commit`** : `bun run typecheck && bun run test` doivent passer.
-- **Ne pas push.** Tom merge lui-même après review.
+- **Commit sur `main`** (voir règle git en haut du document). **Ne pas push.**
 
 ## Rapport final (< 300 mots, français)
 
 - Livrables : checklist des composants (✅/🟡 stub/❌ skip) avec raison si non-✅.
 - DoD : checklist des 7 gates (OK/KO).
-- Commit : hash + branche worktree.
+- Commit : hash sur main.
 - Blockers : ce qui a été stubé (avec rationale).
 - Risques conso W2 : composants ambigus à clarifier avec Tom avant features Alpha.
 ```
@@ -213,13 +226,13 @@ Fichiers dans `packages/db/src/queries/` :
   Wave: 1 · Track: B · Points: 8
   ```
 - **Avant `git commit`** : `bun run typecheck && bun run test` passent.
-- **Ne pas push.**
+- **Commit sur `main`** (voir règle git en haut du document). **Ne pas push.**
 
 ## Rapport final (< 300 mots, français)
 
 - Livrables : checklist queries (✅/🟡/❌).
 - DoD : OK/KO par gate.
-- Commit : hash + branche.
+- Commit : hash sur main.
 - Dettes identifiées (notamment numbering stub → atomique).
 - Risques conso W2 : cas d'usage métier non couverts par les queries actuelles.
 ```
@@ -320,13 +333,13 @@ Fichiers dans `packages/pdf/templates/` :
   Wave: 1 · Track: C · Points: 13
   ```
 - **Avant `git commit`** : `bun run typecheck && bun run test` passent. PDFs de validation générés dans `tests/output/`.
-- **Ne pas push.** Tom valide visuellement les PDFs avant merge.
+- **Commit sur `main`** (voir règle git en haut du document). **Ne pas push.** Tom valide les PDFs a posteriori.
 
 ## Rapport final (< 300 mots, français)
 
 - Livrables : checklist 4 phases (exploration / Typst / wrapper / tests).
 - DoD : 7 gates OK/KO.
-- Commit : hash + branche.
+- Commit : hash sur main.
 - **Décision bundle :** crate embedded ou CLI fallback (avec taille mesurée).
 - Blockers : polices manquantes, skills mal parsés, snapshots non-déterministes.
 - Risques conso W2 : charte validée par Tom ou à ajuster avant Track H.
@@ -504,8 +517,8 @@ Dans `apps/desktop/src-tauri/src/crypto/` :
 
 ## Règles globales Track D
 
-- **Ne pas push.** Tom review les 3 commits avant merge.
-- Si blocage à mi-sub-track, commit en `wip(track-dX): ...` avec body explicatif et escalade.
+- **Commit sur `main`** (voir règle git en haut du document) — **3 commits atomiques séquentiels** D1/D2/D3 sur main. **Ne pas push.**
+- Si blocage à mi-sub-track, commit en `wip(track-dX): ...` sur main avec body explicatif et escalade.
 - **Escalade obligatoire** si J+3 D1 pas passé, ou J+5 D2 pas validé Adobe Reader.
 - Ne pas écrire de code crypto "approximatif". Préférer vendor bien établi (crates `ring`, `rsa`, `cms`, `x509-cert` maintenus par RustCrypto) plutôt que rolling own crypto.
 
@@ -515,7 +528,7 @@ Dans `apps/desktop/src-tauri/src/crypto/` :
 - Validation Adobe Reader : screenshot ou description précise du résultat.
 - Benchmarks : génération cert / embed signature / full sign.
 - Blockers cross-OS : problèmes spécifiques à un OS, workarounds appliqués.
-- Commits : 3 hashes + branche worktree.
+- Commits : 3 hashes sur main.
 - Risques conso W3 Track I : api signature exposée aux consumers TS, format stable ?
 ```
 
@@ -620,13 +633,13 @@ Dans `apps/desktop/src-tauri/src/ai/cli.rs` :
   Wave: 1 · Track: E · Points: 8
   ```
 - **Avant `git commit`** : `bun run typecheck && bun run test` passent.
-- **Ne pas push.**
+- **Commit sur `main`** (voir règle git en haut du document). **Ne pas push.**
 
 ## Rapport final (< 300 mots, français)
 
 - Livrables : checklist composants (AiProvider, ClaudeCliProvider, MockAiProvider, prompts, healthCheck, Rust spawn).
 - DoD : 6 gates OK/KO.
-- Commit : hash + branche.
+- Commit : hash sur main.
 - **Test manuel streaming** : brief fourni + résultat (capture rapide).
 - Blockers : format de sortie CLI non stable, CLI manquant sur OS X.
 - Risques conso W2 Track H : interface suffisante pour composer sidebar (US-028) ?
@@ -634,16 +647,17 @@ Dans `apps/desktop/src-tauri/src/ai/cli.rs` :
 
 ---
 
-## Merge strategy fin de Wave 1
+## Stratégie fin de Wave 1 (mise à jour 2026-04-21)
 
-Quand les 5 tracks A/B/C/D ont produit leurs commits :
+Puisque chaque agent commit directement sur `main`, il n'y a plus de phase merge séparée. Quand les 5 tracks A/B/C/D/E ont produit leurs commits sur main :
 
-1. Tom pull chaque worktree, fait un `bun install && bun run typecheck && bun run test` sur la branche merge candidate.
-2. Review rapide du rapport agent + diff principal.
-3. Merge séquentiel dans `main` via `git merge --ff-only` (ou `--no-ff` si volonté de conserver branche). Ordre suggéré : **B → A → E → C → D** (B débloque le plus, D commit séparé par sub-track donc mergeable indépendamment si D1 prêt avant D2/D3).
-4. Tag `wave-1-done` sur main après les 5 merges.
+1. Tom lit le rapport de chaque agent + inspecte le commit dans main (`git show <hash>`).
+2. Tom fait un `bun install && bun run typecheck && bun run test` sur main pour valider l'état consolidé.
+3. Si un commit est mauvais : `git revert <hash>` sur main puis relance de l'agent concerné (pas de `git reset --hard` sauf cas extrême).
+4. Tag `wave-1-done` sur main après validation globale.
 5. Update `docs/sprint-status.yaml` : statuses `W1 tracks A/B/C/D/E = completed`, `current_wave: 2`.
-6. Lancer immédiatement Wave 2 : tracks F (Onboarding), G (Clients+Prestations), H (Devis+Factures split H1/H2/H3).
+6. Push manuel de Tom (optionnel, selon son choix de visibilité upstream).
+7. Lancer immédiatement Wave 2 : tracks F (Onboarding), G (Clients+Prestations), H (Devis+Factures split H1/H2/H3).
 
 ---
 
