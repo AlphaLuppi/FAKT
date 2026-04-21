@@ -198,6 +198,9 @@ export function installMockApis(options?: {
     async renderQuote(): Promise<Uint8Array> {
       return new Uint8Array([37, 80, 68, 70]); // "%PDF" magic bytes.
     },
+    async renderInvoice(): Promise<Uint8Array> {
+      return new Uint8Array([37, 80, 68, 70]); // "%PDF" magic bytes.
+    },
     async saveDialog(): Promise<string | null> {
       return "/tmp/fake.pdf";
     },

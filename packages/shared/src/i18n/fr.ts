@@ -174,6 +174,14 @@ export const fr = {
   invoices: {
     title: "Factures",
     new: "Nouvelle facture",
+    newMenu: {
+      fromQuote: "Depuis un devis",
+      fromScratch: "Facture libre",
+    },
+    modes: {
+      fromQuote: "Depuis un devis signé",
+      fromScratch: "Facture libre (sans devis)",
+    },
     status: {
       draft: "Brouillon",
       sent: "Envoyée",
@@ -181,28 +189,128 @@ export const fr = {
       overdue: "En retard",
       cancelled: "Annulée",
     },
+    statusFilters: {
+      all: "Toutes",
+      draft: "Brouillons",
+      sent: "Envoyées",
+      paid: "Payées",
+      overdue: "En retard",
+      cancelled: "Annulées",
+    },
     kind: {
       deposit: "Acompte",
       balance: "Solde",
       total: "Facture totale",
       independent: "Facture libre",
     },
+    kindRadios: {
+      deposit30: "Acompte 30 %",
+      balance: "Solde restant",
+      full: "Facture totale",
+      deposit30Hint:
+        "Génère une facture d'acompte de 30 % du montant HT du devis.",
+      balanceHint:
+        "Facture le solde restant après les acomptes déjà émis.",
+      fullHint: "Recopie toutes les lignes du devis pour une facture totale.",
+    },
     actions: {
       issue: "Émettre",
       send: "Envoyer",
       markPaid: "Marquer payée",
       archive: "Archiver",
+      cancel: "Annuler",
+      edit: "Éditer",
+      downloadPdf: "Télécharger le PDF",
+      saveDraft: "Enregistrer brouillon",
+      createAndIssue: "Créer et émettre",
+      backToList: "Retour à la liste",
+      createCreditNote: "Créer un avoir",
+      delete: "Supprimer",
     },
     labels: {
       number: "Numéro",
+      numberPending: "—",
       client: "Client",
       title: "Objet",
       totalHt: "Total HT",
+      totalTtc: "Total TTC",
       issuedAt: "Émise le",
       dueDate: "Échéance",
       paidAt: "Payée le",
+      createdAt: "Créée le",
+      status: "Statut",
+      actions: "Actions",
+      notes: "Notes",
+      paymentMethod: "Moyen de paiement",
+      kind: "Type",
+      quoteLink: "Devis lié",
+    },
+    form: {
+      selectQuote: "Choisir un devis signé",
+      selectQuoteHint:
+        "Seuls les devis signés peuvent être convertis en facture.",
+      noSignedQuote:
+        "Aucun devis signé disponible. Signez d'abord un devis.",
+      chooseMode: "Mode de facturation",
+      titlePlaceholder: "Objet de la facture",
+      issueDate: "Date d'émission",
+      dueDays: "Échéance (jours)",
+      dueDateLabel: "Date d'échéance",
+      paymentMethodPlaceholder: "Choisir un moyen de paiement",
+      paymentMethods: {
+        wire: "Virement bancaire",
+        card: "Carte bancaire",
+        cash: "Espèces",
+        check: "Chèque",
+        other: "Autre",
+      },
+      legalMentionsTitle: "Mentions légales obligatoires",
+      legalMentionsHint:
+        "Ces mentions seront automatiquement ajoutées au PDF (CGI art. 289).",
+      depositLabel: (quoteNumber: string) =>
+        `Acompte 30 % sur devis ${quoteNumber}`,
+      balanceLabel: (quoteNumber: string) =>
+        `Solde de la facturation du devis ${quoteNumber}`,
+      notesPlaceholder: "Remarques pour le client, conditions particulières…",
+      quickClientNew: "Nouveau client rapide",
+      quickClientStub:
+        "La création rapide de client sera disponible avec Track G.",
+    },
+    search: {
+      placeholder: "Rechercher une facture…",
+    },
+    detail: {
+      previewTitle: "Aperçu PDF",
+      infosTitle: "Informations",
+      noPdf:
+        "Aucun PDF disponible. Émettez la facture pour attribuer un numéro.",
+      noPdfDraft:
+        "Cette facture est en brouillon — aucun numéro n'a été attribué.",
+      draftOnlyEdit:
+        "Seules les factures en brouillon peuvent être éditées.",
+      issuedNotEditable:
+        "Facture émise, non modifiable. Utilisez 'Créer un avoir' pour correction.",
+      creditNoteTodo:
+        "La création d'avoirs sera disponible en v0.2.",
+      archivalLegalNotice:
+        "Archivage légal obligatoire (10 ans — CGI). Utilisez 'Créer un avoir' pour corriger.",
     },
     empty: "Aucune facture pour le moment.",
+    errors: {
+      noItems: "Ajoute au moins une ligne à la facture.",
+      missingClient: "Choisis un client avant de créer la facture.",
+      missingTitle: "L'objet de la facture est obligatoire.",
+      missingQuote: "Sélectionne un devis signé.",
+      notFound: "Facture introuvable.",
+      pdfFailed: "Impossible de générer le PDF.",
+      loadFailed: "Impossible de charger la facture.",
+      createFailed: "La création de la facture a échoué.",
+      saveFailed: "L'enregistrement de la facture a échoué.",
+      deleteIssued:
+        "Les factures émises ne peuvent pas être supprimées (archivage légal 10 ans).",
+      balanceZero:
+        "Le solde est nul ou négatif — les acomptes couvrent déjà le total.",
+    },
   },
 
   clients: {

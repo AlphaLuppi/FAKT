@@ -11,11 +11,18 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
-      include: ["src/routes/quotes/**", "src/features/doc-editor/**"],
+      include: [
+        "src/routes/quotes/**",
+        "src/routes/invoices/**",
+        "src/features/doc-editor/**",
+      ],
       exclude: [
         "src/routes/quotes/index.tsx",
         "src/routes/quotes/New.tsx",
         "src/routes/quotes/__test-helpers__/**",
+        "src/routes/invoices/index.tsx",
+        "src/routes/invoices/New.tsx",
+        "src/routes/invoices/__test-helpers__/**",
         "src/features/doc-editor/index.ts",
         "**/*.test.{ts,tsx}",
       ],

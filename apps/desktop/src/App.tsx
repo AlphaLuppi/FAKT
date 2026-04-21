@@ -7,6 +7,7 @@ import { ServicesRoute } from "./routes/services/index.js";
 import { WizardRoute } from "./routes/onboarding/Wizard.js";
 import { SettingsRoute } from "./routes/settings/Settings.js";
 import { QuotesRouter } from "./routes/quotes/index.js";
+import { InvoicesRouter } from "./routes/invoices/index.js";
 import { useOnboardingGuard } from "./routes/onboarding/guard.js";
 
 export function App(): ReactElement {
@@ -37,7 +38,7 @@ export function App(): ReactElement {
       <Routes>
         <Route path="/" element={<DashboardRoute />} />
         <Route path="/quotes/*" element={<QuotesRouter />} />
-        <Route path="/invoices/*" element={<Placeholder title="Factures" />} />
+        <Route path="/invoices/*" element={<InvoicesRouter />} />
         <Route path="/clients/*" element={<ClientsRoute />} />
         <Route path="/services/*" element={<ServicesRoute />} />
         <Route path="/settings" element={<SettingsRoute />} />

@@ -12,6 +12,12 @@ export type { ItemsEditorProps, EditableItem } from "./ItemsEditor.js";
 export { ClientPicker } from "./ClientPicker.js";
 export type { ClientPickerProps } from "./ClientPicker.js";
 
+export { InvoiceForm, invoiceToFormValues } from "./InvoiceForm.js";
+export type {
+  InvoiceFormProps,
+  InvoiceFormValues,
+} from "./InvoiceForm.js";
+
 export { quotesApi, setQuotesApi, type QuotesApi } from "./quotes-api.js";
 export {
   workspaceApi,
@@ -26,3 +32,15 @@ export {
 } from "./prestations-api.js";
 export { numberingApi, setNumberingApi, type NumberingApi } from "./numbering-api.js";
 export { pdfApi, setPdfApi, type PdfApi } from "./pdf-api.js";
+export {
+  invoiceApi,
+  setInvoiceApi,
+  type InvoiceApi,
+  type CreateInvoiceInput,
+  type CreateFromQuoteInput,
+  type CreateFromQuoteMode,
+  type UpdateInvoiceInput,
+  type ListInvoicesInput,
+  type InvoiceItemInput,
+  type MarkPaidInput,
+} from "./invoice-api.js";

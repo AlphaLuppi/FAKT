@@ -1,10 +1,16 @@
 /**
- * Bridge PDF — utilise @fakt/pdf renderQuotePdf et la save dialog Tauri.
+ * Bridge PDF — utilise @fakt/pdf renderQuotePdf / renderInvoicePdf et la
+ * save dialog Tauri.
  */
 
 import { invoke } from "@tauri-apps/api/core";
-import { renderQuotePdf } from "@fakt/pdf";
-import type { QuoteInput, ClientInput, WorkspaceInput } from "@fakt/core";
+import { renderQuotePdf, renderInvoicePdf } from "@fakt/pdf";
+import type {
+  QuoteInput,
+  InvoiceInput,
+  ClientInput,
+  WorkspaceInput,
+} from "@fakt/core";
 
 export interface RenderQuoteArgs {
   quote: QuoteInput;
@@ -12,8 +18,17 @@ export interface RenderQuoteArgs {
   workspace: WorkspaceInput;
 }
 
+export interface RenderInvoiceArgs {
+  invoice: InvoiceInput;
+  client: ClientInput;
+  workspace: WorkspaceInput;
+  quoteReference?: string | null;
+  executionAt?: number | null;
+}
+
 export interface PdfApi {
   renderQuote(args: RenderQuoteArgs): Promise<Uint8Array>;
+  renderInvoice(args: RenderInvoiceArgs): Promise<Uint8Array>;
   saveDialog(suggestedName: string): Promise<string | null>;
   writeFile(path: string, bytes: Uint8Array): Promise<void>;
 }
@@ -21,6 +36,9 @@ export interface PdfApi {
 const tauriPdfApi: PdfApi = {
   async renderQuote(args): Promise<Uint8Array> {
     return renderQuotePdf(args);
+  },
+  async renderInvoice(args): Promise<Uint8Array> {
+    return renderInvoicePdf(args);
   },
   async saveDialog(suggestedName): Promise<string | null> {
     // Le plugin-dialog Tauri expose la command plugin:dialog|save.
@@ -49,6 +67,7 @@ let _impl: PdfApi = tauriPdfApi;
 
 export const pdfApi: PdfApi = {
   renderQuote: (args) => _impl.renderQuote(args),
+  renderInvoice: (args) => _impl.renderInvoice(args),
   saveDialog: (name) => _impl.saveDialog(name),
   writeFile: (path, bytes) => _impl.writeFile(path, bytes),
 };
