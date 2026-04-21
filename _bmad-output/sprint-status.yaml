@@ -6,10 +6,10 @@
 version: "6.0.0"
 project_name: "FAKT"
 project_level: 3
-current_wave: 1
+current_wave: 0
 current_milestone: "alpha"
 sprint_plan_path: "docs/sprint-plan.md"
-last_updated: "2026-04-21T20:15:00Z"
+last_updated: "2026-04-21T19:00:00Z"
 
 # Milestones
 milestones:
@@ -18,7 +18,7 @@ milestones:
     target_day: "J+10"
     target_date: "2026-05-01"
     gate_waves: ["W0", "W1", "W2"]
-    status: "in_progress"
+    status: "not_started"
 
   - name: "beta"
     description: "+ Signature PAdES + Dashboard complet + Composer IA sidebar"
@@ -41,12 +41,7 @@ waves:
     description: "Scaffold monorepo + packages socle. Séquentiel, 1 agent."
     total_points: 25
     target_duration_days: "1-2"
-    status: "completed"
-    started_at: "2026-04-21T19:30:00Z"
-    completed_at: "2026-04-21T19:49:00Z"
-    merged_at: "2026-04-21T20:10:00Z"
-    merge_commit: "5baea73"
-    duration_minutes: 19
+    status: "not_started"
     parallel_agents_max: 1
     dependencies_upstream: []
     tracks:
@@ -55,18 +50,7 @@ waves:
         agent_type: "general-purpose"
         model: "sonnet"
         isolation: "worktree"
-        status: "completed"
-        started_at: "2026-04-21T19:30:00Z"
-        completed_at: "2026-04-21T19:49:00Z"
-        commit_hash: "7013bae"
-        worktree_branch: "worktree-agent-ada3751f"
-        worktree_path: ".claude/worktrees/agent-ada3751f"
-        dod_status:
-          - "bun install OK (484 packages)"
-          - "bun run typecheck OK (7/7 packages, 1.5s avec cache turbo)"
-          - "bun run test OK (76 tests, core 95.91% / legal 97.29%)"
-          - "bun run build Vite OK (1.04s)"
-          - "tauri dev NON testé (toolchain Tauri CLI pas installée, user action après merge)"
+        status: "not_started"
         points: 25
         subtasks:
           - "W0.1 scaffold monorepo (5 pts)"
@@ -90,8 +74,7 @@ waves:
     description: "5 piliers techniques en parallèle. Track D chemin critique."
     total_points: 63
     target_duration_days: "5"
-    status: "in_progress"
-    started_at: "2026-04-21T20:15:00Z"
+    status: "not_started"
     parallel_agents_max: 5
     dependencies_upstream: ["W0"]
     tracks:
@@ -100,9 +83,7 @@ waves:
         agent_type: "feature-dev:code-architect"
         model: "sonnet"
         isolation: "worktree"
-        status: "in_progress"
-        started_at: "2026-04-21T20:15:00Z"
-        agent_name: "w1-track-a-ui"
+        status: "not_started"
         points: 13
         stories: []  # socle pour US-001/005/006/008/009/025/026/027/028
         frs_covered: ["FR-023", "FR-025"]
@@ -113,9 +94,7 @@ waves:
         agent_type: "general-purpose"
         model: "sonnet"
         isolation: "worktree"
-        status: "in_progress"
-        started_at: "2026-04-21T20:15:00Z"
-        agent_name: "w1-track-b-db"
+        status: "not_started"
         points: 8
         stories: []  # socle CRUD
         frs_covered: ["FR-005", "FR-006", "FR-010", "FR-011", "FR-015", "FR-022"]
@@ -126,9 +105,7 @@ waves:
         agent_type: "feature-dev:code-architect"
         model: "sonnet"
         isolation: "worktree"
-        status: "in_progress"
-        started_at: "2026-04-21T20:15:00Z"
-        agent_name: "w1-track-c-pdf"
+        status: "not_started"
         points: 13
         stories: ["US-012"]
         frs_covered: ["FR-012", "FR-016"]
@@ -139,9 +116,7 @@ waves:
         agent_type: "general-purpose"
         model: "opus"
         isolation: "worktree"
-        status: "in_progress"
-        started_at: "2026-04-21T20:15:00Z"
-        agent_name: "w1-track-d-crypto"
+        status: "not_started"
         points: 21
         critical_path: true
         stories: []  # socle EPIC-005
@@ -165,9 +140,7 @@ waves:
         agent_type: "general-purpose"
         model: "sonnet"
         isolation: "worktree"
-        status: "in_progress"
-        started_at: "2026-04-21T20:15:00Z"
-        agent_name: "w1-track-e-ai"
+        status: "not_started"
         points: 8
         stories: []  # socle FR-003/009/028
         frs_covered: ["FR-003", "FR-009"]
