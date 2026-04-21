@@ -2,6 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "noEmit": true,
+    "allowImportingTsExtensions": true,
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "jsx": "react-jsx",
     "paths": {
@@ -9,8 +10,12 @@
       "@fakt/design-tokens": ["../../packages/design-tokens/src/index.ts"],
       "@fakt/core": ["../../packages/core/src/index.ts"],
       "@fakt/legal": ["../../packages/legal/src/index.ts"],
-      "@fakt/config": ["../../packages/config/src/index.ts"]
-    }
+      "@fakt/config": ["../../packages/config/src/index.ts"],
+      "@fakt/ui": ["../../packages/ui/src/index.ts"],
+      "@fakt/ai": ["../../packages/ai/src/index.ts"],
+      "@fakt/pdf": ["../../packages/pdf/src/index.ts"]
+    },
+    "types": ["vitest/globals", "@testing-library/jest-dom"]
   },
   "include": [
     "src/**/*",
@@ -18,7 +23,10 @@
     "../../packages/design-tokens/src/**/*",
     "../../packages/core/src/**/*",
     "../../packages/legal/src/**/*",
-    "../../packages/config/src/**/*"
+    "../../packages/config/src/**/*",
+    "../../packages/ui/src/**/*",
+    "../../packages/ai/src/**/*",
+    "../../packages/pdf/src/**/*"
   ],
   "exclude": ["src-tauri", "node_modules", "dist"]
 }

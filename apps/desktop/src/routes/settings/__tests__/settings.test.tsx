@@ -1,0 +1,152 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import React from "react";
+
+const mockInvoke = vi.fn().mockResolvedValue(null);
+
+vi.mock("@tauri-apps/api/core", () => ({
+  invoke: mockInvoke,
+}));
+
+vi.mock("@fakt/ai", () => ({
+  healthCheck: vi.fn().mockResolvedValue({
+    installed: false,
+    installHint: "Installer Claude Code : winget install Anthropic.Claude",
+  }),
+}));
+
+vi.mock("@fakt/ui", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@fakt/ui")>();
+  return {
+    ...actual,
+    toast: { success: vi.fn(), error: vi.fn() },
+    Toaster: () => null,
+  };
+});
+
+import { SettingsRoute } from "../Settings.js";
+import { MemoryRouter } from "react-router";
+
+const mockWorkspace = {
+  id: "ws-1",
+  name: "Atelier Mercier",
+  legalForm: "Micro-entreprise",
+  siret: "73282932000074",
+  address: "12 rue de la République, 13001 Marseille",
+  email: "contact@atelier-mercier.fr",
+  iban: null,
+  tvaMention: "TVA non applicable, art. 293 B du CGI",
+  createdAt: Date.now(),
+};
+
+function renderSettings() {
+  return render(
+    <MemoryRouter>
+      <SettingsRoute />
+    </MemoryRouter>
+  );
+}
+
+describe("SettingsRoute — rendu et tabs", () => {
+  beforeEach(() => {
+    mockInvoke.mockResolvedValue(mockWorkspace);
+  });
+
+  it("affiche le titre 'Paramètres'", () => {
+    renderSettings();
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(/param/i);
+  });
+
+  it("affiche les 4 tabs", () => {
+    renderSettings();
+    expect(screen.getByRole("tab", { name: /identit/i })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /claude cli/i })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /certificat/i })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /t.l.m.trie/i })).toBeInTheDocument();
+  });
+
+  it("affiche le tab Identité par défaut avec aria-selected", () => {
+    renderSettings();
+    const identityTab = screen.getByRole("tab", { name: /identit/i });
+    expect(identityTab).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("les autres tabs ont aria-selected=false par défaut", () => {
+    renderSettings();
+    expect(screen.getByRole("tab", { name: /claude cli/i })).toHaveAttribute("aria-selected", "false");
+    expect(screen.getByRole("tab", { name: /certificat/i })).toHaveAttribute("aria-selected", "false");
+  });
+
+  it("bascule vers le tab CLI au clic", async () => {
+    const user = userEvent.setup();
+    renderSettings();
+
+    await user.click(screen.getByRole("tab", { name: /claude cli/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("tab", { name: /claude cli/i })).toHaveAttribute("aria-selected", "true");
+    });
+  });
+
+  it("bascule vers le tab Télémétrie", async () => {
+    const user = userEvent.setup();
+    renderSettings();
+
+    await user.click(screen.getByRole("tab", { name: /t.l.m.trie/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("tab", { name: /t.l.m.trie/i })).toHaveAttribute("aria-selected", "true");
+    });
+  });
+});
+
+describe("SettingsRoute — tab Identité", () => {
+  beforeEach(() => {
+    mockInvoke.mockResolvedValue(mockWorkspace);
+  });
+
+  it("pré-remplit le champ nom avec le workspace après chargement", async () => {
+    renderSettings();
+    // invokeGetWorkspace est async — attendre le chargement
+    await waitFor(() => {
+      const nameInput = screen.getByLabelText(/nom ou raison/i) as HTMLInputElement;
+      expect(nameInput.value).toBe("Atelier Mercier");
+    }, { timeout: 2000 });
+  });
+});
+
+describe("SettingsRoute — tab Claude CLI", () => {
+  beforeEach(() => {
+    mockInvoke.mockResolvedValue(null);
+  });
+
+  it("affiche l'onglet Claude CLI avec son titre", async () => {
+    const user = userEvent.setup();
+    renderSettings();
+
+    await user.click(screen.getByRole("tab", { name: /claude cli/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { level: 3 })).toHaveTextContent(/claude code cli/i);
+    });
+  });
+});
+
+describe("SettingsRoute — tab Télémétrie", () => {
+  beforeEach(() => {
+    mockInvoke.mockResolvedValue(null);
+  });
+
+  it("checkbox télémétrie désactivée par défaut", async () => {
+    const user = userEvent.setup();
+    renderSettings();
+
+    await user.click(screen.getByRole("tab", { name: /t.l.m.trie/i }));
+
+    await waitFor(() => {
+      const checkbox = screen.getByLabelText(/t.l.m.trie anonyme/i) as HTMLInputElement;
+      expect(checkbox.checked).toBe(false);
+    });
+  });
+});

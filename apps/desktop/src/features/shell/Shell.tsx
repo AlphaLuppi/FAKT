@@ -1,6 +1,7 @@
 import type { ReactNode, ReactElement } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { fr } from "@fakt/shared";
+import { CommandPaletteProvider, useCommandPalette } from "../../components/command-palette/CommandPaletteProvider.js";
 
 const NAV_ITEMS = [
   { id: "dashboard", label: fr.nav.dashboard, path: "/" },
@@ -16,28 +17,30 @@ interface ShellProps {
 
 export function Shell({ children }: ShellProps): ReactElement {
   return (
-    <div
-      style={{
-        display: "flex",
-        height: "100vh",
-        overflow: "hidden",
-        background: "var(--paper)",
-      }}
-    >
-      <Sidebar />
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-        <Topbar />
-        <main
-          style={{
-            flex: 1,
-            overflow: "auto",
-            background: "var(--paper)",
-          }}
-        >
-          {children}
-        </main>
+    <CommandPaletteProvider>
+      <div
+        style={{
+          display: "flex",
+          height: "100vh",
+          overflow: "hidden",
+          background: "var(--paper)",
+        }}
+      >
+        <Sidebar />
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+          <Topbar />
+          <main
+            style={{
+              flex: 1,
+              overflow: "auto",
+              background: "var(--paper)",
+            }}
+          >
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </CommandPaletteProvider>
   );
 }
 
@@ -192,6 +195,7 @@ function Sidebar(): ReactElement {
 
 function Topbar(): ReactElement {
   const location = useLocation();
+  const { open } = useCommandPalette();
 
   const currentNav = NAV_ITEMS.find((item) =>
     item.path === "/" ? location.pathname === "/" : location.pathname.startsWith(item.path)
@@ -226,6 +230,42 @@ function Topbar(): ReactElement {
           {title}
         </div>
       </div>
+
+      {/* Bouton ⌘K */}
+      <button
+        onClick={open}
+        aria-label="Recherche globale"
+        title="Recherche globale (⌘K / Ctrl+K)"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          padding: "5px 12px",
+          border: "2px solid var(--ink)",
+          background: "transparent",
+          cursor: "pointer",
+          fontFamily: "var(--font-ui)",
+          fontSize: 12,
+          fontWeight: 700,
+          color: "var(--muted)",
+          textTransform: "uppercase",
+          letterSpacing: "0.05em",
+        }}
+      >
+        <span>{fr.search.placeholder}</span>
+        <kbd
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: 11,
+            padding: "1px 6px",
+            border: "1.5px solid var(--line)",
+            background: "var(--paper)",
+            color: "var(--ink)",
+          }}
+        >
+          ⌘K
+        </kbd>
+      </button>
     </div>
   );
 }
