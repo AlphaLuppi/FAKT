@@ -145,6 +145,22 @@
   box-shadow: var(--shadow-lg);
 }
 
+/* Tabs (segmented) */
+.fakt-tabs {
+  /* layout portée par le composant, styles focus uniquement ici */
+}
+.fakt-tab:last-child {
+  border-right: none !important;
+}
+.fakt-tab:focus-visible {
+  outline: var(--stroke) solid var(--accent-soft);
+  outline-offset: -3px;
+}
+.fakt-tab:hover:not(:disabled):not([aria-selected="true"]) {
+  background: var(--ink) !important;
+  color: var(--accent-soft) !important;
+}
+
 /* Chip */
 .fakt-chip {
   display: inline-flex;

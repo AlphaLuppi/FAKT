@@ -11,6 +11,8 @@ export { Checkbox } from "./primitives/Checkbox.js";
 export type { CheckboxProps } from "./primitives/Checkbox.js";
 export { Radio, RadioGroup } from "./primitives/Radio.js";
 export type { RadioGroupProps, RadioProps } from "./primitives/Radio.js";
+export { Tabs, getTabPanelId } from "./primitives/Tabs.js";
+export type { TabItem, TabsProps } from "./primitives/Tabs.js";
 
 // Layout
 export { Card } from "./layout/Card.js";

@@ -14,7 +14,10 @@ export default defineConfig({
       include: [
         "src/routes/quotes/**",
         "src/routes/invoices/**",
+        "src/routes/signatures/**",
         "src/features/doc-editor/**",
+        "src/components/signature-modal/**",
+        "src/components/audit-timeline/**",
       ],
       exclude: [
         "src/routes/quotes/index.tsx",
@@ -23,7 +26,10 @@ export default defineConfig({
         "src/routes/invoices/index.tsx",
         "src/routes/invoices/New.tsx",
         "src/routes/invoices/__test-helpers__/**",
+        "src/routes/signatures/index.tsx",
         "src/features/doc-editor/index.ts",
+        "src/components/signature-modal/index.ts",
+        "src/components/audit-timeline/index.ts",
         "**/*.test.{ts,tsx}",
       ],
       thresholds: {

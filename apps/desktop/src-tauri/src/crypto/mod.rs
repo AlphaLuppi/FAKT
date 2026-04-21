@@ -16,6 +16,7 @@ pub mod error;
 pub mod keychain;
 pub mod pades;
 pub mod tsa;
+pub mod verify;
 
 pub use commands::*;
 pub use error::CryptoError;

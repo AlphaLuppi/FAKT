@@ -265,3 +265,20 @@ export const backups = sqliteTable("backups", {
     .notNull()
     .default(sql`(unixepoch() * 1000)`),
 });
+
+export const signedDocuments = sqliteTable(
+  "signed_documents",
+  {
+    documentType: text("document_type", { enum: ["quote", "invoice"] }).notNull(),
+    documentId: text("document_id").notNull(),
+    path: text("path").notNull(),
+    padesLevel: text("pades_level", { enum: ["B", "B-T"] }).notNull(),
+    tsaProvider: text("tsa_provider"),
+    signedAt: integer("signed_at", { mode: "timestamp_ms" }).notNull(),
+    signatureEventId: text("signature_event_id").notNull(),
+  },
+  (t) => ({
+    pk: unique("signed_documents_pk").on(t.documentType, t.documentId),
+    eventIdx: index("signed_documents_event_idx").on(t.signatureEventId),
+  })
+);

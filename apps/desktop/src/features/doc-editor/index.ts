@@ -44,3 +44,11 @@ export {
   type InvoiceItemInput,
   type MarkPaidInput,
 } from "./invoice-api.js";
+export {
+  signatureApi,
+  setSignatureApi,
+  type SignatureApi,
+  type SignDocumentInput,
+  type SignDocumentOutput,
+  type VerifyReport,
+} from "./signature-api.js";
