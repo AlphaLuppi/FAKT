@@ -7,7 +7,7 @@ project_type: "other"
 project_level: 3
 communication_language: "French"
 output_language: "French"
-last_updated: "2026-04-21T15:45:00Z"
+last_updated: "2026-04-21T16:10:00Z"
 
 # Workflow Status Tracking
 # Status values:
@@ -38,8 +38,8 @@ workflow_status:
   # Phase 2: Planning
   - name: prd
     phase: 2
-    status: "required"  # Level 3 requires PRD
-    description: "Product Requirements Document — user stories + acceptance criteria"
+    status: "docs/prd.md"
+    description: "Product Requirements Document — 25 FRs, 12 NFRs, 8 epics, ~28 stories — COMPLETED 2026-04-21"
 
   - name: tech-spec
     phase: 2
