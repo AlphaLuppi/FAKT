@@ -7,7 +7,7 @@ project_type: "other"
 project_level: 3
 communication_language: "French"
 output_language: "French"
-last_updated: "2026-04-21T16:10:00Z"
+last_updated: "2026-04-21T18:30:00Z"
 
 # Workflow Status Tracking
 # Status values:
@@ -54,8 +54,8 @@ workflow_status:
   # Phase 3: Solutioning
   - name: architecture
     phase: 3
-    status: "required"  # Level 3 requires architecture
-    description: "System architecture — monorepo, Tauri desktop, Rust crypto, triple-mode deploy"
+    status: "docs/architecture.md"
+    description: "System architecture — 26 sections, 12 open questions tranchées, DDL Drizzle, IPC Tauri, PAdES DIY — COMPLETED 2026-04-21"
 
   - name: solutioning-gate-check
     phase: 3
