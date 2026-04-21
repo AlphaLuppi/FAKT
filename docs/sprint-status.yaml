@@ -6,10 +6,10 @@
 version: "6.0.0"
 project_name: "FAKT"
 project_level: 3
-current_wave: 4
+current_wave: null
 current_milestone: "v0.1.0"
 sprint_plan_path: "docs/sprint-plan.md"
-last_updated: "2026-04-22T00:25:00Z"
+last_updated: "2026-04-22T01:10:00Z"
 
 # Milestones
 milestones:
@@ -35,8 +35,17 @@ milestones:
     description: "Release publique — installers signés + landing + docs + GitHub release"
     target_day: "J+21"
     target_date: "2026-05-12"
+    code_complete_at: "2026-04-22T01:05:00Z"
+    code_complete_day: "J+1"
     gate_waves: ["W0", "W1", "W2", "W3", "W4"]
-    status: "not_started"
+    status: "code_ready_for_release"
+    release_gates_pending_tom:
+      - "Validation Adobe Reader du PDF signé Wave 1 Track D (apps/desktop/src-tauri/tests/output/signed_pades_b_t_freetsa.pdf)"
+      - "Apple Developer Program souscrit + 6 secrets GitHub pluggés (APPLE_ID, APPLE_TEAM_ID, APPLE_PASSWORD, APPLE_CERTIFICATE, APPLE_CERTIFICATE_PASSWORD, APPLE_SIGNING_IDENTITY)"
+      - "Usage 72h réel FAKT sans crash bloquant (≥ 5 devis + ≥ 5 factures émis)"
+      - "Déploiement landing sur Vercel/Netlify + DNS fakt.alphaluppi.com"
+      - "Tag v0.1.0 sur main → release.yml auto-trigger"
+      - "Messages launch postés sur ≥ 2 canaux (Product Hunt / HN / Twitter / LinkedIn)"
 
 # Waves
 waves:
@@ -406,32 +415,73 @@ waves:
     description: "Email + Archive + CI + code-signing + landing + docs."
     total_points: 21
     target_duration_days: "4"
-    status: "not_started"
+    status: "completed"
+    started_at: "2026-04-22T00:35:00Z"
+    completed_at: "2026-04-22T01:05:00Z"
+    duration_minutes: 30
     parallel_agents_max: 2
     dependencies_upstream: ["W0", "W1", "W2", "W3"]
+    notes: |
+      Wave 4 livrée en ~30 min (vs 4 jours planifiés, x192 accélération).
+      Batch unique K+L parallèle (sonnet+sonnet, agent_type forcé general-purpose
+      conformément leçons W1+W2+W3).
+      K a commité en premier (69d9506), L en second (18113c9). Aucun conflit.
+      Diagnostic IDE vite 5 vs 6 (mismatch desktop vite@5 vs landing astro→vite@6)
+      remonté post-commit → non bloquant, tsc turbo passe 11/11 ✓.
+      Validation globale : bun typecheck + test 11/11 packages · 222 tests
+      desktop + 21 email + ~10 autres nouveaux (total ~250+).
+      MILESTONE v0.1.0 CODE-READY à J+1 (target J+21 = 2026-05-12, 20 jours d'avance).
+      Gates post-code à résoudre par Tom (voir milestones[v0.1.0].release_gates_pending_tom).
     tracks:
       - id: "K"
         name: "Email + Archive"
         agent_type: "general-purpose"
         model: "sonnet"
         isolation: "worktree"
-        status: "not_started"
+        status: "completed"
+        commit_hash: "69d9506"
+        agent_name: "w4-track-k-email-archive"
+        tests_passed: "222 desktop + 21 email + 7 archive/modal (coverage ≥ 70% scope K)"
         points: 8
         stories: ["US-021", "US-022", "US-023", "US-024"]
         frs_covered: ["FR-019", "FR-020", "FR-021", "FR-022"]
+        notes: |
+          packages/email RFC 5322 + 4 templates FR + mailto fallback.
+          Tauri open_email_draft + open_mailto_fallback (xdg-open / open / cmd start).
+          PrepareEmailModal dropdown + édition inline + PDF attaché.
+          Bouton "Préparer email" sur Detail devis+facture (status-aware).
+          Route /archive + Tauri build_workspace_zip (crate zip 2.x, hybride JS+Rust).
+          README.txt compliance Art. L123-22 + Art. 286 CGI.
+          No-hard-delete invoices confirmé existant (trigger DB + UI guards).
+          Dettes v0.2 : SMTP direct, DKIM, multi-lang templates, pixel tracking.
 
       - id: "L"
         name: "CI + Release + Code-signing + Docs"
         agent_type: "general-purpose"
         model: "sonnet"
         isolation: "worktree"
-        status: "not_started"
+        status: "completed"
+        commit_hash: "18113c9"
+        agent_name: "w4-track-l-release"
+        files_added: 30
+        insertions: 2446
         points: 13
         stories: []
         nfrs_covered: ["NFR-003", "NFR-010", "NFR-011"]
-        blocked_by_external:
-          - "Windows OV Code Signing cert order (3-7j délai) — Tom commande J+1"
-          - "Apple Developer Program signup (99 USD/an) — Tom fait J+1"
+        blocked_by_external_resolved:
+          - "Windows OV cert : SKIP v0.1.0 (décision Tom 2026-04-22), .msi non signé, follow-up v0.1.1 (issue template créé)"
+          - "Apple Developer Program : Tom souscrit 2026-04-22, secrets placeholder dans release.yml, Tom plugue à réception"
+        notes: |
+          .github/workflows/ci.yml matrix ubuntu+macos+windows (lint + typecheck + test + build + cargo check).
+          .github/workflows/e2e.yml Playwright smoke (Xvfb Linux).
+          .github/workflows/release.yml tauri-action@v2 avec secrets macOS placeholder + Windows skip documenté.
+          tauri.conf.json enrichi : identifier com.alphaluppi.fakt, targets 5 formats, copyright, descriptions FR.
+          landing/ Astro 5 statique : hero + 3 features + badges conformité + CTA OS + Brutal Invoice strict (dist 24 KB).
+          README.md FR refondu + CONTRIBUTING.md DCO complet + CHANGELOG.md v0.1.0 + docs-site/ Mintlify (6 mdx).
+          .github/launch-messages/ : product-hunt + hacker-news (EN) + twitter + linkedin (FR).
+          LICENSE BSL 1.1 change date 2030-04-21 (existait déjà, validé).
+          Icons : placeholder Tauri defaults, dette v0.1.1.
+          Playwright E2E : smoke uniquement, full suite dette v0.1.1.
 
 # Velocity tracking
 velocity:
@@ -439,8 +489,8 @@ velocity:
   wave_1: "63 pts en 45 min (1.40 pts/min)"
   wave_2: "50 pts en 140 min (0.36 pts/min) — agents W2 plus complexes (routes UI riches + tests e2e)"
   wave_3: "34 pts en 35 min (0.97 pts/min) — batch unique I+J parallèle opus+sonnet, zéro retry"
-  wave_4: null
-  rolling_average: "0.69 pts/min sur W0+W1+W2+W3 (172 pts / 251 min)"
+  wave_4: "21 pts en 30 min (0.70 pts/min) — batch unique K+L parallèle sonnet+sonnet, zéro retry"
+  rolling_average: "0.69 pts/min sur W0+W1+W2+W3+W4 (193 pts / 281 min — code-ready v0.1.0 à J+1)"
 
 # Team setup for agent team execution
 team:
@@ -460,23 +510,30 @@ critical_path:
     track: "D"
     reason: "PAdES POC cross-OS, bloque BETA si échec. Budget 7j. Démarrer J+3 obligatoirement."
 
-# External blockers à anticiper (Tom agit J+1)
+# External blockers à anticiper (état confirmé Tom 2026-04-22)
 external_blockers:
   - item: "Windows OV Code Signing cert"
     vendor: "Sectigo / DigiCert / GoGetSSL"
     cost_eur_per_year: 200
     lead_time_days: "3-7"
-    action_required_by: "2026-04-22"
-    status: "to_order"
-    blocks: ["Track L release signée v0.1.0"]
+    status: "deferred_v0.1.1"
+    decision_by: "Tom 2026-04-22"
+    decision_reason: ".msi non signé accepté pour v0.1.0 (SmartScreen warning), patch signature authenticode en v0.1.1"
+    follow_up: ".github/ISSUE_TEMPLATE/windows-codesign-v0.1.1.md"
 
   - item: "Apple Developer Program"
     vendor: "Apple"
     cost_usd_per_year: 99
     lead_time_days: "1 (immédiat après paiement)"
-    action_required_by: "2026-04-22"
-    status: "to_order"
-    blocks: ["Track L notarization macOS"]
+    status: "tom_subscribes_2026-04-22"
+    blocks: ["macOS .dmg notarization pour release v0.1.0"]
+    resolution: "release.yml scaffoldé avec secrets placeholder (APPLE_ID, APPLE_TEAM_ID, APPLE_PASSWORD, APPLE_CERTIFICATE, APPLE_CERTIFICATE_PASSWORD, APPLE_SIGNING_IDENTITY) — Tom plugue les valeurs à réception dans GitHub Settings → Secrets"
+
+  - item: "Adobe Reader validation PDF signé Wave 1 Track D"
+    file: "apps/desktop/src-tauri/tests/output/signed_pades_b_t_freetsa.pdf"
+    status: "tom_validates_2026-04-22"
+    blocks: ["Confirmation technique BETA avant tag v0.1.0"]
+    resolution: "Valider signature verte + TSA timestamp visible dans Adobe Reader"
 
 # Notes libres
 notes: |
@@ -484,3 +541,20 @@ notes: |
   Philosophie : livrer ALPHA (remplace skills) à J+10, pas attendre v0.1.0 à J+21 pour avoir de la valeur.
   Track D (Crypto PAdES) est le chemin critique technique — démarrer en Wave 1 même si consommé en Wave 3.
   Tracks W0 séquentiel 1 agent, puis explosion parallèle à 5 agents en W1.
+
+  WAVE 4 CLOSURE (2026-04-22 J+1) :
+  - Code-ready v0.1.0 atteint à J+1 (target J+21 = 2026-05-12), 20 jours d'avance.
+  - Total code delivered : 193 pts en 281 min (~4.7h agents cumulés) sur 4 waves + W0.
+  - 12 packages Bun + 1 app Tauri + 1 landing Astro. 11/11 typecheck. ~250 tests.
+  - Agents stack finale : W0 (sonnet general-purpose) · W1 (opus A/C/D + sonnet B/E) ·
+    W2 (sonnet F/G + opus H1/H2/H3) · W3 (opus I + sonnet J) · W4 (sonnet K + sonnet L).
+  - Zéro retry sur W2+W3+W4 après règle "subagent_type=general-purpose" en W1.
+
+  RELEASE v0.1.0 PUBLIC (gates Tom) :
+  Code est prêt mais la release nécessite 6 actions Tom avant tag :
+  1. Valider Adobe Reader PDF signé Wave 1 (signed_pades_b_t_freetsa.pdf).
+  2. Souscrire Apple Dev Program + plug 6 secrets GitHub Settings.
+  3. Usage réel FAKT 72h (≥ 5 devis + 5 factures émis sans crash).
+  4. Déployer landing Vercel/Netlify + DNS fakt.alphaluppi.com.
+  5. Tag v0.1.0 main → release.yml auto-trigger.
+  6. Poster ≥ 2 canaux launch (messages rédigés dans .github/launch-messages/).

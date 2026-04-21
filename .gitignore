@@ -26,6 +26,7 @@ out/
 .next/
 .vite/
 .turbo/
+.astro/
 
 # IDE
 .vscode/
