@@ -10,7 +10,10 @@
 export type {
   AiProvider,
   AiStreamEvent,
+  ChatMessage,
+  ChatOpts,
   CliInfo,
+  DocContext,
   DraftOpts,
   EmailContext,
   ExtractOpts,

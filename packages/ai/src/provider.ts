@@ -86,6 +86,24 @@ export interface DraftOpts {
   signal?: AbortSignal;
 }
 
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export interface DocContext {
+  docType: "quote" | "invoice";
+  number: string;
+  clientName: string;
+  amountCents: number;
+  status: string;
+}
+
+export interface ChatOpts {
+  context?: DocContext;
+  signal?: AbortSignal;
+}
+
 // ─── Provider interface ───────────────────────────────────────────────────────
 
 /**
@@ -111,6 +129,15 @@ export interface AiProvider {
   draftEmail(
     context: EmailContext,
     opts?: DraftOpts
+  ): AsyncIterable<AiStreamEvent<string>>;
+
+  /**
+   * General-purpose chat for the Composer sidebar.
+   * Streams string deltas token by token.
+   */
+  chat(
+    messages: ChatMessage[],
+    opts?: ChatOpts
   ): AsyncIterable<AiStreamEvent<string>>;
 
   /**

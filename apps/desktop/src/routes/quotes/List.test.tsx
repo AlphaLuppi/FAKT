@@ -61,9 +61,9 @@ describe("QuotesListRoute", () => {
     mocks.reset();
   });
 
-  function renderRoute(): void {
+  function renderRoute(initialSearch = ""): void {
     render(
-      <MemoryRouter>
+      <MemoryRouter initialEntries={[`/quotes${initialSearch}`]}>
         <QuotesListRoute />
       </MemoryRouter>,
     );
@@ -96,6 +96,25 @@ describe("QuotesListRoute", () => {
     });
   });
 
+  it("les chips filtres s'affichent avec fond jaune quand actif", async () => {
+    renderRoute("?status=sent");
+    await waitFor(() => {
+      const chip = screen.getByTestId("status-filter-sent");
+      expect(chip).toHaveAttribute("aria-pressed", "true");
+    });
+  });
+
+  it("efface les filtres via le bouton clearAll", async () => {
+    renderRoute("?status=sent");
+    await waitFor(() => {
+      expect(screen.getByTestId("clear-filters")).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByTestId("clear-filters"));
+    await waitFor(() => {
+      expect(screen.queryByTestId("clear-filters")).not.toBeInTheDocument();
+    });
+  });
+
   it("propose un menu [Manuel / IA]", async () => {
     renderRoute();
     fireEvent.click(screen.getByTestId("new-quote-menu"));
@@ -109,6 +128,18 @@ describe("QuotesListRoute", () => {
     renderRoute();
     await waitFor(() => {
       expect(screen.getByTestId("quotes-empty")).toBeInTheDocument();
+    });
+  });
+
+  it("recherche textuelle filtre par titre", async () => {
+    renderRoute();
+    await waitFor(() => {
+      expect(screen.getByText("Site vitrine")).toBeInTheDocument();
+    });
+    fireEvent.change(screen.getByTestId("quotes-search"), { target: { value: "pâtisserie" } });
+    await waitFor(() => {
+      expect(screen.queryByText("Site vitrine")).not.toBeInTheDocument();
+      expect(screen.getByText("E-shop pâtisserie")).toBeInTheDocument();
     });
   });
 });

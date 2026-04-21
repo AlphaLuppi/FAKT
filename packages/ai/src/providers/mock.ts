@@ -11,6 +11,8 @@
 import type {
   AiProvider,
   AiStreamEvent,
+  ChatMessage,
+  ChatOpts,
   CliInfo,
   DraftOpts,
   EmailContext,
@@ -112,6 +114,16 @@ export class MockAiProvider implements AiProvider {
       const message = err instanceof Error ? err.message : String(err);
       yield { type: "error", message };
     }
+  }
+
+  async *chat(
+    messages: ChatMessage[],
+    _opts?: ChatOpts
+  ): AsyncIterable<AiStreamEvent<string>> {
+    const last = messages[messages.length - 1]?.content ?? "";
+    const reply = `[Mock] Réponse à : "${last.slice(0, 60)}…"\n\nBien sûr, voici une relance professionnelle pour votre facture. Cordialement.`;
+    yield { type: "delta", data: reply.slice(0, Math.ceil(reply.length / 2)) };
+    yield { type: "done", data: reply };
   }
 
   async *draftEmail(

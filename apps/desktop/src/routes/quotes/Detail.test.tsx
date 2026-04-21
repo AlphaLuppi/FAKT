@@ -104,11 +104,12 @@ describe("QuoteDetailRoute", () => {
     });
   });
 
-  it("expose un stub Signer (Track I) et un stub Envoyer (Track K) hors draft", async () => {
+  it("expose le bouton Signer (Track I) et un stub Envoyer (Track K) hors draft", async () => {
     renderAt("/quotes/q-issued", ISSUED_QUOTE);
     await waitFor(() => {
       expect(screen.getByTestId("detail-send-stub")).toBeDisabled();
-      expect(screen.getByTestId("detail-sign-stub")).toBeDisabled();
+      // detail-sign est actif mais désactivé tant que pdfBytes n'est pas chargé
+      expect(screen.getByTestId("detail-sign")).toBeDisabled();
     });
   });
 

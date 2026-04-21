@@ -16,6 +16,11 @@ import { useQuote, useWorkspace, useClientsList } from "./hooks.js";
 import { clientsApi } from "../../features/doc-editor/clients-api.js";
 import { pdfApi } from "../../features/doc-editor/pdf-api.js";
 import { quotesApi } from "../../features/doc-editor/quotes-api.js";
+import { SignatureModal } from "../../components/signature-modal/index.js";
+import {
+  AuditTimeline,
+  type BaseAuditEntry,
+} from "../../components/audit-timeline/index.js";
 
 function slugify(str: string): string {
   return str
@@ -62,6 +67,8 @@ export function QuoteDetailRoute(): ReactElement {
   const [markSentOpen, setMarkSentOpen] = useState(false);
   const [markSentSubmitting, setMarkSentSubmitting] = useState(false);
   const [markSentError, setMarkSentError] = useState<string | null>(null);
+  const [signOpen, setSignOpen] = useState(false);
+  const [pdfBytes, setPdfBytes] = useState<Uint8Array | null>(null);
 
   useEffect(() => {
     if (!quote) return;
@@ -103,6 +110,7 @@ export function QuoteDetailRoute(): ReactElement {
       })
       .then((bytes) => {
         if (cancelled) return;
+        setPdfBytes(bytes);
         const blob = new Blob([bytes as BlobPart], { type: "application/pdf" });
         const url = URL.createObjectURL(blob);
         revoke = url;
@@ -296,7 +304,7 @@ export function QuoteDetailRoute(): ReactElement {
         >
           <div
             style={{
-              padding: `${tokens.spacing[3]} ${tokens.spacing[4]}`,
+              padding: `${tokens.spacing[2]} ${tokens.spacing[4]}`,
               borderBottom: `${tokens.stroke.base} solid ${tokens.color.ink}`,
               fontFamily: tokens.font.ui,
               fontSize: tokens.fontSize.xs,
@@ -304,9 +312,36 @@ export function QuoteDetailRoute(): ReactElement {
               textTransform: "uppercase",
               letterSpacing: "0.08em",
               background: tokens.color.surface,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
             }}
           >
-            {fr.quotes.detail.previewTitle}
+            <span>{fr.quotes.detail.previewTitle}</span>
+            {pdfUrl && (
+              <div style={{ display: "flex", gap: tokens.spacing[2] }}>
+                <PdfToolbarButton
+                  label="Zoom +"
+                  onClick={() => {
+                    const iframe = document.querySelector<HTMLIFrameElement>("[data-testid='pdf-iframe']");
+                    if (iframe?.contentWindow) iframe.contentWindow.document.body.style.zoom = "1.2";
+                  }}
+                />
+                <PdfToolbarButton
+                  label="Zoom -"
+                  onClick={() => {
+                    const iframe = document.querySelector<HTMLIFrameElement>("[data-testid='pdf-iframe']");
+                    if (iframe?.contentWindow) iframe.contentWindow.document.body.style.zoom = "0.8";
+                  }}
+                />
+                <PdfToolbarButton
+                  label="Plein écran"
+                  onClick={() => {
+                    if (pdfUrl) window.open(pdfUrl, "_blank");
+                  }}
+                />
+              </div>
+            )}
           </div>
           <div style={{ flex: 1, position: "relative", minHeight: 400 }}>
             {pdfUrl ? (
@@ -424,6 +459,32 @@ export function QuoteDetailRoute(): ReactElement {
 
           <div
             style={{
+              borderTop: `${tokens.stroke.base} solid ${tokens.color.ink}`,
+              paddingTop: tokens.spacing[3],
+            }}
+          >
+            <div
+              style={{
+                fontFamily: tokens.font.ui,
+                fontSize: tokens.fontSize.xs,
+                fontWeight: Number(tokens.fontWeight.bold),
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                color: tokens.color.muted,
+                marginBottom: tokens.spacing[2],
+              }}
+            >
+              {fr.audit.title}
+            </div>
+            <AuditTimeline
+              docType="quote"
+              docId={quote.id}
+              extraEntries={buildQuoteExtras(quote)}
+            />
+          </div>
+
+          <div
+            style={{
               display: "flex",
               gap: tokens.spacing[2],
               flexDirection: "column",
@@ -450,14 +511,16 @@ export function QuoteDetailRoute(): ReactElement {
                 {fr.quotes.actions.send}
               </Button>
             )}
-            <Button
-              variant="secondary"
-              disabled
-              data-testid="detail-sign-stub"
-              title="Track I"
-            >
-              {fr.quotes.actions.sign}
-            </Button>
+            {(quote.status === "draft" || quote.status === "sent") && (
+              <Button
+                variant="secondary"
+                onClick={() => setSignOpen(true)}
+                disabled={!quote.number || !pdfBytes || pdfBytes.byteLength === 0}
+                data-testid="detail-sign"
+              >
+                {fr.quotes.actions.sign}
+              </Button>
+            )}
           </div>
         </aside>
       </div>
@@ -525,8 +588,48 @@ export function QuoteDetailRoute(): ReactElement {
           </div>
         )}
       </Modal>
+
+      <SignatureModal
+        open={signOpen}
+        onClose={() => setSignOpen(false)}
+        docId={quote.id}
+        docType="quote"
+        docNumber={quote.number ?? null}
+        clientName={client?.name ?? "—"}
+        signerName={workspace?.name ?? "Signataire"}
+        signerEmail={workspace?.email ?? "contact@local"}
+        pdfBytes={pdfBytes}
+        onSigned={async () => {
+          try {
+            await quotesApi.updateStatus(quote.id, "signed");
+          } catch (err) {
+            // Si la transition directe échoue (devis en draft), on tente sent puis signed.
+            if (quote.status === "draft") {
+              try {
+                await quotesApi.updateStatus(quote.id, "sent");
+                await quotesApi.updateStatus(quote.id, "signed");
+              } catch {
+                /* ignore — l'UI refetch montrera l'état réel */
+              }
+            }
+          }
+          toast.success(fr.signature.modal.successBody);
+          refresh();
+        }}
+      />
     </div>
   );
+}
+
+function buildQuoteExtras(q: Quote): BaseAuditEntry[] {
+  const extras: BaseAuditEntry[] = [];
+  if (q.createdAt) {
+    extras.push({ kind: "created", timestamp: q.createdAt });
+  }
+  if (q.issuedAt) {
+    extras.push({ kind: "sent", timestamp: q.issuedAt });
+  }
+  return extras;
 }
 
 function DescriptionRow({
@@ -574,6 +677,29 @@ function DescriptionLabel({
     >
       {children}
     </span>
+  );
+}
+
+function PdfToolbarButton({ label, onClick }: { label: string; onClick: () => void }): ReactElement {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        padding: "2px 8px",
+        border: `1.5px solid ${tokens.color.ink}`,
+        background: "transparent",
+        fontFamily: tokens.font.ui,
+        fontSize: tokens.fontSize.xs,
+        fontWeight: Number(tokens.fontWeight.bold),
+        textTransform: "uppercase",
+        letterSpacing: "0.04em",
+        color: tokens.color.ink,
+        cursor: "pointer",
+      }}
+    >
+      {label}
+    </button>
   );
 }
 

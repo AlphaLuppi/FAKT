@@ -1,7 +1,12 @@
 import type { ReactNode, ReactElement } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { fr } from "@fakt/shared";
 import { CommandPaletteProvider, useCommandPalette } from "../../components/command-palette/CommandPaletteProvider.js";
+import { ComposerSidebarProvider, useComposerSidebar } from "../../components/composer-sidebar/ComposerContext.js";
+import { ComposerSidebar } from "../../components/composer-sidebar/ComposerSidebar.js";
+import { ShortcutsOverlay } from "../../components/shortcuts-overlay/ShortcutsOverlay.js";
+import { buildShortcuts, matchesShortcut } from "../../shortcuts.js";
 
 const NAV_ITEMS = [
   { id: "dashboard", label: fr.nav.dashboard, path: "/" },
@@ -18,29 +23,69 @@ interface ShellProps {
 export function Shell({ children }: ShellProps): ReactElement {
   return (
     <CommandPaletteProvider>
-      <div
-        style={{
-          display: "flex",
-          height: "100vh",
-          overflow: "hidden",
-          background: "var(--paper)",
-        }}
-      >
-        <Sidebar />
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-          <Topbar />
-          <main
-            style={{
-              flex: 1,
-              overflow: "auto",
-              background: "var(--paper)",
-            }}
-          >
-            {children}
-          </main>
-        </div>
-      </div>
+      <ComposerSidebarProvider>
+        <ShellInner>{children}</ShellInner>
+      </ComposerSidebarProvider>
     </CommandPaletteProvider>
+  );
+}
+
+function ShellInner({ children }: ShellProps): ReactElement {
+  const [showHelp, setShowHelp] = useState(false);
+  const navigate = useNavigate();
+  const { open: openPalette } = useCommandPalette();
+  const { toggle: toggleComposer } = useComposerSidebar();
+
+  useEffect(() => {
+    const shortcuts = buildShortcuts({
+      onNewQuote: () => void navigate("/quotes/new?mode=manual"),
+      onNewInvoice: () => void navigate("/invoices/new"),
+      onToggleComposer: toggleComposer,
+      onShowHelp: () => setShowHelp((v) => !v),
+    });
+
+    const handler = (e: KeyboardEvent): void => {
+      // ⌘K is handled by CommandPaletteProvider
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") return;
+
+      for (const shortcut of shortcuts) {
+        if (matchesShortcut(e, shortcut)) {
+          e.preventDefault();
+          shortcut.action();
+          return;
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [navigate, openPalette, toggleComposer]);
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        height: "100vh",
+        overflow: "hidden",
+        background: "var(--paper)",
+      }}
+    >
+      <Sidebar />
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        <Topbar />
+        <main
+          style={{
+            flex: 1,
+            overflow: "auto",
+            background: "var(--paper)",
+          }}
+        >
+          {children}
+        </main>
+      </div>
+      <ComposerSidebar />
+      {showHelp && <ShortcutsOverlay onClose={() => setShowHelp(false)} />}
+    </div>
   );
 }
 
@@ -138,9 +183,7 @@ function Sidebar(): ReactElement {
       <nav style={{ padding: "4px 8px", flex: 1 }}>
         {NAV_ITEMS.map((item) => {
           const isActive =
-            item.path === "/"
-              ? currentPath === "/"
-              : currentPath.startsWith(item.path);
+            item.path === "/" ? currentPath === "/" : currentPath.startsWith(item.path);
 
           return (
             <button
@@ -196,9 +239,10 @@ function Sidebar(): ReactElement {
 function Topbar(): ReactElement {
   const location = useLocation();
   const { open } = useCommandPalette();
+  const { toggle: toggleComposer, isOpen: composerOpen } = useComposerSidebar();
 
   const currentNav = NAV_ITEMS.find((item) =>
-    item.path === "/" ? location.pathname === "/" : location.pathname.startsWith(item.path)
+    item.path === "/" ? location.pathname === "/" : location.pathname.startsWith(item.path),
   );
 
   const title = currentNav?.label ?? fr.nav.settings;
@@ -230,6 +274,43 @@ function Topbar(): ReactElement {
           {title}
         </div>
       </div>
+
+      {/* Bouton Composer IA */}
+      <button
+        onClick={toggleComposer}
+        data-testid="topbar-composer-toggle"
+        aria-label="Composer IA (Ctrl+/)"
+        title="Composer IA (Ctrl+/)"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          padding: "5px 12px",
+          border: "2px solid var(--ink)",
+          background: composerOpen ? "var(--ink)" : "transparent",
+          cursor: "pointer",
+          fontFamily: "var(--font-ui)",
+          fontSize: 12,
+          fontWeight: 700,
+          color: composerOpen ? "var(--accent-soft)" : "var(--muted)",
+          textTransform: "uppercase",
+          letterSpacing: "0.05em",
+        }}
+      >
+        <span>{fr.composer.title}</span>
+        <kbd
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: 11,
+            padding: "1px 6px",
+            border: "1.5px solid var(--line)",
+            background: "var(--paper)",
+            color: "var(--ink)",
+          }}
+        >
+          ⌘/
+        </kbd>
+      </button>
 
       {/* Bouton ⌘K */}
       <button

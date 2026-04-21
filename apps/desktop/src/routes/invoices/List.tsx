@@ -1,17 +1,17 @@
 import type { ReactElement } from "react";
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router";
+import { useMemo, useState, useCallback } from "react";
+import { useNavigate, useSearchParams } from "react-router";
 import { tokens } from "@fakt/design-tokens";
 import { Button, Input, StatusPill, Table } from "@fakt/ui";
 import type { TableColumn, StatusKind } from "@fakt/ui";
-import { fr, formatEur, formatFrDate } from "@fakt/shared";
+import { fr, formatEur, formatFrDate, today } from "@fakt/shared";
 import type { Invoice, InvoiceStatus, UUID } from "@fakt/shared";
 import { useInvoices } from "./hooks.js";
 import { useClientsList } from "../quotes/hooks.js";
 
-type StatusFilter = InvoiceStatus | "all";
+type StatusFilter = InvoiceStatus | "overdue" | "all";
 
-const STATUS_FILTERS: ReadonlyArray<{ id: StatusFilter; label: string }> = [
+const STATUS_CHIP_FILTERS: ReadonlyArray<{ id: StatusFilter; label: string }> = [
   { id: "all", label: fr.invoices.statusFilters.all },
   { id: "draft", label: fr.invoices.statusFilters.draft },
   { id: "sent", label: fr.invoices.statusFilters.sent },
@@ -22,12 +22,34 @@ const STATUS_FILTERS: ReadonlyArray<{ id: StatusFilter; label: string }> = [
 
 export function InvoicesListRoute(): ReactElement {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { invoices, loading } = useInvoices();
   const { clients } = useClientsList();
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [clientFilter, setClientFilter] = useState<UUID | "all">("all");
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const statusFilter = (searchParams.get("status") ?? "all") as StatusFilter;
+  const clientFilter = (searchParams.get("client") ?? "all") as UUID | "all";
+  const fromFilter = searchParams.get("from") ?? "";
+  const toFilter = searchParams.get("to") ?? "";
+  const search = searchParams.get("q") ?? "";
+  const overdueParam = searchParams.get("overdue") === "true";
+
+  const effectiveStatusFilter: StatusFilter = overdueParam ? "overdue" : statusFilter;
+
+  const setFilter = useCallback(
+    (key: string, value: string) => {
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        if (!value || value === "all") {
+          next.delete(key);
+        } else {
+          next.set(key, value);
+        }
+        return next;
+      });
+    },
+    [setSearchParams],
+  );
 
   const clientMap = useMemo(() => {
     const m = new Map<string, string>();
@@ -35,13 +57,40 @@ export function InvoicesListRoute(): ReactElement {
     return m;
   }, [clients]);
 
+  const now = today();
+
   const filtered = useMemo(() => {
     return invoices.filter((inv) => {
-      if (statusFilter !== "all" && inv.status !== statusFilter) return false;
+      const isOverdue = inv.status === "sent" && inv.dueDate !== null && inv.dueDate < now;
+
+      if (effectiveStatusFilter === "overdue") {
+        if (!isOverdue) return false;
+      } else if (effectiveStatusFilter !== "all") {
+        if (inv.status !== effectiveStatusFilter) return false;
+      }
+
       if (clientFilter !== "all" && inv.clientId !== clientFilter) return false;
+
+      if (fromFilter) {
+        const from = new Date(fromFilter).getTime();
+        if ((inv.issuedAt ?? inv.createdAt) < from) return false;
+      }
+      if (toFilter) {
+        const to = new Date(toFilter).getTime() + 86400000;
+        if ((inv.issuedAt ?? inv.createdAt) > to) return false;
+      }
+
+      if (search) {
+        const s = search.toLowerCase();
+        const num = (inv.number ?? "").toLowerCase();
+        const title = inv.title.toLowerCase();
+        const clientName = (clientMap.get(inv.clientId) ?? "").toLowerCase();
+        if (!num.includes(s) && !title.includes(s) && !clientName.includes(s)) return false;
+      }
+
       return true;
     });
-  }, [invoices, statusFilter, clientFilter]);
+  }, [invoices, effectiveStatusFilter, clientFilter, fromFilter, toFilter, search, clientMap, now]);
 
   const columns: ReadonlyArray<TableColumn<Invoice>> = useMemo(
     () => [
@@ -49,14 +98,7 @@ export function InvoicesListRoute(): ReactElement {
         id: "number",
         header: fr.invoices.labels.number,
         accessor: (inv) => (
-          <span
-            style={{
-              fontFamily: tokens.font.mono,
-              fontSize: tokens.fontSize.xs,
-              fontVariantNumeric: "tabular-nums",
-              color: inv.number ? tokens.color.ink : tokens.color.muted,
-            }}
-          >
+          <span style={{ fontFamily: tokens.font.mono, fontSize: tokens.fontSize.xs, fontVariantNumeric: "tabular-nums", color: inv.number ? tokens.color.ink : tokens.color.muted }}>
             {inv.number ?? fr.invoices.labels.numberPending}
           </span>
         ),
@@ -76,15 +118,7 @@ export function InvoicesListRoute(): ReactElement {
         id: "title",
         header: fr.invoices.labels.title,
         accessor: (inv) => (
-          <span
-            style={{
-              fontFamily: tokens.font.ui,
-              fontSize: tokens.fontSize.sm,
-              color: tokens.color.ink,
-            }}
-          >
-            {inv.title}
-          </span>
+          <span style={{ fontFamily: tokens.font.ui, fontSize: tokens.fontSize.sm, color: tokens.color.ink }}>{inv.title}</span>
         ),
         sortable: true,
         sortValue: (inv) => inv.title,
@@ -93,13 +127,7 @@ export function InvoicesListRoute(): ReactElement {
         id: "total",
         header: fr.invoices.labels.totalTtc,
         accessor: (inv) => (
-          <span
-            style={{
-              fontFamily: tokens.font.mono,
-              fontVariantNumeric: "tabular-nums",
-              fontWeight: Number(tokens.fontWeight.bold),
-            }}
-          >
+          <span style={{ fontFamily: tokens.font.mono, fontVariantNumeric: "tabular-nums", fontWeight: Number(tokens.fontWeight.bold) }}>
             {formatEur(inv.totalHtCents)}
           </span>
         ),
@@ -111,7 +139,11 @@ export function InvoicesListRoute(): ReactElement {
       {
         id: "status",
         header: fr.invoices.labels.status,
-        accessor: (inv) => <StatusPill status={inv.status as StatusKind} size="sm" />,
+        accessor: (inv) => {
+          const isOverdue = inv.status === "sent" && inv.dueDate !== null && inv.dueDate < now;
+          const displayStatus: StatusKind = isOverdue ? "overdue" : (inv.status as StatusKind);
+          return <StatusPill status={displayStatus} size="sm" />;
+        },
         sortable: true,
         sortValue: (inv) => inv.status,
         width: 120,
@@ -120,13 +152,7 @@ export function InvoicesListRoute(): ReactElement {
         id: "issuedAt",
         header: fr.invoices.labels.issuedAt,
         accessor: (inv) => (
-          <span
-            style={{
-              fontFamily: tokens.font.mono,
-              fontSize: tokens.fontSize.xs,
-              color: tokens.color.muted,
-            }}
-          >
+          <span style={{ fontFamily: tokens.font.mono, fontSize: tokens.fontSize.xs, color: tokens.color.muted }}>
             {inv.issuedAt ? formatFrDate(inv.issuedAt) : "—"}
           </span>
         ),
@@ -135,26 +161,20 @@ export function InvoicesListRoute(): ReactElement {
         width: 120,
       },
     ],
-    [clientMap],
+    [clientMap, now],
   );
 
+  const hasActiveFilters =
+    effectiveStatusFilter !== "all" ||
+    clientFilter !== "all" ||
+    fromFilter !== "" ||
+    toFilter !== "" ||
+    search !== "" ||
+    overdueParam;
+
   return (
-    <div
-      style={{
-        padding: tokens.spacing[6],
-        display: "flex",
-        flexDirection: "column",
-        gap: tokens.spacing[5],
-      }}
-    >
-      <header
-        style={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-          gap: tokens.spacing[4],
-        }}
-      >
+    <div style={{ padding: tokens.spacing[6], display: "flex", flexDirection: "column", gap: tokens.spacing[5] }}>
+      <header style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: tokens.spacing[4] }}>
         <div>
           <h1
             style={{
@@ -168,27 +188,16 @@ export function InvoicesListRoute(): ReactElement {
             {fr.invoices.title}
           </h1>
           <p
-            style={{
-              fontFamily: tokens.font.ui,
-              fontSize: tokens.fontSize.sm,
-              color: tokens.color.muted,
-              marginTop: tokens.spacing[1],
-              marginBottom: 0,
-            }}
+            style={{ fontFamily: tokens.font.ui, fontSize: tokens.fontSize.sm, color: tokens.color.muted, marginTop: tokens.spacing[1], marginBottom: 0 }}
             data-testid="invoices-count"
           >
-            {invoices.length}{" "}
-            {invoices.length > 1 ? "factures" : "facture"} ·{" "}
+            {invoices.length} {invoices.length > 1 ? "factures" : "facture"} ·{" "}
             {formatEur(invoices.reduce((s, inv) => s + inv.totalHtCents, 0))}
           </p>
         </div>
 
         <div style={{ position: "relative" }}>
-          <Button
-            variant="primary"
-            onClick={() => setMenuOpen((v) => !v)}
-            data-testid="new-invoice-menu"
-          >
+          <Button variant="primary" onClick={() => setMenuOpen((v) => !v)} data-testid="new-invoice-menu">
             {fr.invoices.new}
           </Button>
           {menuOpen && (
@@ -210,10 +219,7 @@ export function InvoicesListRoute(): ReactElement {
               <button
                 type="button"
                 role="menuitem"
-                onClick={() => {
-                  setMenuOpen(false);
-                  void navigate("/invoices/new?from=quote");
-                }}
+                onClick={() => { setMenuOpen(false); void navigate("/invoices/new?from=quote"); }}
                 data-testid="new-invoice-from-quote"
                 className="fakt-btn fakt-btn--ghost"
                 style={{ justifyContent: "flex-start", height: 40 }}
@@ -223,10 +229,7 @@ export function InvoicesListRoute(): ReactElement {
               <button
                 type="button"
                 role="menuitem"
-                onClick={() => {
-                  setMenuOpen(false);
-                  void navigate("/invoices/new?from=scratch");
-                }}
+                onClick={() => { setMenuOpen(false); void navigate("/invoices/new?from=scratch"); }}
                 data-testid="new-invoice-from-scratch"
                 className="fakt-btn fakt-btn--ghost"
                 style={{ justifyContent: "flex-start", height: 40 }}
@@ -238,39 +241,45 @@ export function InvoicesListRoute(): ReactElement {
         </div>
       </header>
 
-      <section
-        aria-label="filtres"
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          alignItems: "center",
-          gap: tokens.spacing[3],
-        }}
-      >
-        <div style={{ flex: "1 1 240px", minWidth: 200 }}>
-          <Input
-            type="search"
-            placeholder={fr.invoices.search.placeholder}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            data-testid="invoices-search"
-          />
-        </div>
+      {/* Filters */}
+      <section aria-label="filtres" style={{ display: "flex", flexDirection: "column", gap: tokens.spacing[3] }}>
+        {/* Status chips */}
         <div style={{ display: "flex", flexWrap: "wrap", gap: tokens.spacing[2] }}>
-          {STATUS_FILTERS.map((f) => {
-            const active = statusFilter === f.id;
+          {STATUS_CHIP_FILTERS.map((f) => {
+            const active = effectiveStatusFilter === f.id || (f.id === "overdue" && overdueParam);
             return (
               <button
                 key={f.id}
                 type="button"
-                onClick={() => setStatusFilter(f.id)}
+                onClick={() => {
+                  if (f.id === "overdue") {
+                    setSearchParams((prev) => {
+                      const next = new URLSearchParams(prev);
+                      if (overdueParam) {
+                        next.delete("overdue");
+                      } else {
+                        next.set("overdue", "true");
+                        next.delete("status");
+                      }
+                      return next;
+                    });
+                  } else {
+                    setFilter("status", f.id);
+                    setSearchParams((prev) => {
+                      const next = new URLSearchParams(prev);
+                      next.delete("overdue");
+                      if (!f.id || f.id === "all") { next.delete("status"); } else { next.set("status", f.id); }
+                      return next;
+                    });
+                  }
+                }}
                 data-testid={`invoice-status-filter-${f.id}`}
                 aria-pressed={active}
                 style={{
                   padding: "6px 12px",
                   border: `1.5px solid ${tokens.color.ink}`,
-                  background: active ? tokens.color.ink : tokens.color.surface,
-                  color: active ? tokens.color.accentSoft : tokens.color.ink,
+                  background: active ? tokens.color.accentSoft : tokens.color.surface,
+                  color: tokens.color.ink,
                   fontFamily: tokens.font.ui,
                   fontSize: tokens.fontSize.xs,
                   fontWeight: Number(tokens.fontWeight.bold),
@@ -285,32 +294,85 @@ export function InvoicesListRoute(): ReactElement {
             );
           })}
         </div>
-        {clients.length > 0 && (
-          <select
-            className="fakt-input"
-            value={clientFilter}
-            onChange={(e) => setClientFilter(e.target.value as UUID | "all")}
-            data-testid="invoice-client-filter"
-            style={{ maxWidth: 200 }}
-          >
-            <option value="all">{fr.invoices.statusFilters.all}</option>
-            {clients.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        )}
+
+        {/* Second row */}
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: tokens.spacing[3] }}>
+          <div style={{ flex: "1 1 200px", minWidth: 180 }}>
+            <Input
+              type="search"
+              placeholder={fr.invoices.search.placeholder}
+              value={search}
+              onChange={(e) => setFilter("q", e.target.value)}
+              data-testid="invoices-search"
+            />
+          </div>
+
+          {clients.length > 0 && (
+            <select
+              className="fakt-input"
+              value={clientFilter}
+              onChange={(e) => setFilter("client", e.target.value)}
+              data-testid="invoice-client-filter"
+              style={{ maxWidth: 200 }}
+            >
+              <option value="all">{fr.filters.clientPlaceholder}</option>
+              {clients.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          )}
+
+          <div style={{ display: "flex", alignItems: "center", gap: tokens.spacing[2] }}>
+            <label style={{ fontFamily: tokens.font.ui, fontSize: tokens.fontSize.xs, fontWeight: Number(tokens.fontWeight.bold), textTransform: "uppercase", letterSpacing: "0.05em", color: tokens.color.muted }}>
+              {fr.filters.dateFromLabel}
+            </label>
+            <input
+              type="date"
+              value={fromFilter}
+              onChange={(e) => setFilter("from", e.target.value)}
+              data-testid="invoice-date-from-filter"
+              className="fakt-input"
+              style={{ width: 140 }}
+            />
+            <label style={{ fontFamily: tokens.font.ui, fontSize: tokens.fontSize.xs, fontWeight: Number(tokens.fontWeight.bold), textTransform: "uppercase", letterSpacing: "0.05em", color: tokens.color.muted }}>
+              {fr.filters.dateToLabel}
+            </label>
+            <input
+              type="date"
+              value={toFilter}
+              onChange={(e) => setFilter("to", e.target.value)}
+              data-testid="invoice-date-to-filter"
+              className="fakt-input"
+              style={{ width: 140 }}
+            />
+          </div>
+
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={() => setSearchParams({})}
+              data-testid="invoice-clear-filters"
+              style={{
+                padding: "6px 12px",
+                border: `1.5px solid ${tokens.color.ink}`,
+                background: "transparent",
+                fontFamily: tokens.font.ui,
+                fontSize: tokens.fontSize.xs,
+                fontWeight: Number(tokens.fontWeight.bold),
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                color: tokens.color.muted,
+                cursor: "pointer",
+              }}
+            >
+              {fr.filters.clearAll}
+            </button>
+          )}
+        </div>
       </section>
 
       {loading ? (
-        <div
-          style={{
-            fontFamily: tokens.font.ui,
-            color: tokens.color.muted,
-            padding: tokens.spacing[5],
-          }}
-        >
+        <div style={{ fontFamily: tokens.font.ui, color: tokens.color.muted, padding: tokens.spacing[5] }}>
           Chargement…
         </div>
       ) : invoices.length === 0 ? (
@@ -329,19 +391,13 @@ export function InvoicesListRoute(): ReactElement {
           {fr.invoices.empty}
         </div>
       ) : (
-        <div
-          style={{
-            border: `${tokens.stroke.bold} solid ${tokens.color.ink}`,
-            background: tokens.color.surface,
-            boxShadow: tokens.shadow.sm,
-          }}
-        >
+        <div style={{ border: `${tokens.stroke.bold} solid ${tokens.color.ink}`, background: tokens.color.surface, boxShadow: tokens.shadow.sm }}>
           <Table
             rows={filtered}
             columns={columns}
             getRowId={(inv) => inv.id}
             onRowClick={(inv) => void navigate(`/invoices/${inv.id}`)}
-            filterText={search}
+            filterText=""
             empty={fr.invoices.empty}
           />
         </div>

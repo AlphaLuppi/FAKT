@@ -20,6 +20,11 @@ import { clientsApi } from "../../features/doc-editor/clients-api.js";
 import { pdfApi } from "../../features/doc-editor/pdf-api.js";
 import { invalidateSearchIndex } from "../../components/command-palette/useCommandPaletteIndex.js";
 import { MarkPaidModal, type MarkPaidPayload } from "./MarkPaidModal.js";
+import { SignatureModal } from "../../components/signature-modal/index.js";
+import {
+  AuditTimeline,
+  type BaseAuditEntry,
+} from "../../components/audit-timeline/index.js";
 
 function slugify(str: string): string {
   return str
@@ -73,6 +78,8 @@ export function InvoiceDetailRoute(): ReactElement {
   const [markPaidOpen, setMarkPaidOpen] = useState(false);
   const [markPaidSubmitting, setMarkPaidSubmitting] = useState(false);
   const [markPaidError, setMarkPaidError] = useState<string | null>(null);
+  const [signOpen, setSignOpen] = useState(false);
+  const [pdfBytes, setPdfBytes] = useState<Uint8Array | null>(null);
 
   useEffect(() => {
     if (!invoice) return;
@@ -114,6 +121,7 @@ export function InvoiceDetailRoute(): ReactElement {
       })
       .then((bytes) => {
         if (cancelled) return;
+        setPdfBytes(bytes);
         const blob = new Blob([bytes as BlobPart], { type: "application/pdf" });
         const url = URL.createObjectURL(blob);
         revoke = url;
@@ -363,7 +371,7 @@ export function InvoiceDetailRoute(): ReactElement {
         >
           <div
             style={{
-              padding: `${tokens.spacing[3]} ${tokens.spacing[4]}`,
+              padding: `${tokens.spacing[2]} ${tokens.spacing[4]}`,
               borderBottom: `${tokens.stroke.base} solid ${tokens.color.ink}`,
               fontFamily: tokens.font.ui,
               fontSize: tokens.fontSize.xs,
@@ -371,9 +379,19 @@ export function InvoiceDetailRoute(): ReactElement {
               textTransform: "uppercase",
               letterSpacing: "0.08em",
               background: tokens.color.surface,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
             }}
           >
-            {fr.invoices.detail.previewTitle}
+            <span>{fr.invoices.detail.previewTitle}</span>
+            {pdfUrl && (
+              <div style={{ display: "flex", gap: tokens.spacing[2] }}>
+                <InvPdfToolbarButton label="Zoom +" onClick={() => { const iframe = document.querySelector<HTMLIFrameElement>("[data-testid='invoice-pdf-iframe']"); if (iframe?.contentWindow) iframe.contentWindow.document.body.style.zoom = "1.2"; }} />
+                <InvPdfToolbarButton label="Zoom -" onClick={() => { const iframe = document.querySelector<HTMLIFrameElement>("[data-testid='invoice-pdf-iframe']"); if (iframe?.contentWindow) iframe.contentWindow.document.body.style.zoom = "0.8"; }} />
+                <InvPdfToolbarButton label="Plein écran" onClick={() => { if (pdfUrl) window.open(pdfUrl, "_blank"); }} />
+              </div>
+            )}
           </div>
           <div style={{ flex: 1, position: "relative", minHeight: 400 }}>
             {pdfUrl ? (
@@ -495,6 +513,16 @@ export function InvoiceDetailRoute(): ReactElement {
                 {fr.invoices.actions.send}
               </Button>
             )}
+            {(isDraft || isSent) && (
+              <Button
+                variant="secondary"
+                onClick={() => setSignOpen(true)}
+                disabled={!invoice.number || !pdfBytes || pdfBytes.byteLength === 0}
+                data-testid="invoice-detail-sign"
+              >
+                {fr.quotes.actions.sign}
+              </Button>
+            )}
             {isDraft && (
               <Button
                 variant="ghost"
@@ -522,6 +550,32 @@ export function InvoiceDetailRoute(): ReactElement {
               {fr.invoices.detail.archivalLegalNotice}
             </div>
           )}
+
+          <div
+            style={{
+              borderTop: `${tokens.stroke.base} solid ${tokens.color.ink}`,
+              paddingTop: tokens.spacing[3],
+            }}
+          >
+            <div
+              style={{
+                fontFamily: tokens.font.ui,
+                fontSize: tokens.fontSize.xs,
+                fontWeight: Number(tokens.fontWeight.bold),
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                color: tokens.color.muted,
+                marginBottom: tokens.spacing[2],
+              }}
+            >
+              {fr.audit.title}
+            </div>
+            <AuditTimeline
+              docType="invoice"
+              docId={invoice.id}
+              extraEntries={buildInvoiceExtras(invoice)}
+            />
+          </div>
         </aside>
       </div>
 
@@ -601,7 +655,67 @@ export function InvoiceDetailRoute(): ReactElement {
         submitting={markPaidSubmitting}
         error={markPaidError}
       />
+
+      <SignatureModal
+        open={signOpen}
+        onClose={() => setSignOpen(false)}
+        docId={invoice.id}
+        docType="invoice"
+        docNumber={invoice.number ?? null}
+        clientName={client?.name ?? "—"}
+        signerName={workspace?.name ?? "Signataire"}
+        signerEmail={workspace?.email ?? "contact@local"}
+        pdfBytes={pdfBytes}
+        onSigned={async () => {
+          if (invoice.status === "draft") {
+            try {
+              await invoiceApi.updateStatus(invoice.id, "sent");
+            } catch {
+              /* ignore — refetch pour mise à jour */
+            }
+          }
+          toast.success(fr.signature.modal.successBody);
+          refresh();
+        }}
+      />
     </div>
+  );
+}
+
+function buildInvoiceExtras(inv: Invoice): BaseAuditEntry[] {
+  const extras: BaseAuditEntry[] = [];
+  if (inv.createdAt) {
+    extras.push({ kind: "created", timestamp: inv.createdAt });
+  }
+  if (inv.issuedAt) {
+    extras.push({ kind: "sent", timestamp: inv.issuedAt });
+  }
+  if (inv.paidAt) {
+    extras.push({ kind: "paid", timestamp: inv.paidAt });
+  }
+  return extras;
+}
+
+function InvPdfToolbarButton({ label, onClick }: { label: string; onClick: () => void }): ReactElement {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        padding: "2px 8px",
+        border: `1.5px solid ${tokens.color.ink}`,
+        background: "transparent",
+        fontFamily: tokens.font.ui,
+        fontSize: tokens.fontSize.xs,
+        fontWeight: Number(tokens.fontWeight.bold),
+        textTransform: "uppercase",
+        letterSpacing: "0.04em",
+        color: tokens.color.ink,
+        cursor: "pointer",
+      }}
+    >
+      {label}
+    </button>
   );
 }
 

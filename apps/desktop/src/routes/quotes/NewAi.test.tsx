@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { NewAi } from "./NewAi.js";
-import { setAi, type AiProvider, type AiStreamEvent, type ExtractedQuote, type CliInfo } from "@fakt/ai";
+import { setAi, type AiProvider, type AiStreamEvent, type ExtractedQuote, type CliInfo, type ChatMessage } from "@fakt/ai";
 import { installMockApis } from "./__test-helpers__/mockApis.js";
 
 function createProvider(opts: {
@@ -29,6 +29,9 @@ function createProvider(opts: {
       yield { type: "done", data: opts.extractResult };
     },
     async *draftEmail(): AsyncIterable<AiStreamEvent<string>> {
+      yield { type: "done", data: "" };
+    },
+    async *chat(_msgs: ChatMessage[]): AsyncIterable<AiStreamEvent<string>> {
       yield { type: "done", data: "" };
     },
   };
