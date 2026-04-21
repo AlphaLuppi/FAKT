@@ -6,10 +6,10 @@
 version: "6.0.0"
 project_name: "FAKT"
 project_level: 3
-current_wave: 2
-current_milestone: "alpha"
+current_wave: 3
+current_milestone: "beta"
 sprint_plan_path: "docs/sprint-plan.md"
-last_updated: "2026-04-21T21:05:00Z"
+last_updated: "2026-04-21T23:40:00Z"
 
 # Milestones
 milestones:
@@ -17,8 +17,10 @@ milestones:
     description: "Remplace les 2 skills Claude Code — Tom utilise FAKT pour tous ses nouveaux devis/factures"
     target_day: "J+10"
     target_date: "2026-05-01"
+    actual_completed_at: "2026-04-21T23:40:00Z"
+    actual_day: "J+0"
     gate_waves: ["W0", "W1", "W2"]
-    status: "in_progress"
+    status: "completed"
 
   - name: "beta"
     description: "+ Signature PAdES + Dashboard complet + Composer IA sidebar"
@@ -199,39 +201,65 @@ waves:
 
   - number: 2
     name: "Features ALPHA"
-    description: "Features consommant W1. 3 agents parallèles. Gate ALPHA à la fin."
+    description: "Features consommant W1. 3 agents parallèles batch 1 (F/G/H1) puis H2 puis H3. Gate ALPHA à la fin."
     total_points: 50
     target_duration_days: "5"
-    status: "not_started"
+    status: "completed"
+    started_at: "2026-04-21T21:15:00Z"
+    completed_at: "2026-04-21T23:35:00Z"
+    duration_minutes: 140
     parallel_agents_max: 3
-    dependencies_upstream: ["W0", "W1 (A, B, C, E minimum)"]
+    dependencies_upstream: ["W0", "W1"]
+    notes: |
+      Wave 2 livrée en 2h20 (vs 5 jours planifiés, x50 accélération).
+      Batch 1 parallèle F+G+H1 (sonnet+sonnet+opus). Puis H2 (opus). Puis H3 (opus).
+      Agent type forcé `general-purpose` sur tous les tracks (leçon W1 : feature-dev:code-architect
+      hallucine). Zéro retry nécessaire sur W2.
+      Un incident mineur : F et G ont partagé la même worktree, G a absorbé les fichiers
+      onboarding/settings de F dans son commit 46f215f. F a commit c4b6dcc après pour rendre
+      l'historique traçable. Correctif intégré au prompt H2/H3 ("git add paths explicites").
+      Validation globale : bun typecheck + test 10/10 packages · 168 tests (+92 vs W1 baseline).
+      MILESTONE ALPHA ATTEINT à J+0 (target J+10).
     tracks:
       - id: "F"
         name: "Onboarding + Settings"
-        agent_type: "feature-dev:code-architect"
-        model: "sonnet"
-        isolation: "worktree"
-        status: "not_started"
-        points: 8
-        stories: ["US-001", "US-002", "US-003", "US-004"]
-        frs_covered: ["FR-001", "FR-002", "FR-003", "FR-004"]
-
-      - id: "G"
-        name: "Clients + Prestations"
         agent_type: "general-purpose"
         model: "sonnet"
         isolation: "worktree"
-        status: "not_started"
+        status: "completed"
+        commit_hash: "c4b6dcc"
+        agent_name: "w2-track-f-onboarding"
+        tests_passed: "40 nouveaux sur scope F (102 total desktop après F+G+H1)"
+        points: 8
+        stories: ["US-001", "US-002", "US-003", "US-004"]
+        frs_covered: ["FR-001", "FR-002", "FR-003", "FR-004"]
+        notes: |
+          Wizard 4 étapes + Settings 4 tabs. Tauri commands is_setup_completed / complete_setup
+          à implémenter côté Rust (stubs TS en attendant, fonctionnent en dev web).
+
+      - id: "G"
+        name: "Clients + Prestations + ⌘K"
+        agent_type: "general-purpose"
+        model: "sonnet"
+        isolation: "worktree"
+        status: "completed"
+        commit_hash: "46f215f"
+        agent_name: "w2-track-g-clients-prestations"
+        tests_passed: "24 nouveaux sur scope G"
         points: 8
         stories: ["US-005", "US-006", "US-007"]
         frs_covered: ["FR-005", "FR-006", "FR-007"]
+        notes: |
+          Routing /services conservé (existant W0). CommandPalette Provider monté au Shell.
+          invalidateSearchIndex exposé pour H1/H2.
 
       - id: "H"
         name: "Devis + Facture (cœur métier)"
-        agent_type: "feature-dev:code-architect"
+        agent_type: "general-purpose"
         model: "opus"
         isolation: "worktree"
-        status: "not_started"
+        status: "completed"
+        commit_hashes: ["a84f09f", "7bb11d1", "36da1a3"]
         points: 34
         stories:
           - "US-008"
@@ -259,14 +287,43 @@ waves:
             name: "Devis création + édition + PDF"
             points: 13
             stories: ["US-008", "US-009", "US-010", "US-011", "US-012"]
+            status: "completed"
+            commit_hash: "a84f09f"
+            agent_name: "w2-track-h1-quotes"
+            tests_passed: "scope H1 coverage 80-82%"
+            files_added: 30
+            notes: |
+              Sous-router dédié, bridges API swap-ables. ItemsEditor + ClientPicker exposés
+              dans features/doc-editor/ pour réutilisation H2. Numérotation D2026-XXX
+              via stub non-atomique (TODO Track D atomic command future).
           - id: "H2"
             name: "Facture from scratch + from quote"
             points: 13
             stories: ["US-014", "US-015", "US-016"]
+            status: "completed"
+            commit_hash: "7bb11d1"
+            agent_name: "w2-track-h2-invoices"
+            tests_passed: "scope H2 coverage 82%"
+            files_added: 25
+            notes: |
+              ~100% réutilisation composants H1 (ItemsEditor, ClientPicker).
+              3 modes from-quote (acompte 30% / solde / total). Mentions obligatoires FR-016
+              exhaustives (test vérifie SIRET, numéro, dates, pénalités, 40€, art. 293 B, IBAN).
+              Protection soft-delete issued (UI hide + DB guard + toast).
           - id: "H3"
-            name: "Cycle vie + statut paiement"
+            name: "Cycle vie + statut paiement + dashboard basique"
             points: 8
             stories: ["US-013", "US-017"]
+            status: "completed"
+            commit_hash: "36da1a3"
+            agent_name: "w2-track-h3-lifecycle"
+            tests_passed: "22 nouveaux sur scope H3 (168 total)"
+            notes: |
+              StatusPill variantes complètes (draft/sent/signed/invoiced/paid/overdue).
+              MarkPaidModal (date+méthode+notes, Zod). Transition auto invoiced
+              uniquement sur mode 'full' (acompte/solde partiels n'éteignent pas le devis).
+              Dashboard 3 widgets basiques (devis en attente, factures retard, activité).
+              overdue computed UI-side. Guards transitions DB patchés.
 
   - number: 3
     name: "Signature + UI avancée (BETA)"
@@ -333,10 +390,10 @@ waves:
 velocity:
   wave_0: "25 pts en 19 min (1.31 pts/min)"
   wave_1: "63 pts en 45 min (1.40 pts/min)"
-  wave_2: null
+  wave_2: "50 pts en 140 min (0.36 pts/min) — agents W2 plus complexes (routes UI riches + tests e2e)"
   wave_3: null
   wave_4: null
-  rolling_average: "1.36 pts/min sur W0+W1 (88 pts / 64 min)"
+  rolling_average: "0.64 pts/min sur W0+W1+W2 (138 pts / 216 min)"
 
 # Team setup for agent team execution
 team:
