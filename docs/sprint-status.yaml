@@ -6,10 +6,10 @@
 version: "6.0.0"
 project_name: "FAKT"
 project_level: 3
-current_wave: 3
-current_milestone: "beta"
+current_wave: 4
+current_milestone: "v0.1.0"
 sprint_plan_path: "docs/sprint-plan.md"
-last_updated: "2026-04-21T23:40:00Z"
+last_updated: "2026-04-22T00:25:00Z"
 
 # Milestones
 milestones:
@@ -26,8 +26,10 @@ milestones:
     description: "+ Signature PAdES + Dashboard complet + Composer IA sidebar"
     target_day: "J+17"
     target_date: "2026-05-08"
+    actual_completed_at: "2026-04-22T00:25:00Z"
+    actual_day: "J+0"
     gate_waves: ["W0", "W1", "W2", "W3"]
-    status: "not_started"
+    status: "completed"
 
   - name: "v0.1.0"
     description: "Release publique — installers signés + landing + docs + GitHub release"
@@ -330,29 +332,74 @@ waves:
     description: "Signature flow intégré + Dashboard avancé + Composer sidebar."
     total_points: 34
     target_duration_days: "5-7"
-    status: "not_started"
+    status: "completed"
+    started_at: "2026-04-21T23:50:00Z"
+    completed_at: "2026-04-22T00:25:00Z"
+    duration_minutes: 35
     parallel_agents_max: 2
     dependencies_upstream: ["W0", "W1", "W2"]
+    notes: |
+      Wave 3 livrée en 35 min (vs 5-7 jours planifiés, x200 accélération).
+      Batch unique I+J parallèle (opus+sonnet, agent_type forcé general-purpose
+      conformément leçons W1+W2 : feature-dev:code-architect hallucine).
+      J a commité en premier (5ba83b5), I a commité en second (c908e25)
+      avec les 8 Tauri commands Rust (dettes W2 résorbées) + atomic numbering
+      SQLite BEGIN IMMEDIATE (CGI art. 289) + AuditTimeline + SignatureModal
+      + route /signatures/:eventId/verify. J a livré dashboard refait + filtres
+      URL-persisted + composer sidebar avec ⌘/ + raccourcis clavier globaux +
+      AiProvider.chat streaming.
+      Diagnostics IDE pre-rebuild obsolètes remontés → ignorés car tsc direct
+      silencieux. Validation globale : bun typecheck + test 10/10 packages ·
+      212 tests (+44 vs W2 baseline).
+      MILESTONE BETA ATTEINT à J+0 (target J+17 = 2026-05-08).
     tracks:
       - id: "I"
         name: "Signature flow intégré"
-        agent_type: "feature-dev:code-architect"
+        agent_type: "general-purpose"
         model: "opus"
         isolation: "worktree"
-        status: "not_started"
+        status: "completed"
+        commit_hash: "c908e25"
+        agent_name: "w3-track-i-signature"
+        tests_passed: "212 total desktop (34 fichiers)"
         points: 13
         stories: ["US-018", "US-019", "US-020"]
         frs_covered: ["FR-016", "FR-017", "FR-018"]
+        notes: |
+          SignatureModal 2 onglets (canvas dessin bezier maison 60 LOC + taper clavier).
+          AuditTimeline chaîne SHA-256. Route /signatures/:eventId/verify.
+          Tauri commands Rust livrées : is_setup_completed, complete_setup,
+          mark_quote_invoiced, mark_invoice_sent, update_invoice, delete_invoice,
+          numbering_next_quote, numbering_next_invoice (atomic SQLite BEGIN IMMEDIATE).
+          Migration 0002_signed_pdf.sql + table signedDocuments.
+          6 commandes cycle-de-vie sont des stubs Rust qui loguent + Ok(()) —
+          source de vérité métier reste TS/Drizzle (signature IPC stable v0.2).
+          Smoothing bezier midpoint-quadratic maison (zéro dep, évite signature_pad 30KB).
 
       - id: "J"
         name: "Dashboard + UI avancée"
-        agent_type: "feature-dev:code-architect"
+        agent_type: "general-purpose"
         model: "sonnet"
         isolation: "worktree"
-        status: "not_started"
+        status: "completed"
+        commit_hash: "5ba83b5"
+        agent_name: "w3-track-j-dashboard-composer"
+        tests_passed: "203/203 (32 fichiers, +2555/-676 lignes, 22 fichiers)"
         points: 21
         stories: ["US-025", "US-026", "US-027", "US-028"]
         frs_covered: ["FR-023", "FR-024", "FR-025"]
+        notes: |
+          Dashboard plein écran : 4 KPIs + sparklines 30j + pipeline horizontal
+          5 étapes + activity feed trié DESC + suggestions IA relances.
+          Filtres listes : chips status (overdue computed), combobox client,
+          date range, text search, persist URL via useSearchParams.
+          Vue détail split-pane avec toolbar PDF (Zoom+/-/Plein écran) +
+          slot AuditTimeline câblé par Track I.
+          ComposerSidebar 400px drawer + streaming chat AiProvider.chat +
+          contexte doc auto-détecté + AbortController cancel.
+          Raccourcis ⌘N / ⌘⇧N / ⌘/ / ? + ShortcutsOverlay.
+          i18n FR : 180 nouvelles clés dashboard/filters/composer/shortcuts.
+          Fix exactOptionalPropertyTypes sur SignatureModal/ComposerSidebar/KpiCard.
 
   - number: 4
     name: "Release v0.1.0"
@@ -391,9 +438,9 @@ velocity:
   wave_0: "25 pts en 19 min (1.31 pts/min)"
   wave_1: "63 pts en 45 min (1.40 pts/min)"
   wave_2: "50 pts en 140 min (0.36 pts/min) — agents W2 plus complexes (routes UI riches + tests e2e)"
-  wave_3: null
+  wave_3: "34 pts en 35 min (0.97 pts/min) — batch unique I+J parallèle opus+sonnet, zéro retry"
   wave_4: null
-  rolling_average: "0.64 pts/min sur W0+W1+W2 (138 pts / 216 min)"
+  rolling_average: "0.69 pts/min sur W0+W1+W2+W3 (172 pts / 251 min)"
 
 # Team setup for agent team execution
 team:
