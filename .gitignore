@@ -76,3 +76,6 @@ bun.lockb
 # Misc
 *.tsbuildinfo
 .eslintcache
+
+# Temp / scratch
+_tmp/

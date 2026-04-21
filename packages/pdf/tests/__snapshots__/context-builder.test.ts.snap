@@ -1,0 +1,86 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`snapshots JSON (déterminisme) > snapshot invoiceSimple 1`] = `
+{
+  "client": {
+    "address": "51 rue Laurent Bertrand, 84320 Entraigues-sur-la-Sorgue",
+    "contactName": "Marco Bianchi",
+    "legalForm": "SARL",
+    "name": "CASA MIA SARL",
+    "siret": "89513306400017",
+  },
+  "dueDate": "21 mai 2026",
+  "executionDate": "21 avril 2026",
+  "issuedAt": "21 avril 2026",
+  "items": [
+    {
+      "description": "Refonte responsive du site vitrine (design + intégration)",
+      "quantity": "1",
+      "total": "2 500,00 €",
+      "unit": "forfait",
+      "unitPrice": "2 500,00 €",
+    },
+  ],
+  "kind": "invoice",
+  "legalMentions": "Micro-entreprise Tom Andrieu
+SIRET : 85366584200029
+67 route de Lyon, 84000 Avignon
+IBAN : FR76 2823 3000 0149 3263 1396 047
+TVA non applicable, art. 293 B du CGI
+Paiement à 30 jours date de facture.
+En cas de retard de paiement, une pénalité égale à 3 fois le taux d'intérêt légal sera appliquée.
+Une indemnité forfaitaire de 40 € sera due pour frais de recouvrement en cas de retard (D. n° 2012-1115).",
+  "number": "F2026-001",
+  "quoteReference": null,
+  "title": "Refonte site vitrine casamia-pizzeriatraiteur.fr — Livraison",
+  "total": "2 500,00 €",
+  "workspace": {
+    "address": "67 route de Lyon, 84000 Avignon",
+    "email": "contact@alphaluppi.com",
+    "iban": "FR76 2823 3000 0149 3263 1396 047",
+    "legalForm": "Micro-entreprise",
+    "name": "Tom Andrieu",
+    "siret": "85366584200029",
+    "tvaMention": "TVA non applicable, art. 293 B du CGI",
+  },
+}
+`;
+
+exports[`snapshots JSON (déterminisme) > snapshot quoteSimple 1`] = `
+{
+  "client": {
+    "address": "51 rue Laurent Bertrand, 84320 Entraigues-sur-la-Sorgue",
+    "contactName": "Marco Bianchi",
+    "legalForm": "SARL",
+    "name": "CASA MIA SARL",
+    "siret": "89513306400017",
+  },
+  "conditions": "Acompte de 30 % à la commande. Solde à réception. Délai de paiement : 30 jours.",
+  "issuedAt": "21 avril 2026",
+  "items": [
+    {
+      "description": "Refonte responsive du site vitrine (design + intégration)",
+      "quantity": "1",
+      "total": "2 500,00 €",
+      "unit": "forfait",
+      "unitPrice": "2 500,00 €",
+    },
+  ],
+  "kind": "quote",
+  "notes": "Prestation incluant 2 allers-retours de révision.",
+  "number": "D2026-001",
+  "signedAt": null,
+  "title": "Refonte site vitrine casamia-pizzeriatraiteur.fr",
+  "total": "2 500,00 €",
+  "validityDate": "21 mai 2026",
+  "workspace": {
+    "address": "67 route de Lyon, 84000 Avignon",
+    "email": "contact@alphaluppi.com",
+    "iban": "FR76 2823 3000 0149 3263 1396 047",
+    "legalForm": "Micro-entreprise",
+    "name": "Tom Andrieu",
+    "siret": "85366584200029",
+    "tvaMention": "TVA non applicable, art. 293 B du CGI",
+  },
+}
+`;

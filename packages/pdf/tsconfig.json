@@ -1,0 +1,21 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "paths": {
+      "@fakt/shared": ["../shared/src/index.ts"],
+      "@fakt/core": ["../core/src/index.ts"],
+      "@fakt/legal": ["../legal/src/index.ts"]
+    }
+  },
+  "include": [
+    "src/**/*",
+    "tests/**/*",
+    "../shared/src/**/*",
+    "../core/src/**/*",
+    "../legal/src/**/*"
+  ],
+  "exclude": ["dist", "node_modules"]
+}

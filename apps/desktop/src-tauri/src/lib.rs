@@ -1,4 +1,5 @@
 mod commands;
+mod pdf;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -7,6 +8,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::ping,
             commands::get_version,
+            pdf::render::render_pdf,
         ])
         .run(tauri::generate_context!())
         .expect("erreur lors du lancement de l'application FAKT");
