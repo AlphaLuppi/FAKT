@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { MemoryRouter, Routes, Route } from "react-router";
 import { QuoteDetailRoute } from "./Detail.js";
 import {
@@ -104,11 +104,26 @@ describe("QuoteDetailRoute", () => {
     });
   });
 
-  it("expose les CTA Envoyer et Signer en stub", async () => {
+  it("expose un stub Signer (Track I) et un stub Envoyer (Track K) hors draft", async () => {
     renderAt("/quotes/q-issued", ISSUED_QUOTE);
     await waitFor(() => {
       expect(screen.getByTestId("detail-send-stub")).toBeDisabled();
       expect(screen.getByTestId("detail-sign-stub")).toBeDisabled();
+    });
+  });
+
+  it("affiche 'Marquer envoyé' sur un devis en draft numéroté", async () => {
+    const draftNumbered: Quote = {
+      ...DRAFT_QUOTE,
+      id: "q-draft-numbered",
+      number: "D2026-007",
+      year: 2026,
+      sequence: 7,
+      issuedAt: now,
+    };
+    renderAt("/quotes/q-draft-numbered", draftNumbered);
+    await waitFor(() => {
+      expect(screen.getByTestId("detail-mark-sent")).toBeInTheDocument();
     });
   });
 
@@ -117,6 +132,56 @@ describe("QuoteDetailRoute", () => {
     await waitFor(() => {
       expect(screen.getByText(/art\. 293 B/i)).toBeInTheDocument();
       expect(screen.getByText(/bon pour accord/i)).toBeInTheDocument();
+    });
+  });
+
+  it("le clic 'Marquer envoyé' ouvre une modale de confirmation", async () => {
+    const draftNumbered: Quote = {
+      ...DRAFT_QUOTE,
+      id: "q-draft-confirm",
+      number: "D2026-008",
+      year: 2026,
+      sequence: 8,
+      issuedAt: now,
+    };
+    renderAt("/quotes/q-draft-confirm", draftNumbered);
+    await waitFor(() => {
+      expect(screen.getByTestId("detail-mark-sent")).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByTestId("detail-mark-sent"));
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("detail-mark-sent-confirm"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByTestId("detail-mark-sent-cancel"),
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("confirmer 'Marquer envoyé' passe le devis en status=sent", async () => {
+    const draftNumbered: Quote = {
+      ...DRAFT_QUOTE,
+      id: "q-draft-transition",
+      number: "D2026-009",
+      year: 2026,
+      sequence: 9,
+      issuedAt: now,
+    };
+    renderAt("/quotes/q-draft-transition", draftNumbered);
+    await waitFor(() => {
+      expect(screen.getByTestId("detail-mark-sent")).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByTestId("detail-mark-sent"));
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("detail-mark-sent-confirm"),
+      ).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByTestId("detail-mark-sent-confirm"));
+    await waitFor(() => {
+      const stored = mocks.store.quotes.get("q-draft-transition");
+      expect(stored?.status).toBe("sent");
     });
   });
 });

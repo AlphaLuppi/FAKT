@@ -215,6 +215,17 @@ export function NewFromQuote(): ReactElement {
         totalHtCents,
         issueNumber,
       });
+
+      if (mode === "full" && issueNumber) {
+        try {
+          await quotesApi.updateStatus(selectedQuote.id, "invoiced");
+        } catch {
+          // Transition secondaire : ne pas bloquer la redirection si elle échoue
+          // (ex. devis déjà invoiced ou statut non transitionnable). Le devis
+          // restera consultable dans la liste pour correction manuelle.
+        }
+      }
+
       invalidateSearchIndex();
       void navigate(`/invoices/${created.id}`);
     } catch (err) {

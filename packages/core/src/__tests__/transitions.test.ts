@@ -25,9 +25,23 @@ describe("canTransitionQuote", () => {
     expect(canTransitionQuote("draft", "signed")).toBe(false);
   });
 
-  it("interdit signed → tout autre statut (terminal)", () => {
+  it("interdit signed → draft ou sent (pas de rollback)", () => {
     expect(canTransitionQuote("signed", "sent")).toBe(false);
     expect(canTransitionQuote("signed", "draft")).toBe(false);
+  });
+
+  it("autorise signed → invoiced (cycle facturation H2→H3)", () => {
+    expect(canTransitionQuote("signed", "invoiced")).toBe(true);
+  });
+
+  it("autorise sent → invoiced (facturation directe sans signature)", () => {
+    expect(canTransitionQuote("sent", "invoiced")).toBe(true);
+  });
+
+  it("interdit invoiced → tout autre statut (terminal)", () => {
+    expect(canTransitionQuote("invoiced", "signed")).toBe(false);
+    expect(canTransitionQuote("invoiced", "draft")).toBe(false);
+    expect(canTransitionQuote("invoiced", "sent")).toBe(false);
   });
 
   it("interdit refused → tout autre statut (terminal)", () => {

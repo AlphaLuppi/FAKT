@@ -169,6 +169,36 @@ describe("updateQuoteStatus", () => {
     expect(() => updateQuoteStatus(db, QUOTE_ID, "signed")).toThrow(/invalid transition/);
   });
 
+  it("transite signed → invoiced (cycle facturation)", () => {
+    updateQuoteStatus(db, QUOTE_ID, "sent");
+    updateQuoteStatus(db, QUOTE_ID, "signed");
+    const q = updateQuoteStatus(db, QUOTE_ID, "invoiced");
+    expect(q.status).toBe("invoiced");
+  });
+
+  it("interdit invoiced → tout autre statut (terminal)", () => {
+    updateQuoteStatus(db, QUOTE_ID, "sent");
+    updateQuoteStatus(db, QUOTE_ID, "signed");
+    updateQuoteStatus(db, QUOTE_ID, "invoiced");
+    expect(() => updateQuoteStatus(db, QUOTE_ID, "signed")).toThrow(
+      /invalid transition/,
+    );
+    expect(() => updateQuoteStatus(db, QUOTE_ID, "draft")).toThrow(
+      /invalid transition/,
+    );
+  });
+
+  it("interdit signed → draft ou sent (pas de rollback)", () => {
+    updateQuoteStatus(db, QUOTE_ID, "sent");
+    updateQuoteStatus(db, QUOTE_ID, "signed");
+    expect(() => updateQuoteStatus(db, QUOTE_ID, "draft")).toThrow(
+      /invalid transition/,
+    );
+    expect(() => updateQuoteStatus(db, QUOTE_ID, "sent")).toThrow(
+      /invalid transition/,
+    );
+  });
+
   it("lève une erreur pour un ID inexistant", () => {
     expect(() => updateQuoteStatus(db, "bad-id", "sent")).toThrow();
   });

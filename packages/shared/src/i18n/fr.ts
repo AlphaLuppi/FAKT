@@ -21,6 +21,7 @@ export const fr = {
 
   dashboard: {
     title: "Tableau de bord",
+    subtitle: "Aperçu rapide de ton activité",
     kpi: {
       signedRevenue: "CA signé",
       pendingQuotes: "Devis en attente",
@@ -31,6 +32,30 @@ export const fr = {
       invoicesToIssue: (n: number) => `${n} facture${n > 1 ? "s" : ""} à émettre`,
       reminderToSend: (n: number) => `${n} relance${n > 1 ? "s" : ""} à envoyer`,
       quotesToFollow: (n: number) => `${n} devis à relancer`,
+    },
+    widgets: {
+      pendingQuotesTitle: "Devis en attente",
+      pendingQuotesHint: "Envoyés, en attente de signature client",
+      pendingQuotesEmpty: "Aucun devis en attente de signature.",
+      pendingQuotesCta: "Voir les devis envoyés",
+      overdueInvoicesTitle: "Factures en retard",
+      overdueInvoicesHint: "Échéance dépassée, non encaissées",
+      overdueInvoicesEmpty: "Aucune facture en retard de paiement.",
+      overdueInvoicesCta: "Voir les factures en retard",
+      recentActivityTitle: "Activité récente",
+      recentActivityEmpty: "Aucune activité pour le moment.",
+      countQuotes: (n: number) => `${n} devis`,
+      countInvoices: (n: number) => `${n} facture${n > 1 ? "s" : ""}`,
+      sumSuffix: "HT cumulé",
+    },
+    activity: {
+      quoteCreated: "Devis créé",
+      quoteSent: "Devis envoyé",
+      quoteSigned: "Devis signé",
+      quoteInvoiced: "Devis facturé",
+      invoiceCreated: "Facture créée",
+      invoiceSent: "Facture envoyée",
+      invoicePaid: "Facture payée",
     },
   },
 
@@ -50,6 +75,7 @@ export const fr = {
       sent: "Envoyé",
       viewed: "Vu",
       signed: "Signé",
+      invoiced: "Facturé",
       refused: "Refusé",
       expired: "Expiré",
     },
@@ -59,12 +85,14 @@ export const fr = {
       sent: "Envoyés",
       viewed: "Vus",
       signed: "Signés",
+      invoiced: "Facturés",
       refused: "Refusés",
       expired: "Expirés",
     },
     actions: {
       issue: "Émettre et attribuer un numéro",
       send: "Envoyer",
+      markSent: "Marquer envoyé",
       duplicate: "Dupliquer",
       createInvoice: "Créer une facture",
       archive: "Archiver",
@@ -75,6 +103,7 @@ export const fr = {
       saveDraft: "Enregistrer brouillon",
       createAndIssue: "Créer et attribuer numéro",
       backToList: "Retour à la liste",
+      confirm: "Confirmer",
     },
     labels: {
       number: "Numéro",
@@ -154,6 +183,11 @@ export const fr = {
         "Ce devis est en brouillon — aucun numéro n'a été attribué.",
       signedOn: "Signé le",
       draftOnlyEdit: "Seuls les devis en brouillon peuvent être édités.",
+      markSentTitle: "Marquer ce devis comme envoyé ?",
+      markSentBody:
+        "Le devis passera au statut « Envoyé » et ne sera plus modifiable directement. Le client pourra ensuite signer, refuser ou laisser expirer le devis.",
+      markSentSuccess: "Devis marqué comme envoyé.",
+      markSentError: "Impossible de marquer le devis comme envoyé.",
     },
     empty: "Aucun devis pour le moment. Crée ton premier devis avec l'IA.",
     errors: {
@@ -216,6 +250,7 @@ export const fr = {
     actions: {
       issue: "Émettre",
       send: "Envoyer",
+      markSent: "Marquer envoyée",
       markPaid: "Marquer payée",
       archive: "Archiver",
       cancel: "Annuler",
@@ -226,6 +261,7 @@ export const fr = {
       backToList: "Retour à la liste",
       createCreditNote: "Créer un avoir",
       delete: "Supprimer",
+      confirm: "Confirmer",
     },
     labels: {
       number: "Numéro",
@@ -294,6 +330,11 @@ export const fr = {
         "La création d'avoirs sera disponible en v0.2.",
       archivalLegalNotice:
         "Archivage légal obligatoire (10 ans — CGI). Utilisez 'Créer un avoir' pour corriger.",
+      markSentTitle: "Marquer cette facture comme envoyée ?",
+      markSentBody:
+        "La facture passera au statut « Envoyée ». Elle sera en attente de paiement jusqu'à la date d'échéance.",
+      markSentSuccess: "Facture marquée comme envoyée.",
+      markSentError: "Impossible de marquer la facture comme envoyée.",
     },
     empty: "Aucune facture pour le moment.",
     errors: {
@@ -310,6 +351,38 @@ export const fr = {
         "Les factures émises ne peuvent pas être supprimées (archivage légal 10 ans).",
       balanceZero:
         "Le solde est nul ou négatif — les acomptes couvrent déjà le total.",
+    },
+  },
+
+  payment: {
+    modal: {
+      title: "Enregistrer le paiement",
+      subtitle:
+        "Renseigne la date, le moyen de paiement et une note éventuelle.",
+      dateLabel: "Date du paiement",
+      methodLabel: "Moyen de paiement",
+      notesLabel: "Notes (optionnel)",
+      notesPlaceholder:
+        "Référence bancaire, numéro de chèque, contexte du règlement…",
+      customMethodLabel: "Précise le moyen de paiement",
+      customMethodPlaceholder: "Ex : Lydia, Paypal, prélèvement SEPA…",
+      confirm: "Enregistrer le paiement",
+      cancel: "Annuler",
+      success: "Facture marquée comme payée.",
+      error: "Impossible d'enregistrer le paiement.",
+    },
+    methods: {
+      wire: "Virement bancaire",
+      card: "Carte bancaire",
+      cash: "Espèces",
+      check: "Chèque",
+      other: "Autre",
+    },
+    errors: {
+      dateRequired: "La date de paiement est obligatoire.",
+      dateFuture: "La date de paiement ne peut pas être dans le futur.",
+      methodRequired: "Choisis un moyen de paiement.",
+      customMethodRequired: "Précise le moyen de paiement.",
     },
   },
 

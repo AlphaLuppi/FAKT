@@ -3,9 +3,10 @@ import type { QuoteStatus, InvoiceStatus } from "@fakt/shared";
 /** Transitions valides pour les devis. */
 const QUOTE_TRANSITIONS: Record<QuoteStatus, QuoteStatus[]> = {
   draft: ["sent"],
-  sent: ["viewed", "signed", "refused", "expired"],
+  sent: ["viewed", "signed", "refused", "expired", "invoiced"],
   viewed: ["signed", "refused", "expired"],
-  signed: [],
+  signed: ["invoiced"],
+  invoiced: [],
   refused: [],
   expired: [],
 };

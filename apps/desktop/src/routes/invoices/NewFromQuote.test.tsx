@@ -154,4 +154,50 @@ describe("NewFromQuote", () => {
       expect(inv.quoteId).toBe(FIXTURE_SIGNED_QUOTE.id);
     });
   });
+
+  it("mode total (full) : passe le devis lié à 'invoiced' automatiquement", async () => {
+    renderRoute();
+    await waitFor(() => {
+      expect(screen.getByTestId("quote-picker")).toBeInTheDocument();
+    });
+    fireEvent.change(screen.getByTestId("quote-picker"), {
+      target: { value: FIXTURE_SIGNED_QUOTE.id },
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId("mode-radio-full")).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByTestId("mode-radio-full"));
+    await waitFor(() => {
+      expect(screen.getByTestId("invoice-create-and-issue")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId("invoice-create-and-issue"));
+
+    await waitFor(() => {
+      const stored = mocks.store.quotes.get(FIXTURE_SIGNED_QUOTE.id);
+      expect(stored?.status).toBe("invoiced");
+    });
+  });
+
+  it("mode acompte 30% : le devis lié reste 'signed' (pas de transition auto)", async () => {
+    renderRoute();
+    await waitFor(() => {
+      expect(screen.getByTestId("quote-picker")).toBeInTheDocument();
+    });
+    fireEvent.change(screen.getByTestId("quote-picker"), {
+      target: { value: FIXTURE_SIGNED_QUOTE.id },
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId("invoice-create-and-issue")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId("invoice-create-and-issue"));
+
+    await waitFor(() => {
+      const invoices = Array.from(mocks.store.invoices.values());
+      expect(invoices).toHaveLength(1);
+    });
+    const stored = mocks.store.quotes.get(FIXTURE_SIGNED_QUOTE.id);
+    expect(stored?.status).toBe("signed");
+  });
 });

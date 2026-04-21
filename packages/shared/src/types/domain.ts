@@ -17,7 +17,14 @@ export type LegalForm =
 
 export type DocumentUnit = "forfait" | "jour" | "heure" | "unité" | "mois" | "semaine";
 
-export type QuoteStatus = "draft" | "sent" | "viewed" | "signed" | "refused" | "expired";
+export type QuoteStatus =
+  | "draft"
+  | "sent"
+  | "viewed"
+  | "signed"
+  | "invoiced"
+  | "refused"
+  | "expired";
 export type InvoiceStatus = "draft" | "sent" | "paid" | "overdue" | "cancelled";
 export type InvoiceKind = "deposit" | "balance" | "total" | "independent";
 export type PaymentMethod = "wire" | "check" | "cash" | "other";

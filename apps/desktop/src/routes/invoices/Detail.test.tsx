@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { MemoryRouter, Routes, Route } from "react-router";
 import { InvoiceDetailRoute } from "./Detail.js";
 import {
@@ -80,16 +80,31 @@ describe("InvoiceDetailRoute", () => {
     });
   });
 
-  it("actions Send/MarkPaid sont stub (désactivés)", async () => {
+  it("bouton Marquer payée visible quand la facture est envoyée (sent)", async () => {
     const invoice = mkInvoice({ id: "inv-2", status: "sent" });
     mocks = installInvoiceMockApis({ invoices: [invoice] });
     renderDetail("inv-2");
 
     await waitFor(() => {
-      const sendBtn = screen.getByTestId("invoice-detail-send-stub");
-      expect(sendBtn).toBeDisabled();
-      const markPaid = screen.getByTestId("invoice-detail-markpaid-stub");
-      expect(markPaid).toBeDisabled();
+      expect(
+        screen.getByTestId("invoice-detail-mark-paid"),
+      ).toBeInTheDocument();
+    });
+    // Le bouton "Marquer envoyée" n'est pas affiché (déjà envoyée).
+    expect(
+      screen.queryByTestId("invoice-detail-mark-sent"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("bouton Marquer envoyée visible sur brouillon numéroté", async () => {
+    const invoice = mkInvoice({ id: "inv-draft-num", status: "draft" });
+    mocks = installInvoiceMockApis({ invoices: [invoice] });
+    renderDetail("inv-draft-num");
+
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("invoice-detail-mark-sent"),
+      ).toBeInTheDocument();
     });
   });
 
@@ -166,6 +181,92 @@ describe("InvoiceDetailRoute", () => {
       expect(
         screen.getByTestId("invoice-detail-not-found"),
       ).toBeInTheDocument();
+    });
+  });
+
+  it("overdue est computed côté UI (sent + dueDate<today)", async () => {
+    const pastDue = Date.now() - 10 * 24 * 3600 * 1000;
+    const invoice = mkInvoice({
+      id: "inv-overdue",
+      status: "sent",
+      dueDate: pastDue,
+    });
+    mocks = installInvoiceMockApis({ invoices: [invoice] });
+    renderDetail("inv-overdue");
+
+    await waitFor(() => {
+      // Le pill doit afficher "En retard" (overdue label FR)
+      expect(screen.getByText(/En retard/i)).toBeInTheDocument();
+    });
+    // Et le bouton "Marquer payée" doit rester actionnable.
+    expect(screen.getByTestId("invoice-detail-mark-paid")).toBeInTheDocument();
+  });
+
+  it("le clic 'Marquer payée' ouvre MarkPaidModal", async () => {
+    const invoice = mkInvoice({ id: "inv-paid-1", status: "sent" });
+    mocks = installInvoiceMockApis({ invoices: [invoice] });
+    renderDetail("inv-paid-1");
+
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("invoice-detail-mark-paid"),
+      ).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByTestId("invoice-detail-mark-paid"));
+    await waitFor(() => {
+      expect(screen.getByTestId("mark-paid-date")).toBeInTheDocument();
+    });
+  });
+
+  it("flow complet : Marquer payée → submit → status=paid", async () => {
+    const invoice = mkInvoice({ id: "inv-paid-2", status: "sent" });
+    mocks = installInvoiceMockApis({ invoices: [invoice] });
+    renderDetail("inv-paid-2");
+
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("invoice-detail-mark-paid"),
+      ).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByTestId("invoice-detail-mark-paid"));
+    await waitFor(() => {
+      expect(screen.getByTestId("mark-paid-confirm")).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByTestId("mark-paid-confirm"));
+
+    await waitFor(() => {
+      const stored = mocks.store.invoices.get("inv-paid-2");
+      expect(stored?.status).toBe("paid");
+      expect(stored?.paidAt).toBeTypeOf("number");
+    });
+  });
+
+  it("confirmer Marquer envoyée passe la facture draft en sent", async () => {
+    const invoice = mkInvoice({
+      id: "inv-sent-1",
+      status: "draft",
+      number: "F2026-010",
+    });
+    mocks = installInvoiceMockApis({ invoices: [invoice] });
+    renderDetail("inv-sent-1");
+
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("invoice-detail-mark-sent"),
+      ).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByTestId("invoice-detail-mark-sent"));
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("invoice-detail-mark-sent-confirm"),
+      ).toBeInTheDocument();
+    });
+    fireEvent.click(
+      screen.getByTestId("invoice-detail-mark-sent-confirm"),
+    );
+    await waitFor(() => {
+      const stored = mocks.store.invoices.get("inv-sent-1");
+      expect(stored?.status).toBe("sent");
     });
   });
 });

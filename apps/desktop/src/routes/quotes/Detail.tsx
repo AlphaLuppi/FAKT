@@ -2,7 +2,7 @@ import type { ReactElement } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { tokens } from "@fakt/design-tokens";
-import { Button, StatusPill } from "@fakt/ui";
+import { Button, Modal, StatusPill, toast } from "@fakt/ui";
 import type { StatusKind } from "@fakt/ui";
 import {
   fr,
@@ -15,6 +15,7 @@ import { TVA_MENTION_MICRO } from "@fakt/legal";
 import { useQuote, useWorkspace, useClientsList } from "./hooks.js";
 import { clientsApi } from "../../features/doc-editor/clients-api.js";
 import { pdfApi } from "../../features/doc-editor/pdf-api.js";
+import { quotesApi } from "../../features/doc-editor/quotes-api.js";
 
 function slugify(str: string): string {
   return str
@@ -52,12 +53,15 @@ export function QuoteDetailRoute(): ReactElement {
   const params = useParams<{ id: string }>();
   const navigate = useNavigate();
   const id = params.id;
-  const { quote, loading, error } = useQuote(id);
+  const { quote, loading, error, refresh } = useQuote(id);
   const { workspace } = useWorkspace();
   const { clients } = useClientsList();
   const [client, setClient] = useState<Client | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [pdfError, setPdfError] = useState<string | null>(null);
+  const [markSentOpen, setMarkSentOpen] = useState(false);
+  const [markSentSubmitting, setMarkSentSubmitting] = useState(false);
+  const [markSentError, setMarkSentError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!quote) return;
@@ -117,6 +121,24 @@ export function QuoteDetailRoute(): ReactElement {
       if (revoke) URL.revokeObjectURL(revoke);
     };
   }, [quote, client, workspace]);
+
+  async function handleMarkSent(): Promise<void> {
+    if (!quote) return;
+    setMarkSentSubmitting(true);
+    setMarkSentError(null);
+    try {
+      await quotesApi.updateStatus(quote.id, "sent");
+      setMarkSentOpen(false);
+      toast.success(fr.quotes.detail.markSentSuccess);
+      refresh();
+    } catch (err) {
+      setMarkSentError(
+        err instanceof Error ? err.message : fr.quotes.detail.markSentError,
+      );
+    } finally {
+      setMarkSentSubmitting(false);
+    }
+  }
 
   async function handleDownload(): Promise<void> {
     if (!quote || !client || !workspace) return;
@@ -409,14 +431,25 @@ export function QuoteDetailRoute(): ReactElement {
               paddingTop: tokens.spacing[3],
             }}
           >
-            <Button
-              variant="secondary"
-              disabled
-              data-testid="detail-send-stub"
-              title="Track H3"
-            >
-              {fr.quotes.actions.send}
-            </Button>
+            {isDraft ? (
+              <Button
+                variant="primary"
+                onClick={() => setMarkSentOpen(true)}
+                disabled={!quote.number}
+                data-testid="detail-mark-sent"
+              >
+                {fr.quotes.actions.markSent}
+              </Button>
+            ) : (
+              <Button
+                variant="secondary"
+                disabled
+                data-testid="detail-send-stub"
+                title="Track K"
+              >
+                {fr.quotes.actions.send}
+              </Button>
+            )}
             <Button
               variant="secondary"
               disabled
@@ -428,6 +461,70 @@ export function QuoteDetailRoute(): ReactElement {
           </div>
         </aside>
       </div>
+
+      <Modal
+        open={markSentOpen}
+        title={fr.quotes.detail.markSentTitle}
+        onClose={() => {
+          if (!markSentSubmitting) {
+            setMarkSentOpen(false);
+            setMarkSentError(null);
+          }
+        }}
+        size="sm"
+        footer={
+          <>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setMarkSentOpen(false);
+                setMarkSentError(null);
+              }}
+              disabled={markSentSubmitting}
+              data-testid="detail-mark-sent-cancel"
+            >
+              {fr.quotes.actions.cancel}
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => void handleMarkSent()}
+              disabled={markSentSubmitting}
+              data-testid="detail-mark-sent-confirm"
+            >
+              {fr.quotes.actions.confirm}
+            </Button>
+          </>
+        }
+      >
+        <p
+          style={{
+            margin: 0,
+            fontFamily: tokens.font.ui,
+            fontSize: tokens.fontSize.sm,
+            color: tokens.color.ink,
+            lineHeight: 1.5,
+          }}
+        >
+          {fr.quotes.detail.markSentBody}
+        </p>
+        {markSentError && (
+          <div
+            role="alert"
+            data-testid="detail-mark-sent-error"
+            style={{
+              marginTop: tokens.spacing[3],
+              border: `${tokens.stroke.bold} solid ${tokens.color.ink}`,
+              background: tokens.color.dangerBg,
+              padding: tokens.spacing[3],
+              fontFamily: tokens.font.ui,
+              fontSize: tokens.fontSize.sm,
+              fontWeight: Number(tokens.fontWeight.bold),
+            }}
+          >
+            {markSentError}
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

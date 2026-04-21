@@ -38,6 +38,7 @@ export const quoteStatusSchema = z.enum([
   "sent",
   "viewed",
   "signed",
+  "invoiced",
   "refused",
   "expired",
 ]);

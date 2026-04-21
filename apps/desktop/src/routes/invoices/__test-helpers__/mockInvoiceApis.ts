@@ -336,9 +336,30 @@ export function installInvoiceMockApis(options?: InstallOptions): {
       store.invoices.set(id, updated);
       return updated;
     },
+    async updateStatus(id, status): Promise<Invoice> {
+      const existing = store.invoices.get(id);
+      if (!existing) throw new Error(`updateStatus: invoice not found ${id}`);
+      if (status === "sent" && existing.status !== "draft") {
+        throw new Error(
+          `updateStatus: invalid transition ${existing.status} → ${status}`,
+        );
+      }
+      const updated: Invoice = {
+        ...existing,
+        status,
+        updatedAt: Date.now(),
+      };
+      store.invoices.set(id, updated);
+      return updated;
+    },
     async markPaid(id, input): Promise<Invoice> {
       const existing = store.invoices.get(id);
       if (!existing) throw new Error(`markPaid: invoice not found ${id}`);
+      if (existing.status !== "sent" && existing.status !== "overdue") {
+        throw new Error(
+          `markPaid: invalid transition ${existing.status} → paid`,
+        );
+      }
       const updated: Invoice = {
         ...existing,
         status: "paid",

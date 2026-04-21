@@ -2,13 +2,14 @@ import type { ReactElement } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { tokens } from "@fakt/design-tokens";
-import { Button, StatusPill } from "@fakt/ui";
+import { Button, Modal, StatusPill, toast } from "@fakt/ui";
 import type { StatusKind } from "@fakt/ui";
 import {
   fr,
   formatEur,
   formatFrDateLong,
   formatFrDate,
+  today,
 } from "@fakt/shared";
 import type { Client, Invoice } from "@fakt/shared";
 import { TVA_MENTION_MICRO } from "@fakt/legal";
@@ -18,6 +19,7 @@ import { invoiceApi } from "../../features/doc-editor/invoice-api.js";
 import { clientsApi } from "../../features/doc-editor/clients-api.js";
 import { pdfApi } from "../../features/doc-editor/pdf-api.js";
 import { invalidateSearchIndex } from "../../components/command-palette/useCommandPaletteIndex.js";
+import { MarkPaidModal, type MarkPaidPayload } from "./MarkPaidModal.js";
 
 function slugify(str: string): string {
   return str
@@ -58,13 +60,19 @@ export function InvoiceDetailRoute(): ReactElement {
   const params = useParams<{ id: string }>();
   const navigate = useNavigate();
   const id = params.id;
-  const { invoice, loading, error } = useInvoice(id);
+  const { invoice, loading, error, refresh } = useInvoice(id);
   const { workspace } = useWorkspace();
   const { clients } = useClientsList();
   const [client, setClient] = useState<Client | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [pdfError, setPdfError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [markSentOpen, setMarkSentOpen] = useState(false);
+  const [markSentSubmitting, setMarkSentSubmitting] = useState(false);
+  const [markSentError, setMarkSentError] = useState<string | null>(null);
+  const [markPaidOpen, setMarkPaidOpen] = useState(false);
+  const [markPaidSubmitting, setMarkPaidSubmitting] = useState(false);
+  const [markPaidError, setMarkPaidError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!invoice) return;
@@ -145,6 +153,48 @@ export function InvoiceDetailRoute(): ReactElement {
     }
   }
 
+  async function handleMarkSent(): Promise<void> {
+    if (!invoice) return;
+    setMarkSentSubmitting(true);
+    setMarkSentError(null);
+    try {
+      await invoiceApi.updateStatus(invoice.id, "sent");
+      setMarkSentOpen(false);
+      toast.success(fr.invoices.detail.markSentSuccess);
+      refresh();
+    } catch (err) {
+      setMarkSentError(
+        err instanceof Error
+          ? err.message
+          : fr.invoices.detail.markSentError,
+      );
+    } finally {
+      setMarkSentSubmitting(false);
+    }
+  }
+
+  async function handleMarkPaid(payload: MarkPaidPayload): Promise<void> {
+    if (!invoice) return;
+    setMarkPaidSubmitting(true);
+    setMarkPaidError(null);
+    try {
+      await invoiceApi.markPaid(invoice.id, {
+        paidAt: payload.paidAt,
+        method: payload.method,
+        notes: payload.notes,
+      });
+      setMarkPaidOpen(false);
+      toast.success(fr.payment.modal.success);
+      refresh();
+    } catch (err) {
+      setMarkPaidError(
+        err instanceof Error ? err.message : fr.payment.modal.error,
+      );
+    } finally {
+      setMarkPaidSubmitting(false);
+    }
+  }
+
   async function handleDelete(): Promise<void> {
     if (!invoice) return;
     if (invoice.status !== "draft") {
@@ -164,6 +214,16 @@ export function InvoiceDetailRoute(): ReactElement {
   }
 
   const isDraft = invoice?.status === "draft";
+  const isSent = invoice?.status === "sent";
+  const isOverdue = useMemo((): boolean => {
+    if (!invoice) return false;
+    if (invoice.status !== "sent") return false;
+    if (!invoice.dueDate) return false;
+    return invoice.dueDate < today();
+  }, [invoice]);
+  const displayStatus: StatusKind = isOverdue
+    ? "overdue"
+    : ((invoice?.status ?? "draft") as StatusKind);
 
   const metadata = useMemo(() => {
     if (!invoice) return [];
@@ -244,7 +304,7 @@ export function InvoiceDetailRoute(): ReactElement {
             >
               {invoice.number ?? fr.invoices.labels.numberPending}
             </h1>
-            <StatusPill status={invoice.status as StatusKind} />
+            <StatusPill status={displayStatus} />
           </div>
           <p
             style={{
@@ -406,22 +466,35 @@ export function InvoiceDetailRoute(): ReactElement {
               paddingTop: tokens.spacing[3],
             }}
           >
-            <Button
-              variant="secondary"
-              disabled
-              data-testid="invoice-detail-send-stub"
-              title="Track K / H3"
-            >
-              {fr.invoices.actions.send}
-            </Button>
-            <Button
-              variant="secondary"
-              disabled
-              data-testid="invoice-detail-markpaid-stub"
-              title="Track H3"
-            >
-              {fr.invoices.actions.markPaid}
-            </Button>
+            {isDraft && (
+              <Button
+                variant="primary"
+                onClick={() => setMarkSentOpen(true)}
+                disabled={!invoice.number}
+                data-testid="invoice-detail-mark-sent"
+              >
+                {fr.invoices.actions.markSent}
+              </Button>
+            )}
+            {(isSent || isOverdue) && (
+              <Button
+                variant="primary"
+                onClick={() => setMarkPaidOpen(true)}
+                data-testid="invoice-detail-mark-paid"
+              >
+                {fr.invoices.actions.markPaid}
+              </Button>
+            )}
+            {!isDraft && !isSent && !isOverdue && (
+              <Button
+                variant="secondary"
+                disabled
+                data-testid="invoice-detail-send-stub"
+                title="Track K"
+              >
+                {fr.invoices.actions.send}
+              </Button>
+            )}
             {isDraft && (
               <Button
                 variant="ghost"
@@ -451,6 +524,83 @@ export function InvoiceDetailRoute(): ReactElement {
           )}
         </aside>
       </div>
+
+      <Modal
+        open={markSentOpen}
+        title={fr.invoices.detail.markSentTitle}
+        onClose={() => {
+          if (!markSentSubmitting) {
+            setMarkSentOpen(false);
+            setMarkSentError(null);
+          }
+        }}
+        size="sm"
+        footer={
+          <>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setMarkSentOpen(false);
+                setMarkSentError(null);
+              }}
+              disabled={markSentSubmitting}
+              data-testid="invoice-detail-mark-sent-cancel"
+            >
+              {fr.invoices.actions.cancel}
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => void handleMarkSent()}
+              disabled={markSentSubmitting}
+              data-testid="invoice-detail-mark-sent-confirm"
+            >
+              {fr.invoices.actions.confirm}
+            </Button>
+          </>
+        }
+      >
+        <p
+          style={{
+            margin: 0,
+            fontFamily: tokens.font.ui,
+            fontSize: tokens.fontSize.sm,
+            color: tokens.color.ink,
+            lineHeight: 1.5,
+          }}
+        >
+          {fr.invoices.detail.markSentBody}
+        </p>
+        {markSentError && (
+          <div
+            role="alert"
+            data-testid="invoice-detail-mark-sent-error"
+            style={{
+              marginTop: tokens.spacing[3],
+              border: `${tokens.stroke.bold} solid ${tokens.color.ink}`,
+              background: tokens.color.dangerBg,
+              padding: tokens.spacing[3],
+              fontFamily: tokens.font.ui,
+              fontSize: tokens.fontSize.sm,
+              fontWeight: Number(tokens.fontWeight.bold),
+            }}
+          >
+            {markSentError}
+          </div>
+        )}
+      </Modal>
+
+      <MarkPaidModal
+        open={markPaidOpen}
+        onClose={() => {
+          if (!markPaidSubmitting) {
+            setMarkPaidOpen(false);
+            setMarkPaidError(null);
+          }
+        }}
+        onConfirm={handleMarkPaid}
+        submitting={markPaidSubmitting}
+        error={markPaidError}
+      />
     </div>
   );
 }

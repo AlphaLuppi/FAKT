@@ -89,6 +89,7 @@ export interface InvoiceApi {
   create(input: CreateInvoiceInput): Promise<Invoice>;
   createFromQuote(input: CreateFromQuoteInput): Promise<Invoice>;
   update(id: UUID, input: UpdateInvoiceInput): Promise<Invoice>;
+  updateStatus(id: UUID, status: InvoiceStatus): Promise<Invoice>;
   markPaid(id: UUID, input: MarkPaidInput): Promise<Invoice>;
   delete(id: UUID): Promise<void>;
 }
@@ -114,6 +115,14 @@ const tauriInvoiceApi: InvoiceApi = {
   async update(id, input): Promise<Invoice> {
     return invoke<Invoice>("update_invoice", { id, input });
   },
+  async updateStatus(id, status): Promise<Invoice> {
+    if (status === "sent") {
+      return invoke<Invoice>("mark_invoice_sent", { id });
+    }
+    throw new Error(
+      `invoiceApi.updateStatus: transition non exposée vers ${status}`,
+    );
+  },
   async markPaid(id, input): Promise<Invoice> {
     return invoke<Invoice>(IPC_COMMANDS.MARK_INVOICE_PAID, {
       id,
@@ -135,6 +144,7 @@ export const invoiceApi: InvoiceApi = {
   create: (input) => _impl.create(input),
   createFromQuote: (input) => _impl.createFromQuote(input),
   update: (id, input) => _impl.update(id, input),
+  updateStatus: (id, status) => _impl.updateStatus(id, status),
   markPaid: (id, input) => _impl.markPaid(id, input),
   delete: (id) => _impl.delete(id),
 };

@@ -109,7 +109,7 @@ export const quotes = sqliteTable(
     sequence: integer("sequence"),
     title: text("title").notNull(),
     status: text("status", {
-      enum: ["draft", "sent", "viewed", "signed", "refused", "expired"],
+      enum: ["draft", "sent", "viewed", "signed", "invoiced", "refused", "expired"],
     })
       .notNull()
       .default("draft"),

@@ -87,6 +87,9 @@ const tauriQuotesApi: QuotesApi = {
     if (status === "refused") {
       return invoke<Quote>(IPC_COMMANDS.CANCEL_QUOTE, { id });
     }
+    if (status === "invoiced") {
+      return invoke<Quote>("mark_quote_invoiced", { id });
+    }
     throw new Error(
       `quotesApi.updateStatus: transition non exposée vers ${status}`,
     );
