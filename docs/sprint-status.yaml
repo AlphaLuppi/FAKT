@@ -1,0 +1,333 @@
+# FAKT Sprint Status — Wave/Track parallel execution
+# Generated: 2026-04-21T19:00:00Z
+# Project: FAKT
+# Strategy: 4 waves × tracks parallèles · 3 milestones (Alpha / Beta / v0.1.0)
+
+version: "6.0.0"
+project_name: "FAKT"
+project_level: 3
+current_wave: 0
+current_milestone: "alpha"
+sprint_plan_path: "docs/sprint-plan.md"
+last_updated: "2026-04-21T19:30:00Z"
+
+# Milestones
+milestones:
+  - name: "alpha"
+    description: "Remplace les 2 skills Claude Code — Tom utilise FAKT pour tous ses nouveaux devis/factures"
+    target_day: "J+10"
+    target_date: "2026-05-01"
+    gate_waves: ["W0", "W1", "W2"]
+    status: "in_progress"
+
+  - name: "beta"
+    description: "+ Signature PAdES + Dashboard complet + Composer IA sidebar"
+    target_day: "J+17"
+    target_date: "2026-05-08"
+    gate_waves: ["W0", "W1", "W2", "W3"]
+    status: "not_started"
+
+  - name: "v0.1.0"
+    description: "Release publique — installers signés + landing + docs + GitHub release"
+    target_day: "J+21"
+    target_date: "2026-05-12"
+    gate_waves: ["W0", "W1", "W2", "W3", "W4"]
+    status: "not_started"
+
+# Waves
+waves:
+  - number: 0
+    name: "Fondations"
+    description: "Scaffold monorepo + packages socle. Séquentiel, 1 agent."
+    total_points: 25
+    target_duration_days: "1-2"
+    status: "in_progress"
+    started_at: "2026-04-21T19:30:00Z"
+    parallel_agents_max: 1
+    dependencies_upstream: []
+    tracks:
+      - id: "W0"
+        name: "Fondations monorepo"
+        agent_type: "general-purpose"
+        model: "sonnet"
+        isolation: "worktree"
+        status: "in_progress"
+        started_at: "2026-04-21T19:30:00Z"
+        points: 25
+        subtasks:
+          - "W0.1 scaffold monorepo (5 pts)"
+          - "W0.2 packages/design-tokens (3 pts)"
+          - "W0.3 packages/shared (2 pts)"
+          - "W0.4 packages/db + triggers (5 pts)"
+          - "W0.5 packages/core (3 pts)"
+          - "W0.6 packages/legal (2 pts)"
+          - "W0.7 apps/desktop scaffold (3 pts)"
+          - "W0.8 packages/config (2 pts)"
+        stories: []
+        frs_covered: []
+        dod:
+          - "bun install ok"
+          - "bun run typecheck global passe"
+          - "bun run dev ouvre fenêtre Tauri"
+          - "bun run test passe core + legal"
+
+  - number: 1
+    name: "Tracks techniques parallèles"
+    description: "5 piliers techniques en parallèle. Track D chemin critique."
+    total_points: 63
+    target_duration_days: "5"
+    status: "not_started"
+    parallel_agents_max: 5
+    dependencies_upstream: ["W0"]
+    tracks:
+      - id: "A"
+        name: "UI Components Brutal Invoice"
+        agent_type: "feature-dev:code-architect"
+        model: "sonnet"
+        isolation: "worktree"
+        status: "not_started"
+        points: 13
+        stories: []  # socle pour US-001/005/006/008/009/025/026/027/028
+        frs_covered: ["FR-023", "FR-025"]
+        critical_path: false
+
+      - id: "B"
+        name: "DB Queries + Adapters"
+        agent_type: "general-purpose"
+        model: "sonnet"
+        isolation: "worktree"
+        status: "not_started"
+        points: 8
+        stories: []  # socle CRUD
+        frs_covered: ["FR-005", "FR-006", "FR-010", "FR-011", "FR-015", "FR-022"]
+        critical_path: false
+
+      - id: "C"
+        name: "PDF Typst + Templates"
+        agent_type: "feature-dev:code-architect"
+        model: "sonnet"
+        isolation: "worktree"
+        status: "not_started"
+        points: 13
+        stories: ["US-012"]
+        frs_covered: ["FR-012", "FR-016"]
+        critical_path: false
+
+      - id: "D"
+        name: "Crypto PAdES POC (chemin critique)"
+        agent_type: "general-purpose"
+        model: "opus"
+        isolation: "worktree"
+        status: "not_started"
+        points: 21
+        critical_path: true
+        stories: []  # socle EPIC-005
+        frs_covered: ["FR-002", "FR-017", "FR-018"]
+        subtracks:
+          - id: "D1"
+            name: "Cert X.509 + Keychain"
+            points: 7
+            status: "not_started"
+          - id: "D2"
+            name: "PAdES B-T embed"
+            points: 7
+            status: "not_started"
+          - id: "D3"
+            name: "TSA RFC 3161 + Audit trail"
+            points: 7
+            status: "not_started"
+
+      - id: "E"
+        name: "AI Claude CLI wrapper"
+        agent_type: "general-purpose"
+        model: "sonnet"
+        isolation: "worktree"
+        status: "not_started"
+        points: 8
+        stories: []  # socle FR-003/009/028
+        frs_covered: ["FR-003", "FR-009"]
+        critical_path: false
+
+  - number: 2
+    name: "Features ALPHA"
+    description: "Features consommant W1. 3 agents parallèles. Gate ALPHA à la fin."
+    total_points: 50
+    target_duration_days: "5"
+    status: "not_started"
+    parallel_agents_max: 3
+    dependencies_upstream: ["W0", "W1 (A, B, C, E minimum)"]
+    tracks:
+      - id: "F"
+        name: "Onboarding + Settings"
+        agent_type: "feature-dev:code-architect"
+        model: "sonnet"
+        isolation: "worktree"
+        status: "not_started"
+        points: 8
+        stories: ["US-001", "US-002", "US-003", "US-004"]
+        frs_covered: ["FR-001", "FR-002", "FR-003", "FR-004"]
+
+      - id: "G"
+        name: "Clients + Prestations"
+        agent_type: "general-purpose"
+        model: "sonnet"
+        isolation: "worktree"
+        status: "not_started"
+        points: 8
+        stories: ["US-005", "US-006", "US-007"]
+        frs_covered: ["FR-005", "FR-006", "FR-007"]
+
+      - id: "H"
+        name: "Devis + Facture (cœur métier)"
+        agent_type: "feature-dev:code-architect"
+        model: "opus"
+        isolation: "worktree"
+        status: "not_started"
+        points: 34
+        stories:
+          - "US-008"
+          - "US-009"
+          - "US-010"
+          - "US-011"
+          - "US-012"
+          - "US-013"
+          - "US-014"
+          - "US-015"
+          - "US-016"
+          - "US-017"
+        frs_covered:
+          - "FR-008"
+          - "FR-009"
+          - "FR-010"
+          - "FR-011"
+          - "FR-012"
+          - "FR-013"
+          - "FR-014"
+          - "FR-015"
+          - "FR-016"
+        subtracks:
+          - id: "H1"
+            name: "Devis création + édition + PDF"
+            points: 13
+            stories: ["US-008", "US-009", "US-010", "US-011", "US-012"]
+          - id: "H2"
+            name: "Facture from scratch + from quote"
+            points: 13
+            stories: ["US-014", "US-015", "US-016"]
+          - id: "H3"
+            name: "Cycle vie + statut paiement"
+            points: 8
+            stories: ["US-013", "US-017"]
+
+  - number: 3
+    name: "Signature + UI avancée (BETA)"
+    description: "Signature flow intégré + Dashboard avancé + Composer sidebar."
+    total_points: 34
+    target_duration_days: "5-7"
+    status: "not_started"
+    parallel_agents_max: 2
+    dependencies_upstream: ["W0", "W1", "W2"]
+    tracks:
+      - id: "I"
+        name: "Signature flow intégré"
+        agent_type: "feature-dev:code-architect"
+        model: "opus"
+        isolation: "worktree"
+        status: "not_started"
+        points: 13
+        stories: ["US-018", "US-019", "US-020"]
+        frs_covered: ["FR-016", "FR-017", "FR-018"]
+
+      - id: "J"
+        name: "Dashboard + UI avancée"
+        agent_type: "feature-dev:code-architect"
+        model: "sonnet"
+        isolation: "worktree"
+        status: "not_started"
+        points: 21
+        stories: ["US-025", "US-026", "US-027", "US-028"]
+        frs_covered: ["FR-023", "FR-024", "FR-025"]
+
+  - number: 4
+    name: "Release v0.1.0"
+    description: "Email + Archive + CI + code-signing + landing + docs."
+    total_points: 21
+    target_duration_days: "4"
+    status: "not_started"
+    parallel_agents_max: 2
+    dependencies_upstream: ["W0", "W1", "W2", "W3"]
+    tracks:
+      - id: "K"
+        name: "Email + Archive"
+        agent_type: "general-purpose"
+        model: "sonnet"
+        isolation: "worktree"
+        status: "not_started"
+        points: 8
+        stories: ["US-021", "US-022", "US-023", "US-024"]
+        frs_covered: ["FR-019", "FR-020", "FR-021", "FR-022"]
+
+      - id: "L"
+        name: "CI + Release + Code-signing + Docs"
+        agent_type: "general-purpose"
+        model: "sonnet"
+        isolation: "worktree"
+        status: "not_started"
+        points: 13
+        stories: []
+        nfrs_covered: ["NFR-003", "NFR-010", "NFR-011"]
+        blocked_by_external:
+          - "Windows OV Code Signing cert order (3-7j délai) — Tom commande J+1"
+          - "Apple Developer Program signup (99 USD/an) — Tom fait J+1"
+
+# Velocity tracking (à remplir au fur et à mesure)
+velocity:
+  wave_0: null
+  wave_1: null
+  wave_2: null
+  wave_3: null
+  wave_4: null
+  rolling_average: null
+
+# Team setup for agent team execution
+team:
+  type: "claude_agent_team"
+  lead_human: "Tom Andrieu (Seeyko)"
+  parallel_agents_max: 5
+  token_budget_estimate_eur: 50
+  mode: "parallel_worktrees"
+  merge_strategy: "human_lead_merges_at_wave_end"
+
+# Blockers actifs
+blockers: []
+
+# Critical path identifié
+critical_path:
+  - wave: 1
+    track: "D"
+    reason: "PAdES POC cross-OS, bloque BETA si échec. Budget 7j. Démarrer J+3 obligatoirement."
+
+# External blockers à anticiper (Tom agit J+1)
+external_blockers:
+  - item: "Windows OV Code Signing cert"
+    vendor: "Sectigo / DigiCert / GoGetSSL"
+    cost_eur_per_year: 200
+    lead_time_days: "3-7"
+    action_required_by: "2026-04-22"
+    status: "to_order"
+    blocks: ["Track L release signée v0.1.0"]
+
+  - item: "Apple Developer Program"
+    vendor: "Apple"
+    cost_usd_per_year: 99
+    lead_time_days: "1 (immédiat après paiement)"
+    action_required_by: "2026-04-22"
+    status: "to_order"
+    blocks: ["Track L notarization macOS"]
+
+# Notes libres
+notes: |
+  Sprint plan optimisé pour agent team parallèle plutôt que développeur solo séquentiel.
+  Philosophie : livrer ALPHA (remplace skills) à J+10, pas attendre v0.1.0 à J+21 pour avoir de la valeur.
+  Track D (Crypto PAdES) est le chemin critique technique — démarrer en Wave 1 même si consommé en Wave 3.
+  Tracks W0 séquentiel 1 agent, puis explosion parallèle à 5 agents en W1.
