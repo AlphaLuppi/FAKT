@@ -1,0 +1,32 @@
+{
+  "client": {
+    "name": "Atelier Dupont Design",
+    "email": "contact@atelierdupont.fr",
+    "address": "12 rue des Artisans, 75011 Paris",
+    "phone": "+33 6 12 34 56 78",
+    "siret": "82312345600016"
+  },
+  "items": [
+    {
+      "description": "Conception et intégration landing page",
+      "quantity": 3,
+      "unitPrice": 800,
+      "unit": "day"
+    },
+    {
+      "description": "Configuration hébergement VPS + déploiement CI/CD",
+      "quantity": 1,
+      "unitPrice": 600,
+      "unit": "forfait"
+    },
+    {
+      "description": "Formation utilisation CMS (2h)",
+      "quantity": 2,
+      "unitPrice": 150,
+      "unit": "hour"
+    }
+  ],
+  "validUntil": "2026-05-21",
+  "notes": "Délai de livraison estimé : 2 semaines après validation du devis. Hébergement non inclus (client possède déjà un VPS OVH).",
+  "depositPercent": 30
+}
