@@ -1,0 +1,66 @@
+# BMAD Method Workflow Status
+# Generated: 2026-04-21T15:28:00Z
+# Project: FAKT
+
+project_name: "FAKT"
+project_type: "other"
+project_level: 3
+communication_language: "French"
+output_language: "French"
+last_updated: "2026-04-21T15:45:00Z"
+
+# Workflow Status Tracking
+# Status values:
+#   - "required"     — Must be completed
+#   - "optional"     — Can be skipped
+#   - "recommended"  — Strongly suggested
+#   - "conditional"  — Required based on project level
+#   - "{file-path}"  — Completed (path to output file)
+#   - "skipped"      — Explicitly skipped
+
+workflow_status:
+  # Phase 1: Analysis
+  - name: product-brief
+    phase: 1
+    status: "docs/product-brief.md"
+    description: "Create comprehensive product brief (BA-authored, validated with user) — COMPLETED 2026-04-21"
+
+  - name: brainstorm-project
+    phase: 1
+    status: "skipped"
+    description: "Structured brainstorming session — already done during design chat (.design-ref/chats/chat1.md)"
+
+  - name: research
+    phase: 1
+    status: "optional"
+    description: "Market and competitive research — optional since Yousign, Tiime, Indy already known by user"
+
+  # Phase 2: Planning
+  - name: prd
+    phase: 2
+    status: "required"  # Level 3 requires PRD
+    description: "Product Requirements Document — user stories + acceptance criteria"
+
+  - name: tech-spec
+    phase: 2
+    status: "optional"
+    description: "Technical Specification — optional at L3 (covered by architecture)"
+
+  - name: create-ux-design
+    phase: 2
+    status: ".design-ref/gestion-de-facture-et-devis/project/"
+    description: "UX/UI design — COMPLETED via Anthropic Claude Design bundle (Brutal Invoice system)"
+
+  # Phase 3: Solutioning
+  - name: architecture
+    phase: 3
+    status: "required"  # Level 3 requires architecture
+    description: "System architecture — monorepo, Tauri desktop, Rust crypto, triple-mode deploy"
+
+  - name: solutioning-gate-check
+    phase: 3
+    status: "recommended"
+    description: "Validate architecture against requirements before implementation"
+
+  # Phase 4: Implementation
+  # Note: Implementation tracked in sprint-status.yaml (created at sprint planning)

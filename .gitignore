@@ -1,0 +1,68 @@
+# Node / Bun
+node_modules/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Env
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Rust / Tauri
+target/
+**/*.rs.bk
+apps/desktop/src-tauri/target/
+apps/desktop/src-tauri/gen/
+
+# Build outputs
+dist/
+build/
+out/
+.next/
+.vite/
+.turbo/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Tests
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+.playwright/
+
+# Secrets and certs
+*.pem
+*.key
+*.cer
+*.pfx
+*.p12
+!keys/public.pem
+
+# Design reference bundle (local only, not in repo)
+.design-ref/
+
+# Claude Code local config (user-specific)
+.claude/
+
+# BMAD local artifacts (keep dir, ignore private outputs)
+_bmad-output/local/
+_research/private/
+
+# Misc
+*.tsbuildinfo
+.eslintcache

@@ -1,0 +1,40 @@
+# BMAD Method v6 — Project Configuration
+# Project: FAKT (AlphaLuppi open-source desktop app for quotes & invoices)
+# Initialized: 2026-04-21
+
+project_name: "FAKT"
+project_type: "other"  # Tauri 2 desktop app (Rust + React webview), pattern MnM
+project_level: 3  # Complex integration (12-40 stories) — multi-mode deploy, signature crypto, AI subprocess, cross-platform installers, open-source release
+
+# Output folder (relative to project root)
+output_folder: "docs"
+
+# Module-specific settings
+bmm:
+  workflow_status_file: "docs/bmm-workflow-status.yaml"
+  sprint_status_file: "docs/sprint-status.yaml"
+
+# Path configuration
+paths:
+  docs: "docs"
+  stories: "docs/stories"
+  tests: "tests"
+  bmad_output: "_bmad-output"
+  research: "_research"
+
+# FAKT-specific metadata
+project:
+  codename: "FAKT"
+  tagline: "Devis, factures, signés."
+  org: "AlphaLuppi"
+  repo: "AlphaLuppi/FAKT"
+  license: "BSL-1.1"
+  license_change_date: "2030-04-21"
+  license_change_license: "Apache-2.0"
+  primary_language: "French"
+  design_system: "Brutal Invoice (brutalist — black/paper/yellow, Space Grotesk UPPERCASE)"
+  reference_project: "C:/Users/andri/IdeaProjects/AlphaLuppi/mnm (pattern MnM — triple deploy mode)"
+
+# Communication
+communication_language: "French"
+document_output_language: "French"
