@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "noEmit": true,
+    "paths": {
+      "@fakt/shared": ["../shared/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*", "../shared/src/**/*"]
+}

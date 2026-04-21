@@ -1,0 +1,43 @@
+{
+  "name": "@fakt/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "typecheck": "tsc --noEmit",
+    "test": "echo 'no tests'",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.1",
+    "@tauri-apps/plugin-shell": "^2.0",
+    "@tanstack/react-query": "^5.59",
+    "react": "^19.0",
+    "react-dom": "^19.0",
+    "react-router": "^7.0",
+    "zustand": "^5.0",
+    "react-hook-form": "^7.53",
+    "zod": "^3.23",
+    "@hookform/resolvers": "^3.9",
+    "lucide-react": "^0.460",
+    "@fakt/shared": "workspace:*",
+    "@fakt/design-tokens": "workspace:*",
+    "@fakt/core": "workspace:*",
+    "@fakt/legal": "workspace:*",
+    "@fakt/config": "workspace:*"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3",
+    "@types/react": "^19.0",
+    "@types/react-dom": "^19.0",
+    "typescript": "^5.6",
+    "vite": "^6.0",
+    "@tauri-apps/cli": "^2.1",
+    "tailwindcss": "^4.0",
+    "@tailwindcss/vite": "^4.0"
+  }
+}

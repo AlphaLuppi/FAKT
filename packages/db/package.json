@@ -1,0 +1,26 @@
+{
+  "name": "@fakt/db",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "echo 'no tests'",
+    "db:generate": "drizzle-kit generate",
+    "db:seed": "bun run src/seed/seed.ts"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.36",
+    "better-sqlite3": "^11.5"
+  },
+  "devDependencies": {
+    "typescript": "^5.6",
+    "drizzle-kit": "^0.28",
+    "@types/better-sqlite3": "^7.6",
+    "@fakt/shared": "workspace:*"
+  }
+}

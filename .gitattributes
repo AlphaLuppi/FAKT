@@ -1,0 +1,32 @@
+# Normalise les fins de ligne en LF dans le repo
+* text=auto eol=lf
+
+# Binaires — pas de normalisation
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.svg text eol=lf
+
+# Archives et installeurs
+*.zip binary
+*.tar.gz binary
+*.msi binary
+*.dmg binary
+*.AppImage binary
+
+# Rust
+*.rs text eol=lf
+*.toml text eol=lf
+Cargo.lock text eol=lf
+
+# Bun
+bun.lockb binary
+
+# Typst templates
+*.typ text eol=lf
+
+# PDF — traiter en binaire
+*.pdf binary

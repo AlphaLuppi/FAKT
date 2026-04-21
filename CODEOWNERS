@@ -1,0 +1,11 @@
+# Mainteneur principal — approuve tout par défaut
+* @Seeyko
+
+# Packages critiques (sécurité + conformité légale)
+/packages/db/ @Seeyko
+/packages/legal/ @Seeyko
+/apps/desktop/src-tauri/src/crypto/ @Seeyko
+
+# Licence et contribution
+/LICENSE @Seeyko
+/CONTRIBUTING.md @Seeyko
