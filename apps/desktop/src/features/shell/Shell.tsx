@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { id: "invoices", label: fr.nav.invoices, path: "/invoices" },
   { id: "clients", label: fr.nav.clients, path: "/clients" },
   { id: "services", label: fr.nav.services, path: "/services" },
+  { id: "archive", label: fr.nav.archive, path: "/archive" },
 ] as const;
 
 interface ShellProps {

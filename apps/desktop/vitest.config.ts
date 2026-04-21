@@ -18,6 +18,8 @@ export default defineConfig({
         "src/features/doc-editor/**",
         "src/components/signature-modal/**",
         "src/components/audit-timeline/**",
+        "src/components/prepare-email-modal/**",
+        "src/routes/archive/**",
       ],
       exclude: [
         "src/routes/quotes/index.tsx",
@@ -71,6 +73,10 @@ export default defineConfig({
       ).pathname,
       "@fakt/pdf": new URL(
         "../../packages/pdf/src/index.ts",
+        import.meta.url,
+      ).pathname,
+      "@fakt/email": new URL(
+        "../../packages/email/src/index.ts",
         import.meta.url,
       ).pathname,
     },

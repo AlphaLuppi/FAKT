@@ -21,6 +21,7 @@ import {
   AuditTimeline,
   type BaseAuditEntry,
 } from "../../components/audit-timeline/index.js";
+import { PrepareEmailModal } from "../../components/prepare-email-modal/index.js";
 
 function slugify(str: string): string {
   return str
@@ -69,6 +70,7 @@ export function QuoteDetailRoute(): ReactElement {
   const [markSentError, setMarkSentError] = useState<string | null>(null);
   const [signOpen, setSignOpen] = useState(false);
   const [pdfBytes, setPdfBytes] = useState<Uint8Array | null>(null);
+  const [emailOpen, setEmailOpen] = useState(false);
 
   useEffect(() => {
     if (!quote) return;
@@ -504,11 +506,11 @@ export function QuoteDetailRoute(): ReactElement {
             ) : (
               <Button
                 variant="secondary"
-                disabled
-                data-testid="detail-send-stub"
-                title="Track K"
+                onClick={() => setEmailOpen(true)}
+                disabled={!quote.number}
+                data-testid="detail-prepare-email"
               >
-                {fr.quotes.actions.send}
+                {fr.email.actions.openInMail}
               </Button>
             )}
             {(quote.status === "draft" || quote.status === "sent") && (
@@ -617,6 +619,20 @@ export function QuoteDetailRoute(): ReactElement {
           refresh();
         }}
       />
+
+      {client && workspace && (
+        <PrepareEmailModal
+          open={emailOpen}
+          onClose={() => setEmailOpen(false)}
+          docType="quote"
+          doc={quote}
+          clientName={client.name}
+          clientEmail={client.email}
+          workspaceName={workspace.name}
+          workspaceEmail={workspace.email}
+          renderArgs={{ quote: toQuoteInput(quote), client, workspace }}
+        />
+      )}
     </div>
   );
 }

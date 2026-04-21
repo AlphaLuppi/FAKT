@@ -13,7 +13,8 @@
       "@fakt/config": ["../../packages/config/src/index.ts"],
       "@fakt/ui": ["../../packages/ui/src/index.ts"],
       "@fakt/ai": ["../../packages/ai/src/index.ts"],
-      "@fakt/pdf": ["../../packages/pdf/src/index.ts"]
+      "@fakt/pdf": ["../../packages/pdf/src/index.ts"],
+      "@fakt/email": ["../../packages/email/src/index.ts"]
     },
     "types": ["vitest/globals", "@testing-library/jest-dom"]
   },
@@ -26,7 +27,8 @@
     "../../packages/config/src/**/*",
     "../../packages/ui/src/**/*",
     "../../packages/ai/src/**/*",
-    "../../packages/pdf/src/**/*"
+    "../../packages/pdf/src/**/*",
+    "../../packages/email/src/**/*"
   ],
   "exclude": ["src-tauri", "node_modules", "dist"]
 }

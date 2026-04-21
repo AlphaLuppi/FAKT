@@ -25,6 +25,7 @@ import {
   AuditTimeline,
   type BaseAuditEntry,
 } from "../../components/audit-timeline/index.js";
+import { PrepareEmailModal } from "../../components/prepare-email-modal/index.js";
 
 function slugify(str: string): string {
   return str
@@ -80,6 +81,7 @@ export function InvoiceDetailRoute(): ReactElement {
   const [markPaidError, setMarkPaidError] = useState<string | null>(null);
   const [signOpen, setSignOpen] = useState(false);
   const [pdfBytes, setPdfBytes] = useState<Uint8Array | null>(null);
+  const [emailOpen, setEmailOpen] = useState(false);
 
   useEffect(() => {
     if (!invoice) return;
@@ -503,14 +505,14 @@ export function InvoiceDetailRoute(): ReactElement {
                 {fr.invoices.actions.markPaid}
               </Button>
             )}
-            {!isDraft && !isSent && !isOverdue && (
+            {!isDraft && (
               <Button
                 variant="secondary"
-                disabled
-                data-testid="invoice-detail-send-stub"
-                title="Track K"
+                onClick={() => setEmailOpen(true)}
+                disabled={!invoice.number}
+                data-testid="invoice-detail-prepare-email"
               >
-                {fr.invoices.actions.send}
+                {fr.email.actions.openInMail}
               </Button>
             )}
             {(isDraft || isSent) && (
@@ -678,6 +680,20 @@ export function InvoiceDetailRoute(): ReactElement {
           refresh();
         }}
       />
+
+      {client && workspace && (
+        <PrepareEmailModal
+          open={emailOpen}
+          onClose={() => setEmailOpen(false)}
+          docType="invoice"
+          doc={invoice}
+          clientName={client.name}
+          clientEmail={client.email}
+          workspaceName={workspace.name}
+          workspaceEmail={workspace.email}
+          renderArgs={{ invoice: toInvoiceInput(invoice), client, workspace }}
+        />
+      )}
     </div>
   );
 }

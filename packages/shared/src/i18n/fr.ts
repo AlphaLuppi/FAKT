@@ -17,6 +17,7 @@ export const fr = {
     services: "Prestations",
     settings: "Paramètres",
     newWithAi: "Nouveau avec l'IA",
+    archive: "Archive",
   },
 
   dashboard: {
@@ -821,6 +822,88 @@ export const fr = {
     dateLocale: "fr-FR",
     currencyLocale: "fr-FR",
     currency: "EUR",
+  },
+
+  email: {
+    modal: {
+      title: "Préparer email",
+    },
+    fields: {
+      template: "Choisir un modèle",
+      to: "Destinataire",
+      subject: "Objet",
+      body: "Corps du message",
+      attachment: "Pièce jointe",
+      useMailto: "Utiliser mailto: au lieu de .eml (sans pièce jointe)",
+    },
+    templates: {
+      quote_sent: "Envoi de devis",
+      invoice_sent: "Envoi de facture",
+      reminder: "Relance retard",
+      thanks: "Remerciement paiement",
+    },
+    actions: {
+      openInMail: "Ouvrir dans l'application mail",
+      cancel: "Annuler",
+      generating: "Génération du brouillon…",
+    },
+    warnings: {
+      noClientEmail: "Ce client n'a pas d'email renseigné. Éditez le client avant d'envoyer.",
+      noAttachmentMailto: "Mode mailto : la pièce jointe PDF n'est pas supportée — attachez le PDF manuellement.",
+    },
+    errors: {
+      toRequired: "L'adresse email du destinataire est obligatoire.",
+      subjectRequired: "L'objet du message est obligatoire.",
+      bodyRequired: "Le corps du message est obligatoire.",
+      pdfFailed: "Impossible de générer le PDF pour la pièce jointe.",
+      draftFailed: "Impossible d'écrire le brouillon .eml dans le dossier temporaire.",
+      openFailed: "Impossible d'ouvrir le client mail. Vérifiez qu'une application mail est installée.",
+    },
+    success: {
+      draftOpened: "Brouillon ouvert dans votre application mail.",
+      mailtoOpened: "Client mail ouvert (mode mailto — sans pièce jointe).",
+      fallbackUsed: "Brouillon ouvert en mode mailto (pièce jointe non supportée par votre OS).",
+    },
+    activity: {
+      drafted: "Brouillon email préparé",
+    },
+  },
+
+  archive: {
+    title: "Archive — Compliance 10 ans",
+    subtitle: "Export et consultation des documents émis — archivage légal obligatoire",
+    legalBadge: "Article 289 CGI",
+    recentTitle: "Documents archivés",
+    loading: "Chargement des documents…",
+    empty: "Aucun document émis pour le moment.",
+    stats: {
+      quotesIssued: "Devis émis",
+      invoicesIssued: "Factures émises",
+      estimatedSize: "Taille estimée",
+    },
+    actions: {
+      export: "Exporter workspace (ZIP)",
+      exporting: "Export en cours…",
+      cancel: "Annuler",
+      confirm: "Exporter",
+    },
+    confirmModal: {
+      title: "Exporter le workspace ?",
+      body: (quotes: number, invoices: number) =>
+        `L'export va générer un fichier ZIP contenant : clients.csv, prestations.csv, ${quotes} devis en PDF, ${invoices} factures en PDF, et un fichier README de conformité légale. Continuer ?`,
+    },
+    exportSuccess: "Export ZIP créé :",
+    table: {
+      type: "Type",
+      number: "Numéro",
+      issuedAt: "Émis le",
+    },
+  },
+
+  compliance: {
+    archiving10y: "Archivage légal 10 ans (L123-22 Code Commerce + Art. 286 CGI)",
+    noHardDelete: "La suppression de factures émises est interdite par la loi française.",
+    padesLevel: "Signature eIDAS niveau avancé (AdES-B-T) — non qualifiée",
   },
 } as const;
 

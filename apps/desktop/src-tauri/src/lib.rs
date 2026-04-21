@@ -40,6 +40,9 @@ pub fn run() {
             commands::store_signed_pdf,
             commands::get_signed_pdf,
             commands::verify_signature,
+            commands::open_email_draft,
+            commands::open_mailto_fallback,
+            commands::build_workspace_zip,
         ])
         .run(tauri::generate_context!())
         .expect("erreur lors du lancement de l'application FAKT");

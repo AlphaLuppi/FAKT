@@ -25,7 +25,8 @@
       "@fakt/db": ["./packages/db/src/index.ts"],
       "@fakt/config": ["./packages/config/src/index.ts"],
       "@fakt/ui": ["./packages/ui/src/index.ts"],
-      "@fakt/pdf": ["./packages/pdf/src/index.ts"]
+      "@fakt/pdf": ["./packages/pdf/src/index.ts"],
+      "@fakt/email": ["./packages/email/src/index.ts"]
     }
   }
 }

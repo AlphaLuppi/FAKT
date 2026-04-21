@@ -9,6 +9,7 @@ import { SettingsRoute } from "./routes/settings/Settings.js";
 import { QuotesRouter } from "./routes/quotes/index.js";
 import { InvoicesRouter } from "./routes/invoices/index.js";
 import { SignaturesRouter } from "./routes/signatures/index.js";
+import { ArchiveRoute } from "./routes/archive/index.js";
 import { useOnboardingGuard } from "./routes/onboarding/guard.js";
 
 export function App(): ReactElement {
@@ -43,6 +44,7 @@ export function App(): ReactElement {
         <Route path="/clients/*" element={<ClientsRoute />} />
         <Route path="/services/*" element={<ServicesRoute />} />
         <Route path="/signatures/*" element={<SignaturesRouter />} />
+        <Route path="/archive" element={<ArchiveRoute />} />
         <Route path="/settings" element={<SettingsRoute />} />
         <Route path="*" element={<Placeholder title="404 — Page introuvable" />} />
       </Routes>
