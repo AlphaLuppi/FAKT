@@ -1,0 +1,92 @@
+---
+title: "Signature électronique PAdES"
+description: "Comment signer un devis ou une facture avec FAKT, et vérifier la signature dans Adobe Reader."
+---
+
+## Niveau de signature
+
+FAKT implémente la signature électronique **niveau eIDAS avancé (AdES-B-T)**.
+
+| Niveau | FAKT | Yousign Basic | Qualifiée |
+|--------|------|---------------|-----------|
+| Intégrité document | ✓ | ✓ | ✓ |
+| Identité signataire | ✓ | ✓ | ✓ |
+| Horodatage RFC 3161 | ✓ | ✓ | ✓ |
+| Accréditation ANSSI | ✗ | ✗ | ✓ |
+| Recevabilité légale eIDAS | ✓ | ✓ | ✓+ |
+
+<Info>
+  La signature **qualifiée** (niveaux QES) nécessite une accréditation ANSSI impossible
+  à obtenir sans certification physique. Elle est hors scope FAKT.
+
+  La signature **avancée** (AdES-B-T) de FAKT est **recevable en droit français**
+  (règlement eIDAS 910/2014 art. 25) pour tout document commercial.
+  Ne jamais prétendre à une signature « qualifiée » dans vos échanges.
+</Info>
+
+## Comment signer un document
+
+1. Ouvrez le devis ou la facture à signer.
+2. Dans la section **Actions** (panneau droit de la vue détail), cliquez sur **Signer le document**.
+3. FAKT affiche un dialogue de confirmation avec :
+   - Le nom du signataire (votre nom légal depuis le workspace).
+   - Le hash SHA-256 du document.
+   - Le service TSA qui sera utilisé (FreeTSA par défaut).
+4. Cliquez sur **Confirmer la signature**.
+5. FAKT exécute en arrière-plan :
+   - Récupération de votre clé RSA 4096 depuis le keychain OS.
+   - Signature du hash SHA-256 du PDF.
+   - Appel au service TSA (FreeTSA.org) pour l'horodatage RFC 3161.
+   - Intégration de la signature + TSR dans le PDF via structure CMS (lopdf crate Rust).
+   - Enregistrement d'un événement dans l'audit trail append-only SQLite.
+6. Le document passe au statut `signé`. Le PDF signé est sauvegardé dans `~/.fakt/documents/signed/`.
+
+## Vérifier la signature dans Adobe Reader
+
+1. Ouvrez le PDF signé dans **Adobe Acrobat Reader** (pas Adobe Acrobat Standard/Pro).
+2. Un bandeau bleu en haut de la page indique :
+   **« Signé et toutes les signatures sont valides »**
+3. Cliquez sur **Panneau de signature** pour voir les détails :
+   - Signataire : votre nom légal.
+   - Date de signature : horodatage RFC 3161.
+   - Autorité d'horodatage : FreeTSA.org.
+   - Hash SHA-256 : empreinte du document.
+4. La mention **« Le document n'a pas été modifié depuis la signature »** confirme l'intégrité.
+
+<Warning>
+  Le certificat X.509 de FAKT est **auto-signé** (non émis par une autorité de certification
+  reconnue). Adobe Reader peut afficher une mention « Identité du signataire inconnue ».
+
+  C'est attendu et n'invalide pas la signature. L'intégrité du document reste prouvable
+  via le hash et l'audit trail FAKT.
+
+  Pour une chaîne de confiance complète, l'utilisateur peut importer son propre
+  certificat issu d'une CA reconnue (fonctionnalité v0.2).
+</Warning>
+
+## Audit trail
+
+Chaque événement de signature est enregistré dans l'audit trail FAKT :
+
+| Champ | Valeur |
+|-------|--------|
+| `doc_id` | Identifiant unique du document |
+| `doc_hash` | SHA-256 du PDF avant signature |
+| `signer_name` | Nom légal du signataire |
+| `timestamp` | Horodatage RFC 3161 |
+| `prev_hash` | Hash de l'événement précédent (chaîne) |
+| `signature_b64` | Signature RSA 4096 base64 |
+
+La table `audit_events` est **append-only** (trigger SQL BEFORE DELETE + BEFORE UPDATE).
+Aucune modification ni suppression n'est possible après insertion.
+
+## Service TSA configurable
+
+Par défaut, FAKT utilise [FreeTSA.org](https://freetsa.org) (gratuit, fiable).
+Pour changer le service TSA :
+
+1. Allez dans **Paramètres** → **Signature**.
+2. Modifiez l'URL TSA (format `http(s)://...`).
+3. FAKT valide la connectivité avant de sauvegarder.
+
+TSA alternatives recommandées : DigiCert, Sectigo, GlobalSign.

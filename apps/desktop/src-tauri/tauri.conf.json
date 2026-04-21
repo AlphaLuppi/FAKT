@@ -27,13 +27,25 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": ["app", "dmg", "msi", "appimage", "deb"],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "copyright": "Copyright © 2026 AlphaLuppi",
+    "publisher": "AlphaLuppi",
+    "category": "Business",
+    "shortDescription": "Devis et factures signés en local pour freelances français.",
+    "longDescription": "FAKT est l'outil open-source pour gérer devis et factures de freelance français avec signature PAdES avancée (eIDAS AdES-B-T), 100% hors-ligne, sans dépendance cloud. Rendu PDF Typst, numérotation séquentielle CGI art. 289, archivage compliance 10 ans.",
+    "macOS": {
+      "providerShortName": ""
+    },
+    "windows": {
+      "digestAlgorithm": "sha256",
+      "certificateThumbprint": null
+    }
   }
 }

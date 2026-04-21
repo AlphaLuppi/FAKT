@@ -1,0 +1,139 @@
+---
+const GITHUB_RELEASES = "https://github.com/AlphaLuppi/FAKT/releases/latest";
+const GITHUB_RELEASES_WIN = `${GITHUB_RELEASES}#msi`;
+const GITHUB_RELEASES_MAC = `${GITHUB_RELEASES}#dmg`;
+const GITHUB_RELEASES_LINUX = `${GITHUB_RELEASES}#appimage`;
+---
+
+<section
+  style="
+    background: #000;
+    color: #F5F5F0;
+    padding: 6rem 2rem;
+    border-top: 2.5px solid #000;
+  "
+>
+  <div style="max-width: 900px; margin: 0 auto; text-align: center;">
+    <h2
+      style="
+        font-family: 'Space Grotesk', sans-serif;
+        font-weight: 800;
+        font-size: clamp(1.5rem, 4vw, 2.5rem);
+        text-transform: uppercase;
+        letter-spacing: -0.02em;
+        color: #FFFF00;
+        margin: 0 0 1rem 0;
+      "
+    >
+      Téléchargez la v0.1.0 et facturez aujourd'hui.
+    </h2>
+
+    <p
+      style="
+        font-size: 1rem;
+        font-weight: 500;
+        margin: 0 0 3rem 0;
+        color: #F5F5F0;
+        opacity: 0.85;
+      "
+    >
+      Installez FAKT en une minute. SQLite local, zéro compte, zéro abonnement.
+    </p>
+
+    <!-- OS download buttons -->
+    <div
+      style="
+        display: flex;
+        gap: 1.5rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-bottom: 2rem;
+      "
+    >
+      <a
+        href={GITHUB_RELEASES_WIN}
+        style="
+          display: inline-block;
+          background: #F5F5F0;
+          color: #000;
+          border: 2px solid #F5F5F0;
+          box-shadow: 5px 5px 0 #333;
+          padding: 1rem 2rem;
+          font-family: 'Space Grotesk', sans-serif;
+          font-weight: 700;
+          font-size: 0.9rem;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          text-decoration: none;
+          min-width: 200px;
+          text-align: center;
+        "
+        onmouseover="this.style.background='#FFFF00'; this.style.borderColor='#FFFF00';"
+        onmouseout="this.style.background='#F5F5F0'; this.style.borderColor='#F5F5F0';"
+      >
+        Windows .msi
+      </a>
+
+      <a
+        href={GITHUB_RELEASES_MAC}
+        style="
+          display: inline-block;
+          background: #F5F5F0;
+          color: #000;
+          border: 2px solid #F5F5F0;
+          box-shadow: 5px 5px 0 #333;
+          padding: 1rem 2rem;
+          font-family: 'Space Grotesk', sans-serif;
+          font-weight: 700;
+          font-size: 0.9rem;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          text-decoration: none;
+          min-width: 200px;
+          text-align: center;
+        "
+        onmouseover="this.style.background='#FFFF00'; this.style.borderColor='#FFFF00';"
+        onmouseout="this.style.background='#F5F5F0'; this.style.borderColor='#F5F5F0';"
+      >
+        macOS .dmg
+      </a>
+
+      <a
+        href={GITHUB_RELEASES_LINUX}
+        style="
+          display: inline-block;
+          background: #F5F5F0;
+          color: #000;
+          border: 2px solid #F5F5F0;
+          box-shadow: 5px 5px 0 #333;
+          padding: 1rem 2rem;
+          font-family: 'Space Grotesk', sans-serif;
+          font-weight: 700;
+          font-size: 0.9rem;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          text-decoration: none;
+          min-width: 200px;
+          text-align: center;
+        "
+        onmouseover="this.style.background='#FFFF00'; this.style.borderColor='#FFFF00';"
+        onmouseout="this.style.background='#F5F5F0'; this.style.borderColor='#F5F5F0';"
+      >
+        Linux .AppImage
+      </a>
+    </div>
+
+    <!-- Note Windows unsigned -->
+    <p
+      style="
+        font-size: 0.8rem;
+        font-family: 'JetBrains Mono', monospace;
+        opacity: 0.6;
+        margin: 0;
+      "
+    >
+      Version Windows non-signée en v0.1.0 — signature Authenticode en v0.1.1.
+      Clic droit → Exécuter quand même.
+    </p>
+  </div>
+</section>

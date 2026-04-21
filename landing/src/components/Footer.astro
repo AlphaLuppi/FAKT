@@ -1,0 +1,79 @@
+---
+const links = [
+  { label: "GitHub", href: "https://github.com/AlphaLuppi/FAKT" },
+  { label: "Documentation", href: "https://fakt.alphaluppi.com/docs" },
+  { label: "Licence BSL 1.1", href: "https://github.com/AlphaLuppi/FAKT/blob/main/LICENSE" },
+  { label: "Product Hunt", href: "https://www.producthunt.com/posts/fakt" },
+  { label: "Twitter", href: "https://twitter.com/seeyko_" },
+];
+---
+
+<footer
+  style="
+    background: #F5F5F0;
+    border-top: 2.5px solid #000;
+    padding: 3rem 2rem;
+  "
+>
+  <div
+    style="
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+    "
+  >
+    <!-- Logo/Brand -->
+    <div
+      style="
+        font-family: 'Space Grotesk', sans-serif;
+        font-weight: 800;
+        font-size: 2rem;
+        text-transform: uppercase;
+        letter-spacing: -0.03em;
+      "
+    >
+      FAKT
+    </div>
+
+    <!-- Links -->
+    <nav style="display: flex; gap: 2rem; flex-wrap: wrap; justify-content: center;">
+      {links.map((link) => (
+        <a
+          href={link.href}
+          style="
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            text-decoration: none;
+            color: #000;
+            border-bottom: 2px solid transparent;
+          "
+          onmouseover="this.style.borderBottomColor='#000';"
+          onmouseout="this.style.borderBottomColor='transparent';"
+        >
+          {link.label}
+        </a>
+      ))}
+    </nav>
+
+    <!-- Copyright -->
+    <div
+      style="
+        font-size: 0.8rem;
+        font-family: 'JetBrains Mono', monospace;
+        text-align: center;
+        opacity: 0.7;
+      "
+    >
+      <div>© 2026 AlphaLuppi — Fait à Avignon avec passion par Tom Andrieu.</div>
+      <div style="margin-top: 0.25rem;">
+        BSL 1.1 → Apache 2.0 (Change Date 2030-04-21)
+      </div>
+    </div>
+  </div>
+</footer>

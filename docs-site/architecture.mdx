@@ -1,0 +1,125 @@
+---
+title: "Architecture"
+description: "Vue d'ensemble technique de FAKT pour les développeurs et contributeurs."
+---
+
+## Stack technique
+
+| Couche | Technologie |
+|--------|-------------|
+| Desktop | Tauri 2 (Rust backend + WebView OS) |
+| Monorepo | Bun workspaces + Turborepo |
+| Frontend | React 19 + Vite + Tailwind v4 |
+| DB locale | SQLite + Drizzle ORM |
+| DB entreprise | PostgreSQL + Drizzle (v0.2, mêmes schémas via adapters) |
+| Rendu PDF | Typst CLI (subprocess) |
+| Signature | Rust : lopdf + rsa + x509-parser + cms + reqwest (TSA) |
+| IA | Claude Code CLI subprocess |
+| UI | Design system Brutal Invoice |
+| CI/CD | GitHub Actions + tauri-apps/tauri-action@v2 |
+
+## Structure du monorepo
+
+```
+fakt/
+├── apps/
+│   └── desktop/           # Application Tauri 2
+│       ├── src/           # Frontend React 19
+│       └── src-tauri/     # Backend Rust
+├── packages/
+│   ├── ui/                # Primitives Brutal Invoice (Button, Card, Modal…)
+│   ├── db/                # Schema Drizzle + migrations + repositories
+│   ├── core/              # Modèles métier TS (Quote, Invoice, Client…)
+│   ├── pdf/               # Wrapper Typst → PDF bytes
+│   ├── crypto/            # Types + interfaces signature
+│   ├── ai/                # Subprocess Claude CLI + prompt templates
+│   ├── email/             # Générateur .eml RFC 5322 + templates FR
+│   ├── legal/             # Validateurs mentions légales FR
+│   ├── design-tokens/     # Tokens Brutal Invoice (Tailwind plugin)
+│   ├── config/            # Settings workspace
+│   └── shared/            # Types partagés + i18n FR
+├── landing/               # Landing Astro (fakt.alphaluppi.com)
+├── docs-site/             # Documentation Mintlify
+└── docs/                  # Specs internes (product-brief, prd, architecture)
+```
+
+## Communication IPC Tauri
+
+Le frontend React communique avec le backend Rust via trois mécanismes :
+
+| Mécanisme | Usage |
+|-----------|-------|
+| `invoke()` — commands | Opérations one-shot : signer un document, ouvrir email |
+| `Channel<T>` — channels | Streaming longue durée : output Claude CLI |
+| Events | Notifications système : backup terminé, migration DB |
+
+## Signature PAdES (Rust)
+
+Le flow complet de signature :
+
+1. `invoke("sign_document", { docId })` depuis React.
+2. Rust lit le PDF depuis `~/.fakt/documents/`.
+3. Rust récupère la clé RSA 4096 depuis le keychain OS via crate `keyring`.
+4. Rust signe le SHA-256 du PDF (crate `rsa` + PKCS#1 v1.5).
+5. Rust appelle FreeTSA via `reqwest` pour l'horodatage RFC 3161.
+6. Rust intègre signature + TSR dans le PDF via `lopdf` + structure CMS.
+7. Rust insert l'événement dans `audit_events` (append-only, chaîne de hash).
+8. React reçoit `SignatureResult` et met à jour le statut.
+
+## Base de données
+
+SQLite locale dans `~/.fakt/data/fakt.db`. Schéma Drizzle versionné dans `packages/db/src/schema.ts`.
+
+Tables principales :
+- `workspaces` — configuration du workspace
+- `clients` — clients avec SIRET, adresse, contact
+- `services` — bibliothèque de prestations
+- `quotes` — devis avec statuts et numérotation
+- `invoices` — factures avec soft-delete uniquement
+- `document_lines` — lignes (partagées quotes + invoices)
+- `signatures` — métadonnées signature PAdES
+- `audit_events` — audit trail append-only
+- `activity` — feed d'activité dashboard
+- `backups` — historique exports ZIP
+- `settings` — paramètres workspace
+
+Contrainte non-négociable : UNIQUE `(year, type, sequence, workspace_id)` sur
+`quotes` et `invoices` pour garantir la numérotation séquentielle sans trous.
+
+## CI/CD
+
+Trois workflows GitHub Actions :
+
+| Workflow | Déclencheur | Rôle |
+|----------|-------------|------|
+| `ci.yml` | PR + push main (hors tags) | lint + typecheck + test + build + cargo check |
+| `e2e.yml` | push main | Playwright smoke tests 3 OS |
+| `release.yml` | push tag `v*` | tauri-action@v2 → installers .msi/.dmg/.AppImage |
+
+## Démarrer en développement
+
+```bash
+# Prérequis : Bun >= 1.3, Rust >= 1.75, Tauri CLI v2
+
+git clone https://github.com/AlphaLuppi/FAKT.git
+cd FAKT
+bun install
+bun run dev          # Lance le frontend Vite + Tauri dev window
+```
+
+Pour les tests :
+```bash
+bun run typecheck    # TypeScript strict
+bun run lint         # Biome (zéro warning)
+bun run test         # Vitest (tous les packages)
+```
+
+## Roadmap architecture
+
+| Version | Changement |
+|---------|------------|
+| v0.2 | Backend Hono + PostgreSQL, sync desktop↔backend (Docker Compose) |
+| v0.3 | SaaS multi-tenant avec RLS PostgreSQL + Stripe |
+| v0.4 | Mobile Expo iOS + Android |
+
+Documentation complète (interne) : `docs/architecture.md` dans le repo.

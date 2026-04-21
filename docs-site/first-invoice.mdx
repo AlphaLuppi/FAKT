@@ -1,0 +1,84 @@
+---
+title: "Émettre votre première facture"
+description: "Convertir un devis signé en facture, ou créer une facture directement."
+---
+
+## Deux façons de créer une facture
+
+### Option A — Depuis un devis signé (recommandé)
+
+C'est la voie la plus rapide et la plus sûre : toutes les informations sont
+pré-remplies depuis le devis, numérotation incluse.
+
+1. Ouvrez le devis signé (statut `signé`).
+2. Cliquez sur **Créer la facture** dans la section Actions.
+3. FAKT crée automatiquement une facture `F2026-001` avec :
+   - Le même client que le devis.
+   - Les mêmes lignes de prestations.
+   - La date d'émission du jour.
+   - Les mentions légales obligatoires pré-remplies.
+4. Vérifiez la **date d'échéance** (défaut : 30 jours après émission).
+5. Cliquez sur **Enregistrer**.
+
+### Option B — Facture directe (sans devis)
+
+1. Dans le menu **Factures**, cliquez sur **Nouvelle facture**.
+2. Remplissez les champs obligatoires :
+   - Client (SIRET auto-injecté dans le PDF depuis la fiche client).
+   - Lignes de prestations.
+   - Date d'échéance.
+3. Vérifiez les mentions légales dans l'aperçu PDF.
+4. Enregistrez.
+
+## Mentions légales françaises (obligatoires)
+
+FAKT injecte automatiquement les mentions requises par CGI art. 289 :
+
+- Numéro SIRET et forme juridique de votre workspace.
+- Adresse complète.
+- Date d'émission et date d'échéance.
+- **Mention TVA :** « TVA non applicable, art. 293 B du CGI » (micro-entreprise).
+- Pénalités de retard (taux légal + 10 points minimum).
+- Indemnité forfaitaire de recouvrement : 40 €.
+
+<Warning>
+  Ces mentions sont pré-remplies depuis votre profil workspace.
+  Vérifiez que votre SIRET et adresse sont corrects dans les **Paramètres**
+  avant d'émettre votre première facture.
+</Warning>
+
+## Suivi du paiement
+
+Le cycle de vie d'une facture dans FAKT :
+
+```
+Brouillon → Envoyée → Payée
+                   ↘ En retard (si date dépassée)
+```
+
+1. **Marquer comme envoyée** : cliquez sur **Marquer comme envoyée** dans les Actions.
+2. **Enregistrer le paiement** : dès réception, cliquez sur **Marquer comme payée**.
+   FAKT enregistre la date de paiement effective.
+
+## Archivage légal
+
+<Info>
+  La **suppression d'une facture émise est interdite** dans FAKT (contrainte légale
+  Art. L123-22 Code de Commerce — archivage 10 ans).
+
+  Le bouton « Supprimer » est uniquement visible pour les factures en statut `brouillon`.
+
+  Pour les factures émises, seul l'archivage (soft delete via `archived_at`) est disponible.
+  La facture reste consultable en lecture.
+</Info>
+
+## Export ZIP pour compliance
+
+Pour exporter toutes vos factures en une fois :
+
+1. Accédez à la route **Archive** (menu de navigation).
+2. Cliquez sur **Exporter workspace (ZIP)**.
+3. Choisissez l'emplacement de sauvegarde.
+4. Le ZIP contient : `clients.csv`, `prestations.csv`, `invoices/` (tous les PDFs), `README.txt` compliance.
+
+Conservez ces exports 10 ans (article 286 CGI).

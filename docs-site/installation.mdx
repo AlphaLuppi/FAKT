@@ -1,0 +1,114 @@
+---
+title: "Installation"
+description: "Installer FAKT sur Windows, macOS ou Linux en moins de 2 minutes."
+---
+
+## Télécharger FAKT
+
+Rendez-vous sur la page [GitHub Releases](https://github.com/AlphaLuppi/FAKT/releases/latest)
+et téléchargez l'installeur correspondant à votre OS.
+
+<Tabs>
+  <Tab title="Windows">
+    **Fichier :** `FAKT_0.1.0_x64-setup.msi`
+
+    <Warning>
+      L'installeur Windows v0.1.0 **n'est pas signé** (certificat Authenticode absent).
+      Windows SmartScreen affichera « Unknown Publisher » à l'installation.
+
+      **Contournement :** clic droit sur le `.msi` → Exécuter quand même.
+
+      La signature Authenticode sera ajoutée en **v0.1.1**.
+    </Warning>
+
+    1. Double-cliquez sur le `.msi`.
+    2. Si SmartScreen bloque : « Plus d'infos » → « Exécuter quand même ».
+    3. Suivez l'assistant d'installation.
+    4. FAKT est accessible depuis le Menu Démarrer.
+
+    **Prérequis :** Windows 10 version 1803 ou supérieur (WebView2 requis — inclus dans Windows 11).
+  </Tab>
+
+  <Tab title="macOS">
+    **Fichier :** `FAKT_0.1.0_universal.dmg` (Intel + Apple Silicon)
+
+    <Note>
+      Si Gatekeeper bloque l'ouverture : clic droit sur l'app → **Ouvrir**.
+      Vous devrez confirmer une seule fois.
+
+      Si les secrets Apple Developer Program étaient actifs lors du build,
+      le `.dmg` est notarisé par Apple et s'ouvre sans avertissement.
+    </Note>
+
+    1. Ouvrez le fichier `.dmg`.
+    2. Glissez FAKT dans votre dossier Applications.
+    3. Double-cliquez sur FAKT pour lancer l'application.
+
+    **Prérequis :** macOS 12 Monterey ou supérieur.
+  </Tab>
+
+  <Tab title="Linux">
+    **Fichiers :**
+    - `FAKT_0.1.0_amd64.AppImage` — fonctionne sur toutes les distributions
+    - `FAKT_0.1.0_amd64.deb` — distributions basées sur Debian/Ubuntu
+
+    **AppImage :**
+    ```bash
+    chmod +x FAKT_0.1.0_amd64.AppImage
+    ./FAKT_0.1.0_amd64.AppImage
+    ```
+
+    **Paquet .deb :**
+    ```bash
+    sudo dpkg -i FAKT_0.1.0_amd64.deb
+    # Puis lancer via le menu applications ou :
+    fakt
+    ```
+
+    **Prérequis :** Ubuntu 22.04+ ou équivalent (WebKit2GTK 4.1 + libayatana-appindicator3).
+  </Tab>
+</Tabs>
+
+## Premier lancement
+
+Au premier lancement, FAKT affiche un **wizard d'onboarding** en 3 étapes :
+
+1. **Informations workspace** : votre nom légal (ou raison sociale), SIRET, adresse.
+2. **Régime fiscal** : micro-entreprise (seul régime supporté en v0.1.0).
+3. **Certificat de signature** : FAKT génère automatiquement un certificat X.509
+   auto-signé et le stocke dans votre keychain OS. Aucune action requise de votre part.
+
+Le wizard prend moins de 2 minutes. Après validation, vous arrivez sur le dashboard principal.
+
+## Vérifier l'installation
+
+Depuis le tableau de bord, vous pouvez :
+- Créer un premier client (menu Clients → Nouveau client).
+- Créer un premier devis (menu Devis → Nouveau devis).
+
+Si vous avez [Claude Code CLI](https://claude.ai/code) installé et configuré,
+le Composer IA sera disponible pour générer des devis depuis un brief texte.
+
+## Prérequis Claude Code CLI (optionnel)
+
+FAKT fonctionne **sans** Claude Code CLI — toutes les fonctionnalités de création
+et gestion de documents sont disponibles en mode manuel.
+
+Pour activer la génération IA, installez Claude Code CLI :
+```bash
+npm install -g @anthropic-ai/claude-code
+claude login
+```
+
+FAKT détecte automatiquement la présence de `claude` dans le PATH au démarrage.
+
+## Développement local
+
+Voir la section [Architecture](/architecture) pour le setup complet dev.
+
+```bash
+git clone https://github.com/AlphaLuppi/FAKT.git
+cd FAKT
+bun install
+bun run dev
+```

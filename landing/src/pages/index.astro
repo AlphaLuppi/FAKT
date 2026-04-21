@@ -1,0 +1,171 @@
+---
+import Base from "../layouts/Base.astro";
+import Hero from "../components/Hero.astro";
+import FeatureCard from "../components/FeatureCard.astro";
+import CTA from "../components/CTA.astro";
+import Footer from "../components/Footer.astro";
+
+const features = [
+  {
+    icon: "🔏",
+    title: "Signature PAdES maison",
+    description:
+      "Niveau eIDAS avancé (AdES-B-T) avec horodatage TSA RFC 3161. Pas de dépendance Yousign ou Docusign. Audit trail chaîné SHA-256 inviolable. Vérifiable dans Adobe Reader.",
+  },
+  {
+    icon: "⚡",
+    title: "100% offline-first",
+    description:
+      "Vos données restent chez vous (SQLite local). Aucun appel réseau critique. Fonctionne sans internet. Backup ZIP workspace en un clic pour la compliance archivage 10 ans.",
+  },
+  {
+    icon: "✨",
+    title: "Skills Claude intégrés",
+    description:
+      "Extraction de devis depuis un brief texte via Claude Code CLI (votre propre token Anthropic). Rédaction de relances. Composer IA latéral persistent. Données jamais envoyées à un tiers.",
+  },
+];
+
+const badges = [
+  { label: "Conforme CGI art. 289", sublabel: "Numérotation séquentielle sans trous" },
+  { label: "Conforme CGI art. 293 B", sublabel: "TVA micro-entreprise" },
+  { label: "Archivage 10 ans", sublabel: "Code Commerce L123-22" },
+  { label: "Licence BSL 1.1", sublabel: "Commercial → Apache 2.0 en 2030" },
+];
+---
+
+<Base>
+  <!-- Section 1 : Hero -->
+  <Hero />
+
+  <!-- Section 2 : Features -->
+  <section
+    style="
+      background: #F5F5F0;
+      padding: 6rem 2rem;
+      border-bottom: 2.5px solid #000;
+    "
+  >
+    <div style="max-width: 1200px; margin: 0 auto;">
+      <div
+        style="
+          text-align: center;
+          margin-bottom: 4rem;
+        "
+      >
+        <h2
+          style="
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 800;
+            font-size: clamp(1.5rem, 3vw, 2.25rem);
+            text-transform: uppercase;
+            letter-spacing: -0.02em;
+            margin: 0 0 0.75rem 0;
+          "
+        >
+          Tout ce qu'il vous faut. Rien de plus.
+        </h2>
+        <p style="font-size: 1rem; font-weight: 500; max-width: 500px; margin: 0 auto; opacity: 0.8;">
+          Yousign + Indy + Google Drive fusionnés en un binaire de ~8 Mo.
+          Hors-ligne par défaut. Open-source.
+        </p>
+      </div>
+
+      <div
+        style="
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+          gap: 2rem;
+        "
+      >
+        {features.map((f) => <FeatureCard {...f} />)}
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 3 : Badges conformité légale -->
+  <section
+    style="
+      background: #FFFF00;
+      padding: 3rem 2rem;
+      border-top: 2.5px solid #000;
+      border-bottom: 2.5px solid #000;
+    "
+  >
+    <div style="max-width: 1200px; margin: 0 auto;">
+      <div
+        style="
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          margin-bottom: 1.5rem;
+        "
+      >
+        <h3
+          style="
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 800;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin: 0;
+          "
+        >
+          Conformité légale française
+        </h3>
+        <div style="flex: 1; height: 2px; background: #000;"></div>
+      </div>
+
+      <div
+        style="
+          display: flex;
+          gap: 1.5rem;
+          flex-wrap: wrap;
+        "
+      >
+        {
+          badges.map((b) => (
+            <div
+              style="
+                background: #000;
+                color: #FFFF00;
+                border: 2px solid #000;
+                box-shadow: 3px 3px 0 #333;
+                padding: 0.75rem 1.25rem;
+                min-width: 220px;
+              "
+            >
+              <div
+                style="
+                  font-family: 'Space Grotesk', sans-serif;
+                  font-weight: 800;
+                  font-size: 0.8rem;
+                  text-transform: uppercase;
+                  letter-spacing: 0.05em;
+                "
+              >
+                {b.label}
+              </div>
+              <div
+                style="
+                  font-size: 0.72rem;
+                  font-family: 'JetBrains Mono', monospace;
+                  opacity: 0.75;
+                  margin-top: 0.25rem;
+                "
+              >
+                {b.sublabel}
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 4 : CTA download -->
+  <CTA />
+
+  <!-- Footer -->
+  <Footer />
+</Base>

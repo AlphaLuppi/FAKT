@@ -1,0 +1,74 @@
+---
+title: "Créer votre premier devis"
+description: "Tutoriel pas à pas pour créer, éditer et envoyer votre premier devis avec FAKT."
+---
+
+## Vue d'ensemble
+
+Un devis FAKT passe par les étapes suivantes :
+
+```
+Brouillon → Envoyé → [Vu] → Signé / Refusé
+```
+
+La numérotation est automatique : `D2026-001`, `D2026-002`…
+Elle est séquentielle et sans trous, conforme CGI art. 289.
+
+## Créer un devis manuellement
+
+1. Dans le menu de navigation, cliquez sur **Devis**.
+2. Cliquez sur **Nouveau devis** (bouton primary en haut à droite).
+3. Remplissez les champs obligatoires :
+   - **Client** : sélectionnez un client existant ou créez-en un nouveau.
+   - **Objet** : titre court du devis (ex : « Refonte site vitrine »).
+   - **Date de validité** : durée de validité proposée au client (défaut : 30 jours).
+4. Ajoutez vos lignes de prestations :
+   - Cliquez sur **+ Ajouter une ligne**.
+   - Sélectionnez une prestation depuis votre bibliothèque ou saisissez-en une manuelle.
+   - Ajustez la quantité et le prix unitaire TTC.
+5. Vérifiez le total et les conditions de paiement.
+6. Cliquez sur **Enregistrer** pour sauvegarder en brouillon.
+
+## Générer un devis depuis un brief (IA)
+
+Si Claude Code CLI est installé et configuré :
+
+1. Sur la page du devis, ouvrez le **Composer IA** (bouton sidebar à droite).
+2. Collez votre brief client dans le champ de saisie.
+   Exemple : *« Refonte complète du site vitrine, 3 pages + mobile, livrables en 3 semaines »*.
+3. Cliquez sur **Extraire** — FAKT invoque Claude Code CLI en subprocess.
+4. Les champs du devis se remplissent automatiquement : client, lignes, montants, conditions.
+5. Vérifiez et ajustez si nécessaire avant d'enregistrer.
+
+## Prévisualiser le PDF
+
+La vue détail du devis affiche un **split-pane** :
+- À gauche : formulaire d'édition des champs.
+- À droite : preview PDF rendu en temps réel via Typst.
+
+Le PDF inclut toutes les mentions légales obligatoires pour un devis micro-entreprise :
+TVA non applicable art. 293 B CGI, coordonnées complètes, SIRET, conditions de validité.
+
+## Envoyer le devis
+
+1. Vérifiez que le devis est finalisé (plus de modification prévue).
+2. Dans la section **Actions** (panneau droit), cliquez sur **Marquer comme envoyé**.
+3. FAKT passe le statut à `envoyé` et enregistre la date d'envoi.
+4. Optionnel : cliquez sur **Préparer email** pour générer un brouillon .eml avec le PDF en pièce jointe, ouvert dans votre client mail.
+
+## Après signature
+
+Lorsque votre client accepte :
+
+1. Cliquez sur **Marquer comme signé** (ou attendez la signature électronique FAKT si le client utilise FAKT de son côté — v0.2+).
+2. FAKT active le bouton **Créer la facture** — un clic et la facture est pré-remplie depuis le devis.
+
+## Signes visuels des statuts
+
+| Statut | Badge couleur |
+|--------|--------------|
+| Brouillon | Gris |
+| Envoyé | Jaune |
+| Signé | Vert |
+| Refusé | Rouge |
+| Expiré | Orange |

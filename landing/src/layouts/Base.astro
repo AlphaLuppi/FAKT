@@ -1,0 +1,88 @@
+---
+export interface Props {
+  title?: string;
+  description?: string;
+  ogImage?: string;
+}
+
+const {
+  title = "FAKT — Facturez et signez en local",
+  description = "FAKT est l'outil open-source pour freelances français : devis et factures avec signature PAdES avancée, 100% hors-ligne, sans SaaS tiers.",
+  ogImage = "/og-image.png",
+} = Astro.props;
+
+const canonical = new URL(Astro.url.pathname, Astro.site);
+---
+
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="generator" content={Astro.generator} />
+
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={new URL(ogImage, Astro.site)} />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={new URL(ogImage, Astro.site)} />
+
+    <!-- Fonts Brutal Invoice -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <style>
+      /* Reset Brutal Invoice — zéro radius partout */
+      *,
+      *::before,
+      *::after {
+        border-radius: 0 !important;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --ink: #000;
+        --paper: #f5f5f0;
+        --yellow: #ffff00;
+        --white: #fff;
+        --border: 2.5px solid #000;
+        --shadow-3: 3px 3px 0 #000;
+        --shadow-5: 5px 5px 0 #000;
+        --shadow-8: 8px 8px 0 #000;
+      }
+
+      body {
+        background-color: var(--paper);
+        color: var(--ink);
+        font-family: "Space Grotesk", sans-serif;
+        font-weight: 500;
+        margin: 0;
+        padding: 0;
+      }
+
+      a {
+        color: var(--ink);
+      }
+    </style>
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

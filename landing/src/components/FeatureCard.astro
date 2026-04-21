@@ -1,0 +1,62 @@
+---
+export interface Props {
+  icon: string;
+  title: string;
+  description: string;
+}
+
+const { icon, title, description } = Astro.props;
+---
+
+<div
+  style="
+    background: #FFF;
+    border: 2.5px solid #000;
+    box-shadow: 5px 5px 0 #000;
+    padding: 2rem;
+    transition: transform 0.1s, box-shadow 0.1s;
+    cursor: default;
+  "
+  onmouseover="this.style.transform='translate(-3px,-3px)'; this.style.boxShadow='8px 8px 0 #000';"
+  onmouseout="this.style.transform='translate(0,0)'; this.style.boxShadow='5px 5px 0 #000';"
+>
+  <div
+    style="
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      width: 3rem;
+      height: 3rem;
+      background: #FFFF00;
+      border: 2px solid #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    "
+  >
+    {icon}
+  </div>
+
+  <h3
+    style="
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 800;
+      font-size: 1.1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin: 0 0 0.75rem 0;
+    "
+  >
+    {title}
+  </h3>
+
+  <p
+    style="
+      font-size: 0.9rem;
+      font-weight: 500;
+      line-height: 1.6;
+      margin: 0;
+    "
+  >
+    {description}
+  </p>
+</div>

@@ -1,0 +1,222 @@
+---
+const GITHUB_RELEASES = "https://github.com/AlphaLuppi/FAKT/releases/latest";
+const DOCS_URL = "https://fakt.alphaluppi.com/docs";
+---
+
+<section
+  style="
+    min-height: 100vh;
+    background: #F5F5F0;
+    border-bottom: 2.5px solid #000;
+    display: flex;
+    align-items: center;
+    padding: 4rem 2rem;
+  "
+>
+  <div style="max-width: 1200px; margin: 0 auto; width: 100%;">
+    <div
+      style="
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4rem;
+        align-items: center;
+      "
+    >
+      <!-- Colonne texte -->
+      <div>
+        <!-- Badge version -->
+        <div
+          style="
+            display: inline-block;
+            background: #FFFF00;
+            border: 2px solid #000;
+            box-shadow: 3px 3px 0 #000;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 1.5rem;
+          "
+        >
+          v0.1.0 — Open Source · BSL 1.1
+        </div>
+
+        <h1
+          style="
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 800;
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            text-transform: uppercase;
+            line-height: 1.05;
+            letter-spacing: -0.02em;
+            margin: 0 0 1.5rem 0;
+          "
+        >
+          FACTUREZ ET<br />
+          SIGNEZ EN LOCAL.
+        </h1>
+
+        <p
+          style="
+            font-size: 1.125rem;
+            font-weight: 500;
+            line-height: 1.6;
+            max-width: 520px;
+            margin: 0 0 2.5rem 0;
+          "
+        >
+          FAKT est l'outil open-source pour freelances français qui veulent
+          émettre des devis et factures conformes, avec signature PAdES avancée,
+          sans envoyer leurs données à une API SaaS tierce.
+        </p>
+
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+          <!-- CTA primary -->
+          <a
+            href={GITHUB_RELEASES}
+            style="
+              display: inline-block;
+              background: #000;
+              color: #FFFF00;
+              border: 2px solid #000;
+              box-shadow: 5px 5px 0 #000;
+              padding: 0.875rem 2rem;
+              font-family: 'Space Grotesk', sans-serif;
+              font-weight: 700;
+              font-size: 1rem;
+              text-transform: uppercase;
+              letter-spacing: 0.05em;
+              text-decoration: none;
+              transition: transform 0.1s, box-shadow 0.1s;
+            "
+            onmouseover="this.style.background='#FFFF00'; this.style.color='#000';"
+            onmouseout="this.style.background='#000'; this.style.color='#FFFF00';"
+          >
+            Télécharger FAKT v0.1.0
+          </a>
+
+          <!-- CTA secondary -->
+          <a
+            href={DOCS_URL}
+            style="
+              display: inline-block;
+              background: #F5F5F0;
+              color: #000;
+              border: 2px solid #000;
+              box-shadow: 5px 5px 0 #000;
+              padding: 0.875rem 2rem;
+              font-family: 'Space Grotesk', sans-serif;
+              font-weight: 700;
+              font-size: 1rem;
+              text-transform: uppercase;
+              letter-spacing: 0.05em;
+              text-decoration: none;
+            "
+            onmouseover="this.style.background='#000'; this.style.color='#FFFF00';"
+            onmouseout="this.style.background='#F5F5F0'; this.style.color='#000';"
+          >
+            Voir la documentation →
+          </a>
+        </div>
+
+        <!-- Stack pills -->
+        <div style="display: flex; gap: 0.5rem; margin-top: 2rem; flex-wrap: wrap;">
+          {["Tauri 2", "Rust", "PAdES B-T", "SQLite", "Claude CLI", "Typst"].map((tag) => (
+            <span
+              style="
+                border: 1.5px solid #000;
+                padding: 0.2rem 0.6rem;
+                font-size: 0.75rem;
+                font-weight: 700;
+                font-family: 'JetBrains Mono', monospace;
+                text-transform: uppercase;
+              "
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <!-- Colonne mockup Brutal -->
+      <div style="display: flex; justify-content: flex-end;">
+        <div
+          style="
+            background: #FFF;
+            border: 2.5px solid #000;
+            box-shadow: 8px 8px 0 #000;
+            padding: 2rem;
+            width: 100%;
+            max-width: 440px;
+          "
+        >
+          <!-- Header mockup -->
+          <div
+            style="
+              background: #000;
+              color: #FFFF00;
+              padding: 0.5rem 1rem;
+              font-family: 'Space Grotesk', sans-serif;
+              font-weight: 800;
+              font-size: 0.75rem;
+              text-transform: uppercase;
+              letter-spacing: 0.1em;
+              margin-bottom: 1.5rem;
+            "
+          >
+            DEVIS D2026-001
+          </div>
+
+          <!-- Lignes de devis simulées -->
+          <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;">
+            <div style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid #000;">
+              <span>Développement frontend</span>
+              <span style="font-weight: 600;">3 200,00 €</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid #000;">
+              <span>Design système</span>
+              <span style="font-weight: 600;">800,00 €</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid #000;">
+              <span>Audit performances</span>
+              <span style="font-weight: 600;">400,00 €</span>
+            </div>
+          </div>
+
+          <!-- Total + signature status -->
+          <div
+            style="
+              margin-top: 1.5rem;
+              padding: 1rem;
+              background: #FFFF00;
+              border: 2px solid #000;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+            "
+          >
+            <span style="font-weight: 800; font-size: 0.875rem; text-transform: uppercase;">Total TTC</span>
+            <span style="font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 1.1rem;">4 400,00 €</span>
+          </div>
+
+          <!-- PAdES badge -->
+          <div
+            style="
+              margin-top: 1rem;
+              display: flex;
+              align-items: center;
+              gap: 0.5rem;
+              font-size: 0.75rem;
+              font-weight: 700;
+              text-transform: uppercase;
+            "
+          >
+            <span style="color: #000;">✓</span>
+            <span>Signé PAdES AdES-B-T · TSA RFC 3161 · SHA-256</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

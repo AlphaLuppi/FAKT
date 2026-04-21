@@ -1,0 +1,51 @@
+{
+  "$schema": "https://mintlify.com/schema.json",
+  "name": "FAKT Documentation",
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "favicon": "/favicon.svg",
+  "colors": {
+    "primary": "#000000",
+    "light": "#FFFF00",
+    "dark": "#000000",
+    "background": {
+      "light": "#F5F5F0",
+      "dark": "#111111"
+    }
+  },
+  "topbarLinks": [
+    {
+      "name": "GitHub",
+      "url": "https://github.com/AlphaLuppi/FAKT"
+    }
+  ],
+  "topbarCtaButton": {
+    "name": "Télécharger",
+    "url": "https://github.com/AlphaLuppi/FAKT/releases/latest"
+  },
+  "tabs": [],
+  "navigation": [
+    {
+      "group": "Introduction",
+      "pages": ["introduction"]
+    },
+    {
+      "group": "Démarrer",
+      "pages": ["installation", "first-quote", "first-invoice"]
+    },
+    {
+      "group": "Signature électronique",
+      "pages": ["signature"]
+    },
+    {
+      "group": "Pour les développeurs",
+      "pages": ["architecture"]
+    }
+  ],
+  "footerSocials": {
+    "twitter": "https://twitter.com/seeyko_",
+    "github": "https://github.com/AlphaLuppi/FAKT"
+  }
+}

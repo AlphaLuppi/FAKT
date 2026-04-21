@@ -1,0 +1,68 @@
+---
+title: "Qu'est-ce que FAKT ?"
+description: "FAKT est l'outil open-source pour freelances français — devis, factures, signature PAdES avancée, 100% hors-ligne."
+---
+
+## Vue d'ensemble
+
+**FAKT** est une application desktop (Windows, macOS, Linux) conçue pour les freelances
+et petites agences francophones qui veulent gérer leur cycle de facturation en local,
+sans envoyer leurs données à un service cloud tiers.
+
+**En une ligne :** Yousign + Indy + Google Drive fusionnés en un binaire de ~8 Mo,
+open-source, hors-ligne par défaut.
+
+## Fonctionnalités clés
+
+<CardGroup cols={2}>
+  <Card title="Numérotation légale FR" icon="hash">
+    Devis (D2026-XXX) et factures (F2026-XXX) avec numérotation séquentielle
+    automatique sans trous, conforme CGI art. 289.
+  </Card>
+  <Card title="Signature PAdES avancée" icon="shield-check">
+    Signature électronique niveau eIDAS avancé (AdES-B-T) maison en Rust —
+    pas de dépendance Yousign ou Docusign. Vérifiable dans Adobe Reader.
+  </Card>
+  <Card title="IA via Claude CLI" icon="sparkles">
+    Extraction de devis depuis un brief texte, composer IA sidebar, rédaction
+    de relances. Subprocess Claude Code CLI — votre propre token Anthropic.
+  </Card>
+  <Card title="Offline-first" icon="wifi-slash">
+    SQLite local dans `~/.fakt/`. Aucun appel réseau critique.
+    Fonctionne sans internet. Backup ZIP en un clic.
+  </Card>
+</CardGroup>
+
+## Trois modes de déploiement
+
+FAKT suit le pattern « outil interne AlphaLuppi » :
+
+| Mode | Version | Description |
+|------|---------|-------------|
+| **Solo local** | v0.1+ | Binaire desktop, SQLite, tout reste sur votre machine |
+| **Self-host entreprise** | v0.2 | Docker Compose, backend partagé, multi-utilisateurs |
+| **SaaS hébergé** | v0.3+ | On vous gère tout, ~12 €/user/mois |
+
+## Conformité légale française
+
+FAKT intègre les contraintes légales françaises non-négociables :
+
+- Numérotation séquentielle sans trous (CGI art. 289).
+- Mentions légales obligatoires sur facture (SIRET, pénalités retard, indemnité 40 €).
+- Mention TVA non applicable art. 293 B CGI (micro-entreprise).
+- Archivage 10 ans — aucune suppression physique des factures émises possible.
+
+## Licence
+
+FAKT est publié sous [Business Source License 1.1](https://github.com/AlphaLuppi/FAKT/blob/main/LICENSE).
+Change Date 2030-04-21, bascule automatique vers Apache License 2.0.
+
+Usage personnel, self-host, fork, contribution : tous autorisés.
+Revente en SaaS concurrent : interdite pendant 4 ans.
+
+## Liens utiles
+
+- [GitHub AlphaLuppi/FAKT](https://github.com/AlphaLuppi/FAKT)
+- [Landing page](https://fakt.alphaluppi.com)
+- [Releases](https://github.com/AlphaLuppi/FAKT/releases)
+- [Product Brief](https://github.com/AlphaLuppi/FAKT/blob/main/docs/product-brief.md)
