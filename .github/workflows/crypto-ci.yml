@@ -1,0 +1,74 @@
+# CI matrix cross-OS pour le module crypto Rust (Track D).
+#
+# Ce workflow est un **squelette** — Track L finalisera la CI globale (front TS,
+# Tauri build, releases). Ici on ne valide que `cargo test` du module crypto
+# sur Windows / macOS / Linux pour confirmer que le keyring crate et les crates
+# PAdES compilent et que les round-trips passent.
+
+name: crypto-ci
+
+on:
+  push:
+    paths:
+      - "apps/desktop/src-tauri/**"
+      - ".github/workflows/crypto-ci.yml"
+  pull_request:
+    paths:
+      - "apps/desktop/src-tauri/**"
+      - ".github/workflows/crypto-ci.yml"
+  workflow_dispatch:
+
+jobs:
+  crypto-tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.75"
+          components: clippy
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            apps/desktop/src-tauri/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('apps/desktop/src-tauri/Cargo.lock') }}
+
+      # Linux headless : Secret Service + keyutils peuvent manquer.
+      # On installe `dbus` + `gnome-keyring` pour les round-trips `--ignored`.
+      # Pour l'instant on skip ces tests en CI Linux — à activer quand Track L
+      # ajoute `dbus-run-session` et seahorse dans l'image.
+      - name: Install Linux deps (skip keychain tests)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libssl-dev libdbus-1-dev
+
+      - name: cargo check
+        working-directory: apps/desktop/src-tauri
+        run: cargo check --lib
+
+      - name: cargo test (unit + integration, keychain ignored)
+        working-directory: apps/desktop/src-tauri
+        run: cargo test --lib --tests
+
+      # Round-trip keychain effectif — Windows + macOS uniquement pour l'instant.
+      # Sur Linux CI headless il faut un démon keyring ; à ajouter dans Track L.
+      - name: cargo test keychain round-trip (Windows/macOS)
+        if: runner.os != 'Linux'
+        working-directory: apps/desktop/src-tauri
+        run: cargo test --test cert_roundtrip -- --ignored
+
+      - name: cargo clippy (zero warnings)
+        working-directory: apps/desktop/src-tauri
+        run: cargo clippy --lib --tests -- -D warnings

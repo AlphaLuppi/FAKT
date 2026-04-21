@@ -23,12 +23,45 @@ serde_json = "1"
 tokio = { version = "1", features = ["full"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-# PDF rendering — temp files for JSON input + templates.
+thiserror = "2"
+anyhow = "1"
+
+# PDF rendering — temp files for JSON input + templates (Track C)
 tempfile = "3.10"
-thiserror = "1"
+
+# Crypto stack (Track D — PAdES B-T)
+rsa = { version = "0.9", features = ["sha2"] }
+rand = "0.8"
+sha2 = "0.10"
+x509-cert = { version = "0.2", features = ["builder", "std"] }
+const-oid = { version = "0.9", features = ["db"] }
+spki = { version = "0.7", features = ["std", "alloc"] }
+pkcs8 = { version = "0.10", features = ["std", "pkcs5"] }
+der = { version = "0.7", features = ["alloc", "oid", "derive"] }
+cms = { version = "0.2", features = ["std", "builder"] }
+signature = { version = "2", features = ["std"] }
+hex = "0.4"
+base64 = "0.22"
+
+# Keychain OS cross-platform
+keyring = { version = "3", features = ["apple-native", "windows-native", "linux-native-sync-persistent"] }
+
+# Fallback chiffrement fichier (AES-256-GCM)
+aes-gcm = "0.10"
+pbkdf2 = { version = "0.12", features = ["hmac", "sha2"] }
+hmac = "0.12"
+
+# PDF manipulation (PAdES)
+lopdf = "0.34"
+
+# TSA RFC 3161
+reqwest = { version = "0.12", default-features = false, features = ["blocking", "rustls-tls"] }
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-shell = "2"
+
+[dev-dependencies]
+tempfile = "3"
 
 [profile.release]
 codegen-units = 1
