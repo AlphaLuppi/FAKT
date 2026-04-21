@@ -13,6 +13,7 @@ pub fn run() {
             crypto::generate_cert,
             crypto::get_cert_info,
             crypto::rotate_cert,
+            crypto::sign_document,
         ])
         .run(tauri::generate_context!())
         .expect("erreur lors du lancement de l'application FAKT");
