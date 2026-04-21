@@ -28,7 +28,8 @@
     "@fakt/design-tokens": "workspace:*",
     "@fakt/core": "workspace:*",
     "@fakt/legal": "workspace:*",
-    "@fakt/config": "workspace:*"
+    "@fakt/config": "workspace:*",
+    "@fakt/ui": "workspace:*"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3",

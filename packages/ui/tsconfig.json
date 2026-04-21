@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["vitest/globals", "@testing-library/jest-dom"],
+    "paths": {
+      "@fakt/design-tokens": ["../design-tokens/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*", "examples/**/*", "../design-tokens/src/**/*"]
+}

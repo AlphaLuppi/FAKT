@@ -23,7 +23,9 @@
       "@fakt/core": ["./packages/core/src/index.ts"],
       "@fakt/legal": ["./packages/legal/src/index.ts"],
       "@fakt/db": ["./packages/db/src/index.ts"],
-      "@fakt/config": ["./packages/config/src/index.ts"]
+      "@fakt/config": ["./packages/config/src/index.ts"],
+      "@fakt/ui": ["./packages/ui/src/index.ts"],
+      "@fakt/pdf": ["./packages/pdf/src/index.ts"]
     }
   }
 }
