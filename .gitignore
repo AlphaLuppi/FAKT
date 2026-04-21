@@ -63,6 +63,16 @@ test-results/
 _bmad-output/local/
 _research/private/
 
+# SQLite runtime files
+*.db-shm
+*.db-wal
+
+# Bun build
+bun.lockb
+
+# Encrypted key fallback (keychain)
+*.key.enc
+
 # Misc
 *.tsbuildinfo
 .eslintcache
