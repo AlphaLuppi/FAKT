@@ -6,10 +6,10 @@
 version: "6.0.0"
 project_name: "FAKT"
 project_level: 3
-current_wave: 1
+current_wave: 2
 current_milestone: "alpha"
 sprint_plan_path: "docs/sprint-plan.md"
-last_updated: "2026-04-21T20:15:00Z"
+last_updated: "2026-04-21T21:05:00Z"
 
 # Milestones
 milestones:
@@ -90,19 +90,31 @@ waves:
     description: "5 piliers techniques en parallèle. Track D chemin critique."
     total_points: 63
     target_duration_days: "5"
-    status: "in_progress"
+    status: "completed"
     started_at: "2026-04-21T20:15:00Z"
+    completed_at: "2026-04-21T21:00:00Z"
+    duration_minutes: 45
     parallel_agents_max: 5
     dependencies_upstream: ["W0"]
+    notes: |
+      Wave 1 livrée en 45 min (vs 5 jours planifiés, x160 accélération).
+      A et C ont nécessité une relance en Opus 4.7 general-purpose (feature-dev:code-architect
+      a halluciné des plans au lieu d'écrire du code).
+      Règle git changée en cours de wave : agents commit DIRECTEMENT sur main
+      (pas sur branches worktree). E et D retros-cherry-picked.
+      Validation globale : bun typecheck + test passent 10/10 packages sur main HEAD 54f9e9b.
     tracks:
       - id: "A"
         name: "UI Components Brutal Invoice"
-        agent_type: "feature-dev:code-architect"
-        model: "sonnet"
+        agent_type: "general-purpose"
+        model: "opus"
         isolation: "worktree"
-        status: "in_progress"
-        started_at: "2026-04-21T20:15:00Z"
-        agent_name: "w1-track-a-ui"
+        status: "completed"
+        commit_hash: "2618a9c"
+        agent_name: "w1-track-a-ui-retry"
+        retry_reason: "Premier essai (feature-dev:code-architect sonnet) a halluciné plan sans écrire code"
+        tests_passed: "47/47"
+        files_added: 69
         points: 13
         stories: []  # socle pour US-001/005/006/008/009/025/026/027/028
         frs_covered: ["FR-023", "FR-025"]
@@ -113,9 +125,11 @@ waves:
         agent_type: "general-purpose"
         model: "sonnet"
         isolation: "worktree"
-        status: "in_progress"
-        started_at: "2026-04-21T20:15:00Z"
+        status: "completed"
+        commit_hash: "3eef0d2"
         agent_name: "w1-track-b-db"
+        tests_passed: "91/91"
+        coverage_stmts: "86.4%"
         points: 8
         stories: []  # socle CRUD
         frs_covered: ["FR-005", "FR-006", "FR-010", "FR-011", "FR-015", "FR-022"]
@@ -123,12 +137,15 @@ waves:
 
       - id: "C"
         name: "PDF Typst + Templates"
-        agent_type: "feature-dev:code-architect"
-        model: "sonnet"
+        agent_type: "general-purpose"
+        model: "opus"
         isolation: "worktree"
-        status: "in_progress"
-        started_at: "2026-04-21T20:15:00Z"
-        agent_name: "w1-track-c-pdf"
+        status: "completed"
+        commit_hash: "39d253b"
+        agent_name: "w1-track-c-pdf-retry"
+        retry_reason: "Premier essai (feature-dev:code-architect sonnet) a halluciné plan sans écrire code"
+        tests_passed: "38/38"
+        bundle_decision: "Typst CLI subprocess (embedded +30 MB, hors budget NFR-003)"
         points: 13
         stories: ["US-012"]
         frs_covered: ["FR-012", "FR-016"]
@@ -139,9 +156,14 @@ waves:
         agent_type: "general-purpose"
         model: "opus"
         isolation: "worktree"
-        status: "in_progress"
-        started_at: "2026-04-21T20:15:00Z"
+        status: "completed"
+        commit_hashes: ["f9fc587", "3bc7dfa", "54f9e9b"]
         agent_name: "w1-track-d-crypto"
+        benchmarks:
+          gen_cert: "1.13s (budget <5s)"
+          embed_pades_b: "10.58ms (budget <500ms, 47x marge)"
+          full_sign_pades_bt_tsa: "~1-1.5s (budget <1.5s)"
+        validation_notes: "Adobe Reader validation manuelle à faire par Tom sur apps/desktop/src-tauri/tests/output/signed_pades_b_t_freetsa.pdf"
         points: 21
         critical_path: true
         stories: []  # socle EPIC-005
@@ -165,9 +187,11 @@ waves:
         agent_type: "general-purpose"
         model: "sonnet"
         isolation: "worktree"
-        status: "in_progress"
-        started_at: "2026-04-21T20:15:00Z"
+        status: "completed"
+        commit_hash: "0e44175"
         agent_name: "w1-track-e-ai"
+        tests_passed: "18/18"
+        coverage_stmts: "87.32%"
         points: 8
         stories: []  # socle FR-003/009/028
         frs_covered: ["FR-003", "FR-009"]
@@ -305,14 +329,14 @@ waves:
           - "Windows OV Code Signing cert order (3-7j délai) — Tom commande J+1"
           - "Apple Developer Program signup (99 USD/an) — Tom fait J+1"
 
-# Velocity tracking (à remplir au fur et à mesure)
+# Velocity tracking
 velocity:
-  wave_0: null
-  wave_1: null
+  wave_0: "25 pts en 19 min (1.31 pts/min)"
+  wave_1: "63 pts en 45 min (1.40 pts/min)"
   wave_2: null
   wave_3: null
   wave_4: null
-  rolling_average: null
+  rolling_average: "1.36 pts/min sur W0+W1 (88 pts / 64 min)"
 
 # Team setup for agent team execution
 team:
