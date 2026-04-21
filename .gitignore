@@ -17,6 +17,7 @@ target/
 **/*.rs.bk
 apps/desktop/src-tauri/target/
 apps/desktop/src-tauri/gen/
+apps/desktop/src-tauri/tests/output/
 
 # Build outputs
 dist/
