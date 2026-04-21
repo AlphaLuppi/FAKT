@@ -1,0 +1,122 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter, Routes, Route } from "react-router";
+import { QuoteDetailRoute } from "./Detail.js";
+import {
+  installMockApis,
+  FIXTURE_CLIENT,
+  FIXTURE_WORKSPACE,
+} from "./__test-helpers__/mockApis.js";
+import type { Quote } from "@fakt/shared";
+
+const now = Date.now();
+
+const ISSUED_QUOTE: Quote = {
+  id: "q-issued",
+  workspaceId: FIXTURE_WORKSPACE.id,
+  clientId: FIXTURE_CLIENT.id,
+  number: "D2026-001",
+  year: 2026,
+  sequence: 1,
+  title: "Site vitrine",
+  status: "sent",
+  totalHtCents: 350000,
+  conditions: null,
+  validityDate: now + 30 * 86400000,
+  notes: "Projet prioritaire",
+  issuedAt: now,
+  signedAt: null,
+  archivedAt: null,
+  createdAt: now,
+  updatedAt: now,
+  items: [],
+};
+
+const DRAFT_QUOTE: Quote = {
+  ...ISSUED_QUOTE,
+  id: "q-draft",
+  status: "draft",
+  number: null,
+  year: null,
+  sequence: null,
+  issuedAt: null,
+};
+
+describe("QuoteDetailRoute", () => {
+  let mocks: ReturnType<typeof installMockApis>;
+
+  beforeEach(() => {
+    // Stub URL.createObjectURL for jsdom.
+    if (!globalThis.URL.createObjectURL) {
+      globalThis.URL.createObjectURL = vi.fn(
+        () => "blob:mocked",
+      ) as unknown as typeof URL.createObjectURL;
+    } else {
+      vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:mocked");
+    }
+    if (!globalThis.URL.revokeObjectURL) {
+      globalThis.URL.revokeObjectURL = vi.fn() as unknown as typeof URL.revokeObjectURL;
+    }
+  });
+
+  afterEach(() => {
+    mocks?.reset();
+    vi.restoreAllMocks();
+  });
+
+  function renderAt(path: string, quote: Quote): void {
+    mocks = installMockApis({ quotes: [quote] });
+    render(
+      <MemoryRouter initialEntries={[path]}>
+        <Routes>
+          <Route path="/quotes/:id" element={<QuoteDetailRoute />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+  }
+
+  it("affiche le numéro, le titre et le statut d'un devis émis", async () => {
+    renderAt("/quotes/q-issued", ISSUED_QUOTE);
+    await waitFor(() => {
+      expect(screen.getAllByText("D2026-001").length).toBeGreaterThanOrEqual(1);
+      expect(screen.getByText("Site vitrine")).toBeInTheDocument();
+    });
+  });
+
+  it("rend un iframe PDF pour un devis émis", async () => {
+    renderAt("/quotes/q-issued", ISSUED_QUOTE);
+    await waitFor(() => {
+      expect(screen.getByTestId("pdf-iframe")).toBeInTheDocument();
+    });
+  });
+
+  it("affiche un placeholder quand le devis est en draft (pas de numéro)", async () => {
+    renderAt("/quotes/q-draft", DRAFT_QUOTE);
+    await waitFor(() => {
+      expect(screen.getByTestId("pdf-placeholder")).toBeInTheDocument();
+    });
+  });
+
+  it("affiche le bouton Éditer uniquement pour les drafts", async () => {
+    renderAt("/quotes/q-issued", ISSUED_QUOTE);
+    await waitFor(() => {
+      expect(screen.getByTestId("detail-edit")).toBeDisabled();
+    });
+  });
+
+  it("expose les CTA Envoyer et Signer en stub", async () => {
+    renderAt("/quotes/q-issued", ISSUED_QUOTE);
+    await waitFor(() => {
+      expect(screen.getByTestId("detail-send-stub")).toBeDisabled();
+      expect(screen.getByTestId("detail-sign-stub")).toBeDisabled();
+    });
+  });
+
+  it("affiche la mention TVA micro-entreprise et signature client", async () => {
+    renderAt("/quotes/q-issued", ISSUED_QUOTE);
+    await waitFor(() => {
+      expect(screen.getByText(/art\. 293 B/i)).toBeInTheDocument();
+      expect(screen.getByText(/bon pour accord/i)).toBeInTheDocument();
+    });
+  });
+});
