@@ -4,8 +4,9 @@
     "outDir": "./dist",
     "noEmit": true,
     "paths": {
-      "@fakt/shared": ["../shared/src/index.ts"]
+      "@fakt/shared": ["../shared/src/index.ts"],
+      "@fakt/core": ["../core/src/index.ts"]
     }
   },
-  "include": ["src/**/*", "../shared/src/**/*"]
+  "include": ["src/**/*", "../shared/src/**/*", "../core/src/**/*"]
 }
