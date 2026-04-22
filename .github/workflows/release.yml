@@ -63,13 +63,24 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      # Build sidecar api-server en Bun-compiled pour chaque target supporté.
-      # `--all` compile les 4 targets (win-x64, darwin-x64, darwin-arm64, linux-x64)
-      # — overhead ~2 min par runner mais garantit que tauri-action trouve toujours
-      # le bon binaire selon la cible bundlée (notamment pour macOS universal qui
-      # nécessite arm64 + x64 co-présents).
-      - name: Build sidecar api-server (all targets)
-        run: bun run packages/api-server/scripts/build-sidecar.ts --all
+      # Build sidecar api-server pour le(s) target(s) de l'OS courant uniquement.
+      # Cross-compile Bun Windows→Darwin échoue sur les runners — on build ce qui
+      # est pertinent pour le bundling de chaque matrix entry.
+      - name: Build sidecar (Windows x64)
+        if: matrix.os == 'windows-latest'
+        run: bun run packages/api-server/scripts/build-sidecar.ts --target=bun-windows-x64
+
+      - name: Build sidecar (Linux x64)
+        if: matrix.os == 'ubuntu-latest'
+        run: bun run packages/api-server/scripts/build-sidecar.ts --target=bun-linux-x64
+
+      # macOS universal-apple-darwin bundle nécessite les 2 darwin targets co-présents
+      # pour que Tauri picke le bon par arch lors du lipo universel.
+      - name: Build sidecar (macOS universal — arm64 + x64)
+        if: matrix.os == 'macos-latest'
+        run: |
+          bun run packages/api-server/scripts/build-sidecar.ts --target=bun-darwin-arm64
+          bun run packages/api-server/scripts/build-sidecar.ts --target=bun-darwin-x64
 
       - name: Build and release with tauri-action
         uses: tauri-apps/tauri-action@v0
