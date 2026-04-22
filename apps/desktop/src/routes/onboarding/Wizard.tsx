@@ -21,6 +21,17 @@ const STEPS = [
 
 const TOTAL_STEPS = STEPS.length;
 
+const BRUTAL_YELLOW = "#FFFF00";
+
+function LogoMark(): ReactElement {
+  return (
+    <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
+      <rect x="3" y="3" width="16" height="16" fill={BRUTAL_YELLOW} />
+      <path d="M7 6h8v2.2H9.2v2.4h5v2.2h-5V16H7V6z" fill="#000" />
+    </svg>
+  );
+}
+
 export function WizardRoute(): ReactElement {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
@@ -61,7 +72,9 @@ export function WizardRoute(): ReactElement {
         <div style={containerStyle}>
           {/* Header */}
           <div style={headerStyle}>
-            <div style={logoStyle}>F</div>
+            <div style={logoStyle} aria-hidden="true">
+              <LogoMark />
+            </div>
             <div>
               <div style={appNameStyle}>{fr.app.name}</div>
               <div style={subtitleStyle}>{fr.onboarding.subtitle}</div>
@@ -94,52 +107,77 @@ interface ProgressBarProps {
 function ProgressBar({ current, total, labels }: ProgressBarProps): ReactElement {
   return (
     <div style={progressContainerStyle} role="navigation" aria-label="Étapes">
-      {Array.from({ length: total }).map((_, i) => {
-        const isActive = i === current;
-        const isDone = i < current;
-        return (
-          <div key={i} style={stepItemStyle}>
-            <div
-              style={{
-                width: 28,
-                height: 28,
-                background: isActive ? "var(--ink)" : isDone ? "var(--ink)" : "var(--surface)",
-                border: "2px solid var(--ink)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: isActive ? "var(--accent)" : isDone ? "var(--accent)" : "var(--ink)",
-                fontFamily: "var(--font-ui)",
-                fontWeight: 800,
-                fontSize: 12,
-                flexShrink: 0,
-              }}
-              aria-current={isActive ? "step" : undefined}
-            >
-              {isDone ? "✓" : String(i + 1)}
+      {/* Cercles + connecteurs */}
+      <div style={progressRowStyle}>
+        {Array.from({ length: total }).map((_, i) => {
+          const isActive = i === current;
+          const isDone = i < current;
+          return (
+            <div key={i} style={stepCircleGroupStyle}>
+              <div
+                style={{
+                  width: 28,
+                  height: 28,
+                  background: isActive || isDone ? "var(--ink)" : "var(--surface)",
+                  border: "2px solid var(--ink)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: isActive || isDone ? BRUTAL_YELLOW : "var(--ink)",
+                  fontFamily: "var(--font-ui)",
+                  fontWeight: 800,
+                  fontSize: 13,
+                  lineHeight: 1,
+                  flexShrink: 0,
+                }}
+                aria-current={isActive ? "step" : undefined}
+              >
+                {isDone ? "✓" : String(i + 1)}
+              </div>
+              {i < total - 1 && (
+                <div
+                  style={{
+                    flex: 1,
+                    height: 2,
+                    background: isDone ? "var(--ink)" : "var(--line)",
+                    minWidth: 12,
+                  }}
+                />
+              )}
             </div>
-            <span style={{
-              fontFamily: "var(--font-ui)",
-              fontSize: "var(--t-xs)",
-              fontWeight: isActive ? 700 : 500,
-              color: isActive ? "var(--ink)" : "var(--muted)",
-              textTransform: "uppercase",
-              letterSpacing: "0.06em",
-              whiteSpace: "nowrap",
-            }}>
+          );
+        })}
+      </div>
+      {/* Labels alignés sous chaque cercle */}
+      <div style={progressLabelsRowStyle}>
+        {Array.from({ length: total }).map((_, i) => {
+          const isActive = i === current;
+          const isDone = i < current;
+          const align: React.CSSProperties["textAlign"] =
+            i === 0 ? "left" : i === total - 1 ? "right" : "center";
+          return (
+            <span
+              key={i}
+              style={{
+                flex: 1,
+                fontFamily: "var(--font-ui)",
+                fontSize: 10,
+                fontWeight: isActive ? 800 : 700,
+                color: isActive ? "var(--ink)" : isDone ? "var(--ink)" : "var(--muted)",
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+                textAlign: align,
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                minWidth: 0,
+              }}
+            >
               {labels[i]}
             </span>
-            {i < total - 1 && (
-              <div style={{
-                flex: 1,
-                height: 2,
-                background: isDone ? "var(--ink)" : "var(--line)",
-                minWidth: 20,
-              }} />
-            )}
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -148,9 +186,10 @@ const outerStyle: React.CSSProperties = {
   minHeight: "100vh",
   background: "var(--paper)",
   display: "flex",
-  alignItems: "center",
+  alignItems: "flex-start",
   justifyContent: "center",
-  padding: "24px 16px",
+  padding: "40px 16px",
+  overflowY: "auto",
 };
 
 const containerStyle: React.CSSProperties = {
@@ -158,7 +197,8 @@ const containerStyle: React.CSSProperties = {
   maxWidth: 680,
   display: "flex",
   flexDirection: "column",
-  gap: 32,
+  gap: 28,
+  margin: "auto",
 };
 
 const headerStyle: React.CSSProperties = {
@@ -171,13 +211,9 @@ const logoStyle: React.CSSProperties = {
   width: 40,
   height: 40,
   background: "var(--ink)",
-  color: "var(--accent)",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  fontFamily: "var(--font-ui)",
-  fontWeight: 800,
-  fontSize: 20,
   flexShrink: 0,
 };
 
@@ -199,16 +235,28 @@ const subtitleStyle: React.CSSProperties = {
 
 const progressContainerStyle: React.CSSProperties = {
   display: "flex",
-  alignItems: "center",
-  gap: 8,
+  flexDirection: "column",
+  gap: 10,
 };
 
-const stepItemStyle: React.CSSProperties = {
+const progressRowStyle: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
-  gap: 8,
+  gap: 6,
+};
+
+const stepCircleGroupStyle: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 6,
   flex: 1,
   minWidth: 0,
+};
+
+const progressLabelsRowStyle: React.CSSProperties = {
+  display: "flex",
+  alignItems: "flex-start",
+  gap: 6,
 };
 
 const contentStyle: React.CSSProperties = {

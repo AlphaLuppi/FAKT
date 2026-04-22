@@ -4,10 +4,6 @@ import { Button, toast } from "@fakt/ui";
 import { fr } from "@fakt/shared";
 import { useOnboarding } from "../context.js";
 
-interface CompleteOnboardingFn {
-  (workspaceData: WorkspaceData): Promise<void>;
-}
-
 interface WorkspaceData {
   name: string;
   legalForm: string;
@@ -19,14 +15,75 @@ interface WorkspaceData {
   certPem?: string | null;
 }
 
-async function invokeUpdateWorkspace(data: WorkspaceData): Promise<void> {
-  const { invoke } = await import("@tauri-apps/api/core");
-  await invoke("update_workspace", { input: data });
+interface FaktApiGlobals {
+  __FAKT_API_URL__?: string;
+  __FAKT_API_TOKEN__?: string;
+}
+
+function apiGlobals(): FaktApiGlobals {
+  if (typeof window === "undefined") return {};
+  return window as unknown as FaktApiGlobals;
+}
+
+/**
+ * Persiste le workspace via le sidecar Hono (POST /api/workspace si absent,
+ * PATCH sinon). Mode dev standalone (pas de sidecar injecté) : no-op, pour
+ * permettre à l'onboarding de terminer sans crash.
+ */
+async function persistWorkspace(data: WorkspaceData): Promise<void> {
+  const g = apiGlobals();
+  if (g.__FAKT_API_URL__ === undefined || g.__FAKT_API_TOKEN__ === undefined) {
+    // Dev standalone sans sidecar — on ne bloque pas l'onboarding.
+    return;
+  }
+  const baseUrl = g.__FAKT_API_URL__;
+  const token = g.__FAKT_API_TOKEN__;
+
+  const body = JSON.stringify({
+    name: data.name,
+    legalForm: data.legalForm,
+    siret: data.siret,
+    address: data.address,
+    email: data.email,
+    ...(data.iban !== null && data.iban !== undefined ? { iban: data.iban } : {}),
+  });
+
+  const headers = {
+    "Content-Type": "application/json",
+    "X-FAKT-Token": token,
+  } as const;
+
+  // Tente PATCH d'abord (workspace existant) ; si 404, bascule en POST (create).
+  const patchRes = await fetch(`${baseUrl}/api/workspace`, {
+    method: "PATCH",
+    headers,
+    body,
+  }).catch(() => null);
+
+  if (patchRes !== null && patchRes.ok) return;
+
+  const postRes = await fetch(`${baseUrl}/api/workspace`, {
+    method: "POST",
+    headers,
+    body,
+  }).catch(() => null);
+
+  if (postRes === null) {
+    throw new Error("Impossible de joindre l'API locale FAKT.");
+  }
+  if (!postRes.ok && postRes.status !== 409) {
+    const text = await postRes.text().catch(() => "");
+    throw new Error(`Enregistrement workspace échoué : ${postRes.status} ${text}`);
+  }
 }
 
 async function invokeSetupComplete(): Promise<void> {
-  const { invoke } = await import("@tauri-apps/api/core");
-  await invoke("complete_setup");
+  try {
+    const { invoke } = await import("@tauri-apps/api/core");
+    await invoke("complete_setup");
+  } catch {
+    // Hors Tauri (dev web pur) : on ignore, le guard renvoie ready par défaut.
+  }
 }
 
 interface Props {
@@ -45,7 +102,7 @@ export function RecapStep({ onPrev, onFinish }: Props): ReactElement {
 
     setSaving(true);
     try {
-      await invokeUpdateWorkspace({
+      await persistWorkspace({
         name: identity.name,
         legalForm: identity.legalForm,
         siret: identity.siret,

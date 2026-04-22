@@ -11,6 +11,7 @@ import { InvoicesRouter } from "./routes/invoices/index.js";
 import { SignaturesRouter } from "./routes/signatures/index.js";
 import { ArchiveRoute } from "./routes/archive/index.js";
 import { useOnboardingGuard } from "./routes/onboarding/guard.js";
+import { ErrorBoundary } from "./components/ErrorBoundary.js";
 
 export function App(): ReactElement {
   const guard = useOnboardingGuard();
@@ -28,27 +29,31 @@ export function App(): ReactElement {
 
   if (isOnboarding) {
     return (
-      <Routes>
-        <Route path="/onboarding" element={<WizardRoute />} />
-        <Route path="*" element={<Navigate to="/onboarding" replace />} />
-      </Routes>
+      <ErrorBoundary>
+        <Routes>
+          <Route path="/onboarding" element={<WizardRoute />} />
+          <Route path="*" element={<Navigate to="/onboarding" replace />} />
+        </Routes>
+      </ErrorBoundary>
     );
   }
 
   return (
-    <Shell>
-      <Routes>
-        <Route path="/" element={<DashboardRoute />} />
-        <Route path="/quotes/*" element={<QuotesRouter />} />
-        <Route path="/invoices/*" element={<InvoicesRouter />} />
-        <Route path="/clients/*" element={<ClientsRoute />} />
-        <Route path="/services/*" element={<ServicesRoute />} />
-        <Route path="/signatures/*" element={<SignaturesRouter />} />
-        <Route path="/archive" element={<ArchiveRoute />} />
-        <Route path="/settings" element={<SettingsRoute />} />
-        <Route path="*" element={<Placeholder title="404 — Page introuvable" />} />
-      </Routes>
-    </Shell>
+    <ErrorBoundary>
+      <Shell>
+        <Routes>
+          <Route path="/" element={<DashboardRoute />} />
+          <Route path="/quotes/*" element={<QuotesRouter />} />
+          <Route path="/invoices/*" element={<InvoicesRouter />} />
+          <Route path="/clients/*" element={<ClientsRoute />} />
+          <Route path="/services/*" element={<ServicesRoute />} />
+          <Route path="/signatures/*" element={<SignaturesRouter />} />
+          <Route path="/archive" element={<ArchiveRoute />} />
+          <Route path="/settings" element={<SettingsRoute />} />
+          <Route path="*" element={<Placeholder title="404 — Page introuvable" />} />
+        </Routes>
+      </Shell>
+    </ErrorBoundary>
   );
 }
 
