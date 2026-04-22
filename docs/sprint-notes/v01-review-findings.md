@@ -29,27 +29,27 @@
 
 _Scope :_ OWASP top 10 sur packages/api-server, secrets, crypto PAdES (apps/desktop/src-tauri/src/crypto/), token X-FAKT-Token binding 127.0.0.1 strict, CORS, SQL injection Drizzle, audit trail append-only intégrité, capabilities Tauri least-privilege.
 
-### [P0] [security] Audit chain hash trop permissif — tampering rétroactif possible (A08)
+### [x] [P0] [security] Audit chain hash trop permissif — tampering rétroactif possible (A08)
 **Path:** apps/desktop/src-tauri/src/crypto/audit.rs:47-59
 **Repro / Impact:** `SignatureEvent::compute_self_hash` ne hache QUE `id | timestamp_iso | doc_hash_after | signer_email | tsa_provider`. Sont **absents du hash** : `document_type`, `document_id`, `signer_name`, `doc_hash_before`, `ip_address`, `user_agent`, `signature_png_base64`, `tsa_response_base64`, et surtout `previous_event_hash`. Conséquences : (1) un attaquant qui édite la DB peut réécrire `document_id`, `signer_name`, `previous_event_hash`, `doc_hash_before`, `signature_png_base64` sans invalider la chaîne ; (2) `verify_chain` renverra `chain_ok=true` malgré le tampering ; (3) la preuve d'intégrité vantée par FR-018 est brisée. Casse la règle CLAUDE.md « audit trail signature : append-only, chaîne de hash ».
 **Fix suggéré:** Hacher la totalité des champs métier + le `previous_event_hash` lui-même. Canoniser via sérialisation ordonnée (JSON canonique ou concaténation déterministe exhaustive). Exemple : `sha256(id|type|doc_id|signer_name|signer_email|ip|ua|ts|before|after|png|tsa_provider|tsa_response|previous_event_hash)`. Test : tampere chaque champ individuellement et attend `broken != []`.
 
-### [P0] [security] Command injection Windows dans `open_email_draft` / `open_mailto_fallback` (A03)
+### [x] [P0] [security] Command injection Windows dans `open_email_draft` / `open_mailto_fallback` (A03)
 **Path:** apps/desktop/src-tauri/src/commands/email.rs:25-55
 **Repro / Impact:** `dispatch_open` appelle `Command::new("cmd").args(["/C", "start", "", target])` avec `target` non assaini. `cmd.exe` interprète `& | < > ^` comme métacaractères shell même via `start`. Un path contenant `foo.eml & calc.exe` déclenche l'exécution de calc.exe. La fonction `quote_cmd_arg` définie dans le même fichier (l:64) est **jamais utilisée** en prod (marquée `#[cfg_attr(not(test), allow(dead_code))]`). `open_email_draft` vérifie extension `.eml` + existence, mais `open_mailto_fallback` ne valide que `starts_with("mailto:")` — `mailto:a@b.com?subject=x & calc` passe. Ces commandes sont invocables via `invoke()` depuis le webview, donc exploitables par bug frontend ou prompt-injection IA. Sous Windows uniquement.
 **Fix suggéré:** Sur Windows, remplacer `cmd /C start "" target` par `Command::new("rundll32").args(["url.dll,FileProtocolHandler", target])` (argument unique sans shell) ou `ShellExecuteW` via `windows-rs`. À minima : blacklister `& | < > ^ " \n \r` dans `target` avant l'appel, et étendre `quote_cmd_arg` pour échapper aussi `|` et `<>` (actuellement absents).
 
-### [P0] [security] Path traversal dans `store_signed_pdf` — écriture hors du répertoire signed (A01)
+### [x] [P0] [security] Path traversal dans `store_signed_pdf` — écriture hors du répertoire signed (A01)
 **Path:** apps/desktop/src-tauri/src/commands/state.rs:157-169
 **Repro / Impact:** `let filename = format!("{}-{}.pdf", doc_type, doc_id); let path = self.signed_dir.join(filename);` — aucune validation de `doc_id`. Un `doc_id = "../../escape"` produit `invoice-../../escape.pdf` ; `Path::join` sur un fragment relatif ne confine PAS au parent, `std::fs::write` écrit alors hors de `signed_dir`. La commande Tauri `store_signed_pdf` est exposée au webview, donc un bug frontend ou une prompt-injection IA qui fabrique un doc_id malicieux permet d'écraser des fichiers arbitraires (`~/.fakt/db.sqlite`, binaires Tauri). Idem pour `load_signed_pdf` (même pattern).
 **Fix suggéré:** Valider `doc_id` et `doc_type` en amont : regex `^[A-Za-z0-9_-]{1,64}$` (UUID v4 ou ULID). Rejeter toute string contenant `/`, `\`, `..`, caractères nul. Après `join`, appeler `path.canonicalize()` et vérifier `path.starts_with(&self.signed_dir.canonicalize()?)`.
 
-### [P0] [security] TSA fallbacks en HTTP plaintext — MITM peut injecter faux timestamp (A02)
+### [x] [P0] [security] TSA fallbacks en HTTP plaintext — MITM peut injecter faux timestamp (A02)
 **Path:** apps/desktop/src-tauri/src/crypto/tsa.rs:28-29, 38-40
 **Repro / Impact:** `DIGICERT_URL = "http://timestamp.digicert.com"` et `SECTIGO_URL = "http://timestamp.sectigo.com"` en HTTP clair. Un MITM (café, VPN compromis, DNS hijack) peut substituer une TimeStampResponse signée par une CA contrôlée par l'attaquant. `parse_timestamp_response` n'authentifie QUE le status field et renvoie le TST brut. Conséquence : niveau PAdES-B-T annoncé mais horodatage non fiable. La réglementation eIDAS AdES exige un horodatage de confiance.
 **Fix suggéré:** Utiliser HTTPS sur les 3 endpoints (DigiCert et Sectigo exposent `https://` — `https://timestamp.digicert.com` fonctionne). Optionnellement pinner les certificats TSA (SPKI pin) ou vérifier la signature TSA contre la chaîne de confiance OS. Retirer toute URL `http://`.
 
-### [P0] [security] CSP autorise uniquement freetsa.org — fallback digicert/sectigo non whitelisté (A05)
+### [x] [P0] [security] CSP autorise uniquement freetsa.org — fallback digicert/sectigo non whitelisté (A05)
 **Path:** apps/desktop/src-tauri/tauri.conf.json:15
 **Repro / Impact:** `connect-src 'self' http://127.0.0.1:* https://freetsa.org`. Les deux endpoints TSA fallback (`timestamp.digicert.com`, `timestamp.sectigo.com`) ne sont pas dans la CSP. L'appel TSA est côté Rust via `reqwest::blocking` (pas le webview), donc la CSP ne les bloque pas directement — mais cache une intention vs réalité et bloquerait toute invocation fetch depuis le front. Si la CSP était honorée côté Rust via un proxy webview futur, la fallback serait non fonctionnelle silencieusement — rétrogradation B-T → B sans message.
 **Fix suggéré:** Aligner CSP avec les TSA effectifs : `connect-src 'self' http://127.0.0.1:* https://freetsa.org https://timestamp.digicert.com https://timestamp.sectigo.com` (après passage en HTTPS). Test unitaire : parser tauri.conf.json et vérifier la présence de chaque URL de `default_endpoints()`.

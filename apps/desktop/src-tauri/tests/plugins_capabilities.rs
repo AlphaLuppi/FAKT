@@ -10,15 +10,36 @@
 
 use std::path::PathBuf;
 
+use fakt_lib::crypto::tsa::default_endpoints;
+
 fn capabilities_path() -> PathBuf {
     let manifest_dir = env!("CARGO_MANIFEST_DIR");
     PathBuf::from(manifest_dir).join("capabilities").join("default.json")
+}
+
+fn tauri_conf_path() -> PathBuf {
+    let manifest_dir = env!("CARGO_MANIFEST_DIR");
+    PathBuf::from(manifest_dir).join("tauri.conf.json")
 }
 
 fn load_capabilities() -> serde_json::Value {
     let raw = std::fs::read_to_string(capabilities_path())
         .expect("capabilities/default.json doit exister");
     serde_json::from_str(&raw).expect("capabilities/default.json doit être un JSON valide")
+}
+
+fn load_tauri_conf() -> serde_json::Value {
+    let raw = std::fs::read_to_string(tauri_conf_path())
+        .expect("tauri.conf.json doit exister");
+    serde_json::from_str(&raw).expect("tauri.conf.json doit être un JSON valide")
+}
+
+/// Extrait la chaîne d'origine TSA d'une URL `https://host[:port]/path`.
+fn origin_of(url: &str) -> String {
+    // `https://host/tsr` → `https://host`
+    let rest = url.trim_start_matches("https://");
+    let host = rest.split('/').next().unwrap_or("");
+    format!("https://{}", host)
 }
 
 #[test]
@@ -101,5 +122,58 @@ fn capabilities_fs_scope_is_least_privilege() {
             "fs:scope ne doit PAS ouvrir le filesystem entier : {}",
             p
         );
+    }
+}
+
+/// P0 security : la CSP `connect-src` doit whitelister TOUS les endpoints TSA
+/// effectifs retournés par `tsa::default_endpoints()`. Un fallback non listé
+/// bloquerait silencieusement toute future requête fetch → rétrogradation
+/// PAdES-B-T → B sans erreur visible.
+#[test]
+fn csp_connect_src_covers_all_tsa_endpoints() {
+    let conf = load_tauri_conf();
+    let csp = conf
+        .get("app")
+        .and_then(|a| a.get("security"))
+        .and_then(|s| s.get("csp"))
+        .and_then(|c| c.as_str())
+        .expect("tauri.conf.json > app.security.csp doit exister");
+
+    // Isoler la directive connect-src.
+    let connect_src = csp
+        .split(';')
+        .map(|s| s.trim())
+        .find(|s| s.starts_with("connect-src"))
+        .expect("csp doit définir connect-src");
+
+    for url in default_endpoints() {
+        let origin = origin_of(url);
+        assert!(
+            connect_src.contains(&origin),
+            "connect-src CSP doit inclure {} (endpoint TSA {}), trouvé: {}",
+            origin,
+            url,
+            connect_src
+        );
+    }
+}
+
+/// P0 security : aucun endpoint TSA ne doit utiliser HTTP plaintext (MITM).
+#[test]
+fn csp_connect_src_has_no_plaintext_tsa() {
+    let conf = load_tauri_conf();
+    let csp = conf
+        .get("app")
+        .and_then(|a| a.get("security"))
+        .and_then(|s| s.get("csp"))
+        .and_then(|c| c.as_str())
+        .expect("csp manquante");
+
+    // `http://127.0.0.1:*` est légitime (sidecar local-only). Tout autre http://
+    // est interdit.
+    for token in csp.split_whitespace() {
+        if token.starts_with("http://") && !token.starts_with("http://127.0.0.1") {
+            panic!("CSP contient un endpoint plaintext non-local: {}", token);
+        }
     }
 }

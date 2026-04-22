@@ -43,18 +43,35 @@ pub struct SignatureEvent {
 impl SignatureEvent {
     /// Calcule le hash SHA-256 de cet événement — utilisé pour chaîner au suivant.
     ///
-    /// Format déterministe : `id|timestamp|doc_hash_after|signer_email|tsa_provider`.
+    /// Format déterministe — couvre **tous** les champs métier + `previous_event_hash`
+    /// pour empêcher tout tampering rétroactif (P0 security fix) :
+    /// `id|document_type|document_id|signer_name|signer_email|ip_address|user_agent|
+    ///  timestamp_iso|doc_hash_before|doc_hash_after|signature_png_base64|
+    ///  tsa_provider|tsa_response_base64|previous_event_hash`.
     pub fn compute_self_hash(&self) -> [u8; 32] {
         let mut hasher = Sha256::new();
-        hasher.update(self.id.as_bytes());
-        hasher.update(b"|");
-        hasher.update(self.timestamp_iso.as_bytes());
-        hasher.update(b"|");
-        hasher.update(self.doc_hash_after.as_bytes());
-        hasher.update(b"|");
-        hasher.update(self.signer_email.as_bytes());
-        hasher.update(b"|");
-        hasher.update(self.tsa_provider.as_deref().unwrap_or("").as_bytes());
+        let fields: [&str; 14] = [
+            &self.id,
+            &self.document_type,
+            &self.document_id,
+            &self.signer_name,
+            &self.signer_email,
+            self.ip_address.as_deref().unwrap_or(""),
+            self.user_agent.as_deref().unwrap_or(""),
+            &self.timestamp_iso,
+            &self.doc_hash_before,
+            &self.doc_hash_after,
+            self.signature_png_base64.as_deref().unwrap_or(""),
+            self.tsa_provider.as_deref().unwrap_or(""),
+            self.tsa_response_base64.as_deref().unwrap_or(""),
+            self.previous_event_hash.as_deref().unwrap_or(""),
+        ];
+        for (i, f) in fields.iter().enumerate() {
+            if i > 0 {
+                hasher.update(b"|");
+            }
+            hasher.update(f.as_bytes());
+        }
         hasher.finalize().into()
     }
 
@@ -169,5 +186,51 @@ mod tests {
         assert!(e.previous_event_hash.is_none());
         let broken = verify_chain(&[e]);
         assert!(broken.is_empty());
+    }
+
+    /// P0 security : chaque champ métier doit être couvert par `compute_self_hash`.
+    /// On tampere champ par champ et on attend que `verify_chain` détecte la cassure.
+    #[test]
+    fn tampering_each_field_breaks_chain() {
+        let e1 = sample_event("evt-1", None);
+        let e2 = sample_event("evt-2", Some(&e1));
+
+        // Each mutator modifies exactly one field of e1 (an "old" event in the chain).
+        let mutators: Vec<(&str, fn(&mut SignatureEvent))> = vec![
+            ("document_type", |e| e.document_type = "quote".into()),
+            ("document_id", |e| e.document_id = "TAMPERED".into()),
+            ("signer_name", |e| e.signer_name = "Mallory".into()),
+            ("signer_email", |e| e.signer_email = "evil@x.com".into()),
+            ("ip_address", |e| e.ip_address = Some("10.0.0.1".into())),
+            ("user_agent", |e| e.user_agent = Some("curl/8".into())),
+            ("timestamp_iso", |e| e.timestamp_iso = "2099-01-01T00:00:00Z".into()),
+            ("doc_hash_before", |e| e.doc_hash_before = format!("{:064x}", 9999)),
+            ("doc_hash_after", |e| e.doc_hash_after = format!("{:064x}", 7777)),
+            ("signature_png_base64", |e| e.signature_png_base64 = Some("ZmFrZQ==".into())),
+            ("tsa_provider", |e| e.tsa_provider = Some("http://evil.tsa".into())),
+            ("tsa_response_base64", |e| e.tsa_response_base64 = Some("dHNh".into())),
+        ];
+
+        for (name, mutate) in mutators {
+            let mut e1_t = e1.clone();
+            mutate(&mut e1_t);
+            let broken = verify_chain(&[e1_t, e2.clone()]);
+            assert_eq!(
+                broken,
+                vec![1],
+                "tampering `{}` on e1 must break e2's previous_event_hash link",
+                name
+            );
+        }
+    }
+
+    /// Tampering de `previous_event_hash` lui-même (directement) cassse aussi la chaîne.
+    #[test]
+    fn tampering_previous_event_hash_breaks_chain() {
+        let e1 = sample_event("evt-1", None);
+        let mut e2 = sample_event("evt-2", Some(&e1));
+        e2.previous_event_hash = Some(format!("{:064x}", 0));
+        let broken = verify_chain(&[e1, e2]);
+        assert_eq!(broken, vec![1]);
     }
 }

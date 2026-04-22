@@ -6,10 +6,11 @@
 //! 3. Reçoit une `TimeStampResp` DER contenant un `TimeStampToken` (CMS SignedData).
 //! 4. Extrait le TST et le retourne pour embed dans le CMS PAdES (UnsignedAttribute).
 //!
-//! **Endpoints** (ordre de fallback) :
+//! **Endpoints** (ordre de fallback) — **tous HTTPS** pour empêcher un MITM
+//! d'injecter un faux timestamp (fix P0 security).
 //! - `https://freetsa.org/tsr` (primaire, gratuit, SHA-256)
-//! - `http://timestamp.digicert.com` (fallback 1)
-//! - `http://timestamp.sectigo.com` (fallback 2)
+//! - `https://timestamp.digicert.com` (fallback 1)
+//! - `https://timestamp.sectigo.com` (fallback 2)
 //!
 //! Timeout 10s par endpoint, 1 retry chacun.
 
@@ -25,8 +26,8 @@ use spki::AlgorithmIdentifierOwned;
 use crate::crypto::error::{CryptoError, CryptoResult};
 
 pub const FREETSA_URL: &str = "https://freetsa.org/tsr";
-pub const DIGICERT_URL: &str = "http://timestamp.digicert.com";
-pub const SECTIGO_URL: &str = "http://timestamp.sectigo.com";
+pub const DIGICERT_URL: &str = "https://timestamp.digicert.com";
+pub const SECTIGO_URL: &str = "https://timestamp.sectigo.com";
 
 pub const HTTP_TIMEOUT: Duration = Duration::from_secs(10);
 pub const TSA_CONTENT_TYPE_QUERY: &str = "application/timestamp-query";
@@ -292,6 +293,20 @@ pub fn request_signature_timestamp(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// P0 security : tous les endpoints TSA DOIVENT être HTTPS pour empêcher
+    /// un MITM d'injecter un faux timestamp (eIDAS AdES-B-T requiert un
+    /// horodatage de confiance).
+    #[test]
+    fn default_endpoints_are_all_https() {
+        for url in default_endpoints() {
+            assert!(
+                url.starts_with("https://"),
+                "TSA endpoint {} is not HTTPS — MITM vulnerability",
+                url
+            );
+        }
+    }
 
     #[test]
     fn builds_tsq_der() {

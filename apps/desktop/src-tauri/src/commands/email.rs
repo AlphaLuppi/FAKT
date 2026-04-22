@@ -25,12 +25,13 @@ pub async fn open_mailto_fallback(url: String) -> Result<(), String> {
 fn dispatch_open(target: &str) -> Result<(), String> {
     #[cfg(target_os = "windows")]
     {
-        // `cmd /C start "" "<path>"` — on passe le path entre guillemets.
-        // Le 2e argument vide est le *titre* de la fenêtre : sans ça, `start`
-        // interprète le 1er guillemet comme le titre et n'ouvre pas le fichier
-        // si le path contient des espaces (FR usernames `Jean Dupont`, etc.).
-        Command::new("cmd")
-            .args(["/C", "start", "", target])
+        // P0 security fix : ne JAMAIS utiliser `cmd /C start` — cmd.exe interprète
+        // `& | < > ^` même avec `start`, ce qui permettait `file.eml & calc.exe`.
+        // `rundll32 url.dll,FileProtocolHandler <target>` passe le target comme
+        // argument unique à rundll32 (pas de shell parsing), puis url.dll l'ouvre
+        // via ShellExecute comme le ferait un double-clic Explorer.
+        Command::new("rundll32")
+            .args(["url.dll,FileProtocolHandler", target])
             .spawn()
             .map_err(|e| format!("Impossible d'ouvrir : {}", e))?;
     }
@@ -77,6 +78,13 @@ pub(crate) fn quote_cmd_arg(path: &str) -> String {
 mod tests {
     use super::quote_cmd_arg;
 
+    // NOTE : `quote_cmd_arg` n'est plus utilisée en prod — `dispatch_open` sous
+    // Windows passe désormais par `rundll32 url.dll,FileProtocolHandler <target>`
+    // qui ne fait aucun shell parsing (fix P0 security command injection).
+    // Les tests restent pour documenter l'ancien comportement de référence au
+    // cas où un fallback shell devrait être réintroduit — ils ne garantissent
+    // PAS la sécurité du chemin de prod.
+
     #[test]
     fn path_without_space_is_unchanged() {
         assert_eq!(quote_cmd_arg("C:\\fakt\\draft.eml"), "C:\\fakt\\draft.eml");
@@ -109,5 +117,24 @@ mod tests {
             quote_cmd_arg("C:\\Users\\A & B\\m.eml"),
             "\"C:\\Users\\A & B\\m.eml\""
         );
+    }
+
+    /// P0 security — `open_mailto_fallback` doit rejeter les URL ne commençant
+    /// pas par `mailto:`. Ce contrat reste invariant du choix de dispatcher
+    /// (cmd vs rundll32).
+    #[tokio::test]
+    async fn open_mailto_fallback_rejects_non_mailto() {
+        let res = super::open_mailto_fallback("http://evil.example/".into()).await;
+        assert!(res.is_err());
+    }
+
+    /// P0 security — `open_email_draft` doit rejeter un path inexistant même
+    /// avec extension `.eml` valide. Le chemin est ensuite passé à rundll32 sans
+    /// shell parsing.
+    #[tokio::test]
+    async fn open_email_draft_rejects_missing_file() {
+        let res =
+            super::open_email_draft("C:\\nonexistent-fakt-draft-12345.eml".into()).await;
+        assert!(res.is_err());
     }
 }

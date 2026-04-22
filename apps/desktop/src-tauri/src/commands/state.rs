@@ -160,8 +160,26 @@ impl AppState {
         doc_id: &str,
         bytes: &[u8],
     ) -> FaktResult<PathBuf> {
+        validate_safe_ident(doc_type, "doc_type")?;
+        validate_safe_ident(doc_id, "doc_id")?;
         let filename = format!("{}-{}.pdf", doc_type, doc_id);
         let path = self.signed_dir.join(filename);
+
+        // Canonicalize after creating the parent dir. We canonicalize the parent
+        // (which exists) and check the would-be path starts_with it. The file
+        // itself may not exist yet, so we cannot canonicalize `path` directly.
+        let parent_canon = self.signed_dir.canonicalize()?;
+        let path_parent_canon = path
+            .parent()
+            .ok_or_else(|| FaktError::Validation("signed path has no parent".into()))?
+            .canonicalize()?;
+        if !path_parent_canon.starts_with(&parent_canon) {
+            return Err(FaktError::Validation(format!(
+                "path escapes signed_dir: {}",
+                path.display()
+            )));
+        }
+
         std::fs::write(&path, bytes)?;
         self.signed_pdfs
             .lock()
@@ -174,17 +192,54 @@ impl AppState {
         doc_type: &str,
         doc_id: &str,
     ) -> FaktResult<Option<Vec<u8>>> {
+        validate_safe_ident(doc_type, "doc_type")?;
+        validate_safe_ident(doc_id, "doc_id")?;
         let map = self.signed_pdfs.lock();
         if let Some(p) = map.get(&(doc_type.to_string(), doc_id.to_string())) {
             return Ok(Some(std::fs::read(p)?));
         }
+        drop(map);
         let candidate = self.signed_dir.join(format!("{}-{}.pdf", doc_type, doc_id));
         if candidate.exists() {
+            // Vérifie que le chemin résolu reste dans signed_dir.
+            let parent_canon = self.signed_dir.canonicalize()?;
+            let candidate_canon = candidate.canonicalize()?;
+            if !candidate_canon.starts_with(&parent_canon) {
+                return Err(FaktError::Validation(format!(
+                    "path escapes signed_dir: {}",
+                    candidate.display()
+                )));
+            }
             return Ok(Some(std::fs::read(&candidate)?));
         }
         Ok(None)
     }
 
+}
+
+/// Valide qu'un identifiant (doc_type, doc_id) ne contient que des caractères
+/// sûrs pour la construction d'un filename confiné : `[A-Za-z0-9_-]{1,64}`.
+/// Rejette explicitement `/`, `\`, `..`, nul, caractères de contrôle.
+fn validate_safe_ident(value: &str, label: &str) -> FaktResult<()> {
+    if value.is_empty() {
+        return Err(FaktError::Validation(format!("{label} vide")));
+    }
+    if value.len() > 64 {
+        return Err(FaktError::Validation(format!(
+            "{label} trop long ({} > 64)",
+            value.len()
+        )));
+    }
+    for c in value.chars() {
+        let ok = c.is_ascii_alphanumeric() || c == '_' || c == '-';
+        if !ok {
+            return Err(FaktError::Validation(format!(
+                "{label} contient un caractère invalide: {:?}",
+                c
+            )));
+        }
+    }
+    Ok(())
 }
 
 /// Payload léger retourné par numbering_next_quote / numbering_next_invoice.
