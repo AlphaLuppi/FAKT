@@ -4,7 +4,7 @@
   "packageManager": "bun@1.3.2",
   "workspaces": ["apps/*", "packages/*", "packages/email", "landing"],
   "scripts": {
-    "dev": "bun run scripts/dev.sh",
+    "dev": "bun run scripts/dev.ts",
     "build": "turbo run build",
     "typecheck": "turbo run typecheck",
     "lint": "biome check .",
