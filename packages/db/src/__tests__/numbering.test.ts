@@ -1,12 +1,19 @@
 import { describe, it, expect, beforeEach } from "vitest";
+import type Database from "better-sqlite3";
 import { createTestDb, seedWorkspace, WORKSPACE_ID } from "./helpers.js";
-import { nextQuoteNumber, nextInvoiceNumber, peekNextNumber } from "../queries/numbering.js";
+import {
+  nextQuoteNumber,
+  nextInvoiceNumber,
+  peekNextNumber,
+  nextNumberAtomic,
+} from "../queries/numbering.js";
 import type { TestDb } from "./helpers.js";
 
 let db: TestDb;
+let sqlite: Database.Database;
 
 beforeEach(() => {
-  ({ db } = createTestDb());
+  ({ db, sqlite } = createTestDb());
   seedWorkspace(db);
 });
 
@@ -79,5 +86,23 @@ describe("peekNextNumber", () => {
     // Le peek ne doit pas avoir incrémenté le compteur
     const next = nextQuoteNumber(db, WORKSPACE_ID);
     expect(next.sequence).toBe(1);
+  });
+});
+
+describe("nextNumberAtomic", () => {
+  it("incrémente séquentiellement via BEGIN IMMEDIATE", () => {
+    const r1 = nextNumberAtomic(sqlite, db, WORKSPACE_ID, "quote");
+    const r2 = nextNumberAtomic(sqlite, db, WORKSPACE_ID, "quote");
+    expect(r1.sequence).toBe(1);
+    expect(r2.sequence).toBe(2);
+  });
+
+  it("quote et invoice indépendants en atomique", () => {
+    const q = nextNumberAtomic(sqlite, db, WORKSPACE_ID, "quote");
+    const f = nextNumberAtomic(sqlite, db, WORKSPACE_ID, "invoice");
+    expect(q.sequence).toBe(1);
+    expect(f.sequence).toBe(1);
+    expect(q.formatted).toMatch(/^D\d{4}-001$/);
+    expect(f.formatted).toMatch(/^F\d{4}-001$/);
   });
 });

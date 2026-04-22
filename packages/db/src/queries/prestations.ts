@@ -3,7 +3,7 @@
  * Soft delete uniquement (archived_at).
  */
 
-import { eq, and, like, isNull, or, asc } from "drizzle-orm";
+import { eq, and, like, isNull, isNotNull, or, asc } from "drizzle-orm";
 import type { DbInstance } from "../adapter.js";
 import { services } from "../schema/index.js";
 import type { Service, DocumentUnit } from "@fakt/shared";
@@ -154,6 +154,19 @@ export function softDeletePrestation(db: DbInstance, id: string): void {
     .get();
 
   if (!result) throw new Error(`softDeletePrestation: prestation not found or already archived id=${id}`);
+}
+
+/** Restaure une prestation archivée (archivedAt → null). */
+export function restorePrestation(db: DbInstance, id: string): Service {
+  const row = db
+    .update(services)
+    .set({ archivedAt: null })
+    .where(and(eq(services.id, id), isNotNull(services.archivedAt)))
+    .returning()
+    .get();
+
+  if (!row) throw new Error(`restorePrestation: prestation not found or not archived id=${id}`);
+  return rowToService(row);
 }
 
 /** Recherche de prestations par nom ou description. */

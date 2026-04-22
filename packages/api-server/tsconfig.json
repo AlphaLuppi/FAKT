@@ -3,7 +3,7 @@
   "compilerOptions": {
     "outDir": "./dist",
     "noEmit": true,
-    "types": ["node"],
+    "types": ["node", "bun"],
     "paths": {
       "@fakt/shared": ["../shared/src/index.ts"],
       "@fakt/db": ["../db/src/index.ts"],

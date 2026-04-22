@@ -6,6 +6,7 @@ import {
   createPrestation,
   updatePrestation,
   softDeletePrestation,
+  restorePrestation,
   searchPrestations,
 } from "../queries/prestations.js";
 import type { TestDb } from "./helpers.js";
@@ -109,6 +110,26 @@ describe("softDeletePrestation", () => {
   it("lève une erreur si déjà archivée", () => {
     softDeletePrestation(db, SERVICE_ID_1);
     expect(() => softDeletePrestation(db, SERVICE_ID_1)).toThrow();
+  });
+});
+
+describe("restorePrestation", () => {
+  beforeEach(() => makeService());
+
+  it("remet archivedAt à null", () => {
+    softDeletePrestation(db, SERVICE_ID_1);
+    const restored = restorePrestation(db, SERVICE_ID_1);
+    expect(restored.archivedAt).toBe(null);
+    const svc = getPrestation(db, SERVICE_ID_1);
+    expect(svc?.archivedAt).toBe(null);
+  });
+
+  it("lève une erreur si non archivée", () => {
+    expect(() => restorePrestation(db, SERVICE_ID_1)).toThrow(/not archived/);
+  });
+
+  it("lève une erreur si inexistante", () => {
+    expect(() => restorePrestation(db, "00000000-0000-0000-0000-999999999999")).toThrow();
   });
 });
 

@@ -18,6 +18,17 @@ import type { DbInstance } from "../adapter.js";
 import { numberingState } from "../schema/index.js";
 import { formatQuoteNumber, formatInvoiceNumber } from "@fakt/core";
 
+/**
+ * Type structurel minimal du driver SQLite brut (better-sqlite3 ou bun:sqlite).
+ * Expose uniquement `transaction(fn).immediate()` requis pour BEGIN IMMEDIATE.
+ */
+export interface SqliteDriverLike {
+  transaction<T>(fn: (...args: unknown[]) => T): {
+    (...args: unknown[]): T;
+    immediate: (...args: unknown[]) => T;
+  };
+}
+
 export type DocType = "quote" | "invoice";
 
 export interface NumberingResult {
@@ -43,6 +54,21 @@ export function nextQuoteNumber(db: DbInstance, workspaceId: string): NumberingR
  */
 export function nextInvoiceNumber(db: DbInstance, workspaceId: string): NumberingResult {
   return nextNumber(db, workspaceId, "invoice");
+}
+
+/**
+ * Atomique : wrap nextNumber dans BEGIN IMMEDIATE SQLite.
+ * Accepte l'instance SQLite brute (better-sqlite3 ou bun:sqlite — API compatible).
+ * Utilisé côté api-server pour garantir CGI art. 289 (pas de trou, pas de double).
+ */
+export function nextNumberAtomic(
+  sqlite: SqliteDriverLike,
+  db: DbInstance,
+  workspaceId: string,
+  type: DocType
+): NumberingResult {
+  const txn = sqlite.transaction((): NumberingResult => nextNumber(db, workspaceId, type));
+  return txn.immediate();
 }
 
 /**
