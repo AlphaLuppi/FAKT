@@ -11,7 +11,6 @@ import type { DbInstance } from "../adapter.js";
 import { invoices, invoiceItems, quotes, quoteItems } from "../schema/index.js";
 import { canTransitionInvoice } from "@fakt/core";
 import type { Invoice, InvoiceStatus, InvoiceKind, DocumentUnit, PaymentMethod } from "@fakt/shared";
-import type { QuoteItemInput } from "./quotes.js";
 
 // ─── Input types ──────────────────────────────────────────────────────────────
 
@@ -255,20 +254,25 @@ export function createInvoiceFromQuote(
   if (mode === "deposit30") {
     kind = "deposit";
     depositPercent = 30;
-    totalHtCents = Math.floor((quote.totalHtCents * 30) / 100);
+    // P0-B : Math.round au lieu de Math.floor — cohérent avec la redistribution cents
+    // sur la dernière ligne ci-dessous. Invariant : Σ lines.lineTotalCents === totalHtCents.
+    totalHtCents = Math.round((quote.totalHtCents * 30) / 100);
   } else if (mode === "full") {
     kind = "total";
     totalHtCents = quote.totalHtCents;
   } else {
     // balance : calcule ce qui reste après les acomptes déjà émis
     kind = "balance";
+    // P0-A : filtrer par status — un acompte draft n'a pas d'existence légale (pas de numéro),
+    // un acompte cancelled est réputé non émis. Seuls sent|paid|overdue soustraient du balance.
     const existingDeposits = db
       .select({ totalHtCents: invoices.totalHtCents })
       .from(invoices)
       .where(
         and(
           eq(invoices.quoteId, quoteId),
-          eq(invoices.kind, "deposit")
+          eq(invoices.kind, "deposit"),
+          inArray(invoices.status, ["sent", "paid", "overdue"])
         )
       )
       .all();
@@ -306,9 +310,14 @@ export function createInvoiceFromQuote(
 
   if (!row) throw new Error(`createInvoiceFromQuote: insert returned no row`);
 
-  // Copie les lignes du devis avec les montants proportionnels
-  const ratio = totalHtCents / quote.totalHtCents;
-  upsertItems(db, newInvoiceId, quoteLines.map((item) => ({
+  // Copie les lignes du devis avec les montants proportionnels.
+  // P0-B : redistribuer l'écart cents sur la dernière ligne pour verrouiller
+  // l'invariant Σ lines.lineTotalCents === totalHtCents (sinon PDF affiche Σ ≠ total).
+  const ratio = quote.totalHtCents === 0 ? 0 : totalHtCents / quote.totalHtCents;
+  const sortedLines = quoteLines
+    .slice()
+    .sort((a, b) => a.position - b.position);
+  const mappedLines = sortedLines.map((item) => ({
     id: crypto.randomUUID(),
     position: item.position,
     description: item.description,
@@ -317,7 +326,16 @@ export function createInvoiceFromQuote(
     unit: item.unit as DocumentUnit,
     lineTotalCents: Math.round(item.lineTotalCents * ratio),
     serviceId: item.serviceId ?? null,
-  })));
+  }));
+  if (mappedLines.length > 0) {
+    const sumOfLines = mappedLines.reduce((s, l) => s + l.lineTotalCents, 0);
+    const delta = totalHtCents - sumOfLines;
+    if (delta !== 0) {
+      const last = mappedLines[mappedLines.length - 1];
+      if (last) last.lineTotalCents += delta;
+    }
+  }
+  upsertItems(db, newInvoiceId, mappedLines);
 
   const created = getInvoice(db, newInvoiceId);
   if (!created) throw new Error(`createInvoiceFromQuote: could not reload invoice id=${newInvoiceId}`);

@@ -88,6 +88,7 @@
       "name": "@fakt/api-server",
       "version": "0.1.0",
       "dependencies": {
+        "@fakt/core": "workspace:*",
         "@fakt/db": "workspace:*",
         "@fakt/shared": "workspace:*",
         "better-sqlite3": "^11.5",

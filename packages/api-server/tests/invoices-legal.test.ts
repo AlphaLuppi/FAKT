@@ -188,3 +188,102 @@ describe("Mention légale TVA micro-entreprise — stockée dans legalMentions",
     expect(body.legalMentions).toContain("TVA non applicable, art. 293 B du CGI");
   });
 });
+
+/* ─── P0-C régression ───────────────────────────────────────────────────────
+ * CGI art. 289-I-4 : une facture émise ne peut pas être annulée — elle doit
+ * être remplacée par un avoir (facture négative avec son propre numéro).
+ * Autoriser sent→cancelled créerait un trou dans la séquence visible par
+ * l'URSSAF/le fisc.
+ */
+describe("POST /api/invoices/:id/cancel — conformité CGI art. 289-I-4", () => {
+  it("200 si draft → cancelled (brouillon jamais émis, autorisé)", async () => {
+    const { app, authHeaders, db } = createTestApp();
+    seedClient(db);
+    await app.request("/api/invoices", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify(invoicePayload()),
+    });
+    const res = await app.request(`/api/invoices/${INVOICE_ID}/cancel`, {
+      method: "POST",
+      headers: authHeaders(),
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { status: string };
+    expect(body.status).toBe("cancelled");
+  });
+
+  it("422 INVALID_TRANSITION si sent → cancelled (facture émise : avoir obligatoire)", async () => {
+    const { app, authHeaders, db } = createTestApp();
+    seedClient(db);
+    await app.request("/api/invoices", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify(invoicePayload()),
+    });
+    // draft → sent (numéro légal attribué)
+    const issueRes = await app.request(`/api/invoices/${INVOICE_ID}/issue`, {
+      method: "POST",
+      headers: authHeaders(),
+    });
+    expect(issueRes.status).toBe(200);
+
+    // cancel → 422 avec mention CGI art. 289-I-4 + "avoir"
+    const res = await app.request(`/api/invoices/${INVOICE_ID}/cancel`, {
+      method: "POST",
+      headers: authHeaders(),
+    });
+    expect(res.status).toBe(422);
+    const body = (await res.json()) as { error: { code: string; message: string } };
+    expect(body.error.code).toBe("INVALID_TRANSITION");
+    expect(body.error.message).toMatch(/CGI art\. 289-I-4/i);
+    expect(body.error.message).toMatch(/avoir/i);
+  });
+
+  it("422 INVALID_TRANSITION si paid → cancelled", async () => {
+    const { app, authHeaders, db } = createTestApp();
+    seedClient(db);
+    await app.request("/api/invoices", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify(invoicePayload()),
+    });
+    await app.request(`/api/invoices/${INVOICE_ID}/issue`, {
+      method: "POST",
+      headers: authHeaders(),
+    });
+    await app.request(`/api/invoices/${INVOICE_ID}/mark-paid`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ paidAt: 1_700_000_000_000, method: "wire" }),
+    });
+
+    const res = await app.request(`/api/invoices/${INVOICE_ID}/cancel`, {
+      method: "POST",
+      headers: authHeaders(),
+    });
+    expect(res.status).toBe(422);
+    const body = (await res.json()) as { error: { code: string; message: string } };
+    expect(body.error.code).toBe("INVALID_TRANSITION");
+    expect(body.error.message).toMatch(/CGI art\. 289-I-4/i);
+  });
+
+  it("200 idempotent si déjà cancelled (re-cancel ne throw pas)", async () => {
+    const { app, authHeaders, db } = createTestApp();
+    seedClient(db);
+    await app.request("/api/invoices", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify(invoicePayload()),
+    });
+    await app.request(`/api/invoices/${INVOICE_ID}/cancel`, {
+      method: "POST",
+      headers: authHeaders(),
+    });
+    const res = await app.request(`/api/invoices/${INVOICE_ID}/cancel`, {
+      method: "POST",
+      headers: authHeaders(),
+    });
+    expect(res.status).toBe(200);
+  });
+});

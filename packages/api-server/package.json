@@ -15,6 +15,7 @@
     "start": "bun run src/index.ts"
   },
   "dependencies": {
+    "@fakt/core": "workspace:*",
     "@fakt/db": "workspace:*",
     "@fakt/shared": "workspace:*",
     "better-sqlite3": "^11.5",

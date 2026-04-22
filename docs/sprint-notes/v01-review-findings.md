@@ -130,7 +130,7 @@ _Scope :_ OWASP top 10 sur packages/api-server, secrets, crypto PAdES (apps/desk
 
 _Scope :_ logic errors, null safety, edge cases (from-quote deposit30 boundary 30%, numbering year transition 2026→2027, empty workspace, soft-delete/restore race, concurrence).
 
-### [P0] from-quote "balance" ne déduit PAS les acomptes archivés et oublie la contrainte sur kind=`balance` lui-même, fuite d'argent côté freelance
+- [x] ### [P0] from-quote "balance" ne déduit PAS les acomptes archivés et oublie la contrainte sur kind=`balance` lui-même, fuite d'argent côté freelance
 **Path:** `packages/db/src/queries/invoices.ts:263-283`
 **Repro:**
 1. Devis signé, total 10 000 €. Émettre deposit30 (3 000 €) → archiver la facture d'acompte (`POST /api/invoices/:id/archive`).
@@ -138,13 +138,13 @@ _Scope :_ logic errors, null safety, edge cases (from-quote deposit30 boundary 3
 **Impact:** la query `.select().from(invoices).where(quoteId=… AND kind="deposit")` ignore `invoices.archivedAt` : on soustrait bien l'acompte — OK dans ce cas. MAIS si l'utilisateur émet **deux fois** le solde (ex : premier balance annulé/cancelled puis relancé), le code prend également en compte les balances précédents via la même requête ? Non, filtre `kind=deposit` seulement, donc côté balance ok. **Le vrai bug** : aucune vérification `status != cancelled` sur les acomptes — un acompte `cancelled` reste compté comme "déjà payé", et le solde est sous-évalué → facturation incomplète (freelance perd de l'argent). Pareil pour un acompte encore en `draft` (jamais émis légalement, mais son montant est déjà soustrait du solde).
 **Fix suggéré:** ajouter `and(ne(invoices.status, "cancelled"))` ET filtrer `status IN ('sent','paid','overdue')` (pas `draft`, pas `cancelled`) dans le SELECT des `existingDeposits`. Et test de régression dans `invoices-from-quote.test.ts` : deposit30 en `cancelled` → balance doit retourner 100 % du total.
 
-### [P0] from-quote deposit30 tronque 1 centime au lieu d'arrondir (Math.floor) → incohérence acompte + solde ≠ total
+- [x] ### [P0] from-quote deposit30 tronque 1 centime au lieu d'arrondir (Math.floor) → incohérence acompte + solde ≠ total
 **Path:** `packages/db/src/queries/invoices.ts:258`
 **Repro:** devis signé 100,01 € (10001 cents). `deposit30` → `Math.floor(10001 * 30 / 100) = Math.floor(3000.3) = 3000`. `balance` → `10001 - 3000 = 7001`. Somme = `10001` OK par hasard grâce au plancher. Mais devis 100,03 € (10003) → acompte `Math.floor(3000.9) = 3000`, solde = `7003`. Mais si freelance a choisi arrondi standard `Math.round`, l'acompte devrait être 3001 et le solde 7002. Le bug de cohérence ne crée pas de trou, mais **la ligne proportionnelle des items** (`Math.round(item.lineTotalCents * ratio)` l.318) utilise `Math.round`, incohérent avec le total `Math.floor` → la somme des lignes peut dépasser `totalHtCents` de 1 centime, invalidant la facture (le PDF rendu montrera `Σ lignes ≠ total`).
 **Impact:** cohérence `Σ lines = total` cassée sur devis non divisibles par 100/30 → freelance reçoit des questions clients, la facture peut être rejetée par le client en automatique.
 **Fix suggéré:** choisir une stratégie unique. Recommandé : `totalHtCents = Math.round(quote.totalHtCents * 30 / 100)` ET après avoir calculé les lignes `Math.round(lineTotalCents * ratio)`, redistribuer la différence `totalHtCents - Σ lineTotalCents` sur la dernière ligne. Tests frontière 1 cent, 99.99 €, 33.33 €.
 
-### [P0] Le `/cancel` invoice contourne `canTransitionInvoice` et ne déclenche pas les triggers — peut effacer un numéro légal
+- [x] ### [P0] Le `/cancel` invoice contourne `canTransitionInvoice` et ne déclenche pas les triggers — peut effacer un numéro légal
 **Path:** `packages/api-server/src/routes/invoices.ts:334-340`
 **Repro:** facture `status=sent, number=F2026-001`. `POST /:id/cancel` → `UPDATE invoices SET status='cancelled'`. Le numéro `F2026-001` reste assigné mais la facture n'a plus aucune existence commerciale → trou dans la séquence perçue par le client (il reçoit F2026-001 puis F2026-002 jamais F2026-001bis). Légalement, **une facture annulée ne se supprime pas, elle est remplacée par un avoir** (CGI art. 289-I-4). Le status `cancelled` tel qu'implémenté laisse croire que le numéro peut être réattribué, alors que le droit français exige un *avoir* (facture négative).
 **Impact:** non-conformité CGI art. 289. Un contrôle URSSAF/fisc peut considérer la séquence comme trouée.

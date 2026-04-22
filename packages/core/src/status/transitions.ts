@@ -11,9 +11,14 @@ const QUOTE_TRANSITIONS: Record<QuoteStatus, QuoteStatus[]> = {
   expired: [],
 };
 
-/** Transitions valides pour les factures. */
+/**
+ * Transitions valides pour les factures.
+ * Note CGI art. 289-I-4 : une facture émise (sent|paid|overdue) ne peut pas
+ * être annulée — elle doit être remplacée par un avoir (facture négative avec
+ * son propre numéro). Seul draft → cancelled est autorisé (brouillon jamais émis).
+ */
 const INVOICE_TRANSITIONS: Record<InvoiceStatus, InvoiceStatus[]> = {
-  draft: ["sent"],
+  draft: ["sent", "cancelled"],
   sent: ["paid", "overdue"],
   paid: [],
   overdue: ["paid"],

@@ -175,11 +175,32 @@ describe("createInvoiceFromQuote", () => {
     expect(inv.depositPercent).toBe(30);
   });
 
-  it("mode balance : calcule le solde après acompte", () => {
+  it("mode balance : calcule le solde après acompte émis (status sent|paid|overdue)", () => {
+    // P0-A : seul un deposit en status sent|paid|overdue compte. Un deposit draft
+    // n'a pas d'existence légale (pas de numéro attribué) — il ne doit pas réduire
+    // le solde (sinon facturation incomplète = fuite d'argent).
     createInvoiceFromQuote(db, INV_ID, QUOTE_ID, "deposit30", LEGAL);
+    // Simule l'émission de l'acompte (draft→sent) via SQL direct.
+    db.update(invoices).set({ status: "sent" }).where(eq(invoices.id, INV_ID)).run();
+
     const balance = createInvoiceFromQuote(db, INV_ID_2, QUOTE_ID, "balance", LEGAL);
     expect(balance.totalHtCents).toBe(70000);
     expect(balance.kind).toBe("balance");
+  });
+
+  it("mode balance : ignore un deposit30 resté en draft (pas émis légalement)", () => {
+    // Deposit créé mais jamais émis → reste draft → ne doit PAS réduire le solde.
+    createInvoiceFromQuote(db, INV_ID, QUOTE_ID, "deposit30", LEGAL);
+    const balance = createInvoiceFromQuote(db, INV_ID_2, QUOTE_ID, "balance", LEGAL);
+    expect(balance.totalHtCents).toBe(100000);
+    expect(balance.kind).toBe("balance");
+  });
+
+  it("mode balance : ignore un deposit30 en status cancelled", () => {
+    createInvoiceFromQuote(db, INV_ID, QUOTE_ID, "deposit30", LEGAL);
+    db.update(invoices).set({ status: "cancelled" }).where(eq(invoices.id, INV_ID)).run();
+    const balance = createInvoiceFromQuote(db, INV_ID_2, QUOTE_ID, "balance", LEGAL);
+    expect(balance.totalHtCents).toBe(100000);
   });
 
   it("refuse si le devis n'est pas signé", () => {

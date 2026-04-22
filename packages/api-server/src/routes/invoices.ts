@@ -1,7 +1,6 @@
 import { Hono } from "hono";
-import { eq } from "drizzle-orm";
 import type { AppEnv } from "../types.js";
-import { invoices } from "@fakt/db/schema";
+import { canTransitionInvoice } from "@fakt/core";
 import { notFound, conflict, invalidTransition } from "../errors.js";
 import { parseBody, parseQuery, parseParam } from "../middleware/zod.js";
 import { uuidSchema } from "../schemas/common.js";
@@ -319,27 +318,26 @@ invoicesRoutes.post("/:id/mark-overdue", (c) => {
   }
 });
 
-/** POST /api/invoices/:id/cancel — annule (facture erronée). */
+/**
+ * POST /api/invoices/:id/cancel — annule un brouillon uniquement.
+ * CGI art. 289-I-4 : une facture émise (sent|paid|overdue) ne peut pas être
+ * annulée — elle doit être remplacée par un AVOIR (facture négative avec son
+ * propre numéro séquentiel). Autoriser `sent → cancelled` créerait un trou
+ * dans la numérotation visible par l'URSSAF/le fisc.
+ */
 invoicesRoutes.post("/:id/cancel", (c) => {
   const id = parseParam(c, "id", uuidSchema);
   const existing = getInvoice(c.var.db, id);
   if (!existing) throw notFound(`invoice ${id} introuvable`);
   if (existing.status === "cancelled") return c.json(existing);
-  // cancel n'est pas dans les transitions canoniques ; on autorise depuis draft ou sent uniquement.
-  if (existing.status !== "draft" && existing.status !== "sent") {
+
+  if (!canTransitionInvoice(existing.status, "cancelled")) {
     throw invalidTransition(
-      `cancel : status=${existing.status} non annulable (draft ou sent requis)`
+      `une facture émise ne peut pas être annulée — créer un avoir (facture d'avoir négative) conformément à CGI art. 289-I-4 (status=${existing.status})`
     );
   }
-  // canTransitionInvoice ne définit pas draft|sent → cancelled ; on fait un update direct
-  // (la transition 'cancelled' est un état terminal documenté, pas un parcours métier normal).
-  c.var.db
-    .update(invoices)
-    .set({ status: "cancelled", updatedAt: new Date(Date.now()) })
-    .where(eq(invoices.id, id))
-    .run();
-  const updated = getInvoice(c.var.db, id);
-  if (!updated) throw notFound(`invoice ${id} introuvable`);
+
+  const updated = updateInvoiceStatus(c.var.db, id, "cancelled");
   const workspaceId = requireWorkspaceId(c.var.db);
   logActivity(c.var.db, workspaceId, "invoice.cancelled", updated.id);
   return c.json(updated);
