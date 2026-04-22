@@ -35,6 +35,10 @@ jobs:
           toolchain: "1.75"
           components: clippy
 
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.2
+
       - name: Cache cargo
         uses: actions/cache@v4
         with:
@@ -53,6 +57,13 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y pkg-config libssl-dev libdbus-1-dev
+
+      # build.rs Tauri vérifie l'existence du sidecar binary avant cargo check
+      # (externalBin dans tauri.conf.json). Sans ça, cargo check échoue.
+      - name: Install monorepo deps + build sidecar
+        run: |
+          bun install --frozen-lockfile
+          bun run packages/api-server/scripts/build-sidecar.ts
 
       - name: cargo check
         working-directory: apps/desktop/src-tauri
