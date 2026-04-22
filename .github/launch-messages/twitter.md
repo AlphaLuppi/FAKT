@@ -12,7 +12,7 @@ J'ai arrêté de payer Yousign + Indy + Google Drive.
 
 J'ai fait FAKT.
 
-~8 Mo. Desktop. Open-source. PAdES maison. SQLite local.
+~100 Mo. Desktop. Open-source. PAdES maison. SQLite local.
 
 Vos devis et factures signés. En local. Pour toujours.
 
@@ -37,7 +37,7 @@ Pendant 3 ans, mon cycle de facturation ressemblait à ça :
 
 **Tweet 3 — La solution**
 
-FAKT : tout ça dans un seul binaire de ~8 Mo.
+FAKT : tout ça dans une app desktop de ~100 Mo (équivalent Slack/Discord/Obsidian).
 
 ✓ Devis + factures conformes (CGI art. 289)
 ✓ Numérotation séquentielle automatique
@@ -48,6 +48,7 @@ FAKT : tout ça dans un seul binaire de ~8 Mo.
 ✓ Export ZIP archive 10 ans
 
 Offline-first. Data chez vous. Zéro SaaS obligatoire.
+Port Rust du sidecar prévu v0.2 → ~20 Mo visés.
 
 ---
 

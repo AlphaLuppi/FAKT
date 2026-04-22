@@ -50,7 +50,7 @@ Existant (baseline) : **222 tests Vitest passent** dans `apps/desktop/src/**/*.t
 
 ### 1.1 `packages/api-server/` — handlers HTTP
 
-**Structure attendue :**
+**Structure livrée (v0.1) :**
 ```
 packages/api-server/
 ├── src/
@@ -62,28 +62,43 @@ packages/api-server/
 │   │   ├── invoices.ts
 │   │   ├── workspace.ts
 │   │   ├── numbering.ts
-│   │   └── signatures.ts
+│   │   ├── signatures.ts
+│   │   ├── activity.ts
+│   │   ├── backups.ts
+│   │   ├── health.ts
+│   │   └── settings.ts
 │   ├── middleware/
-│   │   ├── auth.ts           # bearer token check (shared secret sidecar)
+│   │   ├── auth.ts           # X-FAKT-Token header check (shared secret sidecar)
 │   │   └── error.ts          # Zod → 400, not-found → 404, conflict → 409
 │   └── schemas/              # Zod schemas partagés avec frontend
-├── src/__tests__/
-│   ├── helpers.ts            # createTestApp() + seed
-│   ├── clients.test.ts
-│   ├── services.test.ts
-│   ├── quotes.test.ts
-│   ├── invoices.test.ts
-│   ├── workspace.test.ts
-│   ├── numbering.test.ts
-│   └── signatures.test.ts
+└── tests/
+    ├── helpers.ts            # createTestApp() + seed
+    ├── activity.test.ts
+    ├── backups.test.ts
+    ├── clients.test.ts
+    ├── health.test.ts
+    ├── invoices-from-quote.test.ts
+    ├── invoices-legal.test.ts
+    ├── invoices.test.ts
+    ├── numbering-concurrency.test.ts
+    ├── numbering.test.ts
+    ├── quotes-cycle.test.ts
+    ├── quotes.test.ts
+    ├── services.test.ts
+    ├── signatures-audit.test.ts
+    └── workspace.test.ts
 ```
 
-**Helper `createTestApp()`** (réutilisable, à créer en premier par l'agent Track α) :
+14 fichiers de tests sont livrés à la racine de `packages/api-server/tests/` (et pas sous
+`src/__tests__/` comme originellement spec'é — l'emplacement a été ajusté en Phase 2 Build
+pour s'aligner sur la convention Bun/Vitest par défaut).
+
+**Helper `createTestApp()`** (réutilisable, créé en premier par l'agent Track α) :
 
 ```ts
-// packages/api-server/src/__tests__/helpers.ts
+// packages/api-server/tests/helpers.ts
 import { createTestDb, seedWorkspace, WORKSPACE_ID } from "@fakt/db/__tests__/helpers";
-import { createApp } from "../app.js";
+import { createApp } from "../src/app.js";
 
 export function createTestApp() {
   const { db, sqlite } = createTestDb();
@@ -93,7 +108,7 @@ export function createTestApp() {
 }
 
 export function authHeaders(token: string) {
-  return { Authorization: `Bearer ${token}` };
+  return { "X-FAKT-Token": token };
 }
 ```
 

@@ -101,6 +101,25 @@ est généré automatiquement et stocké dans le keychain de l'OS.
 
 ---
 
+## Troubleshooting
+
+**L'app ne démarre pas (fenêtre blanche)**
+Le sidecar api-server n'a pas pu se lancer. Logs dans :
+- Windows : `%APPDATA%\fakt\logs\sidecar.log`
+- macOS : `~/Library/Application Support/fakt/logs/sidecar.log`
+- Linux : `~/.local/share/fakt/logs/sidecar.log`
+
+**Port 3117 déjà occupé**
+Une instance précédente est peut-être encore en arrière-plan. Sur Windows : `netstat -ano | findstr :3117` puis `taskkill /PID <pid>`. Sur macOS/Linux : `lsof -ti:3117 | xargs kill`.
+
+**Erreur 401 UNAUTHORIZED en dev**
+Le token `window.__FAKT_API_TOKEN__` n'a pas été injecté. Relancer via `bun run dev` (qui injecte) au lieu de `bun --cwd apps/desktop run dev` (Vite standalone sans token).
+
+**Sidecar crash-loop (l'app se ferme 3× de suite en <60s)**
+Vérifier les logs sidecar ci-dessus. Causes courantes : DB corrompue (supprimer `~/.fakt/db.sqlite` et relancer pour regénérer), migration cassée, port 3117 pris.
+
+---
+
 ## Développement local
 
 **Prérequis :**

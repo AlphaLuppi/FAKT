@@ -14,7 +14,7 @@ J'ai commencé à bidouiller des scripts Claude Code qui généraient des PDF de
 
 Alors j'ai décidé d'aller jusqu'au bout.
 
-FAKT réunit tout ça dans un seul binaire de ~8 Mo :
+FAKT réunit tout ça dans une application desktop de ~100 Mo (équivalent Slack, Discord ou Obsidian ; un port Rust du sidecar est prévu en v0.2 pour descendre à ~20 Mo) :
 → Devis et factures conformes (CGI art. 289, mention TVA art. 293 B)
 → Signature électronique PAdES avancée (niveau eIDAS AdES-B-T) implémentée en Rust, sans Yousign
 → Horodatage RFC 3161, audit trail SHA-256 inviolable

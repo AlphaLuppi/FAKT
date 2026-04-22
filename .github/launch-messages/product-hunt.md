@@ -12,7 +12,7 @@ FAKT — Facturez et signez en local, sans SaaS
 
 ## Description courte (260 chars max)
 
-Application desktop open-source pour freelances français. Devis + factures conformes CGI, signature PAdES avancée maison (pas Yousign), 100% offline-first, IA Claude intégrée. Binaire ~8 Mo. Windows/macOS/Linux. BSL 1.1.
+Application desktop open-source pour freelances français. Devis + factures conformes CGI, signature PAdES avancée maison (pas Yousign), 100% offline-first, IA Claude intégrée. App desktop ~100 Mo (équivalent Slack/Discord). Windows/macOS/Linux. BSL 1.1.
 
 ---
 

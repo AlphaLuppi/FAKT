@@ -24,9 +24,14 @@ Ce PRD définit les exigences fonctionnelles et non-fonctionnelles de **FAKT v0.
 
 ---
 
+> **Addendum 2026-04-22 — NFR-003 révisé à ~100 Mo**
+> Suite au bundling Bun compiled du sidecar api-server (refacto sidecar de la v0.1), la taille binaire réelle est ~100 Mo (équivalent Slack/Discord/Obsidian). Port Rust envisagé v0.2 pour revenir à ~20 Mo. Le critère release-blocking est fonctionnel (démarrage ≤ 2 s, app dogfoodable), pas la taille binaire. Voir [CHANGELOG.md](/CHANGELOG.md) section Changed. Les mentions « ~5 Mo » / « ≤ 15 Mo » ci-dessous sont conservées pour traçabilité mais doivent être lues comme « ~100 Mo (objectif v0.2 : ~20 Mo via port Rust sidecar) ».
+
+---
+
 ## Executive Summary
 
-FAKT est une application desktop native (Tauri 2, ~5 Mo) qui permet à un freelance français en micro-entreprise de piloter son cycle complet de devis et factures : génération IA depuis un brief client, édition, rendu PDF conforme à la législation FR, signature électronique avancée PAdES maison, et préparation de brouillon email.
+FAKT est une application desktop native (Tauri 2 + sidecar Bun compiled, ~100 Mo — objectif v0.2 : ~20 Mo via port Rust sidecar) qui permet à un freelance français en micro-entreprise de piloter son cycle complet de devis et factures : génération IA depuis un brief client, édition, rendu PDF conforme à la législation FR, signature électronique avancée PAdES maison, et préparation de brouillon email.
 
 **Objectif v0.1.0 (échéance 2026-05-12) :** remplacer à 100 % les skills Claude Code `/devis-freelance` et `/facture-freelance` pour l'usage personnel de Tom Andrieu, puis shipper en open-source pour adoption par la communauté freelance FR.
 
@@ -47,7 +52,7 @@ FAKT est une application desktop native (Tauri 2, ~5 Mo) qui permet à un freela
 
 - **Adoption perso (go/no-go) :** 0 invocation des skills legacy pendant 30 jours post-launch.
 - **Fiabilité signature :** 0 PDF signé par FAKT rejeté par Adobe Reader / Foxit / pyHanko pendant 6 mois.
-- **Performance installer :** taille binaire ≤ 15 Mo (objectif 8 Mo), startup ≤ 2 s sur MacBook Air M1 ou PC Win11 i5.
+- **Performance installer :** taille binaire ~100 Mo (objectif v0.2 ~20 Mo via port Rust sidecar) — NFR-003 révisé 2026-04-22 ; le critère release-blocking est fonctionnel (démarrage ≤ 2 s, app dogfoodable), pas la taille binaire. Startup ≤ 2 s sur MacBook Air M1 ou PC Win11 i5.
 - **Qualité code :** coverage tests >= 70 % sur `packages/core` et `packages/pdf`, 0 warning lint/typecheck en CI.
 - **Star velocity :** ≥ 10 stars GitHub à 30 jours post-release.
 
@@ -597,18 +602,19 @@ Le rendu d'un devis ou facture standard (< 20 lignes) via Typst doit se complét
 
 ### NFR-003 : Taille de l'installer
 
-**Priority :** Must Have
+**Priority :** Should Have _(déprionné — voir révision ci-dessous)_
 
 **Description :**
-Les installers signés cross-platform doivent peser ≤ 15 Mo (objectif 8 Mo). Tauri 2 permet d'atteindre cet objectif grâce à l'utilisation du webview OS natif.
+_Révisé 2026-04-22 à ~100 Mo — cf. addendum en tête + CHANGELOG [Unreleased] Changed._ Les installers signés cross-platform pèsent désormais ~100 Mo suite au bundling Bun compiled du sidecar api-server (équivalent Slack/Discord/Obsidian). Le critère release-blocking est fonctionnel (démarrage ≤ 2 s, app dogfoodable), pas la taille binaire.
 
-**Acceptance Criteria :**
-- Windows `.msi` : ≤ 15 Mo (target 8 Mo)
-- macOS `.dmg` : ≤ 15 Mo (target 8 Mo)
-- Linux `.AppImage` : ≤ 25 Mo (webview GTK bundlé)
-- Measured on : artefacts CI post-build
+**Acceptance Criteria (v0.1) :**
+- Windows `.msi` : ~100 Mo (cohérent avec apps desktop modernes)
+- macOS `.dmg` : ~100 Mo
+- Linux `.AppImage` : ~100 Mo (webview GTK bundlé)
+- Objectif v0.2 : ~20 Mo via port Rust du sidecar api-server
+- Measured on : artefacts CI post-build (monitoring informatif, pas de gate bloquant)
 
-**Rationale :** positionning open-source « 5 Mo vs Electron 150 Mo » est un axe marketing. Casser cet engagement = perte de crédibilité.
+**Rationale :** le positionning « 5 Mo vs Electron 150 Mo » ne tient plus post-refacto sidecar. Le positionning actuel est « app desktop moderne ~100 Mo, objectif ~20 Mo v0.2 ». Cf. CHANGELOG Known Issues.
 
 ---
 

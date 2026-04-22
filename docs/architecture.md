@@ -139,6 +139,17 @@ et **ne passent pas par le sidecar**.
 - **Cert X.509** : génération auto-signée + stockage keychain (Windows Credential
   Manager / macOS Keychain / Linux Secret Service via crate `keyring`).
 
+### NFR-003 révisé à ~100 Mo (addendum 2026-04-22)
+
+Le bundling du sidecar Bun compiled fait passer la taille installer de ~15 Mo (objectif
+initial MVP) à **~100 Mo** (équivalent Slack / Discord / Obsidian : 100-200 Mo). Toutes les
+références à « ≤ 15 Mo » ou « 5 Mo » dans les sections ci-dessous sont **conservées pour
+traçabilité** mais doivent être lues comme **« ~100 Mo en v0.1, objectif ~20 Mo en v0.2 via
+port Rust sidecar »**. Le critère release-blocking est **fonctionnel** (démarrage ≤ 2 s,
+app dogfoodable), pas la taille binaire. La CI v0.1 ne comporte pas de gate artifact size
+bloquant (cf. `.github/workflows/ci.yml`). Monitoring informatif uniquement. Cf.
+[`CHANGELOG.md`](../CHANGELOG.md) section Changed + Known Issues.
+
 ### Détails et sources complémentaires
 
 - Spec complète sidecar : [`docs/refacto-spec/architecture.md`](./refacto-spec/architecture.md)
@@ -239,7 +250,7 @@ Les NFRs qui pèsent le plus sur les décisions d'architecture :
 
 | NFR | Driver | Impact design |
 |---|---|---|
-| **NFR-003** Installer ≤ 15 Mo | Tauri 2 obligatoire (vs Electron) | Webview OS natif, pas de runtime Node embarqué côté frontend |
+| **NFR-003** Installer ~100 Mo _(révisé 2026-04-22 — cf. addendum en tête + CHANGELOG [0.1.0] Changed ; anciennement ≤ 15 Mo)_ | Tauri 2 + sidecar Bun compiled (Rust sidecar v0.2 → ~20 Mo) | Webview OS natif ; sidecar api-server embarqué fait le gros du poids |
 | **NFR-004** Conformité légale FR | Numérotation atomique, archivage 10 ans, mentions | Table `numbering_state` + transactions IMMEDIATE, triggers SQL anti-UPDATE/DELETE, `archived_at` nullable |
 | **NFR-001** Startup ≤ 2s | Pas d'init réseau bloquante, lazy-load DB | Migrations async en background, splash minimal, DB connect en tâche détachée |
 | **NFR-002** PDF render ≤ 3s | Typst natif (pas Puppeteer) | `typst-cli` linked-in ou `typst` crate embedded (décision 7.3) |
@@ -1092,7 +1103,7 @@ Les alternatives évaluées :
 | Option | Pro | Contra | Verdict |
 |---|---|---|---|
 | `sign-pdf-rs` | API haut niveau | Maintenance incertaine (< 50 stars), pas de PAdES-B-T, pas d'audit crypto public | Rejeté |
-| `openssl` wrapper | Robuste | Binding C/OpenSSL complique cross-OS (Windows MSVC), augmente taille binaire, nécessite libssl installée | Rejeté (NFR-003 installer ≤ 15 Mo) |
+| `openssl` wrapper | Robuste | Binding C/OpenSSL complique cross-OS (Windows MSVC), augmente taille binaire, nécessite libssl installée | Rejeté (NFR-003 budget taille — _révisé 2026-04-22 à ~100 Mo, cf. addendum ; rejet maintenu car openssl ajouterait encore de la taille et complexifie la cross-compile_) |
 | **`lopdf` + `rsa` + `cms`** (retenu) | Pure Rust, audité, contrôle fin, pas de dépendance C, petit overhead taille | Plus de code à écrire pour le CMS/PKCS#7 | **Retenu** |
 
 **Rationale complémentaire :** la signature PAdES est un actif différenciant (« sans Yousign »). En contrôler le code 100 % = flexibilité pour évoluer vers PAdES-LT en v0.2+ (archivage long terme), et crédibilité en cas d'audit communauté.
@@ -1937,9 +1948,9 @@ jobs:
 
 | Métrique | Budget v0.1 | Mesure |
 |---|---|---|
-| Installer Windows `.msi` | ≤ 15 Mo (objectif 8 Mo) | CI artifact size check |
-| Installer macOS `.dmg` | ≤ 15 Mo (objectif 8 Mo) | CI |
-| Installer Linux `.AppImage` | ≤ 25 Mo (webview bundlé) | CI |
+| Installer Windows `.msi` | ~100 Mo _(révisé 2026-04-22 — cf. addendum en tête + CHANGELOG [0.1.0] Changed ; objectif v0.2 ~20 Mo via port Rust sidecar)_ | Monitoring informatif (pas de gate bloquant en CI) |
+| Installer macOS `.dmg` | ~100 Mo _(révisé 2026-04-22 ; idem)_ | idem |
+| Installer Linux `.AppImage` | ~100 Mo _(révisé 2026-04-22 ; idem)_ | idem |
 | Startup cold | p95 ≤ 2 s | Benchmark CI (hardware standard) |
 | Startup warm | p95 ≤ 800 ms | Benchmark |
 | PDF render (20 lignes) | p95 ≤ 3 s | Vitest benchmark `packages/pdf` |
@@ -2019,7 +2030,7 @@ Plausible instance fournit un dashboard agrégé (org AlphaLuppi) sur les events
 | Claude CLI subprocess | Pas de token Anthropic à gérer | Dépendance externe à installer | Respect user ownership, pas de liability |
 | Signature eIDAS avancée maison (pas qualifiée) | Indépendance + gratuité | Pas d'accréditation ANSSI | v0.3+ offrira Yousign en option payante |
 | Bun + Turborepo + Biome | Toolchain rapide, pattern MnM | Toolchain moins mainstream que npm/pnpm+ESLint | Aligné sur stack AlphaLuppi, DX excellente |
-| Tauri vs Electron | Installer 5 Mo vs 150 Mo | Écosystème plus jeune | NFR-003 imposé |
+| Tauri vs Electron | Installer ~100 Mo vs ~150 Mo (avec sidecar Bun ; objectif v0.2 ~20 Mo via port Rust) _— révisé 2026-04-22, cf. addendum_ | Écosystème plus jeune | NFR-003 initial déprionné, reste un gain significatif vs Electron |
 
 ---
 
@@ -2061,7 +2072,7 @@ Plausible instance fournit un dashboard agrégé (org AlphaLuppi) sur les events
 |---|---|---|
 | NFR-001 Startup ≤ 2s | Tauri webview natif, init DB async, splash minimal | Benchmark CI |
 | NFR-002 PDF ≤ 3s | `typst` crate embedded, templates optimisés | Vitest bench |
-| NFR-003 Installer ≤ 15 Mo | Tauri 2, tree-shake Vite, pas d'assets lourds | CI size gate |
+| NFR-003 Installer ~100 Mo _(révisé 2026-04-22 — cf. addendum en tête + CHANGELOG [0.1.0] Changed ; objectif v0.2 ~20 Mo via port Rust sidecar)_ | Tauri 2, tree-shake Vite, sidecar Bun compiled | Monitoring informatif (pas de CI size gate bloquant) |
 | NFR-004 Conformité FR | Triggers SQL, `packages/legal`, snapshot mentions | Audit manuel + tests |
 | NFR-005 Keychain secrets | `keyring` crate + fallback AES-256 | Test unit crypto |
 | NFR-006 Validation inputs | Zod front + serde strict Rust + Drizzle prepared | Tests |
@@ -2083,7 +2094,7 @@ Plausible instance fournit un dashboard agrégé (org AlphaLuppi) sur les events
 | Code-signing Windows OV = goulot d'achat | Medium | Medium | Démarrer achat cert dès semaine 1 (délai livraison 5-10j) |
 | `keyring` crate bugs sur Linux (Secret Service) | Medium | Medium | Fallback AES-256 dès v0.1 |
 | FreeTSA downtime > 24h | Low | Low | Mode PAdES-B sans timestamp documenté comme acceptable |
-| Bundle binaire > 15 Mo avec crates crypto | Medium | Low | Monitoring taille, tree-shake, compile-time feature flags |
+| Bundle binaire > 100 Mo avec crates crypto + sidecar Bun _(seuil révisé 2026-04-22 ; cf. addendum NFR-003)_ | Medium | Low | Monitoring taille informatif, tree-shake, objectif v0.2 ~20 Mo via port Rust sidecar |
 | Claude CLI breaking changes inter-versions | Low | Medium | Pin version min ≥ 2.0, feature detection |
 | Drizzle single schema vs PG adapter en v0.2 | Low | Low | Refactor deferé v0.2, tests parité au moment voulu |
 

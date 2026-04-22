@@ -8,7 +8,7 @@ Note : Hacker News = anglais obligatoire. Le reste des messages est en français
 
 ## Titre (format Show HN)
 
-Show HN: FAKT – Open-source desktop app for French freelancers (invoices + PAdES signing, ~8MB, offline-first)
+Show HN: FAKT – Open-source desktop app for French freelancers (invoices + PAdES signing, ~100MB, offline-first)
 
 ---
 
@@ -16,7 +16,7 @@ Show HN: FAKT – Open-source desktop app for French freelancers (invoices + PAd
 
 Hey HN,
 
-I'm Tom Andrieu, a freelance developer and designer in Avignon, France. I built FAKT (https://github.com/AlphaLuppi/FAKT) to replace my patchwork of 6 tools for billing cycle management with a single ~8MB Tauri binary.
+I'm Tom Andrieu, a freelance developer and designer in Avignon, France. I built FAKT (https://github.com/AlphaLuppi/FAKT) to replace my patchwork of 6 tools for billing cycle management with a single ~100MB Tauri + Bun sidecar binary (comparable to Slack/Discord/Obsidian; a Rust port of the sidecar is planned for v0.2 to bring it down to ~20MB).
 
 **The problem it solves**
 
@@ -32,7 +32,7 @@ French freelancers have unusually specific legal requirements: sequential invoic
 
 4. **Claude Code CLI subprocess.** FAKT spawns `claude` as a subprocess for brief → invoice/quote extraction and email drafting. The user provides their own Anthropic token — FAKT never touches it. The AI integration uses structured JSON tool-use output, not raw text parsing.
 
-5. **Tauri 2 for the size.** The binary is ~8MB because Tauri uses the OS WebView instead of embedding Chromium. On Windows it requires WebView2 (included in Win11, downloadable for Win10). Compared to Electron at 150MB+, this matters a lot for an installer that people will download on a slow connection.
+5. **Tauri 2 + Bun sidecar for the packaging.** The installer is ~100MB because the Bun-compiled api-server sidecar ships alongside the Tauri shell (Tauri uses the OS WebView instead of embedding Chromium — on Windows it requires WebView2, included in Win11). That's comparable to Slack/Discord/Obsidian (100-200MB) and still ~30-50% smaller than an equivalent Electron app. A Rust port of the sidecar is planned for v0.2 to bring the installer down to ~20MB.
 
 **Stack**
 

@@ -11,9 +11,14 @@
 
 ---
 
+> **Addendum 2026-04-22 — NFR-003 révisé à ~100 Mo**
+> Suite au bundling Bun compiled du sidecar api-server (refacto sidecar de la v0.1), la taille binaire réelle est ~100 Mo (équivalent Slack/Discord/Obsidian). Port Rust envisagé v0.2 pour revenir à ~20 Mo. Le critère release-blocking reste fonctionnel (démarrage ≤ 2 s, app dogfoodable), pas la taille binaire. Voir [CHANGELOG.md](/CHANGELOG.md) section Changed. Les mentions « ~5 Mo » / « ≤ 15 Mo » ci-dessous sont conservées pour traçabilité mais doivent être lues comme « ~100 Mo (objectif v0.2 : ~20 Mo via port Rust sidecar) ».
+
+---
+
 ## Executive Summary
 
-**FAKT** est une application desktop open-source (Tauri 2, ~5 Mo) qui remplace les skills Claude Code `/devis-freelance` et `/facture-freelance` par un outil **unifié, hors-ligne, conforme législation française** pour piloter devis et factures d'un freelance ou d'une petite agence. Le moteur IA repose sur un **subprocess Claude Code CLI** — l'utilisateur fournit son propre token Anthropic. Le document final est **signé cryptographiquement maison** (PAdES B-T, qualité équivalente Yousign Basic), archivé localement avec un audit trail intègre, et préparé pour envoi via un brouillon email ouvert dans le client mail par défaut de l'OS. Le produit suit le **pattern « outil interne » AlphaLuppi** établi par MnM : trois modes de déploiement successifs (solo local → self-host entreprise → SaaS hébergé). Identité visuelle non-négociable : **design system Brutal Invoice** (noir, papier off-white, jaune vif, Space Grotesk UPPERCASE, ombres plates, zéro radius).
+**FAKT** est une application desktop open-source (Tauri 2 + sidecar Bun compiled, ~100 Mo — objectif v0.2 : ~20 Mo via port Rust sidecar) qui remplace les skills Claude Code `/devis-freelance` et `/facture-freelance` par un outil **unifié, hors-ligne, conforme législation française** pour piloter devis et factures d'un freelance ou d'une petite agence. Le moteur IA repose sur un **subprocess Claude Code CLI** — l'utilisateur fournit son propre token Anthropic. Le document final est **signé cryptographiquement maison** (PAdES B-T, qualité équivalente Yousign Basic), archivé localement avec un audit trail intègre, et préparé pour envoi via un brouillon email ouvert dans le client mail par défaut de l'OS. Le produit suit le **pattern « outil interne » AlphaLuppi** établi par MnM : trois modes de déploiement successifs (solo local → self-host entreprise → SaaS hébergé). Identité visuelle non-négociable : **design system Brutal Invoice** (noir, papier off-white, jaune vif, Space Grotesk UPPERCASE, ombres plates, zéro radius).
 
 ---
 
@@ -117,7 +122,7 @@ Top 3 besoins adressés :
 
 ### Value Proposition
 
-> **FAKT, c'est Yousign + Indy + Google Drive fusionnés en un binaire de 5 Mo, 100 % open-source, hors-ligne par défaut, avec un moteur IA qui prépare ton cycle de facturation en 3 minutes au lieu de 30.**
+> **FAKT, c'est Yousign + Indy + Google Drive fusionnés en une app desktop de ~100 Mo (objectif v0.2 : ~20 Mo via port Rust sidecar), 100 % open-source, hors-ligne par défaut, avec un moteur IA qui prépare ton cycle de facturation en 3 minutes au lieu de 30.**
 
 En une phrase brutalist (on-brand) : *« Un document. Un clic. Signé. »*
 
@@ -283,7 +288,7 @@ En une phrase brutalist (on-brand) : *« Un document. Un clic. Signé. »*
 - Coverage tests unitaires ≥ 70 % sur `packages/core` et `packages/pdf`.
 - E2E Playwright passant sur le flow « créer devis → signer → draft email » sur les 3 OS (via GitHub Actions matrix).
 - Lint + typecheck stricts (0 warning accepté sur la CI).
-- Bundle Tauri ≤ 15 Mo (objectif 8 Mo).
+- Bundle Tauri ~100 Mo (objectif v0.2 : ~20 Mo via port Rust sidecar). _NFR-003 révisé 2026-04-22 — cf. addendum en tête._
 - Temps de démarrage à froid ≤ 2 s sur un MacBook Air M1 / PC Win11 i5.
 
 ---
@@ -435,7 +440,7 @@ Trois marchés possibles :
 - **CLA (Contributor License Agreement)** : oui, léger, pour permettre le dual-licensing futur (offrir une licence commerciale à ceux qui voudraient revendre en SaaS).
 - **Landing page `fakt.alphaluppi.com`** sobre brutalist avec 3 CTA : download, self-host, join-waitlist-SaaS.
 - **Canaux de launch :** Product Hunt, Hacker News, r/freelance, r/selfhosted, Indie Hackers, Twitter FR tech, LinkedIn FR freelance, newsletter BNF (Biz News Freelance).
-- **Messaging clé :** « Yousign + Indy en open-source, 5 Mo, hors ligne par défaut. »
+- **Messaging clé :** « Yousign + Indy en open-source, app desktop ~100 Mo (équivalent Slack/Discord/Obsidian), hors ligne par défaut. »
 
 ---
 
