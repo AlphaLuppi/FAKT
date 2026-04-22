@@ -149,6 +149,11 @@ export function ArchiveRoute(): ReactElement {
       const readme = buildReadme(workspace.name, workspace.siret, isoDate);
 
       const csvClients = buildClientsCsv(clients);
+      // TODO(track-ε-wave3): remplacer par `await api.get<Service[]>('/api/services', { archived: '1' })`
+      // dès que track ε refactor hooks (invoke → fetch) et track β endpoints services sont livrés.
+      // Actuellement le CSV prestations est vide : source hardcodée car `invoke('list_services')` a été
+      // supprimé par track ζ (remplacé par REST). Laisse le gap temporaire plutôt que de câbler deux
+      // fois le même chemin d'accès.
       const csvPrestations = buildPrestationsCsv([]);
 
       const destPath = await invoke<string | null>("plugin:dialog|save", {

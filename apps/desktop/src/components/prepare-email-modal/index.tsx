@@ -173,6 +173,11 @@ export function PrepareEmailModal(props: PrepareEmailModalProps): ReactElement {
         toast.success(fr.email.success.fallbackUsed);
       });
 
+      // TODO(track-ε-wave3): insérer l'événement `email_drafted` dans l'activity feed via
+      // `await api.post('/api/activity', { type: 'email_drafted', entityType: docType, entityId: doc.id })`
+      // dès que hooks React refactorés (invoke → fetch) et endpoint POST /api/activity livré (track γ).
+      // Actuellement l'événement n'est jamais tracké côté DB (gap e2e-wiring-audit §7).
+
       toast.success(fr.email.success.draftOpened);
       onClose();
     } catch (err) {

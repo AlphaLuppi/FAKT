@@ -128,6 +128,7 @@ const SCHEMA_DDL = [
     due_date INTEGER,
     paid_at INTEGER,
     payment_method TEXT,
+    payment_notes TEXT,
     legal_mentions TEXT NOT NULL,
     issued_at INTEGER,
     archived_at INTEGER,

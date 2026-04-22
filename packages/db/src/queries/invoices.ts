@@ -88,6 +88,7 @@ function rowToInvoice(
     dueDate: row.dueDate ? Number(row.dueDate) : null,
     paidAt: row.paidAt ? Number(row.paidAt) : null,
     paymentMethod: (row.paymentMethod as PaymentMethod) ?? null,
+    paymentNotes: row.paymentNotes ?? null,
     legalMentions: row.legalMentions,
     issuedAt: row.issuedAt ? Number(row.issuedAt) : null,
     archivedAt: row.archivedAt ? Number(row.archivedAt) : null,
@@ -363,7 +364,8 @@ export function markInvoicePaid(
   db: DbInstance,
   id: string,
   paidAt: number,
-  method: PaymentMethod
+  method: PaymentMethod,
+  notes?: string | null
 ): Invoice {
   const row = db
     .select({ id: invoices.id, status: invoices.status })
@@ -385,6 +387,7 @@ export function markInvoicePaid(
       status: "paid",
       paidAt: new Date(paidAt),
       paymentMethod: method,
+      paymentNotes: notes ?? null,
       updatedAt: new Date(Date.now()),
     })
     .where(eq(invoices.id, id))

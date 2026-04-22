@@ -1,11 +1,157 @@
 # Architecture — FAKT v0.1.0
 
-**Date :** 2026-04-21
+**Date :** 2026-04-21 · _addendum 3 modes : 2026-04-22 (Track θ)_
 **Auteur :** Tom Andrieu (AlphaLuppi) / Claude agent (System Architect)
-**Version :** 1.0
+**Version :** 1.1 (addendum sidecar)
 **Statut :** Draft — à valider avant `/sprint-planning`
 **Type de projet :** Application desktop open-source Tauri 2, pattern AlphaLuppi « outil interne »
 **Niveau de projet :** 3 (Complex integration)
+
+---
+
+## Addendum 2026-04-22 — Architecture 3 modes (sidecar refacto)
+
+Suite à l'audit E2E ([`docs/sprint-notes/e2e-wiring-audit.md`](./sprint-notes/e2e-wiring-audit.md))
+et à la validation par Tom de l'option C (API backend sidecar), la v0.1 bascule vers une
+architecture triple-mode unifiée. Cette section résume les choix ; les détails exhaustifs
+sont dans [`docs/refacto-spec/architecture.md`](./refacto-spec/architecture.md).
+
+### Vue haut-niveau des 3 modes
+
+**Mode 1 — Solo desktop (v0.1, MVP)**
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  Desktop Tauri (installer .msi / .dmg / .AppImage, ~100 Mo)  │
+│                                                              │
+│  ┌────────────────┐   HTTP localhost   ┌──────────────────┐  │
+│  │ React webview │ ─────────────────▶ │ Bun api-server   │  │
+│  │ (Vite build)  │  fetch + X-FAKT-   │ Hono REST        │  │
+│  │               │    Token header    │ Drizzle SQLite   │  │
+│  └────────────────┘ ◀───────────────── └──────────────────┘  │
+│         │                                        │           │
+│         │ Tauri invoke (signature / email /      │           │
+│         │        archive / PDF Typst)            ▼           │
+│         ▼                                 ~/.fakt/db.sqlite  │
+│  ┌──────────────────────────────┐                            │
+│  │ Rust core                    │                            │
+│  │  - PAdES B-T + keychain OS   │                            │
+│  │  - open_email_draft (.eml)   │                            │
+│  │  - build_workspace_zip       │                            │
+│  │  - render_pdf (Typst)        │                            │
+│  └──────────────────────────────┘                            │
+└──────────────────────────────────────────────────────────────┘
+
+Bind api-server : 127.0.0.1:RANDOM_PORT (jamais exposé LAN)
+Token : 32 bytes crypto-random au spawn, partagé Rust ↔ webview
+```
+
+**Mode 2 — Self-host entreprise (v0.2+)**
+
+```
+┌─────────────────────┐              ┌──────────────────────────┐
+│ Desktop Tauri       │    HTTPS     │ VPS Docker               │
+│ (utilisateur équipe)│ ───────────▶ │ api-server (Bun)         │
+│ FAKT_API_URL=https  │  JWT header  │ Drizzle Postgres 16      │
+│ ://fakt.agence.com  │              │ Reverse proxy : Caddy    │
+└─────────────────────┘              └──────────────────────────┘
+```
+
+Même binaire api-server (bundle Bun compile standalone). Différence runtime :
+`DATABASE_URL=postgres://...`, `AUTH_MODE=jwt`, `BIND=0.0.0.0:3000`. Le Rust core reste en
+desktop — signature et email OS locaux.
+
+**Mode 3 — SaaS hébergé (v0.3+)**
+
+```
+┌──────────────────┐          ┌────────────────────────────────┐
+│ Desktop Tauri    │          │ fakt.com (Cloud Run / Fly.io)  │
+│ ou navigateur    │ ──HTTPS─▶│ api-server scalable            │
+│ multi-tenant     │  OAuth   │ Drizzle Postgres + RLS         │
+└──────────────────┘          │ Stripe · Clerk · Sentry        │
+                              └────────────────────────────────┘
+```
+
+Mêmes endpoints REST. Auth : OAuth / session cookie. `workspace_id` résolu server-side
+(jamais envoyé par le client), RLS policies par `workspace_id` activées sur Postgres.
+
+### Invariant fondateur
+
+**Les 3 modes partagent le même code `packages/api-server/` et les mêmes queries
+`packages/db/`.** Seuls diffèrent l'adapter DB, la couche auth et le bind.
+
+| Dimension             | Mode 1                   | Mode 2                 | Mode 3                      |
+|-----------------------|--------------------------|------------------------|-----------------------------|
+| DB adapter            | SQLite (better-sqlite3)  | Postgres (postgres-js) | Postgres + RLS              |
+| Bind                  | 127.0.0.1                | 0.0.0.0                | 0.0.0.0 derrière LB         |
+| Auth                  | Token 32 B local         | JWT / session cookie   | OAuth + session             |
+| Workspace resolution  | Seed unique              | JWT claim              | Session → RLS               |
+| Bundling              | Bun compile sidecar      | Docker image           | Docker image                |
+| TLS                   | non (localhost)          | reverse-proxy Caddy    | LB managed                  |
+
+### Sidecar startup sequence (mode 1)
+
+1. **Rust setup** : génère token 32 bytes (`rand::random`), spawn binaire sidecar avec
+   `FAKT_API_TOKEN=<token>` en env, capture `child.stdout`.
+2. **Sidecar boot** : bind sur `127.0.0.1:0` (port libre), logue
+   `{"event":"listening","port":NNNNN,"pid":PPP}` sur stdout.
+3. **Rust port discovery** : lit stdout ligne par ligne jusqu'à matcher l'event
+   `listening`. Timeout 10 s → erreur boot.
+4. **Healthcheck polling** : `GET http://127.0.0.1:PORT/health` toutes 100 ms jusqu'à
+   200, timeout 5 s.
+5. **Injection webview** : `Window::execute_javascript()` définit
+   `window.__FAKT_API_TOKEN` + `__FAKT_API_PORT` juste avant chargement React.
+6. **Shutdown** : au `on_window_event::CloseRequested`, SIGTERM du child, kill -9 après 3 s.
+
+### Data flow runtime
+
+```
+React Hook (ex. useClients)
+    │
+    ▼
+apps/desktop/src/api/clients.ts  ── fetch ──▶ api-client.ts
+                                                    │
+                                 header X-FAKT-Token│
+                                 baseURL 127.0.0.1:PORT/api
+                                                    ▼
+                            packages/api-server/src/routes/clients.ts
+                                                    │
+                                                    ▼
+                            packages/db/src/queries/clients.ts (Drizzle)
+                                                    │
+                                                    ▼
+                                     ~/.fakt/db.sqlite (better-sqlite3)
+```
+
+Les opérations qui nécessitent un accès système (keychain OS, file picker natif, envoi
+`.eml` via le client mail, subprocess Typst) restent sur Tauri `invoke` direct vers Rust
+et **ne passent pas par le sidecar**.
+
+### Rust core — responsabilités conservées (v0.1)
+
+- **Signature PAdES B-T** : RSA 4096 + X.509 + CMS + TSA RFC 3161 + keychain OS
+  (`apps/desktop/src-tauri/src/commands/signatures.rs`).
+- **Email dispatch** : `open_email_draft` ouvre un `.eml` via client mail OS, fallback
+  `mailto:` (`apps/desktop/src-tauri/src/commands/email.rs`).
+- **Archive ZIP** : `build_workspace_zip` (crate `zip`) avec CSV clients/prestations +
+  PDFs + README compliance Art. L123-22 & Art. 286 CGI.
+- **Rendu PDF Typst** : subprocess `typst compile` depuis templates embarqués.
+- **Cert X.509** : génération auto-signée + stockage keychain (Windows Credential
+  Manager / macOS Keychain / Linux Secret Service via crate `keyring`).
+
+### Détails et sources complémentaires
+
+- Spec complète sidecar : [`docs/refacto-spec/architecture.md`](./refacto-spec/architecture.md)
+- Catalogue des 55 endpoints REST : [`docs/refacto-spec/api-endpoints.md`](./refacto-spec/api-endpoints.md)
+- Découpage Phase 2 Build : [`docs/refacto-spec/task-breakdown.md`](./refacto-spec/task-breakdown.md)
+- Stratégie de test : [`docs/refacto-spec/test-plan.md`](./refacto-spec/test-plan.md)
+- Audit de câblage E2E initial : [`docs/sprint-notes/e2e-wiring-audit.md`](./sprint-notes/e2e-wiring-audit.md)
+- Journal d'avancement sprint : [`docs/sprint-notes/progress.md`](./sprint-notes/progress.md)
+
+Le reste du présent document décrit l'architecture pré-refacto (mode solo Rust + IPC
+direct). Il reste utile pour les modules **conservés** côté Rust (signature, email,
+archive, PDF, keychain) et pour le design system Brutal Invoice. Les sections
+portant sur le CRUD métier côté IPC sont superseded par le sidecar api-server.
 
 ---
 

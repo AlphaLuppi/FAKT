@@ -60,6 +60,7 @@ function invoice(override: Partial<Invoice>): Invoice {
     dueDate: null,
     paidAt: null,
     paymentMethod: null,
+    paymentNotes: null,
     legalMentions: "TVA non applicable, art. 293 B du CGI",
     issuedAt: null,
     archivedAt: null,

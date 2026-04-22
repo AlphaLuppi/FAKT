@@ -117,6 +117,7 @@ export interface Invoice {
   dueDate: TimestampMs | null;
   paidAt: TimestampMs | null;
   paymentMethod: PaymentMethod | null;
+  paymentNotes: string | null;
   legalMentions: string;
   issuedAt: TimestampMs | null;
   archivedAt: TimestampMs | null;

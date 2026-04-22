@@ -27,6 +27,7 @@ function mkInvoice(override: Partial<Invoice>): Invoice {
     dueDate: null,
     paidAt: null,
     paymentMethod: "wire",
+    paymentNotes: null,
     legalMentions: "TVA non applicable, art. 293 B du CGI",
     issuedAt: now,
     archivedAt: null,

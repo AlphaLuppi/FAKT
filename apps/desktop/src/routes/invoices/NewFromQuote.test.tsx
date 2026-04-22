@@ -103,6 +103,7 @@ describe("NewFromQuote", () => {
           dueDate: null,
           paidAt: Date.now(),
           paymentMethod: "wire",
+          paymentNotes: null,
           legalMentions: "TVA non applicable, art. 293 B du CGI",
           issuedAt: Date.now() - 86400000,
           archivedAt: null,

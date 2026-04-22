@@ -9,7 +9,7 @@
 FAKT est une application desktop (Windows, macOS, Linux) open-source pour freelances et
 petites agences francophones. De ton brief client à un PDF signé, en 3 minutes au lieu de 30.
 
-**Yousign + Indy + Google Drive fusionnés en un binaire de ~8 Mo. Hors-ligne par défaut.**
+**Yousign + Indy + Google Drive fusionnés en une app desktop de ~100 Mo. Hors-ligne par défaut.**
 
 ---
 
@@ -50,6 +50,10 @@ FAKT réunit tout ça dans un seul outil desktop :
 ---
 
 ## Installation
+
+**Taille installer :** ~100 Mo (sidecar Bun bundlé, cohérent avec les apps desktop modernes
+type Slack, Discord, Obsidian qui pèsent 100-200 Mo). Un port Rust du sidecar est envisagé
+en v0.2 pour réduire la taille à ~20 Mo.
 
 ### Télécharger depuis GitHub Releases
 
@@ -138,12 +142,76 @@ et le texte complet du DCO.
 
 ## Architecture
 
+FAKT est pensé pour **trois modes de déploiement** qui partagent le même code serveur
+(`packages/api-server/` — Bun + Hono + Drizzle) et les mêmes queries DB. Seuls l'adapter
+DB et la couche auth changent entre modes.
+
+### Mode 1 — Solo desktop (v0.1, MVP)
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  Desktop Tauri (installer .msi / .dmg / .AppImage, ~100 Mo)  │
+│                                                              │
+│  ┌────────────────┐   HTTP localhost   ┌──────────────────┐  │
+│  │ React webview │ ─────────────────▶ │ Bun api-server   │  │
+│  │ (Vite build)  │  fetch + X-FAKT-   │ Hono REST        │  │
+│  │               │    Token header    │ Drizzle SQLite   │  │
+│  └────────────────┘ ◀───────────────── └──────────────────┘  │
+│         │                                        │           │
+│         │ Tauri invoke (signature / email /      │           │
+│         │        archive / PDF Typst)            ▼           │
+│         ▼                                 ~/.fakt/db.sqlite  │
+│  ┌──────────────────────────────┐                            │
+│  │ Rust core                    │                            │
+│  │  - PAdES B-T + keychain OS   │                            │
+│  │  - open_email_draft (.eml)   │                            │
+│  │  - build_workspace_zip       │                            │
+│  │  - render_pdf (Typst)        │                            │
+│  └──────────────────────────────┘                            │
+└──────────────────────────────────────────────────────────────┘
+
+Bind api-server : 127.0.0.1:RANDOM_PORT (jamais exposé LAN)
+Token : 32 bytes crypto-random au spawn, partagé Rust ↔ webview
+```
+
+### Mode 2 — Self-host entreprise (v0.2+)
+
+```
+┌─────────────────────┐              ┌──────────────────────────┐
+│ Desktop Tauri       │    HTTPS     │ VPS Docker               │
+│ (utilisateur équipe)│ ───────────▶ │ api-server (Bun)         │
+│ FAKT_API_URL=https  │  JWT header  │ Drizzle Postgres 16      │
+│ ://fakt.agence.com  │              │ Reverse proxy : Caddy    │
+└─────────────────────┘              └──────────────────────────┘
+```
+
+Même binaire api-server (bundle Bun compile standalone).
+Différence : `DATABASE_URL=postgres://...`, `AUTH_MODE=jwt`, `BIND=0.0.0.0:3000`.
+Le Rust core reste en desktop (signature et email OS locaux).
+
+### Mode 3 — SaaS hébergé (v0.3+)
+
+```
+┌──────────────────┐          ┌────────────────────────────────┐
+│ Desktop Tauri    │          │ fakt.com (Cloud Run / Fly.io)  │
+│ ou navigateur    │ ──HTTPS─▶│ api-server scalable            │
+│ multi-tenant     │  OAuth   │ Drizzle Postgres + RLS         │
+└──────────────────┘          │ Stripe · Clerk · Sentry        │
+                              └────────────────────────────────┘
+```
+
+Mêmes endpoints REST, auth = OAuth / session cookie,
+`workspace_id` résolu server-side (RLS policies par workspace).
+
+### Structure monorepo
+
 ```
 fakt/
 ├── apps/desktop/          # Application Tauri 2 (React 19 + Rust)
 ├── packages/
+│   ├── api-server/        # Sidecar Bun + Hono (55 endpoints REST)
 │   ├── ui/                # Design system Brutal Invoice (primitives React)
-│   ├── db/                # Schéma Drizzle + migrations SQLite
+│   ├── db/                # Schéma Drizzle + migrations (SQLite / Postgres)
 │   ├── core/              # Modèles métier TS (Quote, Invoice, Client)
 │   ├── pdf/               # Wrapper Typst → PDF
 │   ├── crypto/            # Interfaces signature PAdES
@@ -156,7 +224,11 @@ fakt/
 └── docs-site/             # Documentation Mintlify
 ```
 
-Stack : Tauri 2 · Bun · React 19 · Vite · Tailwind v4 · Drizzle ORM · SQLite · Typst · Rust
+Stack : Tauri 2 · Bun · Hono · React 19 · Vite · Tailwind v4 · Drizzle ORM · SQLite · Typst · Rust
+
+Détails architecturaux : [`docs/architecture.md`](docs/architecture.md) ·
+Spec refacto sidecar : [`docs/refacto-spec/architecture.md`](docs/refacto-spec/architecture.md) ·
+Catalogue REST : [`docs/refacto-spec/api-endpoints.md`](docs/refacto-spec/api-endpoints.md)
 
 CI : GitHub Actions matrix 3 OS · tauri-apps/tauri-action@v2
 
@@ -184,7 +256,7 @@ Pour une licence commerciale : contact@alphaluppi.com
 ## Reconnaissance
 
 Merci aux équipes dont les projets rendent FAKT possible :
-- [Tauri](https://tauri.app) — le framework desktop qui tient en ~8 Mo
+- [Tauri](https://tauri.app) — framework desktop Rust + webview
 - [Typst](https://typst.app) — rendu PDF déterministe sans headless Chrome
 - [Anthropic](https://anthropic.com) — Claude Code CLI pour la génération IA
 - [FreeTSA](https://freetsa.org) — horodatage RFC 3161 gratuit

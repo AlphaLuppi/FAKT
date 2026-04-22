@@ -182,6 +182,7 @@ export const invoices = sqliteTable(
     dueDate: integer("due_date", { mode: "timestamp_ms" }),
     paidAt: integer("paid_at", { mode: "timestamp_ms" }),
     paymentMethod: text("payment_method"),
+    paymentNotes: text("payment_notes"),
     legalMentions: text("legal_mentions").notNull(),
     issuedAt: integer("issued_at", { mode: "timestamp_ms" }),
     archivedAt: integer("archived_at", { mode: "timestamp_ms" }),
