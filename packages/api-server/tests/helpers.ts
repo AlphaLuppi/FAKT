@@ -43,7 +43,7 @@ export function createTestApp(options: CreateTestAppOptions = {}): TestAppHandle
   if (options.seedWorkspaceDefault !== false) {
     seedWorkspace(db);
   }
-  const app = createApp({ db, authToken: token });
+  const app = createApp({ db, sqlite, authToken: token });
 
   const authHeaders = (extra: Record<string, string> = {}) => ({
     "X-FAKT-Token": token,
