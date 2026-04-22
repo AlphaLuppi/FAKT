@@ -212,16 +212,14 @@ export const fr = {
       vatNote: "TVA non applicable, art. 293 B du CGI (micro-entreprise)",
       noItems: "Aucune ligne. Ajoute une première prestation.",
       prestationPicker: "Bibliothèque de prestations",
-      prestationPickerHint:
-        "Choisis une prestation pour remplir automatiquement la ligne.",
+      prestationPickerHint: "Choisis une prestation pour remplir automatiquement la ligne.",
       notesPlaceholder: "Conditions, modalités, note interne au client…",
       notesLabel: "Notes libres affichées sur le devis",
       emptyClientList: "Aucun client trouvé.",
       quickClientName: "Nom du client",
       quickClientEmail: "Email",
       quickClientCreate: "Créer le client",
-      quickClientStub:
-        "La création rapide de client sera disponible avec Track G.",
+      quickClientStub: "La création rapide de client sera disponible avec Track G.",
     },
     search: {
       placeholder: "Rechercher un devis…",
@@ -247,10 +245,8 @@ export const fr = {
     detail: {
       previewTitle: "Aperçu PDF",
       infosTitle: "Informations",
-      noPdf:
-        "Aucun PDF disponible. Émettez le devis pour attribuer un numéro.",
-      noPdfDraft:
-        "Ce devis est en brouillon — aucun numéro n'a été attribué.",
+      noPdf: "Aucun PDF disponible. Émettez le devis pour attribuer un numéro.",
+      noPdfDraft: "Ce devis est en brouillon — aucun numéro n'a été attribué.",
       signedOn: "Signé le",
       draftOnlyEdit: "Seuls les devis en brouillon peuvent être édités.",
       markSentTitle: "Marquer ce devis comme envoyé ?",
@@ -311,10 +307,8 @@ export const fr = {
       deposit30: "Acompte 30 %",
       balance: "Solde restant",
       full: "Facture totale",
-      deposit30Hint:
-        "Génère une facture d'acompte de 30 % du montant HT du devis.",
-      balanceHint:
-        "Facture le solde restant après les acomptes déjà émis.",
+      deposit30Hint: "Génère une facture d'acompte de 30 % du montant HT du devis.",
+      balanceHint: "Facture le solde restant après les acomptes déjà émis.",
       fullHint: "Recopie toutes les lignes du devis pour une facture totale.",
     },
     actions: {
@@ -353,10 +347,8 @@ export const fr = {
     },
     form: {
       selectQuote: "Choisir un devis signé",
-      selectQuoteHint:
-        "Seuls les devis signés peuvent être convertis en facture.",
-      noSignedQuote:
-        "Aucun devis signé disponible. Signez d'abord un devis.",
+      selectQuoteHint: "Seuls les devis signés peuvent être convertis en facture.",
+      noSignedQuote: "Aucun devis signé disponible. Signez d'abord un devis.",
       chooseMode: "Mode de facturation",
       titlePlaceholder: "Objet de la facture",
       issueDate: "Date d'émission",
@@ -371,16 +363,12 @@ export const fr = {
         other: "Autre",
       },
       legalMentionsTitle: "Mentions légales obligatoires",
-      legalMentionsHint:
-        "Ces mentions seront automatiquement ajoutées au PDF (CGI art. 289).",
-      depositLabel: (quoteNumber: string) =>
-        `Acompte 30 % sur devis ${quoteNumber}`,
-      balanceLabel: (quoteNumber: string) =>
-        `Solde de la facturation du devis ${quoteNumber}`,
+      legalMentionsHint: "Ces mentions seront automatiquement ajoutées au PDF (CGI art. 289).",
+      depositLabel: (quoteNumber: string) => `Acompte 30 % sur devis ${quoteNumber}`,
+      balanceLabel: (quoteNumber: string) => `Solde de la facturation du devis ${quoteNumber}`,
       notesPlaceholder: "Remarques pour le client, conditions particulières…",
       quickClientNew: "Nouveau client rapide",
-      quickClientStub:
-        "La création rapide de client sera disponible avec Track G.",
+      quickClientStub: "La création rapide de client sera disponible avec Track G.",
     },
     search: {
       placeholder: "Rechercher une facture…",
@@ -388,16 +376,12 @@ export const fr = {
     detail: {
       previewTitle: "Aperçu PDF",
       infosTitle: "Informations",
-      noPdf:
-        "Aucun PDF disponible. Émettez la facture pour attribuer un numéro.",
-      noPdfDraft:
-        "Cette facture est en brouillon — aucun numéro n'a été attribué.",
-      draftOnlyEdit:
-        "Seules les factures en brouillon peuvent être éditées.",
+      noPdf: "Aucun PDF disponible. Émettez la facture pour attribuer un numéro.",
+      noPdfDraft: "Cette facture est en brouillon — aucun numéro n'a été attribué.",
+      draftOnlyEdit: "Seules les factures en brouillon peuvent être éditées.",
       issuedNotEditable:
         "Facture émise, non modifiable. Utilisez 'Créer un avoir' pour correction.",
-      creditNoteTodo:
-        "La création d'avoirs sera disponible en v0.2.",
+      creditNoteTodo: "La création d'avoirs sera disponible en v0.2.",
       archivalLegalNotice:
         "Archivage légal obligatoire (10 ans — CGI). Utilisez 'Créer un avoir' pour corriger.",
       markSentTitle: "Marquer cette facture comme envoyée ?",
@@ -417,23 +401,19 @@ export const fr = {
       loadFailed: "Impossible de charger la facture.",
       createFailed: "La création de la facture a échoué.",
       saveFailed: "L'enregistrement de la facture a échoué.",
-      deleteIssued:
-        "Les factures émises ne peuvent pas être supprimées (archivage légal 10 ans).",
-      balanceZero:
-        "Le solde est nul ou négatif — les acomptes couvrent déjà le total.",
+      deleteIssued: "Les factures émises ne peuvent pas être supprimées (archivage légal 10 ans).",
+      balanceZero: "Le solde est nul ou négatif — les acomptes couvrent déjà le total.",
     },
   },
 
   payment: {
     modal: {
       title: "Enregistrer le paiement",
-      subtitle:
-        "Renseigne la date, le moyen de paiement et une note éventuelle.",
+      subtitle: "Renseigne la date, le moyen de paiement et une note éventuelle.",
       dateLabel: "Date du paiement",
       methodLabel: "Moyen de paiement",
       notesLabel: "Notes (optionnel)",
-      notesPlaceholder:
-        "Référence bancaire, numéro de chèque, contexte du règlement…",
+      notesPlaceholder: "Référence bancaire, numéro de chèque, contexte du règlement…",
       customMethodLabel: "Précise le moyen de paiement",
       customMethodPlaceholder: "Ex : Lydia, Paypal, prélèvement SEPA…",
       confirm: "Enregistrer le paiement",
@@ -521,37 +501,29 @@ export const fr = {
     certInfo: "Certificat X.509 auto-signé généré par FAKT",
     modal: {
       titleQuote: (numberAndClient: string) => `Signer : ${numberAndClient}`,
-      titleInvoice: (numberAndClient: string) =>
-        `Signer la facture : ${numberAndClient}`,
+      titleInvoice: (numberAndClient: string) => `Signer la facture : ${numberAndClient}`,
       tabDraw: "Dessiner au trackpad",
       tabType: "Taper au clavier",
-      drawInstruction:
-        "Signe dans la zone ci-dessous avec ton trackpad, ta souris ou ton stylet.",
-      typeInstruction:
-        "Saisis ton nom. Il sera converti en signature cursive pour le document.",
+      drawInstruction: "Signe dans la zone ci-dessous avec ton trackpad, ta souris ou ton stylet.",
+      typeInstruction: "Saisis ton nom. Il sera converti en signature cursive pour le document.",
       typePlaceholder: "Tom Andrieu",
       ackLabel:
         "Je comprends que cette signature électronique avancée (AdES-B-T) engage ma responsabilité.",
       submit: "Signer définitivement",
       submitting: "Préparation du document…",
-      submittingTsa:
-        "Signature en cours (embed PAdES-B-T + horodatage TSA)…",
+      submittingTsa: "Signature en cours (embed PAdES-B-T + horodatage TSA)…",
       cancel: "Annuler",
       clear: "Effacer",
       successTitle: "Document signé et horodaté",
-      successBody:
-        "La signature est vérifiable dans l'onglet Audit trail du document.",
+      successBody: "La signature est vérifiable dans l'onglet Audit trail du document.",
       errorTitle: "La signature a échoué",
       errorBody: (msg: string) => `Erreur : ${msg}`,
       retry: "Réessayer",
-      emptySignature:
-        "La signature est vide. Dessine ou saisis ton nom avant de continuer.",
+      emptySignature: "La signature est vide. Dessine ou saisis ton nom avant de continuer.",
       ackRequired: "Confirme l'acceptation AdES-B-T pour continuer.",
-      pdfNotReady:
-        "Le document n'a pas encore de numéro. Émets-le avant de le signer.",
+      pdfNotReady: "Le document n'a pas encore de numéro. Émets-le avant de le signer.",
       certMissingTitle: "Aucun certificat actif",
-      certMissingBody:
-        "Génère un certificat X.509 dans les paramètres avant de signer.",
+      certMissingBody: "Génère un certificat X.509 dans les paramètres avant de signer.",
       certMissingCta: "Configurer mon certificat",
       level: "Niveau eIDAS",
       levelValue: "Avancée (AdES-B-T)",
@@ -665,8 +637,7 @@ export const fr = {
     },
     cli: {
       title: "Claude Code CLI",
-      description:
-        "Claude Code CLI permet à FAKT de générer des devis depuis un brief textuel.",
+      description: "Claude Code CLI permet à FAKT de générer des devis depuis un brief textuel.",
       status: "État",
       recheck: "Vérifier à nouveau",
       openInstallPage: "Ouvrir la page d'installation",
@@ -780,8 +751,7 @@ export const fr = {
     network: "Impossible de contacter le service distant. Vérifiez votre connexion.",
     siretInvalid: "Le numéro SIRET est invalide (14 chiffres, clé Luhn incorrecte).",
     siretFormat: "Le SIRET doit contenir 14 chiffres sans espace.",
-    numberingConflict:
-      "Numéro de document déjà attribué. Rechargez la page et réessayez.",
+    numberingConflict: "Numéro de document déjà attribué. Rechargez la page et réessayez.",
     signatureFailed:
       "La signature a échoué. Vérifiez que votre certificat est valide et réessayez.",
     pdfRenderFailed:
@@ -789,14 +759,11 @@ export const fr = {
     claudeCliNotFound:
       "Claude CLI introuvable. Installez-le via : https://docs.claude.com/en/docs/claude-code/overview",
     keychainError: "Impossible d'accéder au trousseau de clés de l'OS.",
-    tsaError:
-      "L'horodatage (TSA) a échoué. La signature sera de type PAdES-B (sans horodatage).",
-    invoiceArchived:
-      "Cette facture est archivée et ne peut pas être modifiée.",
+    tsaError: "L'horodatage (TSA) a échoué. La signature sera de type PAdES-B (sans horodatage).",
+    invoiceArchived: "Cette facture est archivée et ne peut pas être modifiée.",
     invoiceHardDeleteForbidden:
       "Les factures émises ne peuvent pas être supprimées (archivage légal 10 ans).",
-    signatureEventsImmutable:
-      "L'audit trail de signature est en lecture seule (append-only).",
+    signatureEventsImmutable: "L'audit trail de signature est en lecture seule (append-only).",
   },
 
   legal: {
@@ -805,8 +772,7 @@ export const fr = {
       "En cas de retard de paiement, une pénalité égale à 3 fois le taux d'intérêt légal sera appliquée.",
     lumpSumIndemnity:
       "Une indemnité forfaitaire de 40 € sera due pour frais de recouvrement en cas de retard (D. n° 2012-1115).",
-    paymentConditions: (days: number) =>
-      `Paiement à ${days} jours date de facture.`,
+    paymentConditions: (days: number) => `Paiement à ${days} jours date de facture.`,
     siretLabel: "SIRET :",
     legalFormLabel: "Forme juridique :",
     addressLabel: "Adresse :",
@@ -849,7 +815,8 @@ export const fr = {
     },
     warnings: {
       noClientEmail: "Ce client n'a pas d'email renseigné. Éditez le client avant d'envoyer.",
-      noAttachmentMailto: "Mode mailto : la pièce jointe PDF n'est pas supportée — attachez le PDF manuellement.",
+      noAttachmentMailto:
+        "Mode mailto : la pièce jointe PDF n'est pas supportée — attachez le PDF manuellement.",
     },
     errors: {
       toRequired: "L'adresse email du destinataire est obligatoire.",
@@ -857,7 +824,8 @@ export const fr = {
       bodyRequired: "Le corps du message est obligatoire.",
       pdfFailed: "Impossible de générer le PDF pour la pièce jointe.",
       draftFailed: "Impossible d'écrire le brouillon .eml dans le dossier temporaire.",
-      openFailed: "Impossible d'ouvrir le client mail. Vérifiez qu'une application mail est installée.",
+      openFailed:
+        "Impossible d'ouvrir le client mail. Vérifiez qu'une application mail est installée.",
     },
     success: {
       draftOpened: "Brouillon ouvert dans votre application mail.",

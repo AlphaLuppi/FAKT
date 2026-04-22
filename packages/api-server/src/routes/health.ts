@@ -12,7 +12,9 @@ healthRoutes.get("/", (c) => {
     // Ping minimal : exécuter un SELECT 1 via driver Drizzle sous-jacent.
     // drizzle.$client.prepare("SELECT 1").get() varie selon adapter.
     // Fallback : lecture d'une table système (sqlite_master) si possible.
-    const raw = db as unknown as { $client?: { prepare?: (sql: string) => { get: () => unknown } } };
+    const raw = db as unknown as {
+      $client?: { prepare?: (sql: string) => { get: () => unknown } };
+    };
     raw.$client?.prepare?.("SELECT 1 as ok")?.get?.();
   } catch {
     dbOk = false;

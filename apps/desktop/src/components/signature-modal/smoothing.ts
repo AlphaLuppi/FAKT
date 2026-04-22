@@ -42,10 +42,7 @@ export function smoothStroke(points: Point[]): QuadSegment[] {
  * Trace la séquence entière sur le contexte 2D.
  * Utilise `quadraticCurveTo` pour un rendu manuscrit propre.
  */
-export function drawSmoothPath(
-  ctx: CanvasRenderingContext2D,
-  points: Point[],
-): void {
+export function drawSmoothPath(ctx: CanvasRenderingContext2D, points: Point[]): void {
   if (points.length < 2) return;
   ctx.beginPath();
   const first = points[0];

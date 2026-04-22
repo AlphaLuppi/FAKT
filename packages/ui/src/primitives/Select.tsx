@@ -1,6 +1,6 @@
+import { tokens } from "@fakt/design-tokens";
 import type { ReactElement, ReactNode, SelectHTMLAttributes } from "react";
 import { forwardRef } from "react";
-import { tokens } from "@fakt/design-tokens";
 import { classNames } from "../utils/classNames.js";
 
 export interface SelectOption {
@@ -9,8 +9,7 @@ export interface SelectOption {
   disabled?: boolean;
 }
 
-export interface SelectProps
-  extends Omit<SelectHTMLAttributes<HTMLSelectElement>, "children"> {
+export interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, "children"> {
   label?: ReactNode;
   hint?: ReactNode;
   invalid?: boolean;
@@ -20,9 +19,11 @@ export interface SelectProps
 
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
   { label, hint, invalid, options, placeholder, id, className, ...rest },
-  ref,
+  ref
 ): ReactElement {
-  const selectId = id ?? (typeof label === "string" ? `select-${label.replace(/\s+/g, "-").toLowerCase()}` : undefined);
+  const selectId =
+    id ??
+    (typeof label === "string" ? `select-${label.replace(/\s+/g, "-").toLowerCase()}` : undefined);
   return (
     <label
       htmlFor={selectId}

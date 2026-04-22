@@ -1,11 +1,11 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
-  canTransitionQuote,
-  canTransitionInvoice,
   canCreateInvoiceFromQuote,
-  isQuoteEditable,
+  canTransitionInvoice,
+  canTransitionQuote,
   isInvoiceEditable,
   isInvoiceOverdue,
+  isQuoteEditable,
 } from "../status/transitions.js";
 
 describe("canTransitionQuote", () => {

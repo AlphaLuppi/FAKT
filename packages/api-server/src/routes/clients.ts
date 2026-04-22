@@ -1,24 +1,24 @@
-import { Hono } from "hono";
-import type { AppEnv } from "../types.js";
-import { notFound } from "../errors.js";
-import { parseBody, parseQuery, parseParam } from "../middleware/zod.js";
-import { uuidSchema } from "../schemas/common.js";
 import {
-  createClientSchema,
-  updateClientSchema,
-  listClientsQuerySchema,
-  clientSearchQuerySchema,
-} from "../schemas/clients.js";
-import {
+  createClient,
+  getClient,
   getWorkspace,
   listClients,
-  getClient,
-  createClient,
-  updateClient,
-  softDeleteClient,
   restoreClient,
   searchClients,
+  softDeleteClient,
+  updateClient,
 } from "@fakt/db/queries";
+import { Hono } from "hono";
+import { notFound } from "../errors.js";
+import { parseBody, parseParam, parseQuery } from "../middleware/zod.js";
+import {
+  clientSearchQuerySchema,
+  createClientSchema,
+  listClientsQuerySchema,
+  updateClientSchema,
+} from "../schemas/clients.js";
+import { uuidSchema } from "../schemas/common.js";
+import type { AppEnv } from "../types.js";
 
 export const clientsRoutes = new Hono<AppEnv>();
 

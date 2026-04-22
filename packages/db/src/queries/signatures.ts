@@ -7,10 +7,10 @@
  * - previousEventHash chaîne les événements (intégrité SHA-256)
  */
 
-import { eq, and, asc } from "drizzle-orm";
+import type { SignatureEvent } from "@fakt/shared";
+import { and, asc, eq } from "drizzle-orm";
 import type { DbInstance } from "../adapter.js";
 import { signatureEvents } from "../schema/index.js";
-import type { SignatureEvent } from "@fakt/shared";
 
 // ─── Input types ──────────────────────────────────────────────────────────────
 

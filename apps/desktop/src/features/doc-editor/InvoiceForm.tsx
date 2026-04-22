@@ -1,24 +1,14 @@
+import { computeLinesTotal } from "@fakt/core";
+import { tokens } from "@fakt/design-tokens";
+import { LATE_PAYMENT_PENALTY_RATE, LUMP_SUM_INDEMNITY, TVA_MENTION_MICRO } from "@fakt/legal";
+import { addDays, formatEur, formatFrDate, fr, today } from "@fakt/shared";
+import type { Invoice, PaymentMethod, UUID } from "@fakt/shared";
+import type { Client, Service } from "@fakt/shared";
+import { Button, Input, Select, Textarea } from "@fakt/ui";
 import type { ReactElement } from "react";
 import { useEffect, useMemo, useState } from "react";
-import { tokens } from "@fakt/design-tokens";
-import { Button, Input, Select, Textarea } from "@fakt/ui";
-import {
-  fr,
-  formatEur,
-  formatFrDate,
-  addDays,
-  today,
-} from "@fakt/shared";
-import type { Invoice, PaymentMethod, UUID } from "@fakt/shared";
-import { computeLinesTotal } from "@fakt/core";
-import {
-  TVA_MENTION_MICRO,
-  LATE_PAYMENT_PENALTY_RATE,
-  LUMP_SUM_INDEMNITY,
-} from "@fakt/legal";
-import { ItemsEditor, type EditableItem } from "./ItemsEditor.js";
 import { ClientPicker } from "./ClientPicker.js";
-import type { Client, Service } from "@fakt/shared";
+import { type EditableItem, ItemsEditor } from "./ItemsEditor.js";
 
 export interface InvoiceFormValues {
   clientId: UUID | null;
@@ -52,9 +42,7 @@ export interface InvoiceFormProps {
   contextNote?: string | null | undefined;
 }
 
-function initialFromPartial(
-  partial: Partial<InvoiceFormValues> | undefined,
-): InvoiceFormValues {
+function initialFromPartial(partial: Partial<InvoiceFormValues> | undefined): InvoiceFormValues {
   const base: InvoiceFormValues = {
     clientId: null,
     title: "",
@@ -89,9 +77,7 @@ export function InvoiceForm(props: InvoiceFormProps): ReactElement {
     contextNote,
   } = props;
 
-  const [values, setValues] = useState<InvoiceFormValues>(() =>
-    initialFromPartial(initial),
-  );
+  const [values, setValues] = useState<InvoiceFormValues>(() => initialFromPartial(initial));
   const [dueDays, setDueDays] = useState<number>(() => {
     const d = initial?.dueDate;
     const i = initial?.issuedAt;
@@ -113,16 +99,12 @@ export function InvoiceForm(props: InvoiceFormProps): ReactElement {
     setValues((v) => ({ ...v, dueDate: addDays(v.issuedAt, dueDays) }));
   }, [dueDays]);
 
-  const totalHtCents = useMemo(
-    () => computeLinesTotal(values.items),
-    [values.items],
-  );
+  const totalHtCents = useMemo(() => computeLinesTotal(values.items), [values.items]);
 
   async function handleSubmit(issueNumber: boolean): Promise<void> {
     const errs: string[] = [];
     if (!values.clientId) errs.push(fr.invoices.errors.missingClient);
-    if (values.title.trim().length === 0)
-      errs.push(fr.invoices.errors.missingTitle);
+    if (values.title.trim().length === 0) errs.push(fr.invoices.errors.missingTitle);
     if (values.items.length === 0) errs.push(fr.invoices.errors.noItems);
     setErrors(errs);
     if (errs.length > 0) return;
@@ -178,9 +160,7 @@ export function InvoiceForm(props: InvoiceFormProps): ReactElement {
           aria-label={fr.invoices.labels.title}
           placeholder={fr.invoices.form.titlePlaceholder}
           value={values.title}
-          onChange={(e) =>
-            setValues((v) => ({ ...v, title: e.target.value }))
-          }
+          onChange={(e) => setValues((v) => ({ ...v, title: e.target.value }))}
           invalid={errors.includes(fr.invoices.errors.missingTitle)}
           disabled={readOnly}
         />
@@ -298,9 +278,7 @@ export function InvoiceForm(props: InvoiceFormProps): ReactElement {
             alignItems: "baseline",
           }}
         >
-          <span style={{ fontSize: tokens.fontSize.md }}>
-            {fr.invoices.labels.totalHt}
-          </span>
+          <span style={{ fontSize: tokens.fontSize.md }}>{fr.invoices.labels.totalHt}</span>
           <span
             data-testid="invoice-total"
             style={{
@@ -330,9 +308,7 @@ export function InvoiceForm(props: InvoiceFormProps): ReactElement {
           aria-label={fr.invoices.labels.notes}
           placeholder={fr.invoices.form.notesPlaceholder}
           value={values.notes}
-          onChange={(e) =>
-            setValues((v) => ({ ...v, notes: e.target.value }))
-          }
+          onChange={(e) => setValues((v) => ({ ...v, notes: e.target.value }))}
           rows={3}
           disabled={readOnly}
         />
@@ -424,11 +400,7 @@ export function InvoiceForm(props: InvoiceFormProps): ReactElement {
             justifyContent: "flex-end",
           }}
         >
-          <Button
-            variant="ghost"
-            onClick={onCancel}
-            disabled={submitting === true}
-          >
+          <Button variant="ghost" onClick={onCancel} disabled={submitting === true}>
             {fr.invoices.actions.cancel}
           </Button>
           <Button
@@ -476,9 +448,7 @@ export function invoiceToFormValues(invoice: Invoice): InvoiceFormValues {
     clientId: invoice.clientId,
     title: invoice.title,
     issuedAt: invoice.issuedAt ?? invoice.createdAt,
-    dueDate:
-      invoice.dueDate ??
-      addDays(invoice.issuedAt ?? invoice.createdAt, 30),
+    dueDate: invoice.dueDate ?? addDays(invoice.issuedAt ?? invoice.createdAt, 30),
     notes: "",
     paymentMethod: invoice.paymentMethod ?? "wire",
     items: invoice.items.map((item) => ({

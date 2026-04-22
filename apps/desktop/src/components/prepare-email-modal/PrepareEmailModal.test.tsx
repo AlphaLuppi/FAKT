@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
 import type { Quote } from "@fakt/shared";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { setPdfApi } from "../../features/doc-editor/pdf-api.js";
 import { PrepareEmailModal } from "./index.js";
 
@@ -46,9 +46,35 @@ const MOCK_QUOTE: Quote = {
 };
 
 const MOCK_RENDER_ARGS = {
-  quote: MOCK_QUOTE as Parameters<typeof import("../../features/doc-editor/pdf-api.js").pdfApi.renderQuote>[0]["quote"],
-  client: { id: "c1", name: "Maison Berthe", legalForm: null, siret: null, address: null, email: "contact@berthe.fr", sector: null, note: null, contactName: null, firstCollaboration: null, archivedAt: null, createdAt: Date.now(), workspaceId: "ws1" },
-  workspace: { id: "ws1", name: "Atelier Mercier", legalForm: "Micro-entreprise" as const, siret: "12345678901234", address: "1 rue des Arts, Avignon", email: "contact@mercier.fr", iban: null, tvaMention: "TVA non applicable", createdAt: Date.now() },
+  quote: MOCK_QUOTE as Parameters<
+    typeof import("../../features/doc-editor/pdf-api.js").pdfApi.renderQuote
+  >[0]["quote"],
+  client: {
+    id: "c1",
+    name: "Maison Berthe",
+    legalForm: null,
+    siret: null,
+    address: null,
+    email: "contact@berthe.fr",
+    sector: null,
+    note: null,
+    contactName: null,
+    firstCollaboration: null,
+    archivedAt: null,
+    createdAt: Date.now(),
+    workspaceId: "ws1",
+  },
+  workspace: {
+    id: "ws1",
+    name: "Atelier Mercier",
+    legalForm: "Micro-entreprise" as const,
+    siret: "12345678901234",
+    address: "1 rue des Arts, Avignon",
+    email: "contact@mercier.fr",
+    iban: null,
+    tvaMention: "TVA non applicable",
+    createdAt: Date.now(),
+  },
 };
 
 beforeEach(() => {
@@ -74,7 +100,7 @@ function renderModal(open = true) {
         workspaceEmail="contact@mercier.fr"
         renderArgs={MOCK_RENDER_ARGS}
       />
-    </MemoryRouter>,
+    </MemoryRouter>
   );
 }
 
@@ -129,7 +155,7 @@ describe("PrepareEmailModal", () => {
           workspaceEmail="contact@mercier.fr"
           renderArgs={MOCK_RENDER_ARGS}
         />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
     const alerts = screen.getAllByRole("alert");
     expect(alerts.length).toBeGreaterThan(0);

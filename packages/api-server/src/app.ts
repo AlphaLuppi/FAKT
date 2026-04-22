@@ -1,24 +1,20 @@
 import { Hono } from "hono";
-import type { AppConfig, AppEnv } from "./types.js";
-import { API_VERSION } from "./types.js";
+import { authMiddleware, errorHandler, requestIdMiddleware } from "./middleware/index.js";
 import {
-  authMiddleware,
-  errorHandler,
-  requestIdMiddleware,
-} from "./middleware/index.js";
-import {
-  healthRoutes,
-  workspaceRoutes,
-  settingsRoutes,
+  activityRoutes,
+  backupsRoutes,
   clientsRoutes,
-  servicesRoutes,
+  healthRoutes,
+  invoicesRoutes,
   numberingRoutes,
   quotesRoutes,
-  invoicesRoutes,
-  activityRoutes,
+  servicesRoutes,
+  settingsRoutes,
   signaturesRoutes,
-  backupsRoutes,
+  workspaceRoutes,
 } from "./routes/index.js";
+import type { AppConfig, AppEnv } from "./types.js";
+import { API_VERSION } from "./types.js";
 
 /**
  * Construit l'application Hono.

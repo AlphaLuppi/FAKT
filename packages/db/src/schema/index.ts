@@ -1,5 +1,5 @@
-import { sqliteTable, text, integer, unique, index } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
+import { index, integer, sqliteTable, text, unique } from "drizzle-orm/sqlite-core";
 
 /** Schéma Drizzle — SQLite dialect primaire (v0.1). PG commenté préparé v0.2. */
 
@@ -11,9 +11,7 @@ export const workspaces = sqliteTable("workspaces", {
   address: text("address").notNull(),
   email: text("email").notNull(),
   iban: text("iban"),
-  tvaMention: text("tva_mention")
-    .notNull()
-    .default("TVA non applicable, art. 293 B du CGI"),
+  tvaMention: text("tva_mention").notNull().default("TVA non applicable, art. 293 B du CGI"),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
     .notNull()
     .default(sql`(unixepoch() * 1000)`),

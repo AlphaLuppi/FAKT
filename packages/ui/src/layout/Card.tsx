@@ -1,6 +1,6 @@
+import { tokens } from "@fakt/design-tokens";
 import type { HTMLAttributes, ReactElement, ReactNode } from "react";
 import { forwardRef } from "react";
-import { tokens } from "@fakt/design-tokens";
 import { classNames } from "../utils/classNames.js";
 
 export type CardShadow = "none" | "sm" | "base" | "lg";
@@ -14,7 +14,7 @@ export interface CardProps extends Omit<HTMLAttributes<HTMLDivElement>, "title">
 
 export const Card = forwardRef<HTMLDivElement, CardProps>(function Card(
   { shadow = "base", padded = true, title, eyebrow, className, children, style, ...rest },
-  ref,
+  ref
 ): ReactElement {
   const shadowClass =
     shadow === "none"

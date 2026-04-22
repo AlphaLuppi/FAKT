@@ -1,19 +1,14 @@
+import { tokens } from "@fakt/design-tokens";
+import { formatEur, formatFrDate, fr, today } from "@fakt/shared";
+import type { Invoice, Quote } from "@fakt/shared";
+import { Sparkline, StatusPill } from "@fakt/ui";
+import type { StatusKind } from "@fakt/ui";
 import type { ReactElement } from "react";
 import { useMemo } from "react";
 import { useNavigate } from "react-router";
-import { tokens } from "@fakt/design-tokens";
-import { StatusPill, Sparkline } from "@fakt/ui";
-import type { StatusKind } from "@fakt/ui";
-import {
-  fr,
-  formatEur,
-  formatFrDate,
-  today,
-} from "@fakt/shared";
-import type { Invoice, Quote } from "@fakt/shared";
-import { useQuotes } from "./quotes/hooks.js";
-import { useInvoices } from "./invoices/hooks.js";
 import { useComposerSidebar } from "../components/composer-sidebar/ComposerContext.js";
+import { useInvoices } from "./invoices/hooks.js";
+import { useQuotes } from "./quotes/hooks.js";
 
 type ActivityKind =
   | "quote-created"
@@ -38,27 +33,83 @@ function buildQuoteActivity(q: Quote): ActivityEntry {
   const reference = q.number ?? q.id.slice(0, 8);
   const docPath = `/quotes/${q.id}`;
   if (q.status === "invoiced") {
-    return { id: `q-${q.id}-inv`, kind: "quote-invoiced", at: q.updatedAt, label: fr.dashboard.activity.quoteInvoiced, reference, clientId: q.clientId, docPath };
+    return {
+      id: `q-${q.id}-inv`,
+      kind: "quote-invoiced",
+      at: q.updatedAt,
+      label: fr.dashboard.activity.quoteInvoiced,
+      reference,
+      clientId: q.clientId,
+      docPath,
+    };
   }
   if (q.status === "signed" && q.signedAt) {
-    return { id: `q-${q.id}-signed`, kind: "quote-signed", at: q.signedAt, label: fr.dashboard.activity.quoteSigned, reference, clientId: q.clientId, docPath };
+    return {
+      id: `q-${q.id}-signed`,
+      kind: "quote-signed",
+      at: q.signedAt,
+      label: fr.dashboard.activity.quoteSigned,
+      reference,
+      clientId: q.clientId,
+      docPath,
+    };
   }
   if (q.status === "sent" && q.issuedAt) {
-    return { id: `q-${q.id}-sent`, kind: "quote-sent", at: q.issuedAt, label: fr.dashboard.activity.quoteSent, reference, clientId: q.clientId, docPath };
+    return {
+      id: `q-${q.id}-sent`,
+      kind: "quote-sent",
+      at: q.issuedAt,
+      label: fr.dashboard.activity.quoteSent,
+      reference,
+      clientId: q.clientId,
+      docPath,
+    };
   }
-  return { id: `q-${q.id}-created`, kind: "quote-created", at: q.createdAt, label: fr.dashboard.activity.quoteCreated, reference, clientId: q.clientId, docPath };
+  return {
+    id: `q-${q.id}-created`,
+    kind: "quote-created",
+    at: q.createdAt,
+    label: fr.dashboard.activity.quoteCreated,
+    reference,
+    clientId: q.clientId,
+    docPath,
+  };
 }
 
 function buildInvoiceActivity(inv: Invoice): ActivityEntry {
   const reference = inv.number ?? inv.id.slice(0, 8);
   const docPath = `/invoices/${inv.id}`;
   if (inv.status === "paid" && inv.paidAt) {
-    return { id: `i-${inv.id}-paid`, kind: "invoice-paid", at: inv.paidAt, label: fr.dashboard.activity.invoicePaid, reference, clientId: inv.clientId, docPath };
+    return {
+      id: `i-${inv.id}-paid`,
+      kind: "invoice-paid",
+      at: inv.paidAt,
+      label: fr.dashboard.activity.invoicePaid,
+      reference,
+      clientId: inv.clientId,
+      docPath,
+    };
   }
   if (inv.status === "sent" && inv.issuedAt) {
-    return { id: `i-${inv.id}-sent`, kind: "invoice-sent", at: inv.issuedAt, label: fr.dashboard.activity.invoiceSent, reference, clientId: inv.clientId, docPath };
+    return {
+      id: `i-${inv.id}-sent`,
+      kind: "invoice-sent",
+      at: inv.issuedAt,
+      label: fr.dashboard.activity.invoiceSent,
+      reference,
+      clientId: inv.clientId,
+      docPath,
+    };
   }
-  return { id: `i-${inv.id}-created`, kind: "invoice-created", at: inv.createdAt, label: fr.dashboard.activity.invoiceCreated, reference, clientId: inv.clientId, docPath };
+  return {
+    id: `i-${inv.id}-created`,
+    kind: "invoice-created",
+    at: inv.createdAt,
+    label: fr.dashboard.activity.invoiceCreated,
+    reference,
+    clientId: inv.clientId,
+    docPath,
+  };
 }
 
 function buildSparkline(invoices: Invoice[], days: number, kind: "issued" | "paid"): number[] {
@@ -95,23 +146,44 @@ export function DashboardRoute(): ReactElement {
   const { start: monthStart, end: monthEnd } = useMemo(() => currentMonthRange(), []);
 
   const caEmis = useMemo(
-    () => invoices.filter((inv) => inv.issuedAt !== null && inv.issuedAt >= monthStart && inv.issuedAt <= monthEnd).reduce((s, inv) => s + inv.totalHtCents, 0),
-    [invoices, monthStart, monthEnd],
+    () =>
+      invoices
+        .filter(
+          (inv) => inv.issuedAt !== null && inv.issuedAt >= monthStart && inv.issuedAt <= monthEnd
+        )
+        .reduce((s, inv) => s + inv.totalHtCents, 0),
+    [invoices, monthStart, monthEnd]
   );
 
   const caEncaisse = useMemo(
-    () => invoices.filter((inv) => inv.status === "paid" && inv.paidAt !== null && inv.paidAt >= monthStart && inv.paidAt <= monthEnd).reduce((s, inv) => s + inv.totalHtCents, 0),
-    [invoices, monthStart, monthEnd],
+    () =>
+      invoices
+        .filter(
+          (inv) =>
+            inv.status === "paid" &&
+            inv.paidAt !== null &&
+            inv.paidAt >= monthStart &&
+            inv.paidAt <= monthEnd
+        )
+        .reduce((s, inv) => s + inv.totalHtCents, 0),
+    [invoices, monthStart, monthEnd]
   );
 
   const pendingQuotes = useMemo(() => quotes.filter((q) => q.status === "sent"), [quotes]);
-  const pendingQuotesSum = useMemo(() => pendingQuotes.reduce((s, q) => s + q.totalHtCents, 0), [pendingQuotes]);
+  const pendingQuotesSum = useMemo(
+    () => pendingQuotes.reduce((s, q) => s + q.totalHtCents, 0),
+    [pendingQuotes]
+  );
 
   const overdueInvoices = useMemo(
-    () => invoices.filter((inv) => inv.status === "sent" && inv.dueDate !== null && inv.dueDate < now),
-    [invoices, now],
+    () =>
+      invoices.filter((inv) => inv.status === "sent" && inv.dueDate !== null && inv.dueDate < now),
+    [invoices, now]
   );
-  const overdueSum = useMemo(() => overdueInvoices.reduce((s, inv) => s + inv.totalHtCents, 0), [overdueInvoices]);
+  const overdueSum = useMemo(
+    () => overdueInvoices.reduce((s, inv) => s + inv.totalHtCents, 0),
+    [overdueInvoices]
+  );
 
   const sparklineEmis = useMemo(() => buildSparkline(invoices, 30, "issued"), [invoices]);
   const sparklineEncaisse = useMemo(() => buildSparkline(invoices, 30, "paid"), [invoices]);
@@ -140,11 +212,14 @@ export function DashboardRoute(): ReactElement {
   }, [quotes, invoices]);
 
   const overdueSuggestions = useMemo(
-    () => overdueInvoices.filter((inv) => {
-      if (!inv.dueDate) return false;
-      return (now - inv.dueDate) > 7 * 24 * 3600 * 1000;
-    }).slice(0, 5),
-    [overdueInvoices, now],
+    () =>
+      overdueInvoices
+        .filter((inv) => {
+          if (!inv.dueDate) return false;
+          return now - inv.dueDate > 7 * 24 * 3600 * 1000;
+        })
+        .slice(0, 5),
+    [overdueInvoices, now]
   );
 
   return (
@@ -304,7 +379,15 @@ export function DashboardRoute(): ReactElement {
           ) : recentActivity.length === 0 ? (
             <EmptyWidget>{fr.dashboard.widgets.recentActivityEmpty}</EmptyWidget>
           ) : (
-            <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column" }}>
+            <ul
+              style={{
+                listStyle: "none",
+                padding: 0,
+                margin: 0,
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
               {recentActivity.map((entry) => (
                 <ActivityRow
                   key={entry.id}
@@ -344,9 +427,20 @@ export function DashboardRoute(): ReactElement {
           ) : overdueSuggestions.length === 0 ? (
             <EmptyWidget>{fr.dashboard.suggestions.empty}</EmptyWidget>
           ) : (
-            <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: tokens.spacing[2] }}>
+            <ul
+              style={{
+                listStyle: "none",
+                padding: 0,
+                margin: 0,
+                display: "flex",
+                flexDirection: "column",
+                gap: tokens.spacing[2],
+              }}
+            >
               {overdueSuggestions.map((inv) => {
-                const daysOverdue = inv.dueDate ? Math.floor((now - inv.dueDate) / (24 * 3600 * 1000)) : 0;
+                const daysOverdue = inv.dueDate
+                  ? Math.floor((now - inv.dueDate) / (24 * 3600 * 1000))
+                  : 0;
                 return (
                   <li
                     key={inv.id}
@@ -358,7 +452,13 @@ export function DashboardRoute(): ReactElement {
                       gap: tokens.spacing[2],
                     }}
                   >
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "flex-start",
+                      }}
+                    >
                       <span
                         style={{
                           fontFamily: tokens.font.mono,
@@ -400,8 +500,14 @@ export function DashboardRoute(): ReactElement {
                       type="button"
                       onClick={() => {
                         openWithContext(
-                          { docType: "invoice", number: inv.number ?? inv.id.slice(0, 8), clientName: inv.clientId, amountCents: inv.totalHtCents, status: inv.status },
-                          fr.dashboard.suggestions.draftRelance,
+                          {
+                            docType: "invoice",
+                            number: inv.number ?? inv.id.slice(0, 8),
+                            clientName: inv.clientId,
+                            amountCents: inv.totalHtCents,
+                            status: inv.status,
+                          },
+                          fr.dashboard.suggestions.draftRelance
                         );
                       }}
                       style={{
@@ -442,7 +548,16 @@ interface KpiCardProps {
   onClick: () => void;
 }
 
-function KpiCard({ testId, title, hint, value, subValue, sparkline, accent = "default", onClick }: KpiCardProps): ReactElement {
+function KpiCard({
+  testId,
+  title,
+  hint,
+  value,
+  subValue,
+  sparkline,
+  accent = "default",
+  onClick,
+}: KpiCardProps): ReactElement {
   return (
     <button
       type="button"
@@ -534,7 +649,12 @@ function KpiCard({ testId, title, hint, value, subValue, sparkline, accent = "de
   );
 }
 
-function PipelineStage({ label, count, isLast, onClick }: { label: string; count: number; isLast: boolean; onClick: () => void }): ReactElement {
+function PipelineStage({
+  label,
+  count,
+  isLast,
+  onClick,
+}: { label: string; count: number; isLast: boolean; onClick: () => void }): ReactElement {
   return (
     <>
       <button
@@ -612,7 +732,10 @@ const ACTIVITY_PILL: Record<ActivityKind, StatusKind> = {
   "invoice-paid": "paid",
 };
 
-function ActivityRow({ entry, onClick }: { entry: ActivityEntry; onClick: () => void }): ReactElement {
+function ActivityRow({
+  entry,
+  onClick,
+}: { entry: ActivityEntry; onClick: () => void }): ReactElement {
   return (
     <li
       data-testid={`activity-row-${entry.id}`}

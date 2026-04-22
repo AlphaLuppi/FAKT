@@ -3,10 +3,10 @@
  * Soft delete uniquement (archived_at).
  */
 
-import { eq, and, like, isNull, isNotNull, or, asc } from "drizzle-orm";
+import type { DocumentUnit, Service } from "@fakt/shared";
+import { and, asc, eq, isNotNull, isNull, like, or } from "drizzle-orm";
 import type { DbInstance } from "../adapter.js";
 import { services } from "../schema/index.js";
-import type { Service, DocumentUnit } from "@fakt/shared";
 
 // ─── Input types ──────────────────────────────────────────────────────────────
 
@@ -124,7 +124,11 @@ export function createPrestation(db: DbInstance, input: CreatePrestationInput): 
 }
 
 /** Met à jour une prestation existante. */
-export function updatePrestation(db: DbInstance, id: string, input: UpdatePrestationInput): Service {
+export function updatePrestation(
+  db: DbInstance,
+  id: string,
+  input: UpdatePrestationInput
+): Service {
   const updates: Partial<typeof services.$inferInsert> = {};
 
   if (input.name !== undefined) updates.name = input.name;
@@ -133,12 +137,7 @@ export function updatePrestation(db: DbInstance, id: string, input: UpdatePresta
   if (input.unitPriceCents !== undefined) updates.unitPriceCents = input.unitPriceCents;
   if ("tags" in input) updates.tags = input.tags ? JSON.stringify(input.tags) : null;
 
-  const row = db
-    .update(services)
-    .set(updates)
-    .where(eq(services.id, id))
-    .returning()
-    .get();
+  const row = db.update(services).set(updates).where(eq(services.id, id)).returning().get();
 
   if (!row) throw new Error(`updatePrestation: prestation not found id=${id}`);
   return rowToService(row);
@@ -153,7 +152,8 @@ export function softDeletePrestation(db: DbInstance, id: string): void {
     .returning({ id: services.id })
     .get();
 
-  if (!result) throw new Error(`softDeletePrestation: prestation not found or already archived id=${id}`);
+  if (!result)
+    throw new Error(`softDeletePrestation: prestation not found or already archived id=${id}`);
 }
 
 /** Restaure une prestation archivée (archivedAt → null). */

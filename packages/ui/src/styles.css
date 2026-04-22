@@ -15,11 +15,8 @@
   align-items: center;
   justify-content: center;
   gap: var(--s-2);
-  transition:
-    transform 40ms ease-out,
-    box-shadow 40ms ease-out,
-    background 80ms ease-out,
-    color 80ms ease-out;
+  transition: transform 40ms ease-out, box-shadow 40ms ease-out, background 80ms ease-out, color
+    80ms ease-out;
   user-select: none;
 }
 

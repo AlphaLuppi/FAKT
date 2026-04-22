@@ -1,5 +1,5 @@
-import type { ReactElement } from "react";
 import { tokens } from "@fakt/design-tokens";
+import type { ReactElement } from "react";
 
 /** Statuts supportés pour devis + facture. */
 export type StatusKind =

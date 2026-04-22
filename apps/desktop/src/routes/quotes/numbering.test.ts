@@ -3,12 +3,8 @@
  * Simule 10 créations consécutives et vérifie D{YYYY}-001 à D{YYYY}-010.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import {
-  formatQuoteNumber,
-  isValidQuoteNumber,
-  parseDocumentNumber,
-} from "@fakt/core";
+import { formatQuoteNumber, isValidQuoteNumber, parseDocumentNumber } from "@fakt/core";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { quotesApi } from "../../features/doc-editor/index.js";
 import { installMockApis } from "./__test-helpers__/mockApis.js";
 

@@ -1,11 +1,10 @@
+import { fr } from "@fakt/shared";
+import { Button, Checkbox, toast } from "@fakt/ui";
 import type { ReactElement } from "react";
 import { useState } from "react";
-import { Checkbox, Button, toast } from "@fakt/ui";
-import { fr } from "@fakt/shared";
 
 /** Version de l'app injectée par Vite — fallback sur constante. */
-const APP_VERSION: string =
-  typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "0.1.0";
+const APP_VERSION: string = typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "0.1.0";
 
 declare const __APP_VERSION__: string | undefined;
 
@@ -50,7 +49,9 @@ export function TelemetryTab({
           label={fr.settings.telemetry.optIn}
           checked={localTelemetry}
           disabled={saving}
-          onChange={(e) => { void handleTelemetryToggle(e.target.checked); }}
+          onChange={(e) => {
+            void handleTelemetryToggle(e.target.checked);
+          }}
         />
         <p style={hintStyle}>{fr.settings.telemetry.description}</p>
       </div>
@@ -80,10 +81,7 @@ export function TelemetryTab({
             variant="ghost"
             size="sm"
             onClick={() =>
-              window.open(
-                "https://github.com/AlphaLuppi/fakt/blob/main/CHANGELOG.md",
-                "_blank"
-              )
+              window.open("https://github.com/AlphaLuppi/fakt/blob/main/CHANGELOG.md", "_blank")
             }
           >
             {fr.settings.telemetry.changelog}
@@ -94,13 +92,33 @@ export function TelemetryTab({
   );
 }
 
-function InfoRow({ label, value, mono }: { label: string; value: string; mono?: boolean }): ReactElement {
+function InfoRow({
+  label,
+  value,
+  mono,
+}: { label: string; value: string; mono?: boolean }): ReactElement {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-      <span style={{ fontFamily: "var(--font-ui)", fontWeight: 700, fontSize: "var(--t-xs)", textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--muted)", minWidth: 120 }}>
+      <span
+        style={{
+          fontFamily: "var(--font-ui)",
+          fontWeight: 700,
+          fontSize: "var(--t-xs)",
+          textTransform: "uppercase",
+          letterSpacing: "0.08em",
+          color: "var(--muted)",
+          minWidth: 120,
+        }}
+      >
         {label}
       </span>
-      <span style={{ fontFamily: mono === true ? "var(--font-mono)" : "var(--font-ui)", fontSize: "var(--t-sm)", color: "var(--ink)" }}>
+      <span
+        style={{
+          fontFamily: mono === true ? "var(--font-mono)" : "var(--font-ui)",
+          fontSize: "var(--t-sm)",
+          color: "var(--ink)",
+        }}
+      >
         {value}
       </span>
     </div>

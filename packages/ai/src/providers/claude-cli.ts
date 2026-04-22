@@ -13,6 +13,7 @@
  * Consumers call getAi() from index.ts.
  */
 
+import { healthCheck } from "../health.ts";
 import type {
   AiProvider,
   AiStreamEvent,
@@ -24,7 +25,6 @@ import type {
   ExtractOpts,
   ExtractedQuote,
 } from "../provider.ts";
-import { healthCheck } from "../health.ts";
 
 // ─── Tauri IPC types (mirrored from Rust AiStreamEvent) ──────────────────────
 
@@ -149,10 +149,7 @@ export class ClaudeCliProvider implements AiProvider {
     yield* invokeStream<ExtractedQuote>(prompt, opts?.signal);
   }
 
-  async *chat(
-    messages: ChatMessage[],
-    opts?: ChatOpts
-  ): AsyncIterable<AiStreamEvent<string>> {
+  async *chat(messages: ChatMessage[], opts?: ChatOpts): AsyncIterable<AiStreamEvent<string>> {
     const template = await loadPromptTemplate("chat");
     const docContext = opts?.context
       ? `${opts.context.docType === "quote" ? "Devis" : "Facture"} ${opts.context.number} pour ${opts.context.clientName}, montant ${(opts.context.amountCents / 100).toLocaleString("fr-FR", { style: "currency", currency: "EUR" })}, statut ${opts.context.status}.`
@@ -160,18 +157,15 @@ export class ClaudeCliProvider implements AiProvider {
     const history = messages
       .map((m) => `${m.role === "user" ? "Utilisateur" : "Assistant"}: ${m.content}`)
       .join("\n\n");
-    const prompt = renderTemplate(template, {
+    const prompt = `${renderTemplate(template, {
       workspace_context: opts?.context?.clientName ? `Client: ${opts.context.clientName}` : "",
       doc_context: docContext,
-    }) + `\n\nHistorique de conversation:\n${history}\n\nAssistant:`;
+    })}\n\nHistorique de conversation:\n${history}\n\nAssistant:`;
 
     yield* invokeStream<string>(prompt, opts?.signal);
   }
 
-  async *draftEmail(
-    context: EmailContext,
-    opts?: DraftOpts
-  ): AsyncIterable<AiStreamEvent<string>> {
+  async *draftEmail(context: EmailContext, opts?: DraftOpts): AsyncIterable<AiStreamEvent<string>> {
     const template = await loadPromptTemplate("draft_email");
     const amountEur = (context.amountCents / 100).toLocaleString("fr-FR", {
       style: "currency",

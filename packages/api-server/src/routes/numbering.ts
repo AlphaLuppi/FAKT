@@ -1,17 +1,10 @@
+import type { DbInstance } from "@fakt/db/adapter";
+import { getWorkspace, nextNumberAtomic, peekNextNumber } from "@fakt/db/queries";
 import { Hono } from "hono";
-import type { AppEnv } from "../types.js";
 import { notFound } from "../errors.js";
 import { parseBody, parseQuery } from "../middleware/zod.js";
-import {
-  numberingPeekQuerySchema,
-  numberingNextBodySchema,
-} from "../schemas/numbering.js";
-import {
-  getWorkspace,
-  peekNextNumber,
-  nextNumberAtomic,
-} from "@fakt/db/queries";
-import type { DbInstance } from "@fakt/db/adapter";
+import { numberingNextBodySchema, numberingPeekQuerySchema } from "../schemas/numbering.js";
+import type { AppEnv } from "../types.js";
 
 export const numberingRoutes = new Hono<AppEnv>();
 

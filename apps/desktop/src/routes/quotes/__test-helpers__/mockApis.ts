@@ -1,18 +1,18 @@
-import type { Quote, Client, Service, Workspace, QuoteStatus } from "@fakt/shared";
 import { formatQuoteNumber } from "@fakt/core";
+import type { Client, Quote, QuoteStatus, Service, Workspace } from "@fakt/shared";
 import {
-  setQuotesApi,
-  setClientsApi,
-  setPrestationsApi,
-  setWorkspaceApi,
-  setNumberingApi,
-  setPdfApi,
-  type QuotesApi,
   type ClientsApi,
-  type PrestationsApi,
-  type WorkspaceApi,
   type NumberingApi,
   type PdfApi,
+  type PrestationsApi,
+  type QuotesApi,
+  type WorkspaceApi,
+  setClientsApi,
+  setNumberingApi,
+  setPdfApi,
+  setPrestationsApi,
+  setQuotesApi,
+  setWorkspaceApi,
 } from "../../../features/doc-editor/index.js";
 
 export const FIXTURE_WORKSPACE: Workspace = {

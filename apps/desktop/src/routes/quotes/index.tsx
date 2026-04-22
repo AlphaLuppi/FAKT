@@ -1,9 +1,9 @@
 import type { ReactElement } from "react";
-import { Routes, Route } from "react-router";
-import { QuotesListRoute } from "./List.js";
-import { QuoteNewRoute } from "./New.js";
+import { Route, Routes } from "react-router";
 import { QuoteDetailRoute } from "./Detail.js";
 import { QuoteEditRoute } from "./Edit.js";
+import { QuotesListRoute } from "./List.js";
+import { QuoteNewRoute } from "./New.js";
 
 export function QuotesRouter(): ReactElement {
   return (

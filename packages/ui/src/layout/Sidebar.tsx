@@ -1,5 +1,5 @@
-import type { ReactElement, ReactNode } from "react";
 import { tokens } from "@fakt/design-tokens";
+import type { ReactElement, ReactNode } from "react";
 import { classNames } from "../utils/classNames.js";
 
 export interface SidebarItem {

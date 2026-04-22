@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import type { Client, Quote, Invoice } from "@fakt/shared";
+import type { Client, Invoice, Quote } from "@fakt/shared";
+import { useCallback, useEffect, useState } from "react";
 import { api } from "../api/index.js";
 
 interface UseClientsOptions {
@@ -91,7 +91,7 @@ export function useClients(options: UseClientsOptions = {}): UseClientsResult {
       await api.clients.create({ id: genUuid(), ...input });
       refresh();
     },
-    [refresh],
+    [refresh]
   );
 
   const updateClient = useCallback(
@@ -99,7 +99,7 @@ export function useClients(options: UseClientsOptions = {}): UseClientsResult {
       await api.clients.update(id, input);
       refresh();
     },
-    [refresh],
+    [refresh]
   );
 
   const deleteClient = useCallback(
@@ -107,7 +107,7 @@ export function useClients(options: UseClientsOptions = {}): UseClientsResult {
       await api.clients.archive(id);
       refresh();
     },
-    [refresh],
+    [refresh]
   );
 
   const restoreClient = useCallback(
@@ -115,7 +115,7 @@ export function useClients(options: UseClientsOptions = {}): UseClientsResult {
       await api.clients.restore(id);
       refresh();
     },
-    [refresh],
+    [refresh]
   );
 
   return { clients, loading, createClient, updateClient, deleteClient, restoreClient, refresh };

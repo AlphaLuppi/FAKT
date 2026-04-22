@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { createTestDb, seedWorkspace, WORKSPACE_ID } from "./helpers.js";
-import { appendSignatureEvent, getSignatureChain } from "../queries/signatures.js";
-import type { TestDb } from "./helpers.js";
 import type Database from "better-sqlite3";
+import { beforeEach, describe, expect, it } from "vitest";
+import { appendSignatureEvent, getSignatureChain } from "../queries/signatures.js";
+import { WORKSPACE_ID, createTestDb, seedWorkspace } from "./helpers.js";
+import type { TestDb } from "./helpers.js";
 
 let db: TestDb;
 let sqlite: Database.Database;
@@ -20,7 +20,8 @@ const BASE_EVENT = {
   timestamp: Date.now(),
   docHashBefore: "abc123def456",
   docHashAfter: "xyz789ghi012",
-  signaturePngBase64: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+  signaturePngBase64:
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
   previousEventHash: null,
 };
 
@@ -54,7 +55,12 @@ describe("getSignatureChain", () => {
     const t1 = Date.now();
     const t2 = t1 + 1000;
     appendSignatureEvent(db, { ...BASE_EVENT, id: EVENT_1_ID, timestamp: t1 });
-    appendSignatureEvent(db, { ...BASE_EVENT, id: EVENT_2_ID, timestamp: t2, previousEventHash: "prev-hash" });
+    appendSignatureEvent(db, {
+      ...BASE_EVENT,
+      id: EVENT_2_ID,
+      timestamp: t2,
+      previousEventHash: "prev-hash",
+    });
 
     const chain = getSignatureChain(db, "quote", DOC_ID);
     expect(chain).toHaveLength(2);
@@ -78,7 +84,7 @@ describe("append-only enforcement (trigger SQL)", () => {
 
   it("bloque un DELETE sur signature_events", () => {
     appendSignatureEvent(db, BASE_EVENT);
-    const stmt = sqlite.prepare(`DELETE FROM signature_events WHERE id = ?`);
+    const stmt = sqlite.prepare("DELETE FROM signature_events WHERE id = ?");
     expect(() => stmt.run(EVENT_1_ID)).toThrow(/append-only/);
   });
 });

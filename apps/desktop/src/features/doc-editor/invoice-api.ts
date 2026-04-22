@@ -3,16 +3,16 @@
  */
 
 import type {
-  Invoice,
-  InvoiceStatus,
-  InvoiceKind,
   DocumentUnit,
+  Invoice,
+  InvoiceKind,
+  InvoiceStatus,
   PaymentMethod,
-  UUID,
   TimestampMs,
+  UUID,
 } from "@fakt/shared";
-import { api as httpApi } from "../../api/index.js";
 import { ApiError } from "../../api/client.js";
+import { api as httpApi } from "../../api/index.js";
 
 export interface InvoiceItemInput {
   id: UUID;
@@ -101,7 +101,9 @@ function genUuid(): string {
   });
 }
 
-function firstStatus(s: InvoiceStatus | InvoiceStatus[] | null | undefined): InvoiceStatus | undefined {
+function firstStatus(
+  s: InvoiceStatus | InvoiceStatus[] | null | undefined
+): InvoiceStatus | undefined {
   if (s === null || s === undefined) return undefined;
   return Array.isArray(s) ? s[0] : s;
 }
@@ -117,9 +119,7 @@ const httpInvoiceApi: InvoiceApi = {
       ...(input.clientId !== undefined && input.clientId !== null
         ? { clientId: input.clientId }
         : {}),
-      ...(input.quoteId !== undefined && input.quoteId !== null
-        ? { quoteId: input.quoteId }
-        : {}),
+      ...(input.quoteId !== undefined && input.quoteId !== null ? { quoteId: input.quoteId } : {}),
       ...(input.limit !== undefined ? { limit: input.limit } : {}),
       ...(input.offset !== undefined ? { offset: input.offset } : {}),
     });

@@ -1,13 +1,13 @@
-import type { ReactElement } from "react";
-import { useState, useCallback, useMemo } from "react";
-import { Table, Button, StatusPill, Chip } from "@fakt/ui";
-import type { TableColumn } from "@fakt/ui";
 import { fr } from "@fakt/shared";
-import type { Client, Quote, Invoice } from "@fakt/shared";
+import type { Client, Invoice, Quote } from "@fakt/shared";
+import { Button, Chip, StatusPill, Table } from "@fakt/ui";
+import type { TableColumn } from "@fakt/ui";
+import type { ReactElement } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { useClientInvoices, useClientQuotes, useClients } from "../../hooks/useClients.js";
+import { ClientDetail } from "./ClientDetail.js";
 import { ClientForm } from "./ClientForm.js";
 import type { ClientFormValues } from "./ClientForm.js";
-import { ClientDetail } from "./ClientDetail.js";
-import { useClients, useClientQuotes, useClientInvoices } from "../../hooks/useClients.js";
 
 export function ClientsRoute(): ReactElement {
   const [search, setSearch] = useState("");
@@ -71,7 +71,7 @@ export function ClientsRoute(): ReactElement {
         });
       }
     },
-    [selectedClient, createClient, updateClient],
+    [selectedClient, createClient, updateClient]
   );
 
   const columns = useMemo(
@@ -79,9 +79,7 @@ export function ClientsRoute(): ReactElement {
       {
         id: "name",
         header: fr.clients.labels.name,
-        accessor: (c) => (
-          <span style={{ fontWeight: 700, color: "var(--ink)" }}>{c.name}</span>
-        ),
+        accessor: (c) => <span style={{ fontWeight: 700, color: "var(--ink)" }}>{c.name}</span>,
         sortValue: (c) => c.name,
         sortable: true,
       },
@@ -96,9 +94,7 @@ export function ClientsRoute(): ReactElement {
         id: "email",
         header: fr.clients.labels.email,
         accessor: (c) => (
-          <span style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>
-            {c.email ?? "—"}
-          </span>
+          <span style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{c.email ?? "—"}</span>
         ),
         sortValue: (c) => c.email ?? "",
         sortable: true,
@@ -107,9 +103,7 @@ export function ClientsRoute(): ReactElement {
         id: "status",
         header: "Statut",
         accessor: (c) =>
-          c.archivedAt ? (
-            <StatusPill status="cancelled" size="sm" label="Archivé" />
-          ) : null,
+          c.archivedAt ? <StatusPill status="cancelled" size="sm" label="Archivé" /> : null,
         width: 100,
       },
       {
@@ -160,11 +154,13 @@ export function ClientsRoute(): ReactElement {
         align: "right",
       },
     ],
-    [restoreClient],
+    [restoreClient]
   );
 
   return (
-    <div style={{ padding: "var(--s-6)", display: "flex", flexDirection: "column", gap: "var(--s-5)" }}>
+    <div
+      style={{ padding: "var(--s-6)", display: "flex", flexDirection: "column", gap: "var(--s-5)" }}
+    >
       {/* En-tête */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <h1

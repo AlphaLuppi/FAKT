@@ -1,11 +1,11 @@
-import type { ReactElement } from "react";
-import { useState, useEffect } from "react";
-import { Toaster } from "@fakt/ui";
 import { fr } from "@fakt/shared";
 import type { Workspace } from "@fakt/shared";
-import { IdentityTab } from "./tabs/IdentityTab.js";
-import { ClaudeCliTab } from "./tabs/ClaudeCliTab.js";
+import { Toaster } from "@fakt/ui";
+import type { ReactElement } from "react";
+import { useEffect, useState } from "react";
 import { CertificateTab } from "./tabs/CertificateTab.js";
+import { ClaudeCliTab } from "./tabs/ClaudeCliTab.js";
+import { IdentityTab } from "./tabs/IdentityTab.js";
 import { TelemetryTab } from "./tabs/TelemetryTab.js";
 
 type TabId = "identity" | "cli" | "certificate" | "telemetry";
@@ -77,10 +77,7 @@ export function SettingsRoute(): ReactElement {
       {/* Tab content */}
       <div style={contentStyle} role="tabpanel">
         {activeTab === "identity" && (
-          <IdentityTab
-            workspace={workspace}
-            onSaved={(updated) => setWorkspace(updated)}
-          />
+          <IdentityTab workspace={workspace} onSaved={(updated) => setWorkspace(updated)} />
         )}
         {activeTab === "cli" && <ClaudeCliTab />}
         {activeTab === "certificate" && <CertificateTab workspace={workspace} />}

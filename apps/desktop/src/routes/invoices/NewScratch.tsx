@@ -1,18 +1,15 @@
+import { tokens } from "@fakt/design-tokens";
+import { buildLegalMentionsSnapshot } from "@fakt/legal";
+import { fr } from "@fakt/shared";
+import type { DocumentUnit, UUID } from "@fakt/shared";
+import { Button } from "@fakt/ui";
 import type { ReactElement } from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { tokens } from "@fakt/design-tokens";
-import { Button } from "@fakt/ui";
-import { fr } from "@fakt/shared";
-import type { UUID, DocumentUnit } from "@fakt/shared";
-import { buildLegalMentionsSnapshot } from "@fakt/legal";
-import {
-  InvoiceForm,
-  type InvoiceFormValues,
-} from "../../features/doc-editor/index.js";
+import { invalidateSearchIndex } from "../../components/command-palette/useCommandPaletteIndex.js";
+import { InvoiceForm, type InvoiceFormValues } from "../../features/doc-editor/index.js";
 import { invoiceApi } from "../../features/doc-editor/invoice-api.js";
 import { useClientsList, usePrestationsList, useWorkspace } from "../quotes/hooks.js";
-import { invalidateSearchIndex } from "../../components/command-palette/useCommandPaletteIndex.js";
 
 function newId(): UUID {
   if (
@@ -32,10 +29,7 @@ export function NewScratch(): ReactElement {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  async function handleSubmit(
-    values: InvoiceFormValues,
-    issueNumber: boolean,
-  ): Promise<void> {
+  async function handleSubmit(values: InvoiceFormValues, issueNumber: boolean): Promise<void> {
     if (!values.clientId) {
       setSubmitError(fr.invoices.errors.missingClient);
       return;
@@ -44,10 +38,7 @@ export function NewScratch(): ReactElement {
     setSubmitError(null);
     try {
       const items = values.items.map((item, idx) => ({
-        id:
-          item.id.startsWith("tmp-") || item.id.startsWith("item-")
-            ? newId()
-            : item.id,
+        id: item.id.startsWith("tmp-") || item.id.startsWith("item-") ? newId() : item.id,
         position: idx,
         description: item.description,
         quantity: item.quantity,
@@ -69,7 +60,7 @@ export function NewScratch(): ReactElement {
               iban: workspace.iban,
               tvaMention: workspace.tvaMention,
             },
-            30,
+            30
           )
         : "";
 
@@ -87,9 +78,7 @@ export function NewScratch(): ReactElement {
       invalidateSearchIndex();
       void navigate(`/invoices/${created.id}`);
     } catch (err) {
-      setSubmitError(
-        err instanceof Error ? err.message : fr.invoices.errors.createFailed,
-      );
+      setSubmitError(err instanceof Error ? err.message : fr.invoices.errors.createFailed);
     } finally {
       setSubmitting(false);
     }

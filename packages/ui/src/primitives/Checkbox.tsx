@@ -1,6 +1,6 @@
+import { tokens } from "@fakt/design-tokens";
 import type { ChangeEvent, InputHTMLAttributes, ReactElement, ReactNode } from "react";
 import { forwardRef, useEffect, useState } from "react";
-import { tokens } from "@fakt/design-tokens";
 
 export interface CheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "type"> {
   label?: ReactNode;
@@ -8,11 +8,11 @@ export interface CheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement
 
 export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Checkbox(
   { label, style, checked, defaultChecked, onChange, disabled, ...rest },
-  ref,
+  ref
 ): ReactElement {
   const isControlled = checked !== undefined;
   const [internalChecked, setInternalChecked] = useState<boolean>(
-    checked ?? defaultChecked ?? false,
+    checked ?? defaultChecked ?? false
   );
 
   useEffect(() => {

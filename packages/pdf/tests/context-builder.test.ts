@@ -132,7 +132,7 @@ describe("buildQuoteContext", () => {
         quote: { ...quoteSimple, number: null },
         client: clientNominal,
         workspace: fixtureWorkspace,
-      }),
+      })
     ).toThrow(/numéro/);
   });
 
@@ -142,7 +142,7 @@ describe("buildQuoteContext", () => {
         quote: { ...quoteSimple, issuedAt: null },
         client: clientNominal,
         workspace: fixtureWorkspace,
-      }),
+      })
     ).toThrow(/émission/);
   });
 
@@ -227,7 +227,7 @@ describe("buildInvoiceContext", () => {
         invoice: { ...invoiceSimple, number: null },
         client: clientNominal,
         workspace: fixtureWorkspace,
-      }),
+      })
     ).toThrow(/numéro/);
   });
 
@@ -237,7 +237,7 @@ describe("buildInvoiceContext", () => {
         invoice: { ...invoiceSimple, issuedAt: null },
         client: clientNominal,
         workspace: fixtureWorkspace,
-      }),
+      })
     ).toThrow(/émission/);
   });
 });

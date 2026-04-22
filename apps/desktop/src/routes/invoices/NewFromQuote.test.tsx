@@ -1,10 +1,10 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { NewFromQuote } from "./NewFromQuote.js";
 import {
-  installInvoiceMockApis,
   FIXTURE_SIGNED_QUOTE,
+  installInvoiceMockApis,
 } from "./__test-helpers__/mockInvoiceApis.js";
 
 describe("NewFromQuote", () => {
@@ -22,7 +22,7 @@ describe("NewFromQuote", () => {
     render(
       <MemoryRouter initialEntries={["/invoices/new?from=quote"]}>
         <NewFromQuote />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
   }
 

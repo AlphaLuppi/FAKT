@@ -17,14 +17,14 @@
 
 import { spawnSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import {
-  buildInvoiceContext,
-  buildQuoteContext,
   type InvoiceCtx,
   type QuoteCtx,
+  buildInvoiceContext,
+  buildQuoteContext,
 } from "../src/context-builder.ts";
 
 import { clientNominal } from "./fixtures/clients.ts";
@@ -42,14 +42,14 @@ mkdirSync(outDir, { recursive: true });
 function compile(
   templateName: "quote.typ" | "invoice.typ",
   ctx: QuoteCtx | InvoiceCtx,
-  outputPath: string,
+  outputPath: string
 ): void {
   // Le contexte est sérialisé dans un JSON dans le même dossier que les
   // templates pour que `sys.inputs.ctx-path` résolve correctement.
   const ctxPath = resolve(templatesDir, `_generated-ctx-${ctx.kind}.json`);
   writeFileSync(ctxPath, JSON.stringify(ctx, null, 2));
 
-  const binary = process.env["FAKT_TYPST_PATH"] ?? "typst";
+  const binary = process.env.FAKT_TYPST_PATH ?? "typst";
   const args = [
     "compile",
     "--root",
@@ -68,9 +68,7 @@ function compile(
   });
   if (r.status !== 0) {
     // eslint-disable-next-line no-console
-    console.error(
-      `Échec de compilation Typst pour ${templateName} — code=${r.status}`,
-    );
+    console.error(`Échec de compilation Typst pour ${templateName} — code=${r.status}`);
     process.exit(1);
   }
 }

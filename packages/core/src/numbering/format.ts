@@ -31,13 +31,11 @@ export function isValidInvoiceNumber(number: string): boolean {
 }
 
 /** Extrait l'année et la séquence d'un numéro formaté. */
-export function parseDocumentNumber(
-  number: string
-): { year: number; sequence: number } | null {
+export function parseDocumentNumber(number: string): { year: number; sequence: number } | null {
   const match = number.match(/^[DF](\d{4})-(\d+)$/);
   if (!match) return null;
   return {
-    year: parseInt(match[1] as string, 10),
-    sequence: parseInt(match[2] as string, 10),
+    year: Number.parseInt(match[1] as string, 10),
+    sequence: Number.parseInt(match[2] as string, 10),
   };
 }

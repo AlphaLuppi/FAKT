@@ -1,14 +1,9 @@
+import { getAllSettings, getSetting, getWorkspace, setSetting } from "@fakt/db/queries";
 import { Hono } from "hono";
-import type { AppEnv } from "../types.js";
 import { notFound } from "../errors.js";
 import { parseBody, parseParam } from "../middleware/zod.js";
 import { setSettingSchema, settingKeySchema } from "../schemas/settings.js";
-import {
-  getWorkspace,
-  getAllSettings,
-  getSetting,
-  setSetting,
-} from "@fakt/db/queries";
+import type { AppEnv } from "../types.js";
 
 export const settingsRoutes = new Hono<AppEnv>();
 

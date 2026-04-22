@@ -1,11 +1,11 @@
+import { tokens } from "@fakt/design-tokens";
 import type {
   CanvasHTMLAttributes,
+  ReactElement,
   MouseEvent as ReactMouseEvent,
   PointerEvent as ReactPointerEvent,
-  ReactElement,
 } from "react";
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from "react";
-import { tokens } from "@fakt/design-tokens";
 
 export interface CanvasHandle {
   clear: () => void;
@@ -24,16 +24,8 @@ export interface CanvasProps
 
 /** Canvas HTML5 pour signature manuscrite. Export PNG dataURL via ref. */
 export const Canvas = forwardRef<CanvasHandle, CanvasProps>(function Canvas(
-  {
-    width = 480,
-    height = 180,
-    strokeColor,
-    strokeWidth = 2.5,
-    onStrokeEnd,
-    style,
-    ...rest
-  },
-  ref,
+  { width = 480, height = 180, strokeColor, strokeWidth = 2.5, onStrokeEnd, style, ...rest },
+  ref
 ): ReactElement {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const drawingRef = useRef(false);
@@ -76,11 +68,11 @@ export const Canvas = forwardRef<CanvasHandle, CanvasProps>(function Canvas(
       },
       isEmpty: () => !hasInkRef.current,
     }),
-    [getCtx],
+    [getCtx]
   );
 
   const pointFromEvent = (
-    e: ReactMouseEvent<HTMLCanvasElement> | ReactPointerEvent<HTMLCanvasElement>,
+    e: ReactMouseEvent<HTMLCanvasElement> | ReactPointerEvent<HTMLCanvasElement>
   ): { x: number; y: number } => {
     const c = canvasRef.current;
     if (!c) return { x: 0, y: 0 };

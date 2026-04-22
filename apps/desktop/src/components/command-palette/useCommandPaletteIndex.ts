@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from "react";
-import { invoke } from "@tauri-apps/api/core";
 import { IPC_COMMANDS } from "@fakt/shared";
-import type { Client, Service, Quote, Invoice } from "@fakt/shared";
+import type { Client, Invoice, Quote, Service } from "@fakt/shared";
 import type { CommandItem } from "@fakt/ui";
+import { invoke } from "@tauri-apps/api/core";
+import { useEffect, useRef, useState } from "react";
 
 export type EntityCategory = "clients" | "prestations" | "devis" | "factures";
 
@@ -34,8 +34,12 @@ export async function preloadSearchIndex(): Promise<void> {
   const start = performance.now();
 
   const [clients, prestations, quotes, invoices] = await Promise.all([
-    invoke<Client[]>(IPC_COMMANDS.LIST_CLIENTS, { includeSoftDeleted: false }).catch(() => [] as Client[]),
-    invoke<Service[]>(IPC_COMMANDS.LIST_SERVICES, { includeSoftDeleted: false }).catch(() => [] as Service[]),
+    invoke<Client[]>(IPC_COMMANDS.LIST_CLIENTS, { includeSoftDeleted: false }).catch(
+      () => [] as Client[]
+    ),
+    invoke<Service[]>(IPC_COMMANDS.LIST_SERVICES, { includeSoftDeleted: false }).catch(
+      () => [] as Service[]
+    ),
     invoke<Quote[]>(IPC_COMMANDS.LIST_QUOTES, {}).catch(() => [] as Quote[]),
     invoke<Invoice[]>(IPC_COMMANDS.LIST_INVOICES, {}).catch(() => [] as Invoice[]),
   ]);
@@ -49,7 +53,9 @@ export async function preloadSearchIndex(): Promise<void> {
   const elapsed = performance.now() - start;
   // NFR-001 : < 100ms target
   if (elapsed > 100) {
-    console.warn(`[CommandPalette] preloadSearchIndex took ${elapsed.toFixed(0)}ms (> 100ms target)`);
+    console.warn(
+      `[CommandPalette] preloadSearchIndex took ${elapsed.toFixed(0)}ms (> 100ms target)`
+    );
   }
 }
 
@@ -63,8 +69,7 @@ function buildItems(index: IndexStore, query: string): SearchResult[] {
   const q = query.trim().toLowerCase();
   const results: SearchResult[] = [];
 
-  const match = (text: string): boolean =>
-    q.length === 0 || text.toLowerCase().includes(q);
+  const match = (text: string): boolean => q.length === 0 || text.toLowerCase().includes(q);
 
   for (const c of index.clients) {
     const hay = [c.name, c.email, c.contactName, c.sector].filter(Boolean).join(" ");
@@ -73,7 +78,7 @@ function buildItems(index: IndexStore, query: string): SearchResult[] {
         id: `client-${c.id}`,
         entityId: c.id,
         category: "clients",
-        path: `/clients`,
+        path: "/clients",
         label: c.name,
         group: "Clients",
         keywords: [c.email ?? "", c.contactName ?? "", c.sector ?? ""],
@@ -90,7 +95,7 @@ function buildItems(index: IndexStore, query: string): SearchResult[] {
         id: `service-${s.id}`,
         entityId: s.id,
         category: "prestations",
-        path: `/services`,
+        path: "/services",
         label: s.name,
         hint: `${(s.unitPriceCents / 100).toFixed(2)} € / ${s.unit}`,
         group: "Prestations",
@@ -163,7 +168,7 @@ export function useCommandPaletteIndex(): UseCommandPaletteIndexResult {
     } else {
       setItems(buildItems(sharedIndex, query));
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
 
   return { items, setQuery, refresh };

@@ -1,6 +1,6 @@
 import type { EmailTemplateKey, TemplateContext, TemplateResult } from "./templates/index.js";
-import { quoteSentTemplate } from "./templates/quote_sent.js";
 import { invoiceSentTemplate } from "./templates/invoice_sent.js";
+import { quoteSentTemplate } from "./templates/quote_sent.js";
 import { reminderTemplate } from "./templates/reminder.js";
 import { thanksTemplate } from "./templates/thanks.js";
 

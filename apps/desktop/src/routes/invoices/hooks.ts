@@ -2,8 +2,8 @@
  * Hooks React pour /invoices — miroir de routes/quotes/hooks.ts (H1).
  */
 
-import { useCallback, useEffect, useState } from "react";
 import type { Invoice, UUID } from "@fakt/shared";
+import { useCallback, useEffect, useState } from "react";
 import { invoiceApi } from "../../features/doc-editor/invoice-api.js";
 
 interface UseInvoicesState {

@@ -1,6 +1,6 @@
+import { tokens } from "@fakt/design-tokens";
 import type { KeyboardEvent, ReactElement, ReactNode } from "react";
 import { useCallback, useId, useMemo } from "react";
-import { tokens } from "@fakt/design-tokens";
 import { classNames } from "../utils/classNames.js";
 
 export interface TabItem {
@@ -17,13 +17,7 @@ export interface TabsProps {
   className?: string;
 }
 
-export function Tabs({
-  items,
-  value,
-  onChange,
-  ariaLabel,
-  className,
-}: TabsProps): ReactElement {
+export function Tabs({ items, value, onChange, ariaLabel, className }: TabsProps): ReactElement {
   const baseId = useId();
 
   const indexByValue = useMemo(() => {
@@ -49,7 +43,7 @@ export function Tabs({
         }
       }
     },
-    [items, indexByValue, value, onChange, baseId],
+    [items, indexByValue, value, onChange, baseId]
   );
 
   function onKeyDown(e: KeyboardEvent<HTMLButtonElement>): void {

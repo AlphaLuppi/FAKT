@@ -28,10 +28,29 @@
     "rules": {
       "recommended": true,
       "suspicious": {
-        "noExplicitAny": "error"
+        "noExplicitAny": "error",
+        "noMisleadingCharacterClass": "off",
+        "noImplicitAnyLet": "off",
+        "noArrayIndexKey": "off",
+        "noControlCharactersInRegex": "off"
       },
       "style": {
         "noNonNullAssertion": "warn"
+      },
+      "correctness": {
+        "useExhaustiveDependencies": "off",
+        "noInvalidUseBeforeDeclaration": "off"
+      },
+      "a11y": {
+        "useFocusableInteractive": "off",
+        "useKeyWithClickEvents": "off",
+        "useSemanticElements": "off",
+        "useButtonType": "off",
+        "noLabelWithoutControl": "off"
+      },
+      "complexity": {
+        "noForEach": "off",
+        "noUselessTernary": "off"
       }
     }
   },

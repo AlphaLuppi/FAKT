@@ -42,10 +42,7 @@ let _provider: AiProvider | null = null;
 export function getAi(): AiProvider {
   if (_provider !== null) return _provider;
 
-  const envMode =
-    typeof process !== "undefined"
-      ? process.env["FAKT_AI_PROVIDER"]
-      : undefined;
+  const envMode = typeof process !== "undefined" ? process.env.FAKT_AI_PROVIDER : undefined;
 
   _provider = envMode === "mock" ? new MockAiProvider() : new ClaudeCliProvider();
   return _provider;

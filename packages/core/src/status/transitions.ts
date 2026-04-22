@@ -1,4 +1,4 @@
-import type { QuoteStatus, InvoiceStatus } from "@fakt/shared";
+import type { InvoiceStatus, QuoteStatus } from "@fakt/shared";
 
 /** Transitions valides pour les devis. */
 const QUOTE_TRANSITIONS: Record<QuoteStatus, QuoteStatus[]> = {

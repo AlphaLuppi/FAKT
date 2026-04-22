@@ -1,8 +1,8 @@
-import { describe, it, expect } from "vitest";
-import { createTestApp } from "./helpers.js";
-import { seedClient, CLIENT_ID_1, WORKSPACE_ID } from "@fakt/db/__tests__/helpers";
-import { createQuote, updateQuoteStatus } from "@fakt/db/queries";
+import { CLIENT_ID_1, WORKSPACE_ID, seedClient } from "@fakt/db/__tests__/helpers";
 import type { TestDb } from "@fakt/db/__tests__/helpers";
+import { createQuote, updateQuoteStatus } from "@fakt/db/queries";
+import { describe, expect, it } from "vitest";
+import { createTestApp } from "./helpers.js";
 
 const QUOTE_ID = "aaaa0000-0000-4000-8000-000000000001";
 const INVOICE_ID_1 = "bbbb0000-0000-4000-8000-000000000001";
@@ -173,14 +173,11 @@ describe("POST /api/invoices/from-quote/:quoteId — 3 modes", () => {
     const { app, authHeaders, db } = createTestApp();
     seedClient(db);
 
-    const res = await app.request(
-      "/api/invoices/from-quote/99999999-0000-4000-8000-999999999999",
-      {
-        method: "POST",
-        headers: authHeaders(),
-        body: JSON.stringify({ id: INVOICE_ID_1, mode: "full", legalMentions: LEGAL }),
-      }
-    );
+    const res = await app.request("/api/invoices/from-quote/99999999-0000-4000-8000-999999999999", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ id: INVOICE_ID_1, mode: "full", legalMentions: LEGAL }),
+    });
     expect(res.status).toBe(404);
   });
 
@@ -323,34 +320,31 @@ describe("POST /api/invoices/from-quote/:quoteId — 3 modes", () => {
     { label: "33,33 € (3333 cents)", totalHtCents: 3_333 },
     { label: "100,03 € (10003 cents)", totalHtCents: 10_003 },
     { label: "100,01 € (10001 cents)", totalHtCents: 10_001 },
-  ])(
-    "P0-B : deposit30 invariant Σ lines = totalHtCents sur $label",
-    async ({ totalHtCents }) => {
-      const { app, authHeaders, db } = createTestApp();
-      seedClient(db);
-      seedSignedQuote(db, totalHtCents);
+  ])("P0-B : deposit30 invariant Σ lines = totalHtCents sur $label", async ({ totalHtCents }) => {
+    const { app, authHeaders, db } = createTestApp();
+    seedClient(db);
+    seedSignedQuote(db, totalHtCents);
 
-      const res = await app.request(`/api/invoices/from-quote/${QUOTE_ID}`, {
-        method: "POST",
-        headers: authHeaders(),
-        body: JSON.stringify({
-          id: INVOICE_ID_1,
-          mode: "deposit30",
-          legalMentions: LEGAL,
-        }),
-      });
-      expect(res.status).toBe(201);
-      const body = (await res.json()) as {
-        totalHtCents: number;
-        items: { lineTotalCents: number }[];
-      };
-      const expected = Math.round((totalHtCents * 30) / 100);
-      expect(body.totalHtCents).toBe(expected);
-      const sum = body.items.reduce((s, i) => s + i.lineTotalCents, 0);
-      // Invariant strict — sinon le PDF Typst affichera Σ ≠ total.
-      expect(sum).toBe(body.totalHtCents);
-    }
-  );
+    const res = await app.request(`/api/invoices/from-quote/${QUOTE_ID}`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({
+        id: INVOICE_ID_1,
+        mode: "deposit30",
+        legalMentions: LEGAL,
+      }),
+    });
+    expect(res.status).toBe(201);
+    const body = (await res.json()) as {
+      totalHtCents: number;
+      items: { lineTotalCents: number }[];
+    };
+    const expected = Math.round((totalHtCents * 30) / 100);
+    expect(body.totalHtCents).toBe(expected);
+    const sum = body.items.reduce((s, i) => s + i.lineTotalCents, 0);
+    // Invariant strict — sinon le PDF Typst affichera Σ ≠ total.
+    expect(sum).toBe(body.totalHtCents);
+  });
 
   it("P0-B : balance invariant Σ lines = totalHtCents sur devis 10003 cents après deposit sent", async () => {
     const { app, authHeaders, db } = createTestApp();

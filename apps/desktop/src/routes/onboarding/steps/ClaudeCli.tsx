@@ -1,9 +1,9 @@
-import type { ReactElement } from "react";
-import { useState, useEffect } from "react";
-import { Button, Checkbox } from "@fakt/ui";
-import { fr } from "@fakt/shared";
 import { healthCheck } from "@fakt/ai";
 import type { CliInfo } from "@fakt/ai";
+import { fr } from "@fakt/shared";
+import { Button, Checkbox } from "@fakt/ui";
+import type { ReactElement } from "react";
+import { useEffect, useState } from "react";
 import { useOnboarding } from "../context.js";
 
 interface Props {
@@ -38,7 +38,7 @@ export function ClaudeCliStep({ onNext, onPrev }: Props): ReactElement {
     onNext();
   }
 
-  const canProceed = skipped || (cliInfo?.installed === true);
+  const canProceed = skipped || cliInfo?.installed === true;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
@@ -82,7 +82,13 @@ export function ClaudeCliStep({ onNext, onPrev }: Props): ReactElement {
         )}
 
         <div style={{ display: "flex", gap: 10, marginTop: 16, flexWrap: "wrap" }}>
-          <Button variant="secondary" onClick={() => { void runCheck(); }} disabled={loading}>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              void runCheck();
+            }}
+            disabled={loading}
+          >
             {fr.onboarding.step2.recheck}
           </Button>
           {cliInfo !== null && !cliInfo.installed && (
@@ -103,9 +109,7 @@ export function ClaudeCliStep({ onNext, onPrev }: Props): ReactElement {
         checked={skipped}
         onChange={(e) => setSkipped(e.target.checked)}
       />
-      {skipped && (
-        <p style={{ ...descStyle, marginTop: -12 }}>{fr.onboarding.step2.skipHint}</p>
-      )}
+      {skipped && <p style={{ ...descStyle, marginTop: -12 }}>{fr.onboarding.step2.skipHint}</p>}
 
       <div style={{ display: "flex", justifyContent: "space-between" }}>
         <Button variant="secondary" onClick={onPrev}>
@@ -128,10 +132,20 @@ interface MetaRowProps {
 function MetaRow({ label, value, mono }: MetaRowProps): ReactElement {
   return (
     <div style={{ display: "flex", gap: 8, fontSize: "var(--t-sm)", fontFamily: "var(--font-ui)" }}>
-      <span style={{ color: "var(--muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", fontSize: 11 }}>
+      <span
+        style={{
+          color: "var(--muted)",
+          fontWeight: 700,
+          textTransform: "uppercase",
+          letterSpacing: "0.06em",
+          fontSize: 11,
+        }}
+      >
         {label}
       </span>
-      <span style={{ color: "var(--ink)", fontFamily: mono === true ? "var(--font-mono)" : undefined }}>
+      <span
+        style={{ color: "var(--ink)", fontFamily: mono === true ? "var(--font-mono)" : undefined }}
+      >
         {value}
       </span>
     </div>
@@ -142,11 +156,17 @@ type DotKind = "checking" | "ok" | "missing";
 
 function dotStyle(kind: DotKind): React.CSSProperties {
   const bg = kind === "ok" ? "#000" : kind === "missing" ? "#000" : "var(--muted)";
-  const border = kind === "ok" ? "2px solid #000" : kind === "missing" ? "2px solid #000" : "2px solid var(--muted)";
+  const border =
+    kind === "ok"
+      ? "2px solid #000"
+      : kind === "missing"
+        ? "2px solid #000"
+        : "2px solid var(--muted)";
   return {
     width: 12,
     height: 12,
-    background: kind === "ok" ? "var(--accent)" : kind === "missing" ? "transparent" : "transparent",
+    background:
+      kind === "ok" ? "var(--accent)" : kind === "missing" ? "transparent" : "transparent",
     border,
     borderRadius: "50%",
     flexShrink: 0,

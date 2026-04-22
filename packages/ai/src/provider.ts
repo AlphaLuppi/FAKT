@@ -126,19 +126,13 @@ export interface AiProvider {
    * Drafts an email body for the given document context.
    * Streams string chunks.
    */
-  draftEmail(
-    context: EmailContext,
-    opts?: DraftOpts
-  ): AsyncIterable<AiStreamEvent<string>>;
+  draftEmail(context: EmailContext, opts?: DraftOpts): AsyncIterable<AiStreamEvent<string>>;
 
   /**
    * General-purpose chat for the Composer sidebar.
    * Streams string deltas token by token.
    */
-  chat(
-    messages: ChatMessage[],
-    opts?: ChatOpts
-  ): AsyncIterable<AiStreamEvent<string>>;
+  chat(messages: ChatMessage[], opts?: ChatOpts): AsyncIterable<AiStreamEvent<string>>;
 
   /**
    * Returns CLI availability info without throwing.

@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { NewScratch } from "./NewScratch.js";
 import { installInvoiceMockApis } from "./__test-helpers__/mockInvoiceApis.js";
 
@@ -19,7 +19,7 @@ describe("NewScratch", () => {
     render(
       <MemoryRouter initialEntries={["/invoices/new?from=scratch"]}>
         <NewScratch />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
   }
 
@@ -27,9 +27,7 @@ describe("NewScratch", () => {
     renderRoute();
     await waitFor(() => {
       expect(screen.getByTestId("invoice-save-draft")).toBeInTheDocument();
-      expect(
-        screen.getByTestId("invoice-create-and-issue"),
-      ).toBeInTheDocument();
+      expect(screen.getByTestId("invoice-create-and-issue")).toBeInTheDocument();
     });
   });
 
@@ -37,15 +35,9 @@ describe("NewScratch", () => {
     renderRoute();
     await waitFor(() => {
       expect(screen.getByTestId("legal-mentions-section")).toBeInTheDocument();
-      expect(screen.getByTestId("mention-tva")).toHaveTextContent(
-        "art. 293 B",
-      );
-      expect(screen.getByTestId("mention-penalty")).toHaveTextContent(
-        "pénalité",
-      );
-      expect(screen.getByTestId("mention-lumpsum")).toHaveTextContent(
-        "40 €",
-      );
+      expect(screen.getByTestId("mention-tva")).toHaveTextContent("art. 293 B");
+      expect(screen.getByTestId("mention-penalty")).toHaveTextContent("pénalité");
+      expect(screen.getByTestId("mention-lumpsum")).toHaveTextContent("40 €");
     });
   });
 

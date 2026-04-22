@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { Select } from "../primitives/Select.js";
 
 describe("Select", () => {
@@ -12,7 +12,7 @@ describe("Select", () => {
           { value: "h", label: "Heure" },
           { value: "j", label: "Jour" },
         ]}
-      />,
+      />
     );
     expect(screen.getByText("Heure")).toBeInTheDocument();
     expect(screen.getByText("Jour")).toBeInTheDocument();
@@ -29,7 +29,7 @@ describe("Select", () => {
           { value: "h", label: "Heure" },
           { value: "j", label: "Jour" },
         ]}
-      />,
+      />
     );
     fireEvent.change(screen.getByLabelText("U"), { target: { value: "j" } });
     expect(onChange).toHaveBeenCalled();

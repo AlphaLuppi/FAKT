@@ -1,9 +1,9 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
-  formatQuoteNumber,
   formatInvoiceNumber,
-  isValidQuoteNumber,
+  formatQuoteNumber,
   isValidInvoiceNumber,
+  isValidQuoteNumber,
   parseDocumentNumber,
 } from "../numbering/format.js";
 

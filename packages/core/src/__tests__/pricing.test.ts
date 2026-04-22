@@ -1,12 +1,12 @@
-import { describe, it, expect } from "vitest";
+import type { DocumentLine } from "@fakt/shared";
+import { describe, expect, it } from "vitest";
 import {
+  checkTotalConsistency,
+  computeBalanceAmount,
+  computeDepositAmount,
   computeLineTotal,
   computeLinesTotal,
-  computeDepositAmount,
-  computeBalanceAmount,
-  checkTotalConsistency,
 } from "../pricing/compute.js";
-import type { DocumentLine } from "@fakt/shared";
 
 const makeLine = (
   quantity: number,
@@ -54,8 +54,8 @@ describe("computeLinesTotal", () => {
   it("calcule la somme de plusieurs lignes", () => {
     const lines: DocumentLine[] = [
       makeLine(1000, 100000), // 1000€
-      makeLine(2000, 50000),  // 1000€
-      makeLine(500, 80000),   // 400€
+      makeLine(2000, 50000), // 1000€
+      makeLine(500, 80000), // 400€
     ];
     expect(computeLinesTotal(lines)).toBe(240000); // 2400€
   });

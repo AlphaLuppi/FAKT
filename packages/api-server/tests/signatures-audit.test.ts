@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
 import { createHash } from "node:crypto";
+import { describe, expect, it } from "vitest";
 import { createTestApp } from "./helpers.js";
 
 const QUOTE_ID = "00000000-0000-4000-8000-000000000abc";
@@ -58,7 +58,8 @@ function eventBody(id: string, ts: number, prevHash: string | null, hashAfter?: 
     timestamp: ts,
     docHashBefore: "0".repeat(64),
     docHashAfter: hashAfter ?? "a".repeat(64),
-    signaturePngBase64: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
+    signaturePngBase64:
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
     previousEventHash: prevHash,
     tsaProvider: null,
     tsaResponse: null,
@@ -238,9 +239,9 @@ describe("Append-only trigger enforcement — signature_events", () => {
       body: JSON.stringify(eventBody(EV_ID_1, 1000, null)),
     });
 
-    expect(() =>
-      sqlite.prepare("DELETE FROM signature_events WHERE id = ?").run(EV_ID_1)
-    ).toThrow(/append-only/i);
+    expect(() => sqlite.prepare("DELETE FROM signature_events WHERE id = ?").run(EV_ID_1)).toThrow(
+      /append-only/i
+    );
   });
 });
 

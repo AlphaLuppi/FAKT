@@ -1,14 +1,14 @@
+import { tokens } from "@fakt/design-tokens";
+import { fr } from "@fakt/shared";
+import type { DocumentUnit } from "@fakt/shared";
+import { Button } from "@fakt/ui";
 import type { ReactElement } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
-import { tokens } from "@fakt/design-tokens";
-import { Button } from "@fakt/ui";
-import { fr } from "@fakt/shared";
-import type { DocumentUnit } from "@fakt/shared";
 import {
   InvoiceForm,
-  invoiceToFormValues,
   type InvoiceFormValues,
+  invoiceToFormValues,
 } from "../../features/doc-editor/index.js";
 import { invoiceApi } from "../../features/doc-editor/invoice-api.js";
 import { useClientsList, usePrestationsList } from "../quotes/hooks.js";
@@ -26,7 +26,7 @@ export function InvoiceEditRoute(): ReactElement {
 
   const initial = useMemo<Partial<InvoiceFormValues> | undefined>(
     () => (invoice ? invoiceToFormValues(invoice) : undefined),
-    [invoice],
+    [invoice]
   );
 
   // Guard : redirige si non-draft.
@@ -64,9 +64,7 @@ export function InvoiceEditRoute(): ReactElement {
       });
       void navigate(`/invoices/${id}`);
     } catch (err) {
-      setSubmitError(
-        err instanceof Error ? err.message : fr.invoices.errors.saveFailed,
-      );
+      setSubmitError(err instanceof Error ? err.message : fr.invoices.errors.saveFailed);
     } finally {
       setSubmitting(false);
     }
@@ -78,10 +76,7 @@ export function InvoiceEditRoute(): ReactElement {
 
   if (error || !invoice) {
     return (
-      <div
-        style={{ padding: tokens.spacing[6] }}
-        data-testid="invoice-edit-not-found"
-      >
+      <div style={{ padding: tokens.spacing[6] }} data-testid="invoice-edit-not-found">
         {fr.invoices.errors.notFound}
       </div>
     );
@@ -112,10 +107,7 @@ export function InvoiceEditRoute(): ReactElement {
           {fr.invoices.detail.issuedNotEditable}
         </div>
         <div style={{ display: "flex", gap: tokens.spacing[3] }}>
-          <Button
-            variant="ghost"
-            onClick={() => void navigate(`/invoices/${invoice.id}`)}
-          >
+          <Button variant="ghost" onClick={() => void navigate(`/invoices/${invoice.id}`)}>
             {fr.invoices.actions.backToList}
           </Button>
           <Button

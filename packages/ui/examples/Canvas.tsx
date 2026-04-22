@@ -1,7 +1,7 @@
 import type { ReactElement } from "react";
 import { useRef, useState } from "react";
-import { Canvas, type CanvasHandle } from "../src/specialized/Canvas.js";
 import { Button } from "../src/primitives/Button.js";
+import { Canvas, type CanvasHandle } from "../src/specialized/Canvas.js";
 
 export function CanvasExample(): ReactElement {
   const ref = useRef<CanvasHandle>(null);
@@ -14,9 +14,7 @@ export function CanvasExample(): ReactElement {
         <Button variant="secondary" onClick={() => ref.current?.clear()}>
           Effacer
         </Button>
-        <Button onClick={() => setDataUrl(ref.current?.toDataURL() ?? null)}>
-          Exporter PNG
-        </Button>
+        <Button onClick={() => setDataUrl(ref.current?.toDataURL() ?? null)}>Exporter PNG</Button>
       </div>
       {dataUrl !== null && (
         <img alt="Signature" src={dataUrl} style={{ border: "2px solid #000", maxWidth: 240 }} />

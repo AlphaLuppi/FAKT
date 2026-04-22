@@ -1,21 +1,11 @@
+import { computeLinesTotal } from "@fakt/core";
+import { tokens } from "@fakt/design-tokens";
+import { addDays, formatEur, formatFrDate, fr, today } from "@fakt/shared";
+import type { Quote, UUID } from "@fakt/shared";
+import { Button, Input, Textarea } from "@fakt/ui";
 import type { ReactElement } from "react";
 import { useEffect, useMemo, useState } from "react";
-import { tokens } from "@fakt/design-tokens";
-import { Button, Input, Textarea } from "@fakt/ui";
-import {
-  fr,
-  formatEur,
-  formatFrDate,
-  addDays,
-  today,
-} from "@fakt/shared";
-import type { Quote, UUID } from "@fakt/shared";
-import { computeLinesTotal } from "@fakt/core";
-import {
-  ItemsEditor,
-  ClientPicker,
-  type EditableItem,
-} from "../../features/doc-editor/index.js";
+import { ClientPicker, type EditableItem, ItemsEditor } from "../../features/doc-editor/index.js";
 import { useClientsList, usePrestationsList } from "./hooks.js";
 
 export interface QuoteFormValues {
@@ -39,9 +29,7 @@ export interface QuoteFormProps {
   readOnly?: boolean | undefined;
 }
 
-function initialFromPartial(
-  partial: Partial<QuoteFormValues> | undefined,
-): QuoteFormValues {
+function initialFromPartial(partial: Partial<QuoteFormValues> | undefined): QuoteFormValues {
   const base: QuoteFormValues = {
     clientId: null,
     title: "",
@@ -55,9 +43,7 @@ function initialFromPartial(
 
 export function QuoteForm(props: QuoteFormProps): ReactElement {
   const { initial, onSubmit, onCancel, submitting, submitError, editMode, readOnly } = props;
-  const [values, setValues] = useState<QuoteFormValues>(() =>
-    initialFromPartial(initial),
-  );
+  const [values, setValues] = useState<QuoteFormValues>(() => initialFromPartial(initial));
   const [validityDays, setValidityDays] = useState<number>(() => {
     const v = initial?.validityDate;
     const i = initial?.issuedAt;
@@ -102,16 +88,12 @@ export function QuoteForm(props: QuoteFormProps): ReactElement {
     }));
   }, [validityDays]);
 
-  const totalHtCents = useMemo(
-    () => computeLinesTotal(values.items),
-    [values.items],
-  );
+  const totalHtCents = useMemo(() => computeLinesTotal(values.items), [values.items]);
 
   async function handleSubmit(issueNumber: boolean): Promise<void> {
     const errs: string[] = [];
     if (!values.clientId) errs.push(fr.quotes.errors.missingClient);
-    if (values.title.trim().length === 0)
-      errs.push(fr.quotes.errors.missingTitle);
+    if (values.title.trim().length === 0) errs.push(fr.quotes.errors.missingTitle);
     if (values.items.length === 0) errs.push(fr.quotes.errors.noItems);
     setErrors(errs);
     if (errs.length > 0) return;
@@ -141,9 +123,7 @@ export function QuoteForm(props: QuoteFormProps): ReactElement {
         <SectionTitle>{fr.quotes.labels.client}</SectionTitle>
         <ClientPicker
           value={values.clientId}
-          onChange={(id) =>
-            setValues((v) => ({ ...v, clientId: id }))
-          }
+          onChange={(id) => setValues((v) => ({ ...v, clientId: id }))}
           clients={clients}
           onQuickCreate={() => setQuickClientModal(true)}
           invalid={errors.includes(fr.quotes.errors.missingClient)}
@@ -155,9 +135,7 @@ export function QuoteForm(props: QuoteFormProps): ReactElement {
           aria-label={fr.quotes.labels.title}
           placeholder={fr.quotes.form.titlePlaceholder}
           value={values.title}
-          onChange={(e) =>
-            setValues((v) => ({ ...v, title: e.target.value }))
-          }
+          onChange={(e) => setValues((v) => ({ ...v, title: e.target.value }))}
           invalid={errors.includes(fr.quotes.errors.missingTitle)}
           disabled={readOnly}
         />
@@ -258,9 +236,7 @@ export function QuoteForm(props: QuoteFormProps): ReactElement {
             alignItems: "baseline",
           }}
         >
-          <span style={{ fontSize: tokens.fontSize.md }}>
-            {fr.quotes.labels.totalHt}
-          </span>
+          <span style={{ fontSize: tokens.fontSize.md }}>{fr.quotes.labels.totalHt}</span>
           <span
             data-testid="quote-total"
             style={{
@@ -290,9 +266,7 @@ export function QuoteForm(props: QuoteFormProps): ReactElement {
           aria-label={fr.quotes.labels.notes}
           placeholder={fr.quotes.form.notesPlaceholder}
           value={values.notes}
-          onChange={(e) =>
-            setValues((v) => ({ ...v, notes: e.target.value }))
-          }
+          onChange={(e) => setValues((v) => ({ ...v, notes: e.target.value }))}
           rows={4}
           disabled={readOnly}
         />
@@ -415,10 +389,7 @@ export function QuoteForm(props: QuoteFormProps): ReactElement {
                 justifyContent: "flex-end",
               }}
             >
-              <Button
-                variant="secondary"
-                onClick={() => setQuickClientModal(false)}
-              >
+              <Button variant="secondary" onClick={() => setQuickClientModal(false)}>
                 {fr.quotes.actions.cancel}
               </Button>
             </div>
@@ -450,9 +421,7 @@ export function quoteToFormValues(quote: Quote): QuoteFormValues {
     clientId: quote.clientId,
     title: quote.title,
     issuedAt: quote.issuedAt ?? quote.createdAt,
-    validityDate:
-      quote.validityDate ??
-      addDays(quote.issuedAt ?? quote.createdAt, 30),
+    validityDate: quote.validityDate ?? addDays(quote.issuedAt ?? quote.createdAt, 30),
     notes: quote.notes ?? "",
     items: quote.items.map((item) => ({
       id: item.id,

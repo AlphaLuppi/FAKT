@@ -6,11 +6,17 @@
  * - createFromQuote : modes deposit30, balance, full
  */
 
-import { eq, and, like, isNull, or, desc, inArray } from "drizzle-orm";
-import type { DbInstance } from "../adapter.js";
-import { invoices, invoiceItems, quotes, quoteItems } from "../schema/index.js";
 import { canTransitionInvoice } from "@fakt/core";
-import type { Invoice, InvoiceStatus, InvoiceKind, DocumentUnit, PaymentMethod } from "@fakt/shared";
+import type {
+  DocumentUnit,
+  Invoice,
+  InvoiceKind,
+  InvoiceStatus,
+  PaymentMethod,
+} from "@fakt/shared";
+import { and, desc, eq, inArray, isNull, like, or } from "drizzle-orm";
+import type { DbInstance } from "../adapter.js";
+import { invoiceItems, invoices, quoteItems, quotes } from "../schema/index.js";
 
 // ─── Input types ──────────────────────────────────────────────────────────────
 
@@ -176,7 +182,12 @@ export function listInvoices(db: DbInstance, input: ListInvoicesInput): Invoice[
     .where(inArray(invoiceItems.invoiceId, invoiceIds))
     .all();
 
-  return rows.map((row) => rowToInvoice(row, allItems.filter((i) => i.invoiceId === row.id)));
+  return rows.map((row) =>
+    rowToInvoice(
+      row,
+      allItems.filter((i) => i.invoiceId === row.id)
+    )
+  );
 }
 
 /** Récupère une facture avec ses lignes. */
@@ -236,16 +247,10 @@ export function createInvoiceFromQuote(
   const quote = db.select().from(quotes).where(eq(quotes.id, quoteId)).get();
   if (!quote) throw new Error(`createInvoiceFromQuote: quote not found id=${quoteId}`);
   if (quote.status !== "signed") {
-    throw new Error(
-      `createInvoiceFromQuote: quote must be signed (current: ${quote.status})`
-    );
+    throw new Error(`createInvoiceFromQuote: quote must be signed (current: ${quote.status})`);
   }
 
-  const quoteLines = db
-    .select()
-    .from(quoteItems)
-    .where(eq(quoteItems.quoteId, quoteId))
-    .all();
+  const quoteLines = db.select().from(quoteItems).where(eq(quoteItems.quoteId, quoteId)).all();
 
   let totalHtCents: number;
   let kind: InvoiceKind;
@@ -308,15 +313,13 @@ export function createInvoiceFromQuote(
     .returning()
     .get();
 
-  if (!row) throw new Error(`createInvoiceFromQuote: insert returned no row`);
+  if (!row) throw new Error("createInvoiceFromQuote: insert returned no row");
 
   // Copie les lignes du devis avec les montants proportionnels.
   // P0-B : redistribuer l'écart cents sur la dernière ligne pour verrouiller
   // l'invariant Σ lines.lineTotalCents === totalHtCents (sinon PDF affiche Σ ≠ total).
   const ratio = quote.totalHtCents === 0 ? 0 : totalHtCents / quote.totalHtCents;
-  const sortedLines = quoteLines
-    .slice()
-    .sort((a, b) => a.position - b.position);
+  const sortedLines = quoteLines.slice().sort((a, b) => a.position - b.position);
   const mappedLines = sortedLines.map((item) => ({
     id: crypto.randomUUID(),
     position: item.position,
@@ -338,7 +341,8 @@ export function createInvoiceFromQuote(
   upsertItems(db, newInvoiceId, mappedLines);
 
   const created = getInvoice(db, newInvoiceId);
-  if (!created) throw new Error(`createInvoiceFromQuote: could not reload invoice id=${newInvoiceId}`);
+  if (!created)
+    throw new Error(`createInvoiceFromQuote: could not reload invoice id=${newInvoiceId}`);
   return created;
 }
 
@@ -395,9 +399,7 @@ export function markInvoicePaid(
 
   const current = row.status as InvoiceStatus;
   if (!canTransitionInvoice(current, "paid")) {
-    throw new Error(
-      `markInvoicePaid: invalid transition ${current} → paid`
-    );
+    throw new Error(`markInvoicePaid: invalid transition ${current} → paid`);
   }
 
   db.update(invoices)
@@ -439,11 +441,7 @@ export function deleteInvoice(db: DbInstance, id: string): void {
 }
 
 /** Transition de statut validée via canTransitionInvoice. */
-export function updateInvoiceStatus(
-  db: DbInstance,
-  id: string,
-  newStatus: InvoiceStatus
-): Invoice {
+export function updateInvoiceStatus(db: DbInstance, id: string, newStatus: InvoiceStatus): Invoice {
   const row = db
     .select({ id: invoices.id, status: invoices.status })
     .from(invoices)
@@ -454,9 +452,7 @@ export function updateInvoiceStatus(
 
   const current = row.status as InvoiceStatus;
   if (!canTransitionInvoice(current, newStatus)) {
-    throw new Error(
-      `updateInvoiceStatus: invalid transition ${current} → ${newStatus}`
-    );
+    throw new Error(`updateInvoiceStatus: invalid transition ${current} → ${newStatus}`);
   }
 
   const updates: Partial<typeof invoices.$inferInsert> = {

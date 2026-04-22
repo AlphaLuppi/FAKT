@@ -15,7 +15,7 @@ function detectPlatform(): OsPlatform {
   const platform =
     typeof process !== "undefined"
       ? process.platform
-      : (typeof navigator !== "undefined" ? navigator.platform ?? "" : "").toLowerCase();
+      : (typeof navigator !== "undefined" ? (navigator.platform ?? "") : "").toLowerCase();
 
   if (platform === "win32" || platform.startsWith("win")) return "windows";
   if (platform === "darwin" || platform.startsWith("mac")) return "macos";

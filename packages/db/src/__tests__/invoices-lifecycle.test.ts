@@ -1,19 +1,13 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
-  createTestDb,
-  seedWorkspace,
-  seedClient,
-  WORKSPACE_ID,
-  CLIENT_ID_1,
-} from "./helpers.js";
-import {
+  archiveInvoice,
   createInvoice,
   deleteInvoice,
-  updateInvoiceStatus,
-  archiveInvoice,
-  searchInvoices,
   issueInvoice,
+  searchInvoices,
+  updateInvoiceStatus,
 } from "../queries/invoices.js";
+import { CLIENT_ID_1, WORKSPACE_ID, createTestDb, seedClient, seedWorkspace } from "./helpers.js";
 import type { TestDb } from "./helpers.js";
 
 let db: TestDb;
@@ -62,9 +56,7 @@ describe("deleteInvoice", () => {
   });
 
   it("throw si invoice introuvable", () => {
-    expect(() => deleteInvoice(db, "99999999-9999-4999-8999-999999999999")).toThrow(
-      /not found/i
-    );
+    expect(() => deleteInvoice(db, "99999999-9999-4999-8999-999999999999")).toThrow(/not found/i);
   });
 
   it("throw si invoice pas en draft (archivage légal 10 ans)", () => {
@@ -100,11 +92,11 @@ describe("issueInvoice", () => {
 
   it("throw si invoice introuvable", () => {
     expect(() =>
-      issueInvoice(
-        db,
-        "99999999-9999-4999-8999-999999999999",
-        { formatted: "x", year: 2026, sequence: 1 }
-      )
+      issueInvoice(db, "99999999-9999-4999-8999-999999999999", {
+        formatted: "x",
+        year: 2026,
+        sequence: 1,
+      })
     ).toThrow(/not found/i);
   });
 });
@@ -130,9 +122,9 @@ describe("updateInvoiceStatus", () => {
   });
 
   it("throw si invoice introuvable", () => {
-    expect(() =>
-      updateInvoiceStatus(db, "99999999-9999-4999-8999-999999999999", "paid")
-    ).toThrow(/not found/i);
+    expect(() => updateInvoiceStatus(db, "99999999-9999-4999-8999-999999999999", "paid")).toThrow(
+      /not found/i
+    );
   });
 });
 
@@ -144,9 +136,7 @@ describe("archiveInvoice", () => {
   });
 
   it("throw si introuvable", () => {
-    expect(() => archiveInvoice(db, "99999999-9999-4999-8999-999999999999")).toThrow(
-      /not found/i
-    );
+    expect(() => archiveInvoice(db, "99999999-9999-4999-8999-999999999999")).toThrow(/not found/i);
   });
 });
 

@@ -12,16 +12,16 @@
  * - IBAN (pour virement)
  */
 
-import { describe, it, expect } from "vitest";
+import { invoiceSchema } from "@fakt/core";
 import {
-  getMandatoryMentions,
-  buildLegalMentionsSnapshot,
-  TVA_MENTION_MICRO,
   LATE_PAYMENT_PENALTY_RATE,
   LUMP_SUM_INDEMNITY,
+  TVA_MENTION_MICRO,
+  buildLegalMentionsSnapshot,
+  getMandatoryMentions,
   isVatExempt,
 } from "@fakt/legal";
-import { invoiceSchema } from "@fakt/core";
+import { describe, expect, it } from "vitest";
 
 describe("Mentions légales obligatoires (FR-016)", () => {
   const workspace = {

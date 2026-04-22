@@ -1,12 +1,12 @@
-import { describe, it, expect, beforeEach } from "vitest";
 import type Database from "better-sqlite3";
-import { createTestDb, seedWorkspace, WORKSPACE_ID } from "./helpers.js";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
-  nextQuoteNumber,
   nextInvoiceNumber,
-  peekNextNumber,
   nextNumberAtomic,
+  nextQuoteNumber,
+  peekNextNumber,
 } from "../queries/numbering.js";
+import { WORKSPACE_ID, createTestDb, seedWorkspace } from "./helpers.js";
 import type { TestDb } from "./helpers.js";
 
 let db: TestDb;

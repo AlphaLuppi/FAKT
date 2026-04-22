@@ -1,13 +1,13 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { createTestDb, seedWorkspace, WORKSPACE_ID } from "./helpers.js";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
-  getWorkspace,
   createWorkspace,
-  updateWorkspace,
-  getSetting,
-  setSetting,
   getAllSettings,
+  getSetting,
+  getWorkspace,
+  setSetting,
+  updateWorkspace,
 } from "../queries/settings.js";
+import { WORKSPACE_ID, createTestDb, seedWorkspace } from "./helpers.js";
 import type { TestDb } from "./helpers.js";
 
 let db: TestDb;
@@ -88,7 +88,10 @@ describe("createWorkspace", () => {
 
 describe("updateWorkspace", () => {
   it("met à jour les champs fournis", () => {
-    const updated = updateWorkspace(db, WORKSPACE_ID, { name: "Nouveau Nom", siret: "12345678901234" });
+    const updated = updateWorkspace(db, WORKSPACE_ID, {
+      name: "Nouveau Nom",
+      siret: "12345678901234",
+    });
     expect(updated.name).toBe("Nouveau Nom");
     expect(updated.siret).toBe("12345678901234");
   });

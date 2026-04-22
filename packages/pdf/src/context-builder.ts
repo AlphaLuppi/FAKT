@@ -155,9 +155,7 @@ export function buildQuoteContext(args: BuildQuoteCtxArgs): QuoteCtx {
   const { quote, client, workspace } = args;
 
   if (!quote.number) {
-    throw new Error(
-      "buildQuoteContext: le devis doit avoir un numéro émis (non draft)",
-    );
+    throw new Error("buildQuoteContext: le devis doit avoir un numéro émis (non draft)");
   }
   if (!quote.issuedAt) {
     throw new Error("buildQuoteContext: le devis doit avoir une date d'émission");
@@ -184,14 +182,10 @@ export function buildInvoiceContext(args: BuildInvoiceCtxArgs): InvoiceCtx {
   const { invoice, client, workspace } = args;
 
   if (!invoice.number) {
-    throw new Error(
-      "buildInvoiceContext: la facture doit avoir un numéro émis (non draft)",
-    );
+    throw new Error("buildInvoiceContext: la facture doit avoir un numéro émis (non draft)");
   }
   if (!invoice.issuedAt) {
-    throw new Error(
-      "buildInvoiceContext: la facture doit avoir une date d'émission",
-    );
+    throw new Error("buildInvoiceContext: la facture doit avoir une date d'émission");
   }
 
   const executionTs = args.executionAt ?? invoice.issuedAt;

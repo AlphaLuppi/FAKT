@@ -1,31 +1,22 @@
+import { tokens } from "@fakt/design-tokens";
+import { TVA_MENTION_MICRO } from "@fakt/legal";
+import { formatEur, formatFrDate, formatFrDateLong, fr, today } from "@fakt/shared";
+import type { Client, Invoice } from "@fakt/shared";
+import { Button, Modal, StatusPill, toast } from "@fakt/ui";
+import type { StatusKind } from "@fakt/ui";
 import type { ReactElement } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
-import { tokens } from "@fakt/design-tokens";
-import { Button, Modal, StatusPill, toast } from "@fakt/ui";
-import type { StatusKind } from "@fakt/ui";
-import {
-  fr,
-  formatEur,
-  formatFrDateLong,
-  formatFrDate,
-  today,
-} from "@fakt/shared";
-import type { Client, Invoice } from "@fakt/shared";
-import { TVA_MENTION_MICRO } from "@fakt/legal";
-import { useInvoice } from "./hooks.js";
-import { useWorkspace, useClientsList } from "../quotes/hooks.js";
-import { invoiceApi } from "../../features/doc-editor/invoice-api.js";
-import { clientsApi } from "../../features/doc-editor/clients-api.js";
-import { pdfApi } from "../../features/doc-editor/pdf-api.js";
+import { AuditTimeline, type BaseAuditEntry } from "../../components/audit-timeline/index.js";
 import { invalidateSearchIndex } from "../../components/command-palette/useCommandPaletteIndex.js";
-import { MarkPaidModal, type MarkPaidPayload } from "./MarkPaidModal.js";
-import { SignatureModal } from "../../components/signature-modal/index.js";
-import {
-  AuditTimeline,
-  type BaseAuditEntry,
-} from "../../components/audit-timeline/index.js";
 import { PrepareEmailModal } from "../../components/prepare-email-modal/index.js";
+import { SignatureModal } from "../../components/signature-modal/index.js";
+import { clientsApi } from "../../features/doc-editor/clients-api.js";
+import { invoiceApi } from "../../features/doc-editor/invoice-api.js";
+import { pdfApi } from "../../features/doc-editor/pdf-api.js";
+import { useClientsList, useWorkspace } from "../quotes/hooks.js";
+import { MarkPaidModal, type MarkPaidPayload } from "./MarkPaidModal.js";
+import { useInvoice } from "./hooks.js";
 
 function slugify(str: string): string {
   return str
@@ -131,9 +122,7 @@ export function InvoiceDetailRoute(): ReactElement {
       })
       .catch((err: unknown) => {
         if (!cancelled) {
-          setPdfError(
-            err instanceof Error ? err.message : fr.invoices.errors.pdfFailed,
-          );
+          setPdfError(err instanceof Error ? err.message : fr.invoices.errors.pdfFailed);
         }
       });
 
@@ -157,9 +146,7 @@ export function InvoiceDetailRoute(): ReactElement {
         await pdfApi.writeFile(path, bytes);
       }
     } catch (err) {
-      setPdfError(
-        err instanceof Error ? err.message : fr.invoices.errors.pdfFailed,
-      );
+      setPdfError(err instanceof Error ? err.message : fr.invoices.errors.pdfFailed);
     }
   }
 
@@ -173,11 +160,7 @@ export function InvoiceDetailRoute(): ReactElement {
       toast.success(fr.invoices.detail.markSentSuccess);
       refresh();
     } catch (err) {
-      setMarkSentError(
-        err instanceof Error
-          ? err.message
-          : fr.invoices.detail.markSentError,
-      );
+      setMarkSentError(err instanceof Error ? err.message : fr.invoices.detail.markSentError);
     } finally {
       setMarkSentSubmitting(false);
     }
@@ -197,9 +180,7 @@ export function InvoiceDetailRoute(): ReactElement {
       toast.success(fr.payment.modal.success);
       refresh();
     } catch (err) {
-      setMarkPaidError(
-        err instanceof Error ? err.message : fr.payment.modal.error,
-      );
+      setMarkPaidError(err instanceof Error ? err.message : fr.payment.modal.error);
     } finally {
       setMarkPaidSubmitting(false);
     }
@@ -217,9 +198,7 @@ export function InvoiceDetailRoute(): ReactElement {
       invalidateSearchIndex();
       void navigate("/invoices");
     } catch (err) {
-      setDeleteError(
-        err instanceof Error ? err.message : fr.invoices.errors.deleteIssued,
-      );
+      setDeleteError(err instanceof Error ? err.message : fr.invoices.errors.deleteIssued);
     }
   }
 
@@ -242,14 +221,8 @@ export function InvoiceDetailRoute(): ReactElement {
       [fr.invoices.labels.client, client?.name ?? "—"],
       [fr.invoices.labels.kind, fr.invoices.kind[invoice.kind]],
       [fr.invoices.labels.totalHt, formatEur(invoice.totalHtCents)],
-      [
-        fr.invoices.labels.issuedAt,
-        invoice.issuedAt ? formatFrDateLong(invoice.issuedAt) : "—",
-      ],
-      [
-        fr.invoices.labels.dueDate,
-        invoice.dueDate ? formatFrDateLong(invoice.dueDate) : "—",
-      ],
+      [fr.invoices.labels.issuedAt, invoice.issuedAt ? formatFrDateLong(invoice.issuedAt) : "—"],
+      [fr.invoices.labels.dueDate, invoice.dueDate ? formatFrDateLong(invoice.dueDate) : "—"],
       [fr.invoices.labels.createdAt, formatFrDate(invoice.createdAt)],
     ];
     if (invoice.paidAt) {
@@ -267,10 +240,7 @@ export function InvoiceDetailRoute(): ReactElement {
 
   if (error || !invoice) {
     return (
-      <div
-        style={{ padding: tokens.spacing[6] }}
-        data-testid="invoice-detail-not-found"
-      >
+      <div style={{ padding: tokens.spacing[6] }} data-testid="invoice-detail-not-found">
         {fr.invoices.errors.notFound}
       </div>
     );
@@ -389,9 +359,32 @@ export function InvoiceDetailRoute(): ReactElement {
             <span>{fr.invoices.detail.previewTitle}</span>
             {pdfUrl && (
               <div style={{ display: "flex", gap: tokens.spacing[2] }}>
-                <InvPdfToolbarButton label="Zoom +" onClick={() => { const iframe = document.querySelector<HTMLIFrameElement>("[data-testid='invoice-pdf-iframe']"); if (iframe?.contentWindow) iframe.contentWindow.document.body.style.zoom = "1.2"; }} />
-                <InvPdfToolbarButton label="Zoom -" onClick={() => { const iframe = document.querySelector<HTMLIFrameElement>("[data-testid='invoice-pdf-iframe']"); if (iframe?.contentWindow) iframe.contentWindow.document.body.style.zoom = "0.8"; }} />
-                <InvPdfToolbarButton label="Plein écran" onClick={() => { if (pdfUrl) window.open(pdfUrl, "_blank"); }} />
+                <InvPdfToolbarButton
+                  label="Zoom +"
+                  onClick={() => {
+                    const iframe = document.querySelector<HTMLIFrameElement>(
+                      "[data-testid='invoice-pdf-iframe']"
+                    );
+                    if (iframe?.contentWindow)
+                      iframe.contentWindow.document.body.style.zoom = "1.2";
+                  }}
+                />
+                <InvPdfToolbarButton
+                  label="Zoom -"
+                  onClick={() => {
+                    const iframe = document.querySelector<HTMLIFrameElement>(
+                      "[data-testid='invoice-pdf-iframe']"
+                    );
+                    if (iframe?.contentWindow)
+                      iframe.contentWindow.document.body.style.zoom = "0.8";
+                  }}
+                />
+                <InvPdfToolbarButton
+                  label="Plein écran"
+                  onClick={() => {
+                    if (pdfUrl) window.open(pdfUrl, "_blank");
+                  }}
+                />
               </div>
             )}
           </div>
@@ -419,10 +412,7 @@ export function InvoiceDetailRoute(): ReactElement {
                 }}
                 data-testid="invoice-pdf-placeholder"
               >
-                {pdfError ??
-                  (isDraft
-                    ? fr.invoices.detail.noPdfDraft
-                    : fr.invoices.detail.noPdf)}
+                {pdfError ?? (isDraft ? fr.invoices.detail.noPdfDraft : fr.invoices.detail.noPdf)}
               </div>
             )}
           </div>
@@ -712,7 +702,10 @@ function buildInvoiceExtras(inv: Invoice): BaseAuditEntry[] {
   return extras;
 }
 
-function InvPdfToolbarButton({ label, onClick }: { label: string; onClick: () => void }): ReactElement {
+function InvPdfToolbarButton({
+  label,
+  onClick,
+}: { label: string; onClick: () => void }): ReactElement {
   return (
     <button
       type="button"

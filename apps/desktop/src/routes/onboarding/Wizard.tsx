@@ -1,16 +1,16 @@
-import type { ReactElement } from "react";
-import { useState, useCallback } from "react";
-import { useNavigate } from "react-router";
-import { Toaster } from "@fakt/ui";
-import { fr } from "@fakt/shared";
-import { IdentityStep } from "./steps/Identity.js";
-import { ClaudeCliStep } from "./steps/ClaudeCli.js";
-import { CertificateStep } from "./steps/Certificate.js";
-import { RecapStep } from "./steps/Recap.js";
-import { OnboardingContext } from "./context.js";
-import type { OnboardingState, CertInfo } from "./context.js";
-import type { IdentityFormValues } from "./validators.js";
 import type { CliInfo } from "@fakt/ai";
+import { fr } from "@fakt/shared";
+import { Toaster } from "@fakt/ui";
+import type { ReactElement } from "react";
+import { useCallback, useState } from "react";
+import { useNavigate } from "react-router";
+import { OnboardingContext } from "./context.js";
+import type { CertInfo, OnboardingState } from "./context.js";
+import { CertificateStep } from "./steps/Certificate.js";
+import { ClaudeCliStep } from "./steps/ClaudeCli.js";
+import { IdentityStep } from "./steps/Identity.js";
+import { RecapStep } from "./steps/Recap.js";
+import type { IdentityFormValues } from "./validators.js";
 
 const STEPS = [
   fr.onboarding.step1.title,

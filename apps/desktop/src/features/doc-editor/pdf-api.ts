@@ -3,14 +3,9 @@
  * save dialog Tauri.
  */
 
+import type { ClientInput, InvoiceInput, QuoteInput, WorkspaceInput } from "@fakt/core";
+import { renderInvoicePdf, renderQuotePdf } from "@fakt/pdf";
 import { invoke } from "@tauri-apps/api/core";
-import { renderQuotePdf, renderInvoicePdf } from "@fakt/pdf";
-import type {
-  QuoteInput,
-  InvoiceInput,
-  ClientInput,
-  WorkspaceInput,
-} from "@fakt/core";
 
 export interface RenderQuoteArgs {
   quote: QuoteInput;

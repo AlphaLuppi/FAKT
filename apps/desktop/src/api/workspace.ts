@@ -1,4 +1,4 @@
-import type { Workspace, LegalForm } from "@fakt/shared";
+import type { LegalForm, Workspace } from "@fakt/shared";
 import { getApiClient } from "./client.js";
 
 export interface CreateWorkspaceInput {

@@ -32,7 +32,7 @@ export function validateSiret(raw: string): boolean {
 
   let sum = 0;
   for (let i = 0; i < 14; i++) {
-    let digit = parseInt(siret[13 - i] as string, 10);
+    let digit = Number.parseInt(siret[13 - i] as string, 10);
     if (i % 2 !== 0) {
       digit *= 2;
       if (digit > 9) digit -= 9;

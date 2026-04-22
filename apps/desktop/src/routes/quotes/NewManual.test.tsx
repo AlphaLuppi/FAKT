@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { NewManual } from "./NewManual.js";
 import { installMockApis } from "./__test-helpers__/mockApis.js";
 
@@ -19,7 +19,7 @@ describe("NewManual", () => {
     render(
       <MemoryRouter initialEntries={["/quotes/new?mode=manual"]}>
         <NewManual />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
   }
 

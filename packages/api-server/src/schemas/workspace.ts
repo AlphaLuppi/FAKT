@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { uuidSchema, siretSchema } from "./common.js";
+import { siretSchema, uuidSchema } from "./common.js";
 
 const LEGAL_FORMS = [
   "Micro-entreprise",

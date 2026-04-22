@@ -1,7 +1,7 @@
 import type { Context } from "hono";
 import type { ZodSchema, z } from "zod";
-import type { AppEnv } from "../types.js";
 import { badRequest } from "../errors.js";
+import type { AppEnv } from "../types.js";
 
 /** Parse body JSON + valide Zod ; throw 400 si invalid. */
 export async function parseBody<S extends ZodSchema>(
@@ -26,10 +26,7 @@ export async function parseBody<S extends ZodSchema>(
 }
 
 /** Valide query params sur un schema Zod ; throw 400 si invalid. */
-export function parseQuery<S extends ZodSchema>(
-  c: Context<AppEnv>,
-  schema: S
-): z.infer<S> {
+export function parseQuery<S extends ZodSchema>(c: Context<AppEnv>, schema: S): z.infer<S> {
   const result = schema.safeParse(c.req.query());
   if (!result.success) {
     const first = result.error.issues[0];

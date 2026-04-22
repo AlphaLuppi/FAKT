@@ -1,6 +1,6 @@
+import { tokens } from "@fakt/design-tokens";
 import type { InputHTMLAttributes, ReactElement, ReactNode } from "react";
 import { forwardRef } from "react";
-import { tokens } from "@fakt/design-tokens";
 
 export interface RadioProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "type"> {
   label?: ReactNode;
@@ -8,7 +8,7 @@ export interface RadioProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
 
 export const Radio = forwardRef<HTMLInputElement, RadioProps>(function Radio(
   { label, style, ...rest },
-  ref,
+  ref
 ): ReactElement {
   return (
     <label

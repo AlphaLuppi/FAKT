@@ -1,35 +1,35 @@
-import { Hono } from "hono";
-import type { AppEnv } from "../types.js";
 import { canTransitionInvoice } from "@fakt/core";
-import { notFound, conflict, invalidTransition } from "../errors.js";
-import { parseBody, parseQuery, parseParam } from "../middleware/zod.js";
+import {
+  type CreateFromQuoteMode,
+  archiveInvoice,
+  createInvoice,
+  createInvoiceFromQuote,
+  deleteInvoice,
+  getInvoice,
+  getWorkspace,
+  insertActivity,
+  issueInvoice,
+  listInvoices,
+  markInvoicePaid,
+  nextInvoiceNumber,
+  searchInvoices,
+  updateInvoice,
+  updateInvoiceStatus,
+  updateQuoteStatus,
+} from "@fakt/db/queries";
+import { Hono } from "hono";
+import { conflict, invalidTransition, notFound } from "../errors.js";
+import { parseBody, parseParam, parseQuery } from "../middleware/zod.js";
 import { uuidSchema } from "../schemas/common.js";
 import {
   createInvoiceSchema,
   fromQuoteSchema,
-  updateInvoiceSchema,
-  markPaidSchema,
-  listInvoicesQuerySchema,
   invoiceSearchQuerySchema,
+  listInvoicesQuerySchema,
+  markPaidSchema,
+  updateInvoiceSchema,
 } from "../schemas/invoices.js";
-import {
-  getWorkspace,
-  listInvoices,
-  getInvoice,
-  createInvoice,
-  createInvoiceFromQuote,
-  updateInvoice,
-  markInvoicePaid,
-  deleteInvoice,
-  updateInvoiceStatus,
-  archiveInvoice,
-  searchInvoices,
-  issueInvoice,
-  nextInvoiceNumber,
-  insertActivity,
-  updateQuoteStatus,
-  type CreateFromQuoteMode,
-} from "@fakt/db/queries";
+import type { AppEnv } from "../types.js";
 
 export const invoicesRoutes = new Hono<AppEnv>();
 
@@ -231,9 +231,7 @@ invoicesRoutes.post("/:id/issue", (c) => {
   const existing = getInvoice(c.var.db, id);
   if (!existing) throw notFound(`invoice ${id} introuvable`);
   if (existing.status !== "draft") {
-    throw invalidTransition(
-      `issue : transition ${existing.status} → sent invalide (draft requis)`
-    );
+    throw invalidTransition(`issue : transition ${existing.status} → sent invalide (draft requis)`);
   }
   const workspaceId = requireWorkspaceId(c.var.db);
   const numbering = nextInvoiceNumber(c.var.db, workspaceId);
@@ -251,9 +249,7 @@ invoicesRoutes.post("/:id/mark-sent", (c) => {
   if (!existing) throw notFound(`invoice ${id} introuvable`);
   if (existing.status === "sent") return c.json(existing);
   if (existing.status !== "draft") {
-    throw invalidTransition(
-      `mark-sent : transition ${existing.status} → sent invalide`
-    );
+    throw invalidTransition(`mark-sent : transition ${existing.status} → sent invalide`);
   }
   const workspaceId = requireWorkspaceId(c.var.db);
   const numbering = nextInvoiceNumber(c.var.db, workspaceId);
@@ -272,13 +268,7 @@ invoicesRoutes.post("/:id/mark-paid", async (c) => {
   const body = await parseBody(c, markPaidSchema);
 
   try {
-    const updated = markInvoicePaid(
-      c.var.db,
-      id,
-      body.paidAt,
-      body.method,
-      body.notes ?? null
-    );
+    const updated = markInvoicePaid(c.var.db, id, body.paidAt, body.method, body.notes ?? null);
     const workspaceId = requireWorkspaceId(c.var.db);
     logActivity(c.var.db, workspaceId, "invoice.paid", updated.id, {
       method: updated.paymentMethod,

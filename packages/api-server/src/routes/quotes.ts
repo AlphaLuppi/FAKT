@@ -1,29 +1,29 @@
+import type { DbInstance } from "@fakt/db/adapter";
+import {
+  createQuote,
+  deleteQuote,
+  getClient,
+  getQuote,
+  getWorkspace,
+  listQuotes,
+  nextNumberAtomic,
+  peekNextNumber,
+  searchQuotes,
+  updateQuote,
+  updateQuoteStatus,
+} from "@fakt/db/queries";
+import type { QuoteStatus } from "@fakt/shared";
 import { Hono } from "hono";
-import type { AppEnv } from "../types.js";
 import { conflict, invalidTransition, notFound } from "../errors.js";
-import { parseBody, parseQuery, parseParam } from "../middleware/zod.js";
+import { parseBody, parseParam, parseQuery } from "../middleware/zod.js";
 import { uuidSchema } from "../schemas/common.js";
 import {
   createQuoteSchema,
-  updateQuoteSchema,
   listQuotesQuerySchema,
   quoteSearchQuerySchema,
+  updateQuoteSchema,
 } from "../schemas/quotes.js";
-import {
-  getWorkspace,
-  listQuotes,
-  getQuote,
-  createQuote,
-  updateQuote,
-  updateQuoteStatus,
-  deleteQuote,
-  searchQuotes,
-  nextNumberAtomic,
-  peekNextNumber,
-  getClient,
-} from "@fakt/db/queries";
-import type { DbInstance } from "@fakt/db/adapter";
-import type { QuoteStatus } from "@fakt/shared";
+import type { AppEnv } from "../types.js";
 
 export const quotesRoutes = new Hono<AppEnv>();
 
@@ -113,9 +113,7 @@ quotesRoutes.patch("/:id", async (c) => {
   const id = parseParam(c, "id", uuidSchema);
   const existing = requireQuote(c.var.db, id);
   if (existing.status !== "draft") {
-    throw invalidTransition(
-      `quote ${id} non modifiable (status=${existing.status} ≠ draft)`
-    );
+    throw invalidTransition(`quote ${id} non modifiable (status=${existing.status} ≠ draft)`);
   }
   const body = await parseBody(c, updateQuoteSchema);
   const input: Parameters<typeof updateQuote>[2] = {};
@@ -146,9 +144,7 @@ quotesRoutes.delete("/:id", (c) => {
   const id = parseParam(c, "id", uuidSchema);
   const existing = requireQuote(c.var.db, id);
   if (existing.status !== "draft") {
-    throw invalidTransition(
-      `quote ${id} non supprimable (status=${existing.status} ≠ draft)`
-    );
+    throw invalidTransition(`quote ${id} non supprimable (status=${existing.status} ≠ draft)`);
   }
   deleteQuote(c.var.db, id);
   return c.body(null, 204);
@@ -159,9 +155,7 @@ quotesRoutes.post("/:id/issue", (c) => {
   const id = parseParam(c, "id", uuidSchema);
   const existing = requireQuote(c.var.db, id);
   if (existing.status !== "draft") {
-    throw invalidTransition(
-      `quote ${id} déjà émis (status=${existing.status})`
-    );
+    throw invalidTransition(`quote ${id} déjà émis (status=${existing.status})`);
   }
   const workspaceId = requireWorkspaceId(c.var.db);
 

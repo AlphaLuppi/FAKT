@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { Modal } from "../overlays/Modal.js";
 
 describe("Modal", () => {
@@ -7,7 +7,7 @@ describe("Modal", () => {
     const { queryByRole } = render(
       <Modal open={false} title="T">
         body
-      </Modal>,
+      </Modal>
     );
     expect(queryByRole("dialog")).not.toBeInTheDocument();
   });
@@ -16,7 +16,7 @@ describe("Modal", () => {
     render(
       <Modal open title="Confirmer">
         <span>body</span>
-      </Modal>,
+      </Modal>
     );
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(screen.getByText("Confirmer")).toBeInTheDocument();
@@ -28,7 +28,7 @@ describe("Modal", () => {
     render(
       <Modal open title="T" onClose={onClose}>
         body
-      </Modal>,
+      </Modal>
     );
     fireEvent.keyDown(document, { key: "Escape" });
     expect(onClose).toHaveBeenCalled();

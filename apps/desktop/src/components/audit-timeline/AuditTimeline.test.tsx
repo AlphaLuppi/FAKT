@@ -1,7 +1,7 @@
-import { describe, expect, it } from "vitest";
+import type { SignatureEvent } from "@fakt/shared";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
-import type { SignatureEvent } from "@fakt/shared";
+import { describe, expect, it } from "vitest";
 import { AuditTimeline } from "./AuditTimeline.js";
 
 function wrap(ui: React.ReactElement): React.ReactElement {
@@ -30,14 +30,7 @@ const FIXTURE_EVENTS: SignatureEvent[] = [
 describe("AuditTimeline", () => {
   it("rend l'état vide si aucune entrée", () => {
     render(
-      wrap(
-        <AuditTimeline
-          docType="quote"
-          docId="doc-1"
-          initialEvents={[]}
-          extraEntries={[]}
-        />,
-      ),
+      wrap(<AuditTimeline docType="quote" docId="doc-1" initialEvents={[]} extraEntries={[]} />)
     );
     expect(screen.getByTestId("audit-timeline-empty")).toBeInTheDocument();
   });
@@ -50,8 +43,8 @@ describe("AuditTimeline", () => {
           docId="doc-1"
           initialEvents={FIXTURE_EVENTS}
           extraEntries={[]}
-        />,
-      ),
+        />
+      )
     );
     expect(screen.getByTestId("audit-entry-signed")).toBeInTheDocument();
     expect(screen.getByTestId("audit-verify")).toBeInTheDocument();
@@ -70,8 +63,8 @@ describe("AuditTimeline", () => {
             { kind: "created", timestamp: 1_713_999_999_000 },
             { kind: "sent", timestamp: 1_713_999_999_500 },
           ]}
-        />,
-      ),
+        />
+      )
     );
     expect(screen.getByTestId("audit-entry-created")).toBeInTheDocument();
     expect(screen.getByTestId("audit-entry-sent")).toBeInTheDocument();

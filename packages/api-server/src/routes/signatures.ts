@@ -1,15 +1,4 @@
-import { Hono } from "hono";
 import { createHash } from "node:crypto";
-import type { AppEnv } from "../types.js";
-import { notFound, badRequest } from "../errors.js";
-import { parseBody, parseQuery, parseParam } from "../middleware/zod.js";
-import { uuidSchema } from "../schemas/common.js";
-import {
-  appendSignatureEventSchema,
-  signatureEventsQuerySchema,
-  upsertSignedDocumentSchema,
-  documentTypeSchema,
-} from "../schemas/signatures.js";
 import {
   appendSignatureEvent,
   getSignatureChain,
@@ -17,6 +6,17 @@ import {
   upsertSignedDocument,
 } from "@fakt/db/queries";
 import type { SignatureEvent } from "@fakt/shared";
+import { Hono } from "hono";
+import { badRequest, notFound } from "../errors.js";
+import { parseBody, parseParam, parseQuery } from "../middleware/zod.js";
+import { uuidSchema } from "../schemas/common.js";
+import {
+  appendSignatureEventSchema,
+  documentTypeSchema,
+  signatureEventsQuerySchema,
+  upsertSignedDocumentSchema,
+} from "../schemas/signatures.js";
+import type { AppEnv } from "../types.js";
 
 export const signaturesRoutes = new Hono<AppEnv>();
 

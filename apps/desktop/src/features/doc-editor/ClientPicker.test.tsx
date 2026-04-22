@@ -1,7 +1,7 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
-import { ClientPicker } from "./ClientPicker.js";
 import type { Client } from "@fakt/shared";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import { ClientPicker } from "./ClientPicker.js";
 
 const CLIENTS: Client[] = [
   {
@@ -39,9 +39,7 @@ const CLIENTS: Client[] = [
 describe("ClientPicker", () => {
   it("affiche un placeholder quand aucun client n'est sélectionné", () => {
     render(<ClientPicker value={null} onChange={vi.fn()} clients={CLIENTS} />);
-    expect(
-      screen.getAllByText(/choisir un client/i).length,
-    ).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/choisir un client/i).length).toBeGreaterThanOrEqual(1);
   });
 
   it("affiche le client sélectionné", () => {
@@ -69,12 +67,7 @@ describe("ClientPicker", () => {
   it("invoque onQuickCreate quand le bouton est cliqué", () => {
     const onQuick = vi.fn();
     render(
-      <ClientPicker
-        value={null}
-        onChange={vi.fn()}
-        clients={CLIENTS}
-        onQuickCreate={onQuick}
-      />,
+      <ClientPicker value={null} onChange={vi.fn()} clients={CLIENTS} onQuickCreate={onQuick} />
     );
     fireEvent.click(screen.getByText(/nouveau client rapide/i));
     expect(onQuick).toHaveBeenCalledTimes(1);

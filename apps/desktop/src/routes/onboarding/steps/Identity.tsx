@@ -1,11 +1,11 @@
+import { fr } from "@fakt/shared";
+import { Button, Input, Select, Textarea } from "@fakt/ui";
+import { zodResolver } from "@hookform/resolvers/zod";
 import type { ReactElement } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Button, Input, Select, Textarea } from "@fakt/ui";
-import { fr } from "@fakt/shared";
-import { identitySchema, LEGAL_FORM_OPTIONS } from "../validators.js";
-import type { IdentityFormValues } from "../validators.js";
 import { useOnboarding } from "../context.js";
+import { LEGAL_FORM_OPTIONS, identitySchema } from "../validators.js";
+import type { IdentityFormValues } from "../validators.js";
 
 interface Props {
   onNext: () => void;
@@ -38,7 +38,12 @@ export function IdentityStep({ onNext }: Props): ReactElement {
   }
 
   return (
-    <form onSubmit={(e) => { void handleSubmit(onSubmit)(e); }} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+    <form
+      onSubmit={(e) => {
+        void handleSubmit(onSubmit)(e);
+      }}
+      style={{ display: "flex", flexDirection: "column", gap: 20 }}
+    >
       <div>
         <h2 style={headingStyle}>{fr.onboarding.step1.title}</h2>
         <p style={descStyle}>{fr.onboarding.step1.description}</p>

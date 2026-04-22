@@ -1,5 +1,5 @@
-import type { ReactElement } from "react";
 import { tokens } from "@fakt/design-tokens";
+import type { ReactElement } from "react";
 
 export interface AvatarProps {
   name: string;
@@ -13,7 +13,9 @@ function deriveInitials(name: string): string {
   if (words.length === 0) return "?";
   const first = words[0] ?? "";
   const second = words[1] ?? "";
-  return (first.charAt(0) + (second.charAt(0) ?? "")).toUpperCase() || first.charAt(0).toUpperCase();
+  return (
+    (first.charAt(0) + (second.charAt(0) ?? "")).toUpperCase() || first.charAt(0).toUpperCase()
+  );
 }
 
 /** Avatar carré brutal (pas de border-radius). */

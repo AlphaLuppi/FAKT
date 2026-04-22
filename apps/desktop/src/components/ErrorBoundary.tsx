@@ -1,4 +1,4 @@
-import type { ErrorInfo, ReactNode, ReactElement } from "react";
+import type { ErrorInfo, ReactElement, ReactNode } from "react";
 import { Component } from "react";
 
 interface Props {
@@ -123,8 +123,7 @@ function DefaultFallback({
             color: "var(--muted)",
           }}
         >
-          L'application a rencontré un problème inattendu. Vous pouvez réessayer ou
-          recharger.
+          L'application a rencontré un problème inattendu. Vous pouvez réessayer ou recharger.
         </p>
         <pre
           style={{

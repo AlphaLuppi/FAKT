@@ -14,14 +14,7 @@ export const quantityMilliSchema = z
   .int("La quantité doit être un entier en millièmes")
   .positive("La quantité doit être supérieure à zéro");
 
-export const documentUnitSchema = z.enum([
-  "forfait",
-  "jour",
-  "heure",
-  "unité",
-  "mois",
-  "semaine",
-]);
+export const documentUnitSchema = z.enum(["forfait", "jour", "heure", "unité", "mois", "semaine"]);
 
 export const legalFormSchema = z.enum([
   "Micro-entreprise",
@@ -44,13 +37,7 @@ export const quoteStatusSchema = z.enum([
   "expired",
 ]);
 
-export const invoiceStatusSchema = z.enum([
-  "draft",
-  "sent",
-  "paid",
-  "overdue",
-  "cancelled",
-]);
+export const invoiceStatusSchema = z.enum(["draft", "sent", "paid", "overdue", "cancelled"]);
 
 export const invoiceKindSchema = z.enum(["deposit", "balance", "total", "independent"]);
 

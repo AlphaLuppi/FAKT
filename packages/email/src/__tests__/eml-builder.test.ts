@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { buildEml } from "../eml-builder.js";
 
 describe("buildEml", () => {
@@ -101,8 +101,12 @@ describe("buildEml", () => {
       bodyPlain: "B",
       boundarySeed: "stable-seed",
     });
-    const boundaryLine1 = eml1.split("\r\n").find((l) => l.startsWith("Content-Type: multipart/mixed"));
-    const boundaryLine2 = eml2.split("\r\n").find((l) => l.startsWith("Content-Type: multipart/mixed"));
+    const boundaryLine1 = eml1
+      .split("\r\n")
+      .find((l) => l.startsWith("Content-Type: multipart/mixed"));
+    const boundaryLine2 = eml2
+      .split("\r\n")
+      .find((l) => l.startsWith("Content-Type: multipart/mixed"));
     expect(boundaryLine1).toBe(boundaryLine2);
   });
 

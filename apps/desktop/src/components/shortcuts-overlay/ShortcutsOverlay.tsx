@@ -1,7 +1,7 @@
-import type { ReactElement } from "react";
-import { useEffect } from "react";
 import { tokens } from "@fakt/design-tokens";
 import { fr } from "@fakt/shared";
+import type { ReactElement } from "react";
+import { useEffect } from "react";
 
 const SHORTCUTS = [
   { keys: ["⌘", "K"], label: fr.shortcuts.palette },
@@ -95,7 +95,16 @@ export function ShortcutsOverlay({ onClose }: ShortcutsOverlayProps): ReactEleme
           </button>
         </div>
 
-        <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: tokens.spacing[2] }}>
+        <ul
+          style={{
+            listStyle: "none",
+            padding: 0,
+            margin: 0,
+            display: "flex",
+            flexDirection: "column",
+            gap: tokens.spacing[2],
+          }}
+        >
           {SHORTCUTS.map((s) => (
             <li
               key={s.label}

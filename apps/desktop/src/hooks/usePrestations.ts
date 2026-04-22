@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import type { Service, DocumentUnit } from "@fakt/shared";
+import type { DocumentUnit, Service } from "@fakt/shared";
+import { useCallback, useEffect, useState } from "react";
 import { api } from "../api/index.js";
 
 interface UsePrestationsOptions {
@@ -85,7 +85,7 @@ export function usePrestations(options: UsePrestationsOptions = {}): UsePrestati
       await api.services.create({ id: genUuid(), ...input });
       refresh();
     },
-    [refresh],
+    [refresh]
   );
 
   const updatePrestation = useCallback(
@@ -93,7 +93,7 @@ export function usePrestations(options: UsePrestationsOptions = {}): UsePrestati
       await api.services.update(id, input);
       refresh();
     },
-    [refresh],
+    [refresh]
   );
 
   const deletePrestation = useCallback(
@@ -101,7 +101,7 @@ export function usePrestations(options: UsePrestationsOptions = {}): UsePrestati
       await api.services.archive(id);
       refresh();
     },
-    [refresh],
+    [refresh]
   );
 
   const restorePrestation = useCallback(
@@ -109,8 +109,16 @@ export function usePrestations(options: UsePrestationsOptions = {}): UsePrestati
       await api.services.restore(id);
       refresh();
     },
-    [refresh],
+    [refresh]
   );
 
-  return { prestations, loading, createPrestation, updatePrestation, deletePrestation, restorePrestation, refresh };
+  return {
+    prestations,
+    loading,
+    createPrestation,
+    updatePrestation,
+    deletePrestation,
+    restorePrestation,
+    refresh,
+  };
 }

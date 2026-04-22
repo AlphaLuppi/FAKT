@@ -1,8 +1,8 @@
-import type { ReactElement } from "react";
-import { useState, useEffect } from "react";
-import { Button, Modal, toast } from "@fakt/ui";
 import { fr } from "@fakt/shared";
 import type { Workspace } from "@fakt/shared";
+import { Button, Modal, toast } from "@fakt/ui";
+import type { ReactElement } from "react";
+import { useEffect, useState } from "react";
 
 /// Miroir de `crypto::cert::CertInfo` côté Rust (serde rename_all camelCase).
 interface CertInfo {
@@ -104,7 +104,11 @@ export function CertificateTab({ workspace }: Props): ReactElement {
           </div>
           <div style={metaStyle}>
             <MetaRow label={fr.settings.certificate.dn} value={certInfo.subjectCn} mono />
-            <MetaRow label={fr.settings.certificate.fingerprint} value={certInfo.fingerprintSha256Hex} mono />
+            <MetaRow
+              label={fr.settings.certificate.fingerprint}
+              value={certInfo.fingerprintSha256Hex}
+              mono
+            />
             <MetaRow
               label={fr.settings.certificate.expiry}
               value={`${certInfo.notAfterIso} — ${computeValidityRemaining(certInfo.notAfterIso)}`}
@@ -113,7 +117,10 @@ export function CertificateTab({ workspace }: Props): ReactElement {
         </div>
       ) : (
         <div style={cardStyle}>
-          <p style={{ ...descStyle, margin: 0 }}>Aucun certificat actif. Utilisez l'assistant de premier lancement ou régénérez un certificat.</p>
+          <p style={{ ...descStyle, margin: 0 }}>
+            Aucun certificat actif. Utilisez l'assistant de premier lancement ou régénérez un
+            certificat.
+          </p>
         </div>
       )}
 
@@ -136,13 +143,27 @@ export function CertificateTab({ workspace }: Props): ReactElement {
             <Button variant="secondary" onClick={() => setShowWarning(false)}>
               {fr.settings.certificate.rotateCancel}
             </Button>
-            <Button variant="danger" onClick={() => { void handleRotate(); }} disabled={rotating}>
+            <Button
+              variant="danger"
+              onClick={() => {
+                void handleRotate();
+              }}
+              disabled={rotating}
+            >
               {rotating ? "Régénération…" : fr.settings.certificate.rotateConfirm}
             </Button>
           </>
         }
       >
-        <p style={{ fontFamily: "var(--font-ui)", fontSize: "var(--t-sm)", color: "var(--ink)", margin: 0, lineHeight: 1.6 }}>
+        <p
+          style={{
+            fontFamily: "var(--font-ui)",
+            fontSize: "var(--t-sm)",
+            color: "var(--ink)",
+            margin: 0,
+            lineHeight: 1.6,
+          }}
+        >
           {fr.settings.certificate.rotateWarningBody}
         </p>
       </Modal>
@@ -150,13 +171,34 @@ export function CertificateTab({ workspace }: Props): ReactElement {
   );
 }
 
-function MetaRow({ label, value, mono }: { label: string; value: string; mono?: boolean }): ReactElement {
+function MetaRow({
+  label,
+  value,
+  mono,
+}: { label: string; value: string; mono?: boolean }): ReactElement {
   return (
     <div style={{ marginBottom: 10 }}>
-      <div style={{ fontFamily: "var(--font-ui)", fontWeight: 700, fontSize: 10, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 2 }}>
+      <div
+        style={{
+          fontFamily: "var(--font-ui)",
+          fontWeight: 700,
+          fontSize: 10,
+          color: "var(--muted)",
+          textTransform: "uppercase",
+          letterSpacing: "0.07em",
+          marginBottom: 2,
+        }}
+      >
         {label}
       </div>
-      <div style={{ fontFamily: mono === true ? "var(--font-mono)" : "var(--font-ui)", fontSize: "var(--t-sm)", color: "var(--ink)", wordBreak: "break-all" }}>
+      <div
+        style={{
+          fontFamily: mono === true ? "var(--font-mono)" : "var(--font-ui)",
+          fontSize: "var(--t-sm)",
+          color: "var(--ink)",
+          wordBreak: "break-all",
+        }}
+      >
         {value}
       </div>
     </div>

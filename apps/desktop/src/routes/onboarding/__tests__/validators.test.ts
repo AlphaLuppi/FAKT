@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { identitySchema } from "../validators.js";
 
 const VALID_SIRET = "73282932000074"; // SIRET valide (Luhn OK)
@@ -127,7 +127,16 @@ describe("identitySchema — validation email", () => {
 });
 
 describe("identitySchema — formes juridiques", () => {
-  const validForms = ["Micro-entreprise", "EI", "EURL", "SASU", "SAS", "SARL", "SA", "Autre"] as const;
+  const validForms = [
+    "Micro-entreprise",
+    "EI",
+    "EURL",
+    "SASU",
+    "SAS",
+    "SARL",
+    "SA",
+    "Autre",
+  ] as const;
 
   for (const form of validForms) {
     it(`accepte la forme "${form}"`, () => {

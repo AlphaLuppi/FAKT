@@ -4,7 +4,7 @@
  * Ordre desc sur createdAt pour affichage sidebar. Append-only côté métier.
  */
 
-import { eq, and, desc } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import type { DbInstance } from "../adapter.js";
 import { activity } from "../schema/index.js";
 

@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { createTestApp } from "./helpers.js";
 
 const SVC_ID = "33333333-3333-4333-8333-333333333333";
@@ -88,8 +88,8 @@ describe("POST /api/services", () => {
   it("201 sans description ni tags (defaults null)", async () => {
     const { app, authHeaders } = createTestApp();
     const payload = svcPayload();
-    delete (payload as Record<string, unknown>)["description"];
-    delete (payload as Record<string, unknown>)["tags"];
+    (payload as Record<string, unknown>).description = undefined;
+    (payload as Record<string, unknown>).tags = undefined;
     const res = await app.request("/api/services", {
       method: "POST",
       headers: authHeaders(),
@@ -178,10 +178,9 @@ describe("GET /api/services/:id", () => {
 
   it("404 inexistant", async () => {
     const { app, authHeaders } = createTestApp();
-    const res = await app.request(
-      "/api/services/99999999-9999-4999-8999-999999999999",
-      { headers: authHeaders() }
-    );
+    const res = await app.request("/api/services/99999999-9999-4999-8999-999999999999", {
+      headers: authHeaders(),
+    });
     expect(res.status).toBe(404);
   });
 
@@ -231,14 +230,11 @@ describe("PATCH /api/services/:id", () => {
 
   it("404 si absent", async () => {
     const { app, authHeaders } = createTestApp();
-    const res = await app.request(
-      "/api/services/99999999-9999-4999-8999-999999999999",
-      {
-        method: "PATCH",
-        headers: authHeaders(),
-        body: JSON.stringify({ name: "X" }),
-      }
-    );
+    const res = await app.request("/api/services/99999999-9999-4999-8999-999999999999", {
+      method: "PATCH",
+      headers: authHeaders(),
+      body: JSON.stringify({ name: "X" }),
+    });
     expect(res.status).toBe(404);
   });
 
@@ -303,19 +299,19 @@ describe("DELETE + restore /api/services/:id", () => {
 
   it("404 restore id inexistant", async () => {
     const { app, authHeaders } = createTestApp();
-    const res = await app.request(
-      "/api/services/99999999-9999-4999-8999-999999999999/restore",
-      { method: "POST", headers: authHeaders() }
-    );
+    const res = await app.request("/api/services/99999999-9999-4999-8999-999999999999/restore", {
+      method: "POST",
+      headers: authHeaders(),
+    });
     expect(res.status).toBe(404);
   });
 
   it("404 DELETE id inexistant", async () => {
     const { app, authHeaders } = createTestApp();
-    const res = await app.request(
-      "/api/services/99999999-9999-4999-8999-999999999999",
-      { method: "DELETE", headers: authHeaders() }
-    );
+    const res = await app.request("/api/services/99999999-9999-4999-8999-999999999999", {
+      method: "DELETE",
+      headers: authHeaders(),
+    });
     expect(res.status).toBe(404);
   });
 });

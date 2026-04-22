@@ -1,18 +1,13 @@
+import { tokens } from "@fakt/design-tokens";
+import { fr, startOfDay, today } from "@fakt/shared";
+import type { PaymentMethod, TimestampMs } from "@fakt/shared";
+import { Button, Modal } from "@fakt/ui";
 import type { ReactElement } from "react";
 import { useMemo, useState } from "react";
 import { z } from "zod";
-import { tokens } from "@fakt/design-tokens";
-import { Button, Modal } from "@fakt/ui";
-import { fr, startOfDay, today } from "@fakt/shared";
-import type { PaymentMethod, TimestampMs } from "@fakt/shared";
 
 /** Méthode sélectionnable dans l'UI, inclut "card" même si le backend persiste "other". */
-export type MarkPaidMethodChoice =
-  | "wire"
-  | "card"
-  | "cash"
-  | "check"
-  | "other";
+export type MarkPaidMethodChoice = "wire" | "card" | "cash" | "check" | "other";
 
 export interface MarkPaidPayload {
   paidAt: TimestampMs;
@@ -109,10 +104,7 @@ export function MarkPaidModal({
   const [notes, setNotes] = useState<string>("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  const canSubmit = useMemo(
-    () => !submitting && dateIso.length > 0,
-    [submitting, dateIso],
-  );
+  const canSubmit = useMemo(() => !submitting && dateIso.length > 0, [submitting, dateIso]);
 
   async function handleConfirm(): Promise<void> {
     const parsed = formSchema.safeParse({

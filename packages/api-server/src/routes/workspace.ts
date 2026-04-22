@@ -1,17 +1,10 @@
-import { Hono } from "hono";
 import { randomUUID } from "node:crypto";
-import type { AppEnv } from "../types.js";
-import { notFound, conflict } from "../errors.js";
+import { createWorkspace, getWorkspace, updateWorkspace } from "@fakt/db/queries";
+import { Hono } from "hono";
+import { conflict, notFound } from "../errors.js";
 import { parseBody } from "../middleware/zod.js";
-import {
-  createWorkspaceSchema,
-  updateWorkspaceSchema,
-} from "../schemas/workspace.js";
-import {
-  getWorkspace,
-  createWorkspace,
-  updateWorkspace,
-} from "@fakt/db/queries";
+import { createWorkspaceSchema, updateWorkspaceSchema } from "../schemas/workspace.js";
+import type { AppEnv } from "../types.js";
 
 export const workspaceRoutes = new Hono<AppEnv>();
 

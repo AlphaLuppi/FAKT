@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { uuidSchema, paginationSchema, booleanStringSchema } from "./common.js";
+import { booleanStringSchema, paginationSchema, uuidSchema } from "./common.js";
 
 const unitEnum = z.enum(["forfait", "jour", "heure", "unité", "mois", "semaine"]);
 const quoteStatusEnum = z.enum([
@@ -57,7 +57,10 @@ export const listQuotesQuerySchema = z
       .optional()
       .transform((v) => {
         if (!v) return undefined;
-        const parts = v.split(",").map((s) => s.trim()).filter(Boolean);
+        const parts = v
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
         return parts.length > 0 ? parts : undefined;
       })
       .pipe(z.array(quoteStatusEnum).optional()),

@@ -1,7 +1,10 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { buildShortcuts, matchesShortcut } from "./shortcuts.js";
 
-function makeKeyEvent(key: string, opts: { metaKey?: boolean; ctrlKey?: boolean; shiftKey?: boolean } = {}): KeyboardEvent {
+function makeKeyEvent(
+  key: string,
+  opts: { metaKey?: boolean; ctrlKey?: boolean; shiftKey?: boolean } = {}
+): KeyboardEvent {
   return {
     key,
     metaKey: opts.metaKey ?? false,
@@ -43,7 +46,9 @@ describe("matchesShortcut", () => {
       onShowHelp: vi.fn(),
     });
     const newInvoice = shortcuts.find((s) => s.description === "Nouvelle facture")!;
-    expect(matchesShortcut(makeKeyEvent("N", { metaKey: true, shiftKey: true }), newInvoice)).toBe(true);
+    expect(matchesShortcut(makeKeyEvent("N", { metaKey: true, shiftKey: true }), newInvoice)).toBe(
+      true
+    );
     expect(matchesShortcut(makeKeyEvent("N", { metaKey: true }), newInvoice)).toBe(false);
   });
 

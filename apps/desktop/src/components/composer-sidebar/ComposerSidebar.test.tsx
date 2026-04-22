@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
-import { ComposerSidebar } from "./ComposerSidebar.js";
-import { ComposerSidebarProvider, useComposerSidebar } from "./ComposerContext.js";
 import { setAi } from "@fakt/ai";
-import type { AiProvider, AiStreamEvent, CliInfo, ChatMessage } from "@fakt/ai";
+import type { AiProvider, AiStreamEvent, ChatMessage, CliInfo } from "@fakt/ai";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ReactElement } from "react";
+import { MemoryRouter } from "react-router";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ComposerSidebarProvider, useComposerSidebar } from "./ComposerContext.js";
+import { ComposerSidebar } from "./ComposerSidebar.js";
 
 function makeAiMock(reply: string): AiProvider {
   return {
@@ -27,7 +27,11 @@ function makeAiMock(reply: string): AiProvider {
 
 function OpenButton(): ReactElement {
   const { open } = useComposerSidebar();
-  return <button onClick={open} data-testid="open-composer">Ouvrir</button>;
+  return (
+    <button onClick={open} data-testid="open-composer">
+      Ouvrir
+    </button>
+  );
 }
 
 function renderComposer(): void {
@@ -37,7 +41,7 @@ function renderComposer(): void {
         <OpenButton />
         <ComposerSidebar />
       </ComposerSidebarProvider>
-    </MemoryRouter>,
+    </MemoryRouter>
   );
 }
 

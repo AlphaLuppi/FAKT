@@ -13,10 +13,10 @@
  * dans une Tauri command Rust dédiée (apps/desktop/src-tauri/src/db/numbering.rs).
  */
 
-import { eq, and, sql } from "drizzle-orm";
+import { formatInvoiceNumber, formatQuoteNumber } from "@fakt/core";
+import { and, eq, sql } from "drizzle-orm";
 import type { DbInstance } from "../adapter.js";
 import { numberingState } from "../schema/index.js";
-import { formatQuoteNumber, formatInvoiceNumber } from "@fakt/core";
 
 /**
  * Type structurel minimal du driver SQLite brut (better-sqlite3 ou bun:sqlite).
@@ -148,8 +148,6 @@ function nextNumber(db: DbInstance, workspaceId: string, type: DocType): Numberi
 
 function buildResult(type: DocType, year: number, sequence: number): NumberingResult {
   const formatted =
-    type === "quote"
-      ? formatQuoteNumber(year, sequence)
-      : formatInvoiceNumber(year, sequence);
+    type === "quote" ? formatQuoteNumber(year, sequence) : formatInvoiceNumber(year, sequence);
   return { year, sequence, formatted };
 }

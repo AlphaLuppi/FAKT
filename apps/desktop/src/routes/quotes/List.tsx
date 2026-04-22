@@ -1,13 +1,13 @@
-import type { ReactElement } from "react";
-import { useMemo, useState, useCallback } from "react";
-import { useNavigate, useSearchParams } from "react-router";
 import { tokens } from "@fakt/design-tokens";
-import { Button, Input, StatusPill, Table } from "@fakt/ui";
-import type { TableColumn, StatusKind } from "@fakt/ui";
-import { fr, formatEur, formatFrDate } from "@fakt/shared";
+import { formatEur, formatFrDate, fr } from "@fakt/shared";
 import type { Quote, QuoteStatus, UUID } from "@fakt/shared";
-import { useClientsList, useQuotes } from "./hooks.js";
+import { Button, Input, StatusPill, Table } from "@fakt/ui";
+import type { StatusKind, TableColumn } from "@fakt/ui";
+import type { ReactElement } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router";
 import { quotesApi } from "../../features/doc-editor/quotes-api.js";
+import { useClientsList, useQuotes } from "./hooks.js";
 
 type StatusFilter = QuoteStatus | "all";
 
@@ -46,7 +46,7 @@ export function QuotesListRoute(): ReactElement {
         return next;
       });
     },
-    [setSearchParams],
+    [setSearchParams]
   );
 
   const clientMap = useMemo(() => {
@@ -74,7 +74,8 @@ export function QuotesListRoute(): ReactElement {
         const notes = (q.notes ?? "").toLowerCase();
         const title = q.title.toLowerCase();
         const clientName = (clientMap.get(q.clientId) ?? "").toLowerCase();
-        if (!num.includes(s) && !notes.includes(s) && !title.includes(s) && !clientName.includes(s)) return false;
+        if (!num.includes(s) && !notes.includes(s) && !title.includes(s) && !clientName.includes(s))
+          return false;
       }
       void now;
       return true;
@@ -85,7 +86,7 @@ export function QuotesListRoute(): ReactElement {
     try {
       await quotesApi.create({
         clientId: q.clientId,
-        title: q.title + " (copie)",
+        title: `${q.title} (copie)`,
         conditions: q.conditions,
         validityDate: q.validityDate,
         notes: q.notes,
@@ -141,7 +142,13 @@ export function QuotesListRoute(): ReactElement {
         id: "title",
         header: fr.quotes.labels.title,
         accessor: (q) => (
-          <span style={{ fontFamily: tokens.font.ui, fontSize: tokens.fontSize.sm, color: tokens.color.ink }}>
+          <span
+            style={{
+              fontFamily: tokens.font.ui,
+              fontSize: tokens.fontSize.sm,
+              color: tokens.color.ink,
+            }}
+          >
             {q.title}
           </span>
         ),
@@ -152,7 +159,13 @@ export function QuotesListRoute(): ReactElement {
         id: "total",
         header: fr.quotes.labels.totalTtc,
         accessor: (q) => (
-          <span style={{ fontFamily: tokens.font.mono, fontVariantNumeric: "tabular-nums", fontWeight: Number(tokens.fontWeight.bold) }}>
+          <span
+            style={{
+              fontFamily: tokens.font.mono,
+              fontVariantNumeric: "tabular-nums",
+              fontWeight: Number(tokens.fontWeight.bold),
+            }}
+          >
             {formatEur(q.totalHtCents)}
           </span>
         ),
@@ -173,7 +186,13 @@ export function QuotesListRoute(): ReactElement {
         id: "createdAt",
         header: fr.quotes.labels.createdAt,
         accessor: (q) => (
-          <span style={{ fontFamily: tokens.font.mono, fontSize: tokens.fontSize.xs, color: tokens.color.muted }}>
+          <span
+            style={{
+              fontFamily: tokens.font.mono,
+              fontSize: tokens.fontSize.xs,
+              color: tokens.color.muted,
+            }}
+          >
             {formatFrDate(q.createdAt)}
           </span>
         ),
@@ -185,7 +204,10 @@ export function QuotesListRoute(): ReactElement {
         id: "actions",
         header: fr.quotes.labels.actions,
         accessor: (q) => (
-          <div style={{ display: "flex", gap: tokens.spacing[1] }} onClick={(e) => e.stopPropagation()}>
+          <div
+            style={{ display: "flex", gap: tokens.spacing[1] }}
+            onClick={(e) => e.stopPropagation()}
+          >
             {(q.status === "draft" || q.status === "sent") && (
               <ActionChip
                 label={fr.quotes.actions.sign}
@@ -203,14 +225,29 @@ export function QuotesListRoute(): ReactElement {
         width: 160,
       },
     ],
-    [clientMap, navigate],
+    [clientMap, navigate]
   );
 
-  const hasActiveFilters = statusFilter !== "all" || clientFilter !== "all" || fromFilter || toFilter || search;
+  const hasActiveFilters =
+    statusFilter !== "all" || clientFilter !== "all" || fromFilter || toFilter || search;
 
   return (
-    <div style={{ padding: tokens.spacing[6], display: "flex", flexDirection: "column", gap: tokens.spacing[5] }}>
-      <header style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: tokens.spacing[4] }}>
+    <div
+      style={{
+        padding: tokens.spacing[6],
+        display: "flex",
+        flexDirection: "column",
+        gap: tokens.spacing[5],
+      }}
+    >
+      <header
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          gap: tokens.spacing[4],
+        }}
+      >
         <div>
           <h1
             style={{
@@ -224,7 +261,13 @@ export function QuotesListRoute(): ReactElement {
             {fr.quotes.title}
           </h1>
           <p
-            style={{ fontFamily: tokens.font.ui, fontSize: tokens.fontSize.sm, color: tokens.color.muted, marginTop: tokens.spacing[1], marginBottom: 0 }}
+            style={{
+              fontFamily: tokens.font.ui,
+              fontSize: tokens.fontSize.sm,
+              color: tokens.color.muted,
+              marginTop: tokens.spacing[1],
+              marginBottom: 0,
+            }}
             data-testid="quotes-count"
           >
             {quotes.length} devis · {formatEur(quotes.reduce((s, q) => s + q.totalHtCents, 0))}
@@ -232,7 +275,11 @@ export function QuotesListRoute(): ReactElement {
         </div>
 
         <div style={{ position: "relative" }}>
-          <Button variant="primary" onClick={() => setMenuOpen((v) => !v)} data-testid="new-quote-menu">
+          <Button
+            variant="primary"
+            onClick={() => setMenuOpen((v) => !v)}
+            data-testid="new-quote-menu"
+          >
             {fr.quotes.new}
           </Button>
           {menuOpen && (
@@ -254,7 +301,10 @@ export function QuotesListRoute(): ReactElement {
               <button
                 type="button"
                 role="menuitem"
-                onClick={() => { setMenuOpen(false); void navigate("/quotes/new?mode=manual"); }}
+                onClick={() => {
+                  setMenuOpen(false);
+                  void navigate("/quotes/new?mode=manual");
+                }}
                 data-testid="new-quote-manual"
                 className="fakt-btn fakt-btn--ghost"
                 style={{ justifyContent: "flex-start", height: 40 }}
@@ -264,7 +314,10 @@ export function QuotesListRoute(): ReactElement {
               <button
                 type="button"
                 role="menuitem"
-                onClick={() => { setMenuOpen(false); void navigate("/quotes/new?mode=ai"); }}
+                onClick={() => {
+                  setMenuOpen(false);
+                  void navigate("/quotes/new?mode=ai");
+                }}
                 data-testid="new-quote-ai"
                 className="fakt-btn fakt-btn--ghost"
                 style={{ justifyContent: "flex-start", height: 40 }}
@@ -277,7 +330,10 @@ export function QuotesListRoute(): ReactElement {
       </header>
 
       {/* Filters */}
-      <section aria-label="filtres" style={{ display: "flex", flexDirection: "column", gap: tokens.spacing[3] }}>
+      <section
+        aria-label="filtres"
+        style={{ display: "flex", flexDirection: "column", gap: tokens.spacing[3] }}
+      >
         {/* Status chips */}
         <div style={{ display: "flex", flexWrap: "wrap", gap: tokens.spacing[2] }}>
           {STATUS_CHIP_FILTERS.map((f) => {
@@ -310,7 +366,14 @@ export function QuotesListRoute(): ReactElement {
         </div>
 
         {/* Second row: search + client + dates + clear */}
-        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: tokens.spacing[3] }}>
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            gap: tokens.spacing[3],
+          }}
+        >
           <div style={{ flex: "1 1 200px", minWidth: 180 }}>
             <Input
               type="search"
@@ -331,13 +394,24 @@ export function QuotesListRoute(): ReactElement {
             >
               <option value="all">{fr.filters.clientPlaceholder}</option>
               {clients.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
               ))}
             </select>
           )}
 
           <div style={{ display: "flex", alignItems: "center", gap: tokens.spacing[2] }}>
-            <label style={{ fontFamily: tokens.font.ui, fontSize: tokens.fontSize.xs, fontWeight: Number(tokens.fontWeight.bold), textTransform: "uppercase", letterSpacing: "0.05em", color: tokens.color.muted }}>
+            <label
+              style={{
+                fontFamily: tokens.font.ui,
+                fontSize: tokens.fontSize.xs,
+                fontWeight: Number(tokens.fontWeight.bold),
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                color: tokens.color.muted,
+              }}
+            >
               {fr.filters.dateFromLabel}
             </label>
             <input
@@ -348,7 +422,16 @@ export function QuotesListRoute(): ReactElement {
               className="fakt-input"
               style={{ width: 140 }}
             />
-            <label style={{ fontFamily: tokens.font.ui, fontSize: tokens.fontSize.xs, fontWeight: Number(tokens.fontWeight.bold), textTransform: "uppercase", letterSpacing: "0.05em", color: tokens.color.muted }}>
+            <label
+              style={{
+                fontFamily: tokens.font.ui,
+                fontSize: tokens.fontSize.xs,
+                fontWeight: Number(tokens.fontWeight.bold),
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                color: tokens.color.muted,
+              }}
+            >
               {fr.filters.dateToLabel}
             </label>
             <input
@@ -386,7 +469,13 @@ export function QuotesListRoute(): ReactElement {
       </section>
 
       {loading ? (
-        <div style={{ fontFamily: tokens.font.ui, color: tokens.color.muted, padding: tokens.spacing[5] }}>
+        <div
+          style={{
+            fontFamily: tokens.font.ui,
+            color: tokens.color.muted,
+            padding: tokens.spacing[5],
+          }}
+        >
           Chargement…
         </div>
       ) : quotes.length === 0 ? (
@@ -405,7 +494,13 @@ export function QuotesListRoute(): ReactElement {
           {fr.quotes.empty}
         </div>
       ) : (
-        <div style={{ border: `${tokens.stroke.bold} solid ${tokens.color.ink}`, background: tokens.color.surface, boxShadow: tokens.shadow.sm }}>
+        <div
+          style={{
+            border: `${tokens.stroke.bold} solid ${tokens.color.ink}`,
+            background: tokens.color.surface,
+            boxShadow: tokens.shadow.sm,
+          }}
+        >
           <Table
             rows={filtered}
             columns={columns}
@@ -420,7 +515,11 @@ export function QuotesListRoute(): ReactElement {
   );
 }
 
-function ActionChip({ label, onClick, testId }: { label: string; onClick: () => void; testId: string }): ReactElement {
+function ActionChip({
+  label,
+  onClick,
+  testId,
+}: { label: string; onClick: () => void; testId: string }): ReactElement {
   return (
     <button
       type="button"

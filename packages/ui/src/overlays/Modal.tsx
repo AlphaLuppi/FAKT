@@ -1,7 +1,7 @@
-import type { ReactElement, ReactNode } from "react";
 import { tokens } from "@fakt/design-tokens";
-import { Overlay } from "./Overlay.js";
+import type { ReactElement, ReactNode } from "react";
 import { Button } from "../primitives/Button.js";
+import { Overlay } from "./Overlay.js";
 
 export interface ModalProps {
   open: boolean;
@@ -27,7 +27,10 @@ export function Modal({
   size = "md",
 }: ModalProps): ReactElement | null {
   if (!open) return null;
-  const titleId = typeof title === "string" ? `modal-title-${title.slice(0, 12).replace(/\s+/g, "-").toLowerCase()}` : undefined;
+  const titleId =
+    typeof title === "string"
+      ? `modal-title-${title.slice(0, 12).replace(/\s+/g, "-").toLowerCase()}`
+      : undefined;
   return (
     <Overlay
       open={open}

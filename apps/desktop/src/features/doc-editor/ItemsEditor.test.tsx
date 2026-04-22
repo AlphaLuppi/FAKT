@@ -1,15 +1,13 @@
+import { fireEvent, render, screen } from "@testing-library/react";
 import type { ReactElement } from "react";
-import { describe, it, expect } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
 import { useState } from "react";
-import { ItemsEditor, type EditableItem } from "./ItemsEditor.js";
+import { describe, expect, it } from "vitest";
+import { type EditableItem, ItemsEditor } from "./ItemsEditor.js";
 
 function Harness({ initial }: { initial: EditableItem[] }): ReactElement {
   const [items, setItems] = useState<EditableItem[]>(initial);
   let n = 0;
-  return (
-    <ItemsEditor value={items} onChange={setItems} makeId={() => `gen-${n++}`} />
-  );
+  return <ItemsEditor value={items} onChange={setItems} makeId={() => `gen-${n++}`} />;
 }
 
 describe("ItemsEditor", () => {
@@ -100,9 +98,7 @@ describe("ItemsEditor", () => {
 
   it("affiche la mention TVA micro-entreprise", () => {
     render(<Harness initial={[]} />);
-    expect(
-      screen.getByText(/art\. 293 B/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/art\. 293 B/i)).toBeInTheDocument();
   });
 
   it("ne rend aucun border-radius inline (règle Brutal)", () => {

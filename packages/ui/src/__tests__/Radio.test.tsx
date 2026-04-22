@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { RadioGroup } from "../primitives/Radio.js";
 
 describe("RadioGroup", () => {
@@ -12,7 +12,7 @@ describe("RadioGroup", () => {
           { value: "devis", label: "Devis" },
           { value: "facture", label: "Facture" },
         ]}
-      />,
+      />
     );
     const radios = screen.getAllByRole("radio");
     expect(radios).toHaveLength(2);
@@ -31,7 +31,7 @@ describe("RadioGroup", () => {
           { value: "devis", label: "Devis" },
           { value: "facture", label: "Facture" },
         ]}
-      />,
+      />
     );
     fireEvent.click(screen.getAllByRole("radio")[1] as HTMLElement);
     expect(onChange).toHaveBeenCalledWith("facture");

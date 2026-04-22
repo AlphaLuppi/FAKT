@@ -1,10 +1,10 @@
-import { describe, it, expect, vi } from "vitest";
-import type { ReactElement } from "react";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router";
-import { CommandPaletteProvider, useCommandPalette } from "../CommandPaletteProvider.js";
 import type { Client, Service } from "@fakt/shared";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import type { ReactElement } from "react";
+import { MemoryRouter } from "react-router";
+import { describe, expect, it, vi } from "vitest";
+import { CommandPaletteProvider, useCommandPalette } from "../CommandPaletteProvider.js";
 
 const mockClients: Client[] = [
   {

@@ -1,27 +1,19 @@
+import { tokens } from "@fakt/design-tokens";
+import { TVA_MENTION_MICRO } from "@fakt/legal";
+import { formatEur, formatFrDate, formatFrDateLong, fr } from "@fakt/shared";
+import type { Client, Quote, Workspace } from "@fakt/shared";
+import { Button, Modal, StatusPill, toast } from "@fakt/ui";
+import type { StatusKind } from "@fakt/ui";
 import type { ReactElement } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
-import { tokens } from "@fakt/design-tokens";
-import { Button, Modal, StatusPill, toast } from "@fakt/ui";
-import type { StatusKind } from "@fakt/ui";
-import {
-  fr,
-  formatEur,
-  formatFrDateLong,
-  formatFrDate,
-} from "@fakt/shared";
-import type { Client, Workspace, Quote } from "@fakt/shared";
-import { TVA_MENTION_MICRO } from "@fakt/legal";
-import { useQuote, useWorkspace, useClientsList } from "./hooks.js";
+import { AuditTimeline, type BaseAuditEntry } from "../../components/audit-timeline/index.js";
+import { PrepareEmailModal } from "../../components/prepare-email-modal/index.js";
+import { SignatureModal } from "../../components/signature-modal/index.js";
 import { clientsApi } from "../../features/doc-editor/clients-api.js";
 import { pdfApi } from "../../features/doc-editor/pdf-api.js";
 import { quotesApi } from "../../features/doc-editor/quotes-api.js";
-import { SignatureModal } from "../../components/signature-modal/index.js";
-import {
-  AuditTimeline,
-  type BaseAuditEntry,
-} from "../../components/audit-timeline/index.js";
-import { PrepareEmailModal } from "../../components/prepare-email-modal/index.js";
+import { useClientsList, useQuote, useWorkspace } from "./hooks.js";
 
 function slugify(str: string): string {
   return str
@@ -120,9 +112,7 @@ export function QuoteDetailRoute(): ReactElement {
       })
       .catch((err: unknown) => {
         if (!cancelled) {
-          setPdfError(
-            err instanceof Error ? err.message : fr.quotes.errors.pdfFailed,
-          );
+          setPdfError(err instanceof Error ? err.message : fr.quotes.errors.pdfFailed);
         }
       });
 
@@ -142,9 +132,7 @@ export function QuoteDetailRoute(): ReactElement {
       toast.success(fr.quotes.detail.markSentSuccess);
       refresh();
     } catch (err) {
-      setMarkSentError(
-        err instanceof Error ? err.message : fr.quotes.detail.markSentError,
-      );
+      setMarkSentError(err instanceof Error ? err.message : fr.quotes.detail.markSentError);
     } finally {
       setMarkSentSubmitting(false);
     }
@@ -164,9 +152,7 @@ export function QuoteDetailRoute(): ReactElement {
         await pdfApi.writeFile(path, bytes);
       }
     } catch (err) {
-      setPdfError(
-        err instanceof Error ? err.message : fr.quotes.errors.pdfFailed,
-      );
+      setPdfError(err instanceof Error ? err.message : fr.quotes.errors.pdfFailed);
     }
   }
 
@@ -178,10 +164,7 @@ export function QuoteDetailRoute(): ReactElement {
       [fr.quotes.labels.number, quote.number ?? fr.quotes.labels.numberPending],
       [fr.quotes.labels.client, client?.name ?? "—"],
       [fr.quotes.labels.totalHt, formatEur(quote.totalHtCents)],
-      [
-        fr.quotes.labels.issuedAt,
-        quote.issuedAt ? formatFrDateLong(quote.issuedAt) : "—",
-      ],
+      [fr.quotes.labels.issuedAt, quote.issuedAt ? formatFrDateLong(quote.issuedAt) : "—"],
       [
         fr.quotes.labels.validityDate,
         quote.validityDate ? formatFrDateLong(quote.validityDate) : "—",
@@ -200,10 +183,7 @@ export function QuoteDetailRoute(): ReactElement {
 
   if (error || !quote) {
     return (
-      <div
-        style={{ padding: tokens.spacing[6] }}
-        data-testid="detail-not-found"
-      >
+      <div style={{ padding: tokens.spacing[6] }} data-testid="detail-not-found">
         {fr.quotes.errors.notFound}
       </div>
     );
@@ -325,15 +305,21 @@ export function QuoteDetailRoute(): ReactElement {
                 <PdfToolbarButton
                   label="Zoom +"
                   onClick={() => {
-                    const iframe = document.querySelector<HTMLIFrameElement>("[data-testid='pdf-iframe']");
-                    if (iframe?.contentWindow) iframe.contentWindow.document.body.style.zoom = "1.2";
+                    const iframe = document.querySelector<HTMLIFrameElement>(
+                      "[data-testid='pdf-iframe']"
+                    );
+                    if (iframe?.contentWindow)
+                      iframe.contentWindow.document.body.style.zoom = "1.2";
                   }}
                 />
                 <PdfToolbarButton
                   label="Zoom -"
                   onClick={() => {
-                    const iframe = document.querySelector<HTMLIFrameElement>("[data-testid='pdf-iframe']");
-                    if (iframe?.contentWindow) iframe.contentWindow.document.body.style.zoom = "0.8";
+                    const iframe = document.querySelector<HTMLIFrameElement>(
+                      "[data-testid='pdf-iframe']"
+                    );
+                    if (iframe?.contentWindow)
+                      iframe.contentWindow.document.body.style.zoom = "0.8";
                   }}
                 />
                 <PdfToolbarButton
@@ -369,10 +355,7 @@ export function QuoteDetailRoute(): ReactElement {
                 }}
                 data-testid="pdf-placeholder"
               >
-                {pdfError ??
-                  (isDraft
-                    ? fr.quotes.detail.noPdfDraft
-                    : fr.quotes.detail.noPdf)}
+                {pdfError ?? (isDraft ? fr.quotes.detail.noPdfDraft : fr.quotes.detail.noPdf)}
               </div>
             )}
           </div>
@@ -696,7 +679,10 @@ function DescriptionLabel({
   );
 }
 
-function PdfToolbarButton({ label, onClick }: { label: string; onClick: () => void }): ReactElement {
+function PdfToolbarButton({
+  label,
+  onClick,
+}: { label: string; onClick: () => void }): ReactElement {
   return (
     <button
       type="button"

@@ -3,10 +3,10 @@
  * CI mode: FAKT_AI_PROVIDER=mock — no Claude CLI required.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { getAi, setAi } from "../src/index.ts";
 import type { AiProvider, AiStreamEvent, ExtractedQuote } from "../src/provider.ts";
 import { MockAiProvider, registerFixtures } from "../src/providers/mock.ts";
-import { getAi, setAi } from "../src/index.ts";
 import { FIXTURES } from "./fixtures/index.ts";
 
 // ─── Shared setup ─────────────────────────────────────────────────────────────
@@ -62,9 +62,9 @@ describe("MockAiProvider", () => {
     }
 
     expect(doneData).toBeDefined();
-    expect(doneData!.client.name).toBe("Atelier Dupont Design");
-    expect(doneData!.items).toHaveLength(3);
-    expect(doneData!.depositPercent).toBe(30);
+    expect(doneData?.client.name).toBe("Atelier Dupont Design");
+    expect(doneData?.items).toHaveLength(3);
+    expect(doneData?.depositPercent).toBe(30);
   });
 
   it("draftEmail yields delta then done event", async () => {
@@ -84,8 +84,8 @@ describe("MockAiProvider", () => {
 
     const doneEvent = events.find((e) => e.type === "done");
     expect(doneEvent).toBeDefined();
-    expect(typeof doneEvent!.data).toBe("string");
-    expect((doneEvent!.data as string).length).toBeGreaterThan(10);
+    expect(typeof doneEvent?.data).toBe("string");
+    expect((doneEvent?.data as string).length).toBeGreaterThan(10);
   });
 
   it("draftEmail with friendly tone still resolves", async () => {

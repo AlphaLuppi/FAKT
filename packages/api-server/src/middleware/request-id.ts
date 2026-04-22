@@ -1,5 +1,5 @@
-import type { MiddlewareHandler } from "hono";
 import { randomUUID } from "node:crypto";
+import type { MiddlewareHandler } from "hono";
 import type { AppEnv } from "../types.js";
 
 /** Assigne un UUID v4 à chaque requête, expose via c.var.requestId + header X-Request-Id. */

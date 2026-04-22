@@ -1,9 +1,9 @@
+import { type LegalForm, fr } from "@fakt/shared";
+import { Button, toast } from "@fakt/ui";
 import type { ReactElement } from "react";
 import { useState } from "react";
-import { Button, toast } from "@fakt/ui";
-import { fr, type LegalForm } from "@fakt/shared";
+import { ApiError, api } from "../../../api/index.js";
 import { useOnboarding } from "../context.js";
-import { api, ApiError } from "../../../api/index.js";
 
 interface WorkspaceData {
   name: string;
@@ -136,16 +136,25 @@ export function RecapStep({ onPrev, onFinish }: Props): ReactElement {
         <RecapCard title={fr.onboarding.step4.cli}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <StatusBadge ok={cliInfo?.installed === true && !cliSkipped} />
-            <span style={{ fontFamily: "var(--font-ui)", fontSize: "var(--t-sm)", color: "var(--ink)" }}>
+            <span
+              style={{ fontFamily: "var(--font-ui)", fontSize: "var(--t-sm)", color: "var(--ink)" }}
+            >
               {cliSkipped
                 ? fr.onboarding.step4.cliSkipped
                 : cliInfo?.installed === true
-                ? fr.onboarding.step4.cliReady
-                : fr.onboarding.step4.cliSkipped}
+                  ? fr.onboarding.step4.cliReady
+                  : fr.onboarding.step4.cliSkipped}
             </span>
           </div>
           {cliInfo?.version !== undefined && !cliSkipped && (
-            <p style={{ margin: "6px 0 0", fontFamily: "var(--font-mono)", fontSize: "var(--t-xs)", color: "var(--muted)" }}>
+            <p
+              style={{
+                margin: "6px 0 0",
+                fontFamily: "var(--font-mono)",
+                fontSize: "var(--t-xs)",
+                color: "var(--muted)",
+              }}
+            >
               v{cliInfo.version}
             </p>
           )}
@@ -155,10 +164,25 @@ export function RecapStep({ onPrev, onFinish }: Props): ReactElement {
           {certInfo !== null ? (
             <>
               <StatusBadge ok />
-              <span style={{ fontFamily: "var(--font-ui)", fontSize: "var(--t-sm)", color: "var(--ink)", marginLeft: 8 }}>
+              <span
+                style={{
+                  fontFamily: "var(--font-ui)",
+                  fontSize: "var(--t-sm)",
+                  color: "var(--ink)",
+                  marginLeft: 8,
+                }}
+              >
                 {fr.onboarding.step4.certActive}
               </span>
-              <p style={{ margin: "8px 0 0", fontFamily: "var(--font-mono)", fontSize: "var(--t-xs)", color: "var(--muted)", wordBreak: "break-all" }}>
+              <p
+                style={{
+                  margin: "8px 0 0",
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "var(--t-xs)",
+                  color: "var(--muted)",
+                  wordBreak: "break-all",
+                }}
+              >
                 {certInfo.fingerprint.slice(0, 32)}…
               </p>
             </>
@@ -174,7 +198,9 @@ export function RecapStep({ onPrev, onFinish }: Props): ReactElement {
         </Button>
         <Button
           size="lg"
-          onClick={() => { void handleFinish(); }}
+          onClick={() => {
+            void handleFinish();
+          }}
           disabled={saving || identity === null}
         >
           {saving ? "Enregistrement…" : fr.onboarding.finish}
@@ -184,25 +210,32 @@ export function RecapStep({ onPrev, onFinish }: Props): ReactElement {
   );
 }
 
-function RecapCard({ title, children }: { title: string; children: React.ReactNode }): ReactElement {
+function RecapCard({
+  title,
+  children,
+}: { title: string; children: React.ReactNode }): ReactElement {
   return (
-    <div style={{
-      background: "var(--surface)",
-      border: "2.5px solid var(--ink)",
-      padding: "16px 20px",
-      boxShadow: "3px 3px 0 var(--ink)",
-    }}>
-      <div style={{
-        fontFamily: "var(--font-ui)",
-        fontWeight: 800,
-        fontSize: "var(--t-xs)",
-        textTransform: "uppercase",
-        letterSpacing: "0.1em",
-        color: "var(--ink)",
-        marginBottom: 12,
-        paddingBottom: 8,
-        borderBottom: "1.5px solid var(--line)",
-      }}>
+    <div
+      style={{
+        background: "var(--surface)",
+        border: "2.5px solid var(--ink)",
+        padding: "16px 20px",
+        boxShadow: "3px 3px 0 var(--ink)",
+      }}
+    >
+      <div
+        style={{
+          fontFamily: "var(--font-ui)",
+          fontWeight: 800,
+          fontSize: "var(--t-xs)",
+          textTransform: "uppercase",
+          letterSpacing: "0.1em",
+          color: "var(--ink)",
+          marginBottom: 12,
+          paddingBottom: 8,
+          borderBottom: "1.5px solid var(--line)",
+        }}
+      >
         {title}
       </div>
       <div>{children}</div>
@@ -210,13 +243,32 @@ function RecapCard({ title, children }: { title: string; children: React.ReactNo
   );
 }
 
-function RecapRow({ label, value, mono }: { label: string; value: string; mono?: boolean }): ReactElement {
+function RecapRow({
+  label,
+  value,
+  mono,
+}: { label: string; value: string; mono?: boolean }): ReactElement {
   return (
     <div style={{ display: "flex", flexDirection: "column", marginBottom: 6 }}>
-      <span style={{ fontFamily: "var(--font-ui)", fontSize: 10, color: "var(--muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em" }}>
+      <span
+        style={{
+          fontFamily: "var(--font-ui)",
+          fontSize: 10,
+          color: "var(--muted)",
+          fontWeight: 700,
+          textTransform: "uppercase",
+          letterSpacing: "0.07em",
+        }}
+      >
         {label}
       </span>
-      <span style={{ fontFamily: mono === true ? "var(--font-mono)" : "var(--font-ui)", fontSize: "var(--t-sm)", color: "var(--ink)" }}>
+      <span
+        style={{
+          fontFamily: mono === true ? "var(--font-mono)" : "var(--font-ui)",
+          fontSize: "var(--t-sm)",
+          color: "var(--ink)",
+        }}
+      >
         {value}
       </span>
     </div>
@@ -225,19 +277,21 @@ function RecapRow({ label, value, mono }: { label: string; value: string; mono?:
 
 function StatusBadge({ ok }: { ok: boolean }): ReactElement {
   return (
-    <span style={{
-      display: "inline-flex",
-      alignItems: "center",
-      justifyContent: "center",
-      width: 20,
-      height: 20,
-      background: ok ? "var(--ink)" : "transparent",
-      border: "2px solid var(--ink)",
-      color: ok ? "var(--accent)" : "var(--ink)",
-      fontWeight: 800,
-      fontSize: 11,
-      flexShrink: 0,
-    }}>
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: 20,
+        height: 20,
+        background: ok ? "var(--ink)" : "transparent",
+        border: "2px solid var(--ink)",
+        color: ok ? "var(--accent)" : "var(--ink)",
+        fontWeight: 800,
+        fontSize: 11,
+        flexShrink: 0,
+      }}
+    >
       {ok ? "✓" : "—"}
     </span>
   );

@@ -1,10 +1,10 @@
-import type { ReactElement, KeyboardEvent } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useLocation } from "react-router";
-import { tokens } from "@fakt/design-tokens";
-import { fr } from "@fakt/shared";
 import { getAi } from "@fakt/ai";
 import type { ChatMessage, DocContext } from "@fakt/ai";
+import { tokens } from "@fakt/design-tokens";
+import { fr } from "@fakt/shared";
+import type { KeyboardEvent, ReactElement } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router";
 import { useComposerSidebar } from "./ComposerContext.js";
 
 interface DisplayMessage {
@@ -106,23 +106,23 @@ export function ComposerSidebar(): ReactElement {
             const delta = typeof event.data === "string" ? event.data : String(event.data);
             accumulated += delta;
             setMessages((prev) =>
-              prev.map((m) => (m.id === assistantMsgId ? { ...m, content: accumulated } : m)),
+              prev.map((m) => (m.id === assistantMsgId ? { ...m, content: accumulated } : m))
             );
           } else if (event.type === "done") {
             const final = typeof event.data === "string" ? event.data : accumulated;
             setMessages((prev) =>
               prev.map((m) =>
-                m.id === assistantMsgId ? { ...m, content: final, streaming: false } : m,
-              ),
+                m.id === assistantMsgId ? { ...m, content: final, streaming: false } : m
+              )
             );
             break;
           } else if (event.type === "error") {
             setMessages((prev) =>
               prev.map((m) =>
                 m.id === assistantMsgId
-                  ? { ...m, content: "Erreur : " + event.message, streaming: false }
-                  : m,
-              ),
+                  ? { ...m, content: `Erreur : ${event.message}`, streaming: false }
+                  : m
+              )
             );
             break;
           }
@@ -131,14 +131,14 @@ export function ComposerSidebar(): ReactElement {
         const msg = err instanceof Error ? err.message : String(err);
         setMessages((prev) =>
           prev.map((m) =>
-            m.id === assistantMsgId ? { ...m, content: "Erreur : " + msg, streaming: false } : m,
-          ),
+            m.id === assistantMsgId ? { ...m, content: `Erreur : ${msg}`, streaming: false } : m
+          )
         );
       } finally {
         setStreaming(false);
       }
     },
-    [messages, streaming, activeContext],
+    [messages, streaming, activeContext]
   );
 
   const handleKeyDown = useCallback(
@@ -148,7 +148,7 @@ export function ComposerSidebar(): ReactElement {
         void sendMessage(input);
       }
     },
-    [input, sendMessage],
+    [input, sendMessage]
   );
 
   const handleReset = useCallback((): void => {

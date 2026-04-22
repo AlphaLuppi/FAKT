@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
-import { QuotesListRoute } from "./List.js";
-import { installMockApis, FIXTURE_CLIENT } from "./__test-helpers__/mockApis.js";
 import type { Quote } from "@fakt/shared";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { QuotesListRoute } from "./List.js";
+import { FIXTURE_CLIENT, installMockApis } from "./__test-helpers__/mockApis.js";
 
 const now = Date.now();
 
@@ -65,7 +65,7 @@ describe("QuotesListRoute", () => {
     render(
       <MemoryRouter initialEntries={[`/quotes${initialSearch}`]}>
         <QuotesListRoute />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
   }
 

@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
-import { setQuotesApi } from "../../features/doc-editor/quotes-api.js";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { setInvoiceApi } from "../../features/doc-editor/invoice-api.js";
+import { setQuotesApi } from "../../features/doc-editor/quotes-api.js";
 import { ArchiveRoute } from "./index.js";
 
 vi.mock("@tauri-apps/api/core", () => ({
@@ -40,18 +40,34 @@ beforeEach(() => {
   setQuotesApi({
     list: vi.fn(async () => []),
     get: vi.fn(async () => null),
-    create: vi.fn(async () => { throw new Error("not impl"); }),
-    update: vi.fn(async () => { throw new Error("not impl"); }),
-    updateStatus: vi.fn(async () => { throw new Error("not impl"); }),
+    create: vi.fn(async () => {
+      throw new Error("not impl");
+    }),
+    update: vi.fn(async () => {
+      throw new Error("not impl");
+    }),
+    updateStatus: vi.fn(async () => {
+      throw new Error("not impl");
+    }),
   });
   setInvoiceApi({
     list: vi.fn(async () => []),
     get: vi.fn(async () => null),
-    create: vi.fn(async () => { throw new Error("not impl"); }),
-    createFromQuote: vi.fn(async () => { throw new Error("not impl"); }),
-    update: vi.fn(async () => { throw new Error("not impl"); }),
-    updateStatus: vi.fn(async () => { throw new Error("not impl"); }),
-    markPaid: vi.fn(async () => { throw new Error("not impl"); }),
+    create: vi.fn(async () => {
+      throw new Error("not impl");
+    }),
+    createFromQuote: vi.fn(async () => {
+      throw new Error("not impl");
+    }),
+    update: vi.fn(async () => {
+      throw new Error("not impl");
+    }),
+    updateStatus: vi.fn(async () => {
+      throw new Error("not impl");
+    }),
+    markPaid: vi.fn(async () => {
+      throw new Error("not impl");
+    }),
     delete: vi.fn(async () => undefined),
   });
 });
@@ -60,7 +76,7 @@ function renderArchive() {
   return render(
     <MemoryRouter>
       <ArchiveRoute />
-    </MemoryRouter>,
+    </MemoryRouter>
   );
 }
 

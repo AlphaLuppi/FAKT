@@ -1,23 +1,17 @@
-import { describe, it, expect, beforeEach } from "vitest";
 import { eq } from "drizzle-orm";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
-  createTestDb,
-  seedWorkspace,
-  seedClient,
-  WORKSPACE_ID,
-  CLIENT_ID_1,
-} from "./helpers.js";
-import { invoices } from "../schema/index.js";
-import {
+  cannotDeleteIssued,
   createInvoice,
+  createInvoiceFromQuote,
   getInvoice,
   listInvoices,
-  updateInvoice,
   markInvoicePaid,
-  createInvoiceFromQuote,
-  cannotDeleteIssued,
+  updateInvoice,
 } from "../queries/invoices.js";
 import { createQuote, updateQuoteStatus } from "../queries/quotes.js";
+import { invoices } from "../schema/index.js";
+import { CLIENT_ID_1, WORKSPACE_ID, createTestDb, seedClient, seedWorkspace } from "./helpers.js";
 import type { TestDb } from "./helpers.js";
 
 let db: TestDb;
@@ -95,15 +89,42 @@ describe("getInvoice", () => {
   });
 
   it("retourne la facture avec items", () => {
-    createInvoice(db, { id: INV_ID, workspaceId: WORKSPACE_ID, clientId: CLIENT_ID_1, kind: "total", title: "F", totalHtCents: 0, legalMentions: LEGAL, items: [] });
+    createInvoice(db, {
+      id: INV_ID,
+      workspaceId: WORKSPACE_ID,
+      clientId: CLIENT_ID_1,
+      kind: "total",
+      title: "F",
+      totalHtCents: 0,
+      legalMentions: LEGAL,
+      items: [],
+    });
     expect(getInvoice(db, INV_ID)?.title).toBe("F");
   });
 });
 
 describe("listInvoices", () => {
   beforeEach(() => {
-    createInvoice(db, { id: INV_ID, workspaceId: WORKSPACE_ID, clientId: CLIENT_ID_1, kind: "total", title: "F1", totalHtCents: 0, legalMentions: LEGAL, items: [] });
-    createInvoice(db, { id: INV_ID_2, workspaceId: WORKSPACE_ID, clientId: CLIENT_ID_1, kind: "total", title: "F2", totalHtCents: 0, legalMentions: LEGAL, items: [] });
+    createInvoice(db, {
+      id: INV_ID,
+      workspaceId: WORKSPACE_ID,
+      clientId: CLIENT_ID_1,
+      kind: "total",
+      title: "F1",
+      totalHtCents: 0,
+      legalMentions: LEGAL,
+      items: [],
+    });
+    createInvoice(db, {
+      id: INV_ID_2,
+      workspaceId: WORKSPACE_ID,
+      clientId: CLIENT_ID_1,
+      kind: "total",
+      title: "F2",
+      totalHtCents: 0,
+      legalMentions: LEGAL,
+      items: [],
+    });
   });
 
   it("liste les factures du workspace", () => {
@@ -125,7 +146,18 @@ describe("listInvoices", () => {
 });
 
 describe("updateInvoice", () => {
-  beforeEach(() => createInvoice(db, { id: INV_ID, workspaceId: WORKSPACE_ID, clientId: CLIENT_ID_1, kind: "total", title: "Old", totalHtCents: 100000, legalMentions: LEGAL, items: [] }));
+  beforeEach(() =>
+    createInvoice(db, {
+      id: INV_ID,
+      workspaceId: WORKSPACE_ID,
+      clientId: CLIENT_ID_1,
+      kind: "total",
+      title: "Old",
+      totalHtCents: 100000,
+      legalMentions: LEGAL,
+      items: [],
+    })
+  );
 
   it("met à jour le titre", () => {
     const updated = updateInvoice(db, INV_ID, { title: "Nouveau" });
@@ -139,7 +171,16 @@ describe("updateInvoice", () => {
 
 describe("markInvoicePaid", () => {
   it("transite sent → paid", () => {
-    createInvoice(db, { id: INV_ID, workspaceId: WORKSPACE_ID, clientId: CLIENT_ID_1, kind: "total", title: "F", totalHtCents: 100000, legalMentions: LEGAL, items: [] });
+    createInvoice(db, {
+      id: INV_ID,
+      workspaceId: WORKSPACE_ID,
+      clientId: CLIENT_ID_1,
+      kind: "total",
+      title: "F",
+      totalHtCents: 100000,
+      legalMentions: LEGAL,
+      items: [],
+    });
     // Passe en sent via SQL direct (pas de commande métier pour cela en Track B)
     db.update(invoices).set({ status: "sent" }).where(eq(invoices.id, INV_ID)).run();
     const paid = markInvoicePaid(db, INV_ID, Date.now(), "wire");
@@ -149,7 +190,16 @@ describe("markInvoicePaid", () => {
   });
 
   it("échoue pour une facture draft", () => {
-    createInvoice(db, { id: INV_ID, workspaceId: WORKSPACE_ID, clientId: CLIENT_ID_1, kind: "total", title: "F", totalHtCents: 100000, legalMentions: LEGAL, items: [] });
+    createInvoice(db, {
+      id: INV_ID,
+      workspaceId: WORKSPACE_ID,
+      clientId: CLIENT_ID_1,
+      kind: "total",
+      title: "F",
+      totalHtCents: 100000,
+      legalMentions: LEGAL,
+      items: [],
+    });
     expect(() => markInvoicePaid(db, INV_ID, Date.now(), "wire")).toThrow(/invalid transition/);
   });
 
@@ -204,7 +254,14 @@ describe("createInvoiceFromQuote", () => {
   });
 
   it("refuse si le devis n'est pas signé", () => {
-    createQuote(db, { id: "10000000-0000-0000-0000-000000000099", workspaceId: WORKSPACE_ID, clientId: CLIENT_ID_1, title: "Draft", totalHtCents: 0, items: [] });
+    createQuote(db, {
+      id: "10000000-0000-0000-0000-000000000099",
+      workspaceId: WORKSPACE_ID,
+      clientId: CLIENT_ID_1,
+      title: "Draft",
+      totalHtCents: 0,
+      items: [],
+    });
     expect(() =>
       createInvoiceFromQuote(db, INV_ID, "10000000-0000-0000-0000-000000000099", "full", LEGAL)
     ).toThrow(/signed/);

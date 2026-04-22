@@ -13,12 +13,7 @@
       "@fakt/db/__tests__/helpers": ["../db/src/__tests__/helpers.ts"]
     }
   },
-  "include": [
-    "src/**/*",
-    "tests/**/*",
-    "../shared/src/**/*",
-    "../db/src/**/*"
-  ],
+  "include": ["src/**/*", "tests/**/*", "../shared/src/**/*", "../db/src/**/*"],
   "exclude": [
     "../db/src/__tests__/invoices-payment-notes.test.ts",
     "../db/src/seed/**",

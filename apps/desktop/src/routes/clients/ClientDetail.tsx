@@ -1,7 +1,7 @@
-import type { ReactElement, ReactNode } from "react";
-import { Modal, Button, StatusPill } from "@fakt/ui";
 import { fr } from "@fakt/shared";
-import type { Client, Quote, Invoice } from "@fakt/shared";
+import type { Client, Invoice, Quote } from "@fakt/shared";
+import { Button, Modal, StatusPill } from "@fakt/ui";
+import type { ReactElement, ReactNode } from "react";
 
 interface ClientDetailProps {
   open: boolean;
@@ -66,25 +66,13 @@ export function ClientDetail({
             {client.legalForm && (
               <InfoRow label={fr.clients.labels.legalForm} value={client.legalForm} />
             )}
-            {client.siret && (
-              <InfoRow
-                label={fr.clients.labels.siret}
-                value={client.siret}
-                mono
-              />
-            )}
+            {client.siret && <InfoRow label={fr.clients.labels.siret} value={client.siret} mono />}
             {client.contactName && (
               <InfoRow label={fr.clients.labels.contactName} value={client.contactName} />
             )}
-            {client.email && (
-              <InfoRow label={fr.clients.labels.email} value={client.email} />
-            )}
-            {client.sector && (
-              <InfoRow label={fr.clients.labels.sector} value={client.sector} />
-            )}
-            {client.address && (
-              <InfoRow label={fr.clients.labels.address} value={client.address} />
-            )}
+            {client.email && <InfoRow label={fr.clients.labels.email} value={client.email} />}
+            {client.sector && <InfoRow label={fr.clients.labels.sector} value={client.sector} />}
+            {client.address && <InfoRow label={fr.clients.labels.address} value={client.address} />}
           </div>
           {client.note && (
             <div style={{ marginTop: 12 }}>
@@ -152,7 +140,11 @@ export function ClientDetail({
   );
 }
 
-function InfoRow({ label, value, mono = false }: { label: string; value: string; mono?: boolean }): ReactElement {
+function InfoRow({
+  label,
+  value,
+  mono = false,
+}: { label: string; value: string; mono?: boolean }): ReactElement {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <span
@@ -202,19 +194,11 @@ function SectionTitle({ children }: { children: ReactNode }): ReactElement {
 }
 
 function Empty({ children }: { children: ReactNode }): ReactElement {
-  return (
-    <div style={{ fontSize: 12, color: "var(--muted)", padding: "8px 0" }}>
-      {children}
-    </div>
-  );
+  return <div style={{ fontSize: 12, color: "var(--muted)", padding: "8px 0" }}>{children}</div>;
 }
 
 function CompactList({ children }: { children: ReactNode }): ReactElement {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-      {children}
-    </div>
-  );
+  return <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>{children}</div>;
 }
 
 function CompactRow({ children }: { children: ReactNode }): ReactElement {

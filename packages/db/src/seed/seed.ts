@@ -4,9 +4,9 @@
  */
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
-import { workspaces, clients, services } from "../schema/index.js";
+import { clients, services, workspaces } from "../schema/index.js";
 
-const DB_PATH = process.env["FAKT_DEV_DB_PATH"] ?? "./dev.db";
+const DB_PATH = process.env.FAKT_DEV_DB_PATH ?? "./dev.db";
 
 function main(): void {
   const sqlite = new Database(DB_PATH);

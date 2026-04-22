@@ -1,7 +1,7 @@
-import type { MiddlewareHandler } from "hono";
 import { timingSafeEqual } from "node:crypto";
-import type { AppEnv } from "../types.js";
+import type { MiddlewareHandler } from "hono";
 import { unauthorized } from "../errors.js";
+import type { AppEnv } from "../types.js";
 
 const HEADER = "x-fakt-token";
 

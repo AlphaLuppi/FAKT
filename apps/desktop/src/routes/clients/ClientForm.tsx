@@ -1,12 +1,12 @@
+import { normalizeSiret, validateSiret } from "@fakt/legal";
+import { fr } from "@fakt/shared";
+import type { Client } from "@fakt/shared";
+import { Button, Input, Modal, Select, Textarea } from "@fakt/ui";
+import { zodResolver } from "@hookform/resolvers/zod";
 import type { ReactElement } from "react";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Modal, Button, Input, Textarea, Select } from "@fakt/ui";
-import { fr } from "@fakt/shared";
-import { validateSiret, normalizeSiret } from "@fakt/legal";
-import type { Client } from "@fakt/shared";
 
 const LEGAL_FORM_OPTIONS = [
   { value: "", label: "— Forme juridique —" },
@@ -100,12 +100,7 @@ export function ClientForm({ open, onClose, onSubmit, initial }: ClientFormProps
           <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>
             Annuler
           </Button>
-          <Button
-            variant="primary"
-            type="submit"
-            form="client-form"
-            disabled={isSubmitting}
-          >
+          <Button variant="primary" type="submit" form="client-form" disabled={isSubmitting}>
             {isSubmitting ? "Enregistrement…" : "Enregistrer"}
           </Button>
         </>
@@ -113,7 +108,9 @@ export function ClientForm({ open, onClose, onSubmit, initial }: ClientFormProps
     >
       <form
         id="client-form"
-        onSubmit={(e) => { void handleFormSubmit(e); }}
+        onSubmit={(e) => {
+          void handleFormSubmit(e);
+        }}
         style={{ display: "flex", flexDirection: "column", gap: 16 }}
       >
         <Input
@@ -145,10 +142,7 @@ export function ClientForm({ open, onClose, onSubmit, initial }: ClientFormProps
           {...register("address")}
         />
 
-        <Input
-          label={fr.clients.labels.contactName}
-          {...register("contactName")}
-        />
+        <Input label={fr.clients.labels.contactName} {...register("contactName")} />
 
         <Input
           label={fr.clients.labels.email}
@@ -164,11 +158,7 @@ export function ClientForm({ open, onClose, onSubmit, initial }: ClientFormProps
           {...register("sector")}
         />
 
-        <Textarea
-          label={fr.clients.labels.note}
-          rows={3}
-          {...register("note")}
-        />
+        <Textarea label={fr.clients.labels.note} rows={3} {...register("note")} />
       </form>
     </Modal>
   );

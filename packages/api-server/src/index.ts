@@ -15,17 +15,15 @@
  */
 
 import { Database } from "bun:sqlite";
-import { drizzle } from "drizzle-orm/bun-sqlite";
+import { readFileSync, readdirSync } from "node:fs";
+import { resolve } from "node:path";
 import * as schema from "@fakt/db/schema";
+import { drizzle } from "drizzle-orm/bun-sqlite";
 import { createApp } from "./app.js";
 import type { SqliteLike } from "./types.js";
-import { readdirSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
 
 function fail(reason: string): never {
-  process.stderr.write(
-    JSON.stringify({ level: "error", event: "startup_failed", reason }) + "\n"
-  );
+  process.stderr.write(`${JSON.stringify({ level: "error", event: "startup_failed", reason })}\n`);
   process.exit(1);
 }
 
@@ -38,13 +36,13 @@ function parsePort(raw: string | undefined): number {
   return n;
 }
 
-const token = process.env["FAKT_API_TOKEN"];
+const token = process.env.FAKT_API_TOKEN;
 if (!token || token.length < 16) {
   fail("FAKT_API_TOKEN requis (>=16 chars)");
 }
 
-const port = parsePort(process.env["FAKT_API_PORT"]);
-const dbPath = process.env["FAKT_DB_PATH"] ?? "fakt.db";
+const port = parsePort(process.env.FAKT_API_PORT);
+const dbPath = process.env.FAKT_DB_PATH ?? "fakt.db";
 
 const sqlite = new Database(dbPath);
 for (const pragma of [
@@ -68,7 +66,11 @@ const db: ApiDb = drizzle(sqlite, { schema }) as unknown as ApiDb;
 const app = createApp({ db, sqlite: sqlite as unknown as SqliteLike, authToken: token });
 
 type BunGlobal = {
-  serve: (opts: { port: number; hostname: string; fetch: (req: Request) => Response | Promise<Response> }) => {
+  serve: (opts: {
+    port: number;
+    hostname: string;
+    fetch: (req: Request) => Response | Promise<Response>;
+  }) => {
     port: number;
     stop: () => void;
   };
@@ -87,19 +89,17 @@ const server = bun.serve({
 
 process.stdout.write(`FAKT_API_READY:port=${server.port}\n`);
 process.stdout.write(
-  JSON.stringify({
+  `${JSON.stringify({
     level: "info",
     event: "listening",
     port: server.port,
     pid: process.pid,
     dbPath,
-  }) + "\n"
+  })}\n`
 );
 
 function shutdown(signal: string): void {
-  process.stdout.write(
-    JSON.stringify({ level: "info", event: "shutdown", signal }) + "\n"
-  );
+  process.stdout.write(`${JSON.stringify({ level: "info", event: "shutdown", signal })}\n`);
   server.stop();
   process.exit(0);
 }
@@ -118,7 +118,7 @@ process.on("SIGTERM", () => shutdown("SIGTERM"));
  */
 function applyMigrationsIfNeeded(db: Database): void {
   db.run(
-    "CREATE TABLE IF NOT EXISTS __fakt_migrations (name TEXT PRIMARY KEY, applied_at INTEGER NOT NULL);",
+    "CREATE TABLE IF NOT EXISTS __fakt_migrations (name TEXT PRIMARY KEY, applied_at INTEGER NOT NULL);"
   );
 
   const migrationsDir = resolveMigrationsDir();
@@ -130,7 +130,7 @@ function applyMigrationsIfNeeded(db: Database): void {
     db
       .query<{ name: string }, []>("SELECT name FROM __fakt_migrations")
       .all()
-      .map((r) => r.name),
+      .map((r) => r.name)
   );
 
   for (const f of files) {
@@ -155,16 +155,13 @@ function applyMigrationsIfNeeded(db: Database): void {
         const ignorable =
           msg.includes("duplicate column name") ||
           msg.includes("already exists") ||
-          msg.includes("trigger") && msg.includes("already exists");
+          (msg.includes("trigger") && msg.includes("already exists"));
         if (!ignorable) throw err;
       }
     }
-    db.run("INSERT INTO __fakt_migrations (name, applied_at) VALUES (?, ?)", [
-      f,
-      Date.now(),
-    ]);
+    db.run("INSERT INTO __fakt_migrations (name, applied_at) VALUES (?, ?)", [f, Date.now()]);
     process.stdout.write(
-      JSON.stringify({ level: "info", event: "migration_applied", file: f }) + "\n",
+      `${JSON.stringify({ level: "info", event: "migration_applied", file: f })}\n`
     );
   }
 }
@@ -188,7 +185,5 @@ function resolveMigrationsDir(): string {
       /* try next */
     }
   }
-  throw new Error(
-    `migrations introuvables dans : ${candidates.join(" | ")}`,
-  );
+  throw new Error(`migrations introuvables dans : ${candidates.join(" | ")}`);
 }

@@ -1,10 +1,10 @@
+import { computeLineTotal } from "@fakt/core";
+import { tokens } from "@fakt/design-tokens";
+import { formatEur, fr, quantityFromMilli } from "@fakt/shared";
+import type { DocumentUnit, Service, UUID } from "@fakt/shared";
+import { Button, Input, Select, Textarea } from "@fakt/ui";
 import type { ReactElement } from "react";
 import { useMemo, useState } from "react";
-import { tokens } from "@fakt/design-tokens";
-import { Button, Input, Select, Textarea } from "@fakt/ui";
-import { formatEur, quantityFromMilli, fr } from "@fakt/shared";
-import { computeLineTotal } from "@fakt/core";
-import type { DocumentUnit, Service, UUID } from "@fakt/shared";
 
 export interface EditableItem {
   id: UUID;
@@ -54,19 +54,13 @@ export function ItemsEditor(props: ItemsEditorProps): ReactElement {
   const newId = makeId ?? defaultMakeId;
   const [pickerOpenIdx, setPickerOpenIdx] = useState<number | null>(null);
 
-  const unitOptions = useMemo(
-    () => UNITS.map((u) => ({ value: u.value, label: u.label })),
-    [],
-  );
+  const unitOptions = useMemo(() => UNITS.map((u) => ({ value: u.value, label: u.label })), []);
 
   function updateItem(idx: number, patch: Partial<EditableItem>): void {
     const next = value.map((item, i) => {
       if (i !== idx) return item;
       const merged = { ...item, ...patch } satisfies EditableItem;
-      merged.lineTotalCents = computeLineTotal(
-        merged.quantity,
-        merged.unitPriceCents,
-      );
+      merged.lineTotalCents = computeLineTotal(merged.quantity, merged.unitPriceCents);
       return merged;
     });
     onChange(next);
@@ -87,9 +81,7 @@ export function ItemsEditor(props: ItemsEditorProps): ReactElement {
   }
 
   function removeItem(idx: number): void {
-    const next = value
-      .filter((_, i) => i !== idx)
-      .map((item, i) => ({ ...item, position: i }));
+    const next = value.filter((_, i) => i !== idx).map((item, i) => ({ ...item, position: i }));
     onChange(next);
   }
 
@@ -151,9 +143,7 @@ export function ItemsEditor(props: ItemsEditorProps): ReactElement {
           <div>{fr.quotes.form.quantity}</div>
           <div>{fr.quotes.form.unit}</div>
           <div>{fr.quotes.form.unitPrice}</div>
-          <div style={{ textAlign: "right" }}>
-            {fr.quotes.form.lineTotal}
-          </div>
+          <div style={{ textAlign: "right" }}>{fr.quotes.form.lineTotal}</div>
           <div />
         </div>
 
@@ -182,9 +172,7 @@ export function ItemsEditor(props: ItemsEditorProps): ReactElement {
             pickerOpen={pickerOpenIdx === idx}
             readOnly={readOnly === true}
             lastIdx={value.length - 1}
-            onTogglePicker={() =>
-              setPickerOpenIdx((v) => (v === idx ? null : idx))
-            }
+            onTogglePicker={() => setPickerOpenIdx((v) => (v === idx ? null : idx))}
             onApplyPrestation={(pid) => applyPrestation(idx, pid)}
             onUpdate={(patch) => updateItem(idx, patch)}
             onRemove={() => removeItem(idx)}
@@ -195,12 +183,7 @@ export function ItemsEditor(props: ItemsEditorProps): ReactElement {
 
       {readOnly !== true && (
         <div style={{ display: "flex", gap: tokens.spacing[2] }}>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={addItem}
-            data-testid="items-add"
-          >
+          <Button variant="secondary" size="sm" onClick={addItem} data-testid="items-add">
             {fr.quotes.form.addItem}
           </Button>
           <span
@@ -261,10 +244,7 @@ function ItemRow(props: ItemRowProps): ReactElement {
         gridTemplateColumns: "1.8fr 0.6fr 0.8fr 0.9fr 0.9fr 0.6fr",
         gap: tokens.spacing[3],
         padding: `${tokens.spacing[3]} ${tokens.spacing[4]}`,
-        borderBottom:
-          idx < lastIdx
-            ? `1.5px solid ${tokens.color.line}`
-            : "none",
+        borderBottom: idx < lastIdx ? `1.5px solid ${tokens.color.line}` : "none",
         alignItems: "flex-start",
       }}
     >
@@ -303,9 +283,7 @@ function ItemRow(props: ItemRowProps): ReactElement {
                   }))}
                   placeholder={fr.quotes.form.prestationPickerHint}
                   defaultValue=""
-                  onChange={(e) =>
-                    e.target.value && onApplyPrestation(e.target.value)
-                  }
+                  onChange={(e) => e.target.value && onApplyPrestation(e.target.value)}
                 />
               </div>
             )}

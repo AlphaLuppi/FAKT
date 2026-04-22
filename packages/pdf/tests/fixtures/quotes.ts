@@ -13,7 +13,7 @@ function line(
   description: string,
   qtyMilli: number,
   unit: DocumentLineInput["unit"],
-  unitPriceCents: number,
+  unitPriceCents: number
 ): DocumentLineInput {
   return {
     id: `00000000-0000-0000-0000-${position.toString().padStart(12, "0")}`,
@@ -38,8 +38,7 @@ export const quoteSimple: QuoteInput = {
   title: "Refonte site vitrine casamia-pizzeriatraiteur.fr",
   status: "sent",
   totalHtCents: 250000,
-  conditions:
-    "Acompte de 30 % à la commande. Solde à réception. Délai de paiement : 30 jours.",
+  conditions: "Acompte de 30 % à la commande. Solde à réception. Délai de paiement : 30 jours.",
   validityDate: ts("2026-05-21T00:00:00Z"),
   notes: "Prestation incluant 2 allers-retours de révision.",
   issuedAt: ts("2026-04-21T00:00:00Z"),
@@ -48,13 +47,7 @@ export const quoteSimple: QuoteInput = {
   createdAt: ts("2026-04-21T00:00:00Z"),
   updatedAt: ts("2026-04-21T00:00:00Z"),
   items: [
-    line(
-      1,
-      "Refonte responsive du site vitrine (design + intégration)",
-      1000,
-      "forfait",
-      250000,
-    ),
+    line(1, "Refonte responsive du site vitrine (design + intégration)", 1000, "forfait", 250000),
   ],
 };
 
@@ -83,15 +76,12 @@ export const quoteLong: QuoteInput = {
       `Phase ${i + 1} — livrable technique détaillé (module ${String.fromCharCode(65 + (i % 26))})`,
       1000 + i * 250,
       i % 3 === 0 ? "jour" : "forfait",
-      50000 + i * 2500,
-    ),
+      50000 + i * 2500
+    )
   ),
 };
 // Pré-calcul totalHt :
-quoteLong.totalHtCents = quoteLong.items.reduce(
-  (acc, it) => acc + it.lineTotalCents,
-  0,
-);
+quoteLong.totalHtCents = quoteLong.items.reduce((acc, it) => acc + it.lineTotalCents, 0);
 
 // ─── Quote 3 : intl hors-UE ─────────────────────────────────────────────────
 export const quoteIntl: QuoteInput = {
@@ -104,8 +94,7 @@ export const quoteIntl: QuoteInput = {
   title: "Dashboard analytics — mission longue durée",
   status: "draft",
   totalHtCents: 720000,
-  conditions:
-    "Payment due within 30 days. Currency : EUR. Services invoiced from France.",
+  conditions: "Payment due within 30 days. Currency : EUR. Services invoiced from France.",
   validityDate: ts("2026-07-01T00:00:00Z"),
   notes: "Outside-EU client — no VAT applicable (art. 293 B CGI).",
   issuedAt: ts("2026-04-21T00:00:00Z"),

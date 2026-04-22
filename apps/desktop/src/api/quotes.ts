@@ -1,4 +1,4 @@
-import type { Quote, QuoteStatus, DocumentLine, Cents, TimestampMs } from "@fakt/shared";
+import type { Cents, DocumentLine, Quote, QuoteStatus, TimestampMs } from "@fakt/shared";
 import { getApiClient } from "./client.js";
 
 export interface ListQuotesInput {

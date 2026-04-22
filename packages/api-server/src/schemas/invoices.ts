@@ -1,26 +1,13 @@
 import { z } from "zod";
-import { uuidSchema, paginationSchema, booleanStringSchema } from "./common.js";
+import { booleanStringSchema, paginationSchema, uuidSchema } from "./common.js";
 
 // ─── Énumérations ────────────────────────────────────────────────────────────
 
-export const invoiceStatusSchema = z.enum([
-  "draft",
-  "sent",
-  "paid",
-  "overdue",
-  "cancelled",
-]);
+export const invoiceStatusSchema = z.enum(["draft", "sent", "paid", "overdue", "cancelled"]);
 
 export const invoiceKindSchema = z.enum(["deposit", "balance", "total", "independent"]);
 
-export const documentUnitSchema = z.enum([
-  "forfait",
-  "jour",
-  "heure",
-  "unité",
-  "mois",
-  "semaine",
-]);
+export const documentUnitSchema = z.enum(["forfait", "jour", "heure", "unité", "mois", "semaine"]);
 
 export const paymentMethodSchema = z.enum(["wire", "check", "cash", "other"]);
 

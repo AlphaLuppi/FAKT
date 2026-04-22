@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
 import { StatusPill } from "../data-display/StatusPill.js";
 
 describe("StatusPill", () => {
@@ -38,9 +38,7 @@ describe("StatusPill", () => {
 
   it("invoiced utilise borderStyle dashed (semi-terminal)", () => {
     const { container } = render(<StatusPill status="invoiced" />);
-    const pill = container.querySelector<HTMLElement>(
-      "[data-status='invoiced']",
-    );
+    const pill = container.querySelector<HTMLElement>("[data-status='invoiced']");
     expect(pill).not.toBeNull();
     expect(pill?.style.borderStyle).toBe("dashed");
   });

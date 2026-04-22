@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { createTestApp } from "./helpers.js";
 
 const CLIENT_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
@@ -43,7 +43,10 @@ function quotePayload(id = QUOTE_ID, overrides: Record<string, unknown> = {}) {
   };
 }
 
-async function createClient(app: ReturnType<typeof createTestApp>["app"], headers: Record<string, string>) {
+async function createClient(
+  app: ReturnType<typeof createTestApp>["app"],
+  headers: Record<string, string>
+) {
   const res = await app.request("/api/clients", {
     method: "POST",
     headers,
@@ -102,7 +105,7 @@ describe("POST /api/quotes", () => {
     const { app, authHeaders } = createTestApp();
     await createClient(app, authHeaders());
     const bad = quotePayload();
-    delete (bad as Record<string, unknown>)["title"];
+    (bad as Record<string, unknown>).title = undefined;
     const res = await app.request("/api/quotes", {
       method: "POST",
       headers: authHeaders(),

@@ -1,7 +1,7 @@
 import type { ReactElement } from "react";
 import { useSearchParams } from "react-router";
-import { NewManual } from "./NewManual.js";
 import { NewAi } from "./NewAi.js";
+import { NewManual } from "./NewManual.js";
 
 /** Route aiguilleur — délègue à NewManual ou NewAi selon ?mode=. */
 export function QuoteNewRoute(): ReactElement {

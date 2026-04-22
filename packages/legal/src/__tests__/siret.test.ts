@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { validateSiret, formatSiret, normalizeSiret, siretToSiren } from "../siret.js";
+import { describe, expect, it } from "vitest";
+import { formatSiret, normalizeSiret, siretToSiren, validateSiret } from "../siret.js";
 
 describe("validateSiret", () => {
   it("valide un SIRET légal connu (La Poste)", () => {
@@ -19,7 +19,7 @@ describe("validateSiret", () => {
   });
 
   it("rejette un SIRET de mauvaise longueur", () => {
-    expect(validateSiret("1234567890123")).toBe(false);   // 13 chiffres
+    expect(validateSiret("1234567890123")).toBe(false); // 13 chiffres
     expect(validateSiret("123456789012345")).toBe(false); // 15 chiffres
     expect(validateSiret("")).toBe(false);
   });

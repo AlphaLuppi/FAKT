@@ -1,10 +1,10 @@
-import { describe, it, expect } from "vitest";
 import {
-  computeInvoiceTotal,
-  computeDepositAmount,
-  computeBalanceAmount,
   checkTotalConsistency,
+  computeBalanceAmount,
+  computeDepositAmount,
+  computeInvoiceTotal,
 } from "@fakt/core";
+import { describe, expect, it } from "vitest";
 
 describe("computeInvoiceTotal et helpers acompte/solde", () => {
   const baseItems = [

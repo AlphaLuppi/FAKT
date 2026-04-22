@@ -6,8 +6,7 @@ import type { LegalForm } from "@fakt/shared";
  */
 
 /** Mention TVA pour micro-entreprise — texte EXACT imposé par l'art. 293 B du CGI. */
-export const TVA_MENTION_MICRO: string =
-  "TVA non applicable, art. 293 B du CGI";
+export const TVA_MENTION_MICRO: string = "TVA non applicable, art. 293 B du CGI";
 
 /** Taux de pénalité de retard légal (3× taux légal — LME art. 21). */
 export const LATE_PAYMENT_PENALTY_RATE: string =
@@ -39,12 +38,8 @@ export interface MandatoryMentions {
  * Retourne l'ensemble des mentions légales obligatoires pour un document donné.
  * Conforme CGI art. 289 + LME art. 21 + D. 2012-1115.
  */
-export function getMandatoryMentions(
-  input: MandatoryMentionsInput
-): MandatoryMentions {
-  const tvaMention = isVatExempt(input.regime)
-    ? TVA_MENTION_MICRO
-    : "TVA applicable";
+export function getMandatoryMentions(input: MandatoryMentionsInput): MandatoryMentions {
+  const tvaMention = isVatExempt(input.regime) ? TVA_MENTION_MICRO : "TVA applicable";
 
   const documentSpecific: string[] = [];
 
@@ -82,7 +77,7 @@ export function buildLegalMentionsSnapshot(
     iban: string | null;
     tvaMention: string;
   },
-  paymentDays: number = 30
+  paymentDays = 30
 ): string {
   const lines: string[] = [
     `${workspace.legalForm} ${workspace.name}`,

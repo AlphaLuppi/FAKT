@@ -1,12 +1,12 @@
 import { z } from "zod";
-import { uuidSchema, paginationSchema, booleanStringSchema } from "./common.js";
+import { booleanStringSchema, paginationSchema, uuidSchema } from "./common.js";
 import { isValidSiret } from "./common.js";
 
 const optionalString = z.string().max(500).nullable().optional();
 const optionalEmail = z
   .union([z.string().email(), z.literal(""), z.null()])
   .optional()
-  .transform((v) => (v === "" ? null : v ?? null));
+  .transform((v) => (v === "" ? null : (v ?? null)));
 
 const optionalSiretField = z
   .string()
@@ -15,7 +15,7 @@ const optionalSiretField = z
   .refine((v) => v === null || v === undefined || v === "" || isValidSiret(v), {
     message: "SIRET invalide (14 chiffres + Luhn)",
   })
-  .transform((v) => (v === "" ? null : v ?? null));
+  .transform((v) => (v === "" ? null : (v ?? null)));
 
 export const createClientSchema = z.object({
   id: uuidSchema,

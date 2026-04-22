@@ -3,75 +3,75 @@
    Port de colors_and_type.css — source de vérité Anthropic bundle.
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap");
 
 :root {
   /* ---- Ink & paper ---- */
-  --ink:          #000000;
-  --ink-2:        #000000;
-  --ink-3:        #222222;
-  --muted:        #666666;
-  --muted-2:      #999999;
+  --ink: #000000;
+  --ink-2: #000000;
+  --ink-3: #222222;
+  --muted: #666666;
+  --muted-2: #999999;
 
   /* ---- Surfaces ---- */
-  --paper:        #F5F5F0;
-  --paper-2:      #EDEDE5;
-  --surface:      #FFFFFF;
+  --paper: #f5f5f0;
+  --paper-2: #edede5;
+  --surface: #ffffff;
 
   /* ---- Borders ---- */
-  --line:         #000000;
-  --line-2:       #000000;
-  --stroke-hair:  1.5px;
-  --stroke:       2px;
-  --stroke-bold:  2.5px;
+  --line: #000000;
+  --line-2: #000000;
+  --stroke-hair: 1.5px;
+  --stroke: 2px;
+  --stroke-bold: 2.5px;
   --stroke-thick: 3px;
 
   /* ---- Accent ---- */
-  --accent:         #000000;
-  --accent-dark:    #000000;
-  --accent-soft:    #FFFF00;
-  --accent-subtle:  #FAFAFA;
+  --accent: #000000;
+  --accent-dark: #000000;
+  --accent-soft: #ffff00;
+  --accent-subtle: #fafafa;
 
   /* ---- Semantic ---- */
-  --success:    #000000;
-  --success-bg: #B9F5B0;
-  --warn:       #000000;
-  --warn-bg:    #FFFF00;
-  --danger:     #000000;
-  --danger-bg:  #FF6B6B;
-  --info:       #000000;
-  --info-bg:    #CCE5FF;
+  --success: #000000;
+  --success-bg: #b9f5b0;
+  --warn: #000000;
+  --warn-bg: #ffff00;
+  --danger: #000000;
+  --danger-bg: #ff6b6b;
+  --info: #000000;
+  --info-bg: #cce5ff;
 
   /* ---- Radii : ZÉRO PARTOUT — règle absolue Brutal Invoice ---- */
   --r-sm: 0px;
-  --r:    0px;
+  --r: 0px;
   --r-lg: 0px;
   --r-xl: 0px;
 
   /* ---- Shadows plates, jamais de blur ---- */
   --shadow-sm: 3px 3px 0 #000;
-  --shadow:    5px 5px 0 #000;
+  --shadow: 5px 5px 0 #000;
   --shadow-lg: 8px 8px 0 #000;
   --shadow-xl: 12px 12px 0 #000;
 
   /* ---- Typographie ---- */
-  --font-ui:   "Space Grotesk", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-ui: "Space Grotesk", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
 
   /* Tailles */
-  --t-xs:      11px;
-  --t-sm:      12.5px;
-  --t-base:    14px;
-  --t-md:      16px;
-  --t-lg:      20px;
-  --t-xl:      28px;
-  --t-2xl:     40px;
+  --t-xs: 11px;
+  --t-sm: 12.5px;
+  --t-base: 14px;
+  --t-md: 16px;
+  --t-lg: 20px;
+  --t-xl: 28px;
+  --t-2xl: 40px;
   --t-display: 64px;
 
   /* Graisses */
-  --w-reg:   500;
-  --w-med:   600;
-  --w-bold:  700;
+  --w-reg: 500;
+  --w-med: 600;
+  --w-bold: 700;
   --w-black: 800;
 
   /* ---- Espacement ---- */
@@ -88,38 +88,38 @@
 
 /* ---- Classes utilitaires typographie ---- */
 .brutal-h-display {
-  font: var(--w-black) var(--t-display)/0.95 var(--font-ui);
+  font: var(--w-black) var(--t-display) / 0.95 var(--font-ui);
   letter-spacing: -0.03em;
   text-transform: uppercase;
   color: var(--ink);
 }
 .brutal-h1 {
-  font: var(--w-black) var(--t-2xl)/1 var(--font-ui);
+  font: var(--w-black) var(--t-2xl) / 1 var(--font-ui);
   letter-spacing: -0.02em;
   text-transform: uppercase;
   color: var(--ink);
 }
 .brutal-h2 {
-  font: var(--w-bold) var(--t-xl)/1.1 var(--font-ui);
+  font: var(--w-bold) var(--t-xl) / 1.1 var(--font-ui);
   letter-spacing: -0.01em;
   text-transform: uppercase;
   color: var(--ink);
 }
 .brutal-h3 {
-  font: var(--w-bold) var(--t-md)/1.2 var(--font-ui);
+  font: var(--w-bold) var(--t-md) / 1.2 var(--font-ui);
   letter-spacing: -0.005em;
   color: var(--ink);
 }
 .brutal-body {
-  font: var(--w-reg) var(--t-base)/1.45 var(--font-ui);
+  font: var(--w-reg) var(--t-base) / 1.45 var(--font-ui);
   color: var(--ink);
 }
 .brutal-small {
-  font: var(--w-reg) var(--t-sm)/1.4 var(--font-ui);
+  font: var(--w-reg) var(--t-sm) / 1.4 var(--font-ui);
   color: var(--muted);
 }
 .brutal-eyebrow {
-  font: var(--w-bold) var(--t-xs)/1 var(--font-ui);
+  font: var(--w-bold) var(--t-xs) / 1 var(--font-ui);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ink);
@@ -133,7 +133,9 @@
 }
 
 /* ---- Reset global ---- */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   border-radius: 0 !important; /* Enforce zéro radius */
 }

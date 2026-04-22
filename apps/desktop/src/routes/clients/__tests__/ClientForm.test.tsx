@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ClientForm } from "../ClientForm.js";
 import type { ClientFormValues } from "../ClientForm.js";
 
@@ -65,9 +65,7 @@ describe("ClientForm", () => {
     await userEvent.click(screen.getByRole("button", { name: /enregistrer/i }));
 
     await waitFor(() => {
-      expect(onSubmit).toHaveBeenCalledWith(
-        expect.objectContaining({ name: "Acme SA" })
-      );
+      expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ name: "Acme SA" }));
     });
   });
 
@@ -104,14 +102,7 @@ describe("ClientForm", () => {
       createdAt: Date.now(),
     };
 
-    render(
-      <ClientForm
-        open={true}
-        onClose={noop}
-        onSubmit={noop}
-        initial={initialClient}
-      />
-    );
+    render(<ClientForm open={true} onClose={noop} onSubmit={noop} initial={initialClient} />);
 
     expect(screen.getByDisplayValue("Client Test")).toBeInTheDocument();
     expect(screen.getByDisplayValue("jean@test.fr")).toBeInTheDocument();

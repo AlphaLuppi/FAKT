@@ -1,12 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
-import { MemoryRouter, Routes, Route } from "react-router";
-import { InvoiceDetailRoute } from "./Detail.js";
-import {
-  installInvoiceMockApis,
-  FIXTURE_CLIENT,
-} from "./__test-helpers__/mockInvoiceApis.js";
 import type { Invoice } from "@fakt/shared";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter, Route, Routes } from "react-router";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { InvoiceDetailRoute } from "./Detail.js";
+import { FIXTURE_CLIENT, installInvoiceMockApis } from "./__test-helpers__/mockInvoiceApis.js";
 
 const now = Date.now();
 
@@ -45,7 +42,7 @@ function renderDetail(id: string): void {
         <Route path="/invoices/:id" element={<InvoiceDetailRoute />} />
         <Route path="/invoices" element={<div data-testid="list">list</div>} />
       </Routes>
-    </MemoryRouter>,
+    </MemoryRouter>
   );
 }
 
@@ -55,14 +52,13 @@ describe("InvoiceDetailRoute", () => {
   beforeEach(() => {
     if (!globalThis.URL.createObjectURL) {
       globalThis.URL.createObjectURL = vi.fn(
-        () => "blob:mocked",
+        () => "blob:mocked"
       ) as unknown as typeof URL.createObjectURL;
     } else {
       vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:mocked");
     }
     if (!globalThis.URL.revokeObjectURL) {
-      globalThis.URL.revokeObjectURL =
-        vi.fn() as unknown as typeof URL.revokeObjectURL;
+      globalThis.URL.revokeObjectURL = vi.fn() as unknown as typeof URL.revokeObjectURL;
     }
   });
 
@@ -87,14 +83,10 @@ describe("InvoiceDetailRoute", () => {
     renderDetail("inv-2");
 
     await waitFor(() => {
-      expect(
-        screen.getByTestId("invoice-detail-mark-paid"),
-      ).toBeInTheDocument();
+      expect(screen.getByTestId("invoice-detail-mark-paid")).toBeInTheDocument();
     });
     // Le bouton "Marquer envoyée" n'est pas affiché (déjà envoyée).
-    expect(
-      screen.queryByTestId("invoice-detail-mark-sent"),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId("invoice-detail-mark-sent")).not.toBeInTheDocument();
   });
 
   it("bouton Marquer envoyée visible sur brouillon numéroté", async () => {
@@ -103,9 +95,7 @@ describe("InvoiceDetailRoute", () => {
     renderDetail("inv-draft-num");
 
     await waitFor(() => {
-      expect(
-        screen.getByTestId("invoice-detail-mark-sent"),
-      ).toBeInTheDocument();
+      expect(screen.getByTestId("invoice-detail-mark-sent")).toBeInTheDocument();
     });
   });
 
@@ -117,9 +107,7 @@ describe("InvoiceDetailRoute", () => {
     await waitFor(() => {
       expect(screen.getAllByText("F2026-001").length).toBeGreaterThanOrEqual(1);
     });
-    expect(
-      screen.queryByTestId("invoice-detail-delete"),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId("invoice-detail-delete")).not.toBeInTheDocument();
   });
 
   it("bouton Éditer désactivé si non-draft", async () => {
@@ -179,9 +167,7 @@ describe("InvoiceDetailRoute", () => {
     renderDetail("inv-missing");
 
     await waitFor(() => {
-      expect(
-        screen.getByTestId("invoice-detail-not-found"),
-      ).toBeInTheDocument();
+      expect(screen.getByTestId("invoice-detail-not-found")).toBeInTheDocument();
     });
   });
 
@@ -209,9 +195,7 @@ describe("InvoiceDetailRoute", () => {
     renderDetail("inv-paid-1");
 
     await waitFor(() => {
-      expect(
-        screen.getByTestId("invoice-detail-mark-paid"),
-      ).toBeInTheDocument();
+      expect(screen.getByTestId("invoice-detail-mark-paid")).toBeInTheDocument();
     });
     fireEvent.click(screen.getByTestId("invoice-detail-mark-paid"));
     await waitFor(() => {
@@ -225,9 +209,7 @@ describe("InvoiceDetailRoute", () => {
     renderDetail("inv-paid-2");
 
     await waitFor(() => {
-      expect(
-        screen.getByTestId("invoice-detail-mark-paid"),
-      ).toBeInTheDocument();
+      expect(screen.getByTestId("invoice-detail-mark-paid")).toBeInTheDocument();
     });
     fireEvent.click(screen.getByTestId("invoice-detail-mark-paid"));
     await waitFor(() => {
@@ -252,19 +234,13 @@ describe("InvoiceDetailRoute", () => {
     renderDetail("inv-sent-1");
 
     await waitFor(() => {
-      expect(
-        screen.getByTestId("invoice-detail-mark-sent"),
-      ).toBeInTheDocument();
+      expect(screen.getByTestId("invoice-detail-mark-sent")).toBeInTheDocument();
     });
     fireEvent.click(screen.getByTestId("invoice-detail-mark-sent"));
     await waitFor(() => {
-      expect(
-        screen.getByTestId("invoice-detail-mark-sent-confirm"),
-      ).toBeInTheDocument();
+      expect(screen.getByTestId("invoice-detail-mark-sent-confirm")).toBeInTheDocument();
     });
-    fireEvent.click(
-      screen.getByTestId("invoice-detail-mark-sent-confirm"),
-    );
+    fireEvent.click(screen.getByTestId("invoice-detail-mark-sent-confirm"));
     await waitFor(() => {
       const stored = mocks.store.invoices.get("inv-sent-1");
       expect(stored?.status).toBe("sent");

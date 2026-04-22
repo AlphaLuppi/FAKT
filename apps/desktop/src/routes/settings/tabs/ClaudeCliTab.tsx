@@ -1,9 +1,9 @@
-import type { ReactElement } from "react";
-import { useState, useEffect } from "react";
-import { Button } from "@fakt/ui";
-import { fr } from "@fakt/shared";
 import { healthCheck } from "@fakt/ai";
 import type { CliInfo } from "@fakt/ai";
+import { fr } from "@fakt/shared";
+import { Button } from "@fakt/ui";
+import type { ReactElement } from "react";
+import { useEffect, useState } from "react";
 
 export function ClaudeCliTab(): ReactElement {
   const [loading, setLoading] = useState(true);
@@ -46,34 +46,52 @@ export function ClaudeCliTab(): ReactElement {
         {!loading && cliInfo?.installed === true && cliInfo.path !== undefined && (
           <div style={{ ...rowStyle, marginTop: 8 }}>
             <span style={labelStyle}>Chemin</span>
-            <span style={{ fontFamily: "var(--font-mono)", fontSize: "var(--t-sm)", color: "var(--ink)" }}>
+            <span
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: "var(--t-sm)",
+                color: "var(--ink)",
+              }}
+            >
               {cliInfo.path}
             </span>
           </div>
         )}
 
         {!loading && cliInfo?.installed !== true && cliInfo?.installHint !== undefined && (
-          <div style={{ marginTop: 12, padding: "12px 16px", background: "var(--paper)", border: "2px solid var(--ink)" }}>
+          <div
+            style={{
+              marginTop: 12,
+              padding: "12px 16px",
+              background: "var(--paper)",
+              border: "2px solid var(--ink)",
+            }}
+          >
             <p style={{ ...descStyle, margin: 0, color: "var(--ink)" }}>{cliInfo.installHint}</p>
           </div>
         )}
       </div>
 
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-        <Button variant="secondary" onClick={() => { void runCheck(); }} disabled={loading}>
+        <Button
+          variant="secondary"
+          onClick={() => {
+            void runCheck();
+          }}
+          disabled={loading}
+        >
           {fr.settings.cli.recheck}
         </Button>
         {cliInfo !== null && !cliInfo.installed && (
-          <Button
-            variant="ghost"
-            onClick={() => window.open("https://claude.ai/code", "_blank")}
-          >
+          <Button variant="ghost" onClick={() => window.open("https://claude.ai/code", "_blank")}>
             {fr.settings.cli.openInstallPage}
           </Button>
         )}
         <Button
           variant="ghost"
-          onClick={() => window.open("https://docs.anthropic.com/en/docs/claude-code/overview", "_blank")}
+          onClick={() =>
+            window.open("https://docs.anthropic.com/en/docs/claude-code/overview", "_blank")
+          }
         >
           {fr.settings.cli.docLink}
         </Button>
@@ -82,24 +100,37 @@ export function ClaudeCliTab(): ReactElement {
   );
 }
 
-function StatusBadge({ installed, version }: { installed: boolean; version?: string }): ReactElement {
+function StatusBadge({
+  installed,
+  version,
+}: { installed: boolean; version?: string }): ReactElement {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-      <span style={{
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        width: 20,
-        height: 20,
-        background: installed ? "var(--ink)" : "transparent",
-        border: "2px solid var(--ink)",
-        color: installed ? "var(--accent)" : "var(--ink)",
-        fontWeight: 800,
-        fontSize: 11,
-      }}>
+      <span
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: 20,
+          height: 20,
+          background: installed ? "var(--ink)" : "transparent",
+          border: "2px solid var(--ink)",
+          color: installed ? "var(--accent)" : "var(--ink)",
+          fontWeight: 800,
+          fontSize: 11,
+        }}
+      >
         {installed ? "✓" : "✗"}
       </span>
-      <span style={{ fontFamily: "var(--font-ui)", fontWeight: 700, fontSize: "var(--t-sm)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+      <span
+        style={{
+          fontFamily: "var(--font-ui)",
+          fontWeight: 700,
+          fontSize: "var(--t-sm)",
+          textTransform: "uppercase",
+          letterSpacing: "0.04em",
+        }}
+      >
         {installed
           ? `${fr.onboarding.step2.detected}${version !== undefined ? ` — v${version}` : ""}`
           : fr.onboarding.step2.missing}

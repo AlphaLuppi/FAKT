@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+import { deleteBackup, insertBackup, listBackups } from "../queries/backups.js";
 import { createTestDb, seedWorkspace } from "./helpers.js";
-import { listBackups, insertBackup, deleteBackup } from "../queries/backups.js";
 import type { TestDb } from "./helpers.js";
 
 let db: TestDb;
@@ -47,8 +47,6 @@ describe("deleteBackup", () => {
   });
 
   it("throw si id inexistant", () => {
-    expect(() => deleteBackup(db, "99999999-0000-4000-8000-999999999999")).toThrow(
-      /not found/i
-    );
+    expect(() => deleteBackup(db, "99999999-0000-4000-8000-999999999999")).toThrow(/not found/i);
   });
 });

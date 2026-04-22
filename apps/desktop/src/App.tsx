@@ -1,17 +1,17 @@
 import type { ReactElement } from "react";
-import { Routes, Route, Navigate, useLocation } from "react-router";
-import { Shell } from "./features/shell/Shell.js";
-import { DashboardRoute } from "./routes/dashboard.js";
-import { ClientsRoute } from "./routes/clients/index.js";
-import { ServicesRoute } from "./routes/services/index.js";
-import { WizardRoute } from "./routes/onboarding/Wizard.js";
-import { SettingsRoute } from "./routes/settings/Settings.js";
-import { QuotesRouter } from "./routes/quotes/index.js";
-import { InvoicesRouter } from "./routes/invoices/index.js";
-import { SignaturesRouter } from "./routes/signatures/index.js";
-import { ArchiveRoute } from "./routes/archive/index.js";
-import { useOnboardingGuard } from "./routes/onboarding/guard.js";
+import { Navigate, Route, Routes, useLocation } from "react-router";
 import { ErrorBoundary } from "./components/ErrorBoundary.js";
+import { Shell } from "./features/shell/Shell.js";
+import { ArchiveRoute } from "./routes/archive/index.js";
+import { ClientsRoute } from "./routes/clients/index.js";
+import { DashboardRoute } from "./routes/dashboard.js";
+import { InvoicesRouter } from "./routes/invoices/index.js";
+import { WizardRoute } from "./routes/onboarding/Wizard.js";
+import { useOnboardingGuard } from "./routes/onboarding/guard.js";
+import { QuotesRouter } from "./routes/quotes/index.js";
+import { ServicesRoute } from "./routes/services/index.js";
+import { SettingsRoute } from "./routes/settings/Settings.js";
+import { SignaturesRouter } from "./routes/signatures/index.js";
 
 export function App(): ReactElement {
   const guard = useOnboardingGuard();

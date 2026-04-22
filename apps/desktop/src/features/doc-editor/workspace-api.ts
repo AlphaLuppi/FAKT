@@ -4,8 +4,8 @@
  */
 
 import type { Workspace } from "@fakt/shared";
-import { api as httpApi } from "../../api/index.js";
 import { ApiError } from "../../api/client.js";
+import { api as httpApi } from "../../api/index.js";
 
 export interface WorkspaceApi {
   get(): Promise<Workspace | null>;

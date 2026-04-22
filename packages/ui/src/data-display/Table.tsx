@@ -1,6 +1,6 @@
+import { tokens } from "@fakt/design-tokens";
 import type { ReactElement, ReactNode } from "react";
 import { useMemo, useState } from "react";
-import { tokens } from "@fakt/design-tokens";
 import { classNames } from "../utils/classNames.js";
 
 export interface TableColumn<T> {
@@ -97,7 +97,7 @@ export function Table<T>({
 
   return (
     <div className={classNames(className)}>
-      <table className="fakt-table" role="table">
+      <table className="fakt-table">
         <thead>
           <tr>
             {columns.map((c) => {
@@ -138,7 +138,11 @@ export function Table<T>({
             <tr>
               <td
                 colSpan={columns.length}
-                style={{ textAlign: "center", padding: tokens.spacing[5], color: tokens.color.muted }}
+                style={{
+                  textAlign: "center",
+                  padding: tokens.spacing[5],
+                  color: tokens.color.muted,
+                }}
               >
                 {empty ?? "Aucun résultat"}
               </td>

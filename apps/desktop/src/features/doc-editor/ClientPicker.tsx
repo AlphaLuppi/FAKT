@@ -1,9 +1,9 @@
-import type { ReactElement } from "react";
-import { useEffect, useMemo, useState } from "react";
 import { tokens } from "@fakt/design-tokens";
-import { Button, Input } from "@fakt/ui";
 import { fr } from "@fakt/shared";
 import type { Client, UUID } from "@fakt/shared";
+import { Button, Input } from "@fakt/ui";
+import type { ReactElement } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export interface ClientPickerProps {
   value: UUID | null;
@@ -29,10 +29,7 @@ export function ClientPicker(props: ClientPickerProps): ReactElement {
     });
   }, [search, clients]);
 
-  const selected = useMemo(
-    () => clients.find((c) => c.id === value) ?? null,
-    [clients, value],
-  );
+  const selected = useMemo(() => clients.find((c) => c.id === value) ?? null, [clients, value]);
 
   useEffect(() => {
     if (disabled === true) setOpen(false);
@@ -44,8 +41,7 @@ export function ClientPicker(props: ClientPickerProps): ReactElement {
         data-testid="client-picker"
         style={{
           border: `${tokens.stroke.base} solid ${invalid === true ? tokens.color.ink : tokens.color.ink}`,
-          background:
-            invalid === true ? tokens.color.dangerBg : tokens.color.surface,
+          background: invalid === true ? tokens.color.dangerBg : tokens.color.surface,
           padding: `${tokens.spacing[3]} ${tokens.spacing[4]}`,
           display: "flex",
           alignItems: "center",
@@ -102,12 +98,7 @@ export function ClientPicker(props: ClientPickerProps): ReactElement {
           {selected ? fr.quotes.actions.edit : fr.quotes.form.clientPlaceholder}
         </Button>
         {onQuickCreate && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onQuickCreate}
-            disabled={disabled}
-          >
+          <Button variant="ghost" size="sm" onClick={onQuickCreate} disabled={disabled}>
             {fr.quotes.form.clientQuickNew}
           </Button>
         )}
@@ -170,12 +161,8 @@ export function ClientPicker(props: ClientPickerProps): ReactElement {
                   style={{
                     textAlign: "left",
                     padding: `${tokens.spacing[2]} ${tokens.spacing[3]}`,
-                    background:
-                      value === c.id ? tokens.color.ink : "transparent",
-                    color:
-                      value === c.id
-                        ? tokens.color.accentSoft
-                        : tokens.color.ink,
+                    background: value === c.id ? tokens.color.ink : "transparent",
+                    color: value === c.id ? tokens.color.accentSoft : tokens.color.ink,
                     border: "none",
                     cursor: "pointer",
                     fontFamily: tokens.font.ui,

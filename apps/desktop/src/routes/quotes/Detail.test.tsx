@@ -1,13 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
-import { MemoryRouter, Routes, Route } from "react-router";
-import { QuoteDetailRoute } from "./Detail.js";
-import {
-  installMockApis,
-  FIXTURE_CLIENT,
-  FIXTURE_WORKSPACE,
-} from "./__test-helpers__/mockApis.js";
 import type { Quote } from "@fakt/shared";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter, Route, Routes } from "react-router";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { QuoteDetailRoute } from "./Detail.js";
+import { FIXTURE_CLIENT, FIXTURE_WORKSPACE, installMockApis } from "./__test-helpers__/mockApis.js";
 
 const now = Date.now();
 
@@ -49,7 +45,7 @@ describe("QuoteDetailRoute", () => {
     // Stub URL.createObjectURL for jsdom.
     if (!globalThis.URL.createObjectURL) {
       globalThis.URL.createObjectURL = vi.fn(
-        () => "blob:mocked",
+        () => "blob:mocked"
       ) as unknown as typeof URL.createObjectURL;
     } else {
       vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:mocked");
@@ -71,7 +67,7 @@ describe("QuoteDetailRoute", () => {
         <Routes>
           <Route path="/quotes/:id" element={<QuoteDetailRoute />} />
         </Routes>
-      </MemoryRouter>,
+      </MemoryRouter>
     );
   }
 
@@ -151,12 +147,8 @@ describe("QuoteDetailRoute", () => {
     });
     fireEvent.click(screen.getByTestId("detail-mark-sent"));
     await waitFor(() => {
-      expect(
-        screen.getByTestId("detail-mark-sent-confirm"),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByTestId("detail-mark-sent-cancel"),
-      ).toBeInTheDocument();
+      expect(screen.getByTestId("detail-mark-sent-confirm")).toBeInTheDocument();
+      expect(screen.getByTestId("detail-mark-sent-cancel")).toBeInTheDocument();
     });
   });
 
@@ -175,9 +167,7 @@ describe("QuoteDetailRoute", () => {
     });
     fireEvent.click(screen.getByTestId("detail-mark-sent"));
     await waitFor(() => {
-      expect(
-        screen.getByTestId("detail-mark-sent-confirm"),
-      ).toBeInTheDocument();
+      expect(screen.getByTestId("detail-mark-sent-confirm")).toBeInTheDocument();
     });
     fireEvent.click(screen.getByTestId("detail-mark-sent-confirm"));
     await waitFor(() => {

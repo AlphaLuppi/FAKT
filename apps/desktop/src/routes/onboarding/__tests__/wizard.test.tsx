@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import React from "react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Stubs Tauri commands
 vi.mock("@tauri-apps/api/core", () => ({
@@ -30,8 +30,8 @@ vi.mock("@fakt/ui", async (importOriginal) => {
   };
 });
 
-import { WizardRoute } from "../Wizard.js";
 import { MemoryRouter } from "react-router";
+import { WizardRoute } from "../Wizard.js";
 
 function renderWizard() {
   return render(

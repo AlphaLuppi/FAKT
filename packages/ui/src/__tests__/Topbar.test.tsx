@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
 import { Topbar } from "../layout/Topbar.js";
 
 describe("Topbar", () => {
@@ -9,7 +9,7 @@ describe("Topbar", () => {
         title="Dashboard"
         subtitle="3 en attente"
         actions={<button type="button">Action</button>}
-      />,
+      />
     );
     expect(screen.getByText("Dashboard")).toBeInTheDocument();
     expect(screen.getByText("3 en attente")).toBeInTheDocument();

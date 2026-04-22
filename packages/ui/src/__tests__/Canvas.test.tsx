@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
-import { createRef } from "react";
 import { render } from "@testing-library/react";
+import { createRef } from "react";
+import { describe, expect, it } from "vitest";
 import { Canvas, type CanvasHandle } from "../specialized/Canvas.js";
 
 describe("Canvas", () => {

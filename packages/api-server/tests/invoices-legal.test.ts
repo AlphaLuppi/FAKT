@@ -6,9 +6,9 @@
  * - Numérotation immutable une fois attribuée
  */
 
-import { describe, it, expect } from "vitest";
+import { CLIENT_ID_1, seedClient } from "@fakt/db/__tests__/helpers";
+import { describe, expect, it } from "vitest";
 import { createTestApp } from "./helpers.js";
-import { seedClient, CLIENT_ID_1 } from "@fakt/db/__tests__/helpers";
 
 const INVOICE_ID = "33330000-0000-4000-8000-000000000001";
 const INVOICE_ID_2 = "33330000-0000-4000-8000-000000000002";
@@ -118,9 +118,9 @@ describe("DELETE /api/invoices/:id — conformité archivage 10 ans", () => {
     });
 
     // Tentative directe via sqlite : doit être interceptée par le trigger
-    expect(() =>
-      sqlite.prepare("DELETE FROM invoices WHERE id = ?").run(INVOICE_ID)
-    ).toThrow(/cannot hard-delete/i);
+    expect(() => sqlite.prepare("DELETE FROM invoices WHERE id = ?").run(INVOICE_ID)).toThrow(
+      /cannot hard-delete/i
+    );
   });
 });
 
@@ -167,9 +167,7 @@ describe("Numérotation séquentielle sans trou — CGI art. 289", () => {
     });
 
     expect(() =>
-      sqlite
-        .prepare("UPDATE invoices SET number = 'TAMPERED' WHERE id = ?")
-        .run(INVOICE_ID)
+      sqlite.prepare("UPDATE invoices SET number = 'TAMPERED' WHERE id = ?").run(INVOICE_ID)
     ).toThrow(/immutable/i);
   });
 });

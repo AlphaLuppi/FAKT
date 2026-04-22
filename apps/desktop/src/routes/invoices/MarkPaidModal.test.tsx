@@ -1,29 +1,17 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { MarkPaidModal, type MarkPaidPayload } from "./MarkPaidModal.js";
 
 describe("MarkPaidModal", () => {
   it("n'est pas rendu quand open=false", () => {
     const onConfirm = vi.fn(async () => {});
     const onClose = vi.fn();
-    render(
-      <MarkPaidModal
-        open={false}
-        onClose={onClose}
-        onConfirm={onConfirm}
-      />,
-    );
+    render(<MarkPaidModal open={false} onClose={onClose} onConfirm={onConfirm} />);
     expect(screen.queryByTestId("mark-paid-date")).not.toBeInTheDocument();
   });
 
   it("affiche date picker + méthode + notes", () => {
-    render(
-      <MarkPaidModal
-        open={true}
-        onClose={() => {}}
-        onConfirm={async () => {}}
-      />,
-    );
+    render(<MarkPaidModal open={true} onClose={() => {}} onConfirm={async () => {}} />);
     expect(screen.getByTestId("mark-paid-date")).toBeInTheDocument();
     expect(screen.getByTestId("mark-paid-method")).toBeInTheDocument();
     expect(screen.getByTestId("mark-paid-notes")).toBeInTheDocument();
@@ -32,13 +20,7 @@ describe("MarkPaidModal", () => {
   });
 
   it("affiche le champ custom method quand method=other", () => {
-    render(
-      <MarkPaidModal
-        open={true}
-        onClose={() => {}}
-        onConfirm={async () => {}}
-      />,
-    );
+    render(<MarkPaidModal open={true} onClose={() => {}} onConfirm={async () => {}} />);
     expect(screen.queryByTestId("mark-paid-custom")).not.toBeInTheDocument();
     fireEvent.change(screen.getByTestId("mark-paid-method"), {
       target: { value: "other" },
@@ -48,13 +30,7 @@ describe("MarkPaidModal", () => {
 
   it("soumet les bonnes valeurs : date, méthode wire, notes", async () => {
     const onConfirm = vi.fn(async () => {});
-    render(
-      <MarkPaidModal
-        open={true}
-        onClose={() => {}}
-        onConfirm={onConfirm}
-      />,
-    );
+    render(<MarkPaidModal open={true} onClose={() => {}} onConfirm={onConfirm} />);
     fireEvent.change(screen.getByTestId("mark-paid-notes"), {
       target: { value: "Reçu le jour même" },
     });
@@ -73,13 +49,7 @@ describe("MarkPaidModal", () => {
 
   it("refuse une date future (validation Zod)", async () => {
     const onConfirm = vi.fn(async () => {});
-    render(
-      <MarkPaidModal
-        open={true}
-        onClose={() => {}}
-        onConfirm={onConfirm}
-      />,
-    );
+    render(<MarkPaidModal open={true} onClose={() => {}} onConfirm={onConfirm} />);
     const future = new Date(Date.now() + 10 * 24 * 3600 * 1000);
     const iso = `${future.getFullYear()}-${String(future.getMonth() + 1).padStart(2, "0")}-${String(future.getDate()).padStart(2, "0")}`;
     fireEvent.change(screen.getByTestId("mark-paid-date"), {
@@ -94,13 +64,7 @@ describe("MarkPaidModal", () => {
 
   it("méthode 'other' sans custom method → bloqué par Zod", async () => {
     const onConfirm = vi.fn(async () => {});
-    render(
-      <MarkPaidModal
-        open={true}
-        onClose={() => {}}
-        onConfirm={onConfirm}
-      />,
-    );
+    render(<MarkPaidModal open={true} onClose={() => {}} onConfirm={onConfirm} />);
     fireEvent.change(screen.getByTestId("mark-paid-method"), {
       target: { value: "other" },
     });
@@ -113,13 +77,7 @@ describe("MarkPaidModal", () => {
 
   it("méthode 'other' avec custom method → passe et préfixe notes", async () => {
     const onConfirm = vi.fn(async () => {});
-    render(
-      <MarkPaidModal
-        open={true}
-        onClose={() => {}}
-        onConfirm={onConfirm}
-      />,
-    );
+    render(<MarkPaidModal open={true} onClose={() => {}} onConfirm={onConfirm} />);
     fireEvent.change(screen.getByTestId("mark-paid-method"), {
       target: { value: "other" },
     });
@@ -148,21 +106,14 @@ describe("MarkPaidModal", () => {
         onClose={() => {}}
         onConfirm={async () => {}}
         error="Erreur serveur"
-      />,
+      />
     );
-    expect(screen.getByTestId("mark-paid-error")).toHaveTextContent(
-      "Erreur serveur",
-    );
+    expect(screen.getByTestId("mark-paid-error")).toHaveTextContent("Erreur serveur");
   });
 
   it("désactive le bouton confirm quand submitting=true", () => {
     render(
-      <MarkPaidModal
-        open={true}
-        onClose={() => {}}
-        onConfirm={async () => {}}
-        submitting={true}
-      />,
+      <MarkPaidModal open={true} onClose={() => {}} onConfirm={async () => {}} submitting={true} />
     );
     expect(screen.getByTestId("mark-paid-cancel")).toBeDisabled();
   });

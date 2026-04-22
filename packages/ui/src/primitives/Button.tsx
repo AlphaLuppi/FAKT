@@ -14,18 +14,13 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
   { variant = "primary", size = "md", iconLeft, iconRight, className, children, type, ...rest },
-  ref,
+  ref
 ): ReactElement {
   return (
     <button
       ref={ref}
       type={type ?? "button"}
-      className={classNames(
-        "fakt-btn",
-        `fakt-btn--${variant}`,
-        `fakt-btn--${size}`,
-        className,
-      )}
+      className={classNames("fakt-btn", `fakt-btn--${variant}`, `fakt-btn--${size}`, className)}
       {...rest}
     >
       {iconLeft}

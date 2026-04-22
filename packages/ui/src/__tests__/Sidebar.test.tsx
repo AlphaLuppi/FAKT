@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { Sidebar } from "../layout/Sidebar.js";
 
 describe("Sidebar", () => {
@@ -11,7 +11,7 @@ describe("Sidebar", () => {
           { id: "a", label: "Devis", badge: 7 },
           { id: "b", label: "Factures" },
         ]}
-      />,
+      />
     );
     expect(screen.getByText("FAKT")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /devis/i })).toBeInTheDocument();
@@ -20,12 +20,7 @@ describe("Sidebar", () => {
 
   it("déclenche onSelect au clic", () => {
     const onSelect = vi.fn();
-    render(
-      <Sidebar
-        items={[{ id: "a", label: "Devis" }]}
-        onSelect={onSelect}
-      />,
-    );
+    render(<Sidebar items={[{ id: "a", label: "Devis" }]} onSelect={onSelect} />);
     fireEvent.click(screen.getByRole("button", { name: /devis/i }));
     expect(onSelect).toHaveBeenCalledWith("a");
   });
@@ -38,7 +33,7 @@ describe("Sidebar", () => {
           { id: "b", label: "B" },
         ]}
         currentId="b"
-      />,
+      />
     );
     const btnB = screen.getByRole("button", { name: /^B$/ });
     expect(btnB).toHaveAttribute("data-active", "true");

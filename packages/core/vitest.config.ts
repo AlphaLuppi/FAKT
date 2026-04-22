@@ -5,15 +5,8 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "lcov"],
-      include: [
-        "src/numbering/**",
-        "src/pricing/**",
-        "src/status/**",
-      ],
-      exclude: [
-        "src/models/**",
-        "src/index.ts",
-      ],
+      include: ["src/numbering/**", "src/pricing/**", "src/status/**"],
+      exclude: ["src/models/**", "src/index.ts"],
       thresholds: {
         lines: 80,
         functions: 80,

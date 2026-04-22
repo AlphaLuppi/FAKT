@@ -4,11 +4,11 @@
  * - updateStatus valide les transitions via canTransitionQuote
  */
 
-import { eq, and, like, isNull, or, asc, desc, inArray } from "drizzle-orm";
-import type { DbInstance } from "../adapter.js";
-import { quotes, quoteItems } from "../schema/index.js";
 import { canTransitionQuote } from "@fakt/core";
-import type { Quote, QuoteStatus, DocumentUnit } from "@fakt/shared";
+import type { DocumentUnit, Quote, QuoteStatus } from "@fakt/shared";
+import { and, asc, desc, eq, inArray, isNull, like, or } from "drizzle-orm";
+import type { DbInstance } from "../adapter.js";
+import { quoteItems, quotes } from "../schema/index.js";
 
 // ─── Input types ──────────────────────────────────────────────────────────────
 
@@ -153,13 +153,14 @@ export function listQuotes(db: DbInstance, input: ListQuotesInput): Quote[] {
   if (rows.length === 0) return [];
 
   const quoteIds = rows.map((r) => r.id);
-  const allItems = db
-    .select()
-    .from(quoteItems)
-    .where(inArray(quoteItems.quoteId, quoteIds))
-    .all();
+  const allItems = db.select().from(quoteItems).where(inArray(quoteItems.quoteId, quoteIds)).all();
 
-  return rows.map((row) => rowToQuote(row, allItems.filter((i) => i.quoteId === row.id)));
+  return rows.map((row) =>
+    rowToQuote(
+      row,
+      allItems.filter((i) => i.quoteId === row.id)
+    )
+  );
 }
 
 /** Récupère un devis avec ses lignes. */
@@ -266,9 +267,7 @@ export function updateQuoteStatus(db: DbInstance, id: string, newStatus: QuoteSt
 
   const current = row.status as QuoteStatus;
   if (!canTransitionQuote(current, newStatus)) {
-    throw new Error(
-      `updateQuoteStatus: invalid transition ${current} → ${newStatus}`
-    );
+    throw new Error(`updateQuoteStatus: invalid transition ${current} → ${newStatus}`);
   }
 
   const updates: Partial<typeof quotes.$inferInsert> = {
@@ -305,10 +304,11 @@ export function searchQuotes(db: DbInstance, workspaceId: string, q: string): Qu
 
   if (rows.length === 0) return [];
   const quoteIds = rows.map((r) => r.id);
-  const allItems = db
-    .select()
-    .from(quoteItems)
-    .where(inArray(quoteItems.quoteId, quoteIds))
-    .all();
-  return rows.map((row) => rowToQuote(row, allItems.filter((i) => i.quoteId === row.id)));
+  const allItems = db.select().from(quoteItems).where(inArray(quoteItems.quoteId, quoteIds)).all();
+  return rows.map((row) =>
+    rowToQuote(
+      row,
+      allItems.filter((i) => i.quoteId === row.id)
+    )
+  );
 }

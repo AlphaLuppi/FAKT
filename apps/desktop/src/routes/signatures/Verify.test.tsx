@@ -1,11 +1,11 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import type { SignatureEvent } from "@fakt/shared";
 import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
-import type { SignatureEvent } from "@fakt/shared";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
-  setSignatureApi,
   type SignatureApi,
   type VerifyReport,
+  setSignatureApi,
 } from "../../features/doc-editor/signature-api.js";
 import { VerifyRoute } from "./Verify.js";
 
@@ -27,12 +27,9 @@ function renderRoute(api: SignatureApi): void {
   render(
     <MemoryRouter initialEntries={[`/signatures/${EVENT_ID}/verify`]}>
       <Routes>
-        <Route
-          path="/signatures/:eventId/verify"
-          element={<VerifyRoute />}
-        />
+        <Route path="/signatures/:eventId/verify" element={<VerifyRoute />} />
       </Routes>
-    </MemoryRouter>,
+    </MemoryRouter>
   );
 }
 
@@ -75,9 +72,7 @@ describe("VerifyRoute", () => {
       tsaProvider: report.tsaProvider,
     };
     renderRoute(buildApi(report, [event]));
-    await waitFor(() =>
-      expect(screen.getByTestId("verify-document")).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByTestId("verify-document")).toBeInTheDocument());
     expect(screen.getByTestId("verify-signature")).toBeInTheDocument();
     expect(screen.getByTestId("verify-integrity")).toBeInTheDocument();
     expect(screen.getByTestId("verify-chain")).toBeInTheDocument();
@@ -103,9 +98,7 @@ describe("VerifyRoute", () => {
       padesLevel: "B",
     };
     renderRoute(buildApi(report, []));
-    await waitFor(() =>
-      expect(screen.getByTestId("verify-integrity")).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByTestId("verify-integrity")).toBeInTheDocument());
     expect(screen.getAllByText(/Hash divergent/).length).toBeGreaterThan(0);
   });
 
@@ -121,8 +114,6 @@ describe("VerifyRoute", () => {
       getSignedPdf: vi.fn(async () => null),
     } satisfies SignatureApi;
     renderRoute(api);
-    await waitFor(() =>
-      expect(screen.getByTestId("verify-error")).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByTestId("verify-error")).toBeInTheDocument());
   });
 });

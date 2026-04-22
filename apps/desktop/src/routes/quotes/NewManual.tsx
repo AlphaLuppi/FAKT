@@ -1,12 +1,12 @@
+import { tokens } from "@fakt/design-tokens";
+import { fr } from "@fakt/shared";
+import type { DocumentUnit, UUID } from "@fakt/shared";
+import { Button } from "@fakt/ui";
 import type { ReactElement } from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { tokens } from "@fakt/design-tokens";
-import { Button } from "@fakt/ui";
-import { fr } from "@fakt/shared";
-import type { UUID, DocumentUnit } from "@fakt/shared";
-import { QuoteForm, type QuoteFormValues } from "./QuoteForm.js";
 import { quotesApi } from "../../features/doc-editor/quotes-api.js";
+import { QuoteForm, type QuoteFormValues } from "./QuoteForm.js";
 
 function newId(): UUID {
   if (
@@ -23,17 +23,12 @@ export function NewManual(): ReactElement {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  async function handleSubmit(
-    values: QuoteFormValues,
-    issueNumber: boolean,
-  ): Promise<void> {
+  async function handleSubmit(values: QuoteFormValues, issueNumber: boolean): Promise<void> {
     setSubmitting(true);
     setSubmitError(null);
     try {
       const items = values.items.map((item) => ({
-        id: item.id.startsWith("tmp-") || item.id.startsWith("item-")
-          ? newId()
-          : item.id,
+        id: item.id.startsWith("tmp-") || item.id.startsWith("item-") ? newId() : item.id,
         position: item.position,
         description: item.description,
         quantity: item.quantity,
@@ -60,9 +55,7 @@ export function NewManual(): ReactElement {
       });
       void navigate(`/quotes/${created.id}`);
     } catch (err) {
-      setSubmitError(
-        err instanceof Error ? err.message : fr.quotes.errors.createFailed,
-      );
+      setSubmitError(err instanceof Error ? err.message : fr.quotes.errors.createFailed);
     } finally {
       setSubmitting(false);
     }

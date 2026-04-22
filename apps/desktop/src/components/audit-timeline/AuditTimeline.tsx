@@ -1,10 +1,10 @@
+import { tokens } from "@fakt/design-tokens";
+import { formatFrDateLong, fr } from "@fakt/shared";
+import type { SignatureEvent } from "@fakt/shared";
+import { Button, Chip } from "@fakt/ui";
 import type { ReactElement, ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { tokens } from "@fakt/design-tokens";
-import { Button, Chip } from "@fakt/ui";
-import { fr, formatFrDateLong } from "@fakt/shared";
-import type { SignatureEvent } from "@fakt/shared";
 import { signatureApi } from "../../features/doc-editor/signature-api.js";
 import { formatRelative } from "./relative.js";
 
@@ -140,9 +140,7 @@ export function AuditTimeline({
     const prev = idx > 0 ? arr[idx - 1] : null;
     const expectedPrev = prev ? prev.docHashAfter : null;
     const broken =
-      prev !== null && prev !== undefined && ev.previousEventHash !== null
-        ? false
-        : false;
+      prev !== null && prev !== undefined && ev.previousEventHash !== null ? false : false;
     // Broken chain detection: previousEventHash must chain to prev.
     // (Full verification is done on /verify.)
     void expectedPrev;
@@ -161,7 +159,7 @@ export function AuditTimeline({
   });
 
   const allEntries: BaseAuditEntry[] = [...extraEntries, ...signatureEntries].sort(
-    (a, b) => a.timestamp - b.timestamp,
+    (a, b) => a.timestamp - b.timestamp
   );
 
   if (events === null && error === null) {
@@ -233,9 +231,7 @@ export function AuditTimeline({
                 height: 14,
                 border: `${tokens.stroke.base} solid ${tokens.color.ink}`,
                 background:
-                  entry.kind === "signed"
-                    ? tokens.color.accentSoft
-                    : tokens.color.surface,
+                  entry.kind === "signed" ? tokens.color.accentSoft : tokens.color.surface,
               }}
             />
             <div
@@ -272,34 +268,22 @@ export function AuditTimeline({
                   {formatRelative(entry.timestamp)}
                 </Chip>
                 {entry.brokenChain === true && (
-                  <Chip tone="danger">
-                    {fr.audit.fields.chainBroken}
-                  </Chip>
+                  <Chip tone="danger">{fr.audit.fields.chainBroken}</Chip>
                 )}
               </div>
               <LabelPair
                 label={fr.audit.timestampAbsolute}
                 value={`${formatFrDateLong(entry.timestamp)} — ${new Date(
-                  entry.timestamp,
+                  entry.timestamp
                 ).toLocaleTimeString("fr-FR", {
                   hour: "2-digit",
                   minute: "2-digit",
                 })}`}
               />
-              {entry.signer && (
-                <LabelPair
-                  label={fr.audit.fields.signer}
-                  value={entry.signer}
-                />
-              )}
-              {entry.ip && (
-                <LabelPair label={fr.audit.fields.ip} value={entry.ip} />
-              )}
+              {entry.signer && <LabelPair label={fr.audit.fields.signer} value={entry.signer} />}
+              {entry.ip && <LabelPair label={fr.audit.fields.ip} value={entry.ip} />}
               {entry.tsaProvider && (
-                <LabelPair
-                  label={fr.audit.fields.tsaProvider}
-                  value={entry.tsaProvider}
-                />
+                <LabelPair label={fr.audit.fields.tsaProvider} value={entry.tsaProvider} />
               )}
               {entry.hashBefore !== undefined && entry.hashBefore !== null && (
                 <LabelPair
@@ -317,15 +301,14 @@ export function AuditTimeline({
                   fullTitle={entry.hashAfter}
                 />
               )}
-              {entry.previousEventHash !== undefined &&
-                entry.previousEventHash !== null && (
-                  <LabelPair
-                    label={fr.audit.fields.previousEventHash}
-                    value={truncateHash(entry.previousEventHash)}
-                    mono
-                    fullTitle={entry.previousEventHash}
-                  />
-                )}
+              {entry.previousEventHash !== undefined && entry.previousEventHash !== null && (
+                <LabelPair
+                  label={fr.audit.fields.previousEventHash}
+                  value={truncateHash(entry.previousEventHash)}
+                  mono
+                  fullTitle={entry.previousEventHash}
+                />
+              )}
               {entry.rotatedCertWarning === true && (
                 <div
                   role="note"
@@ -348,9 +331,7 @@ export function AuditTimeline({
                     size="sm"
                     data-testid="audit-verify"
                     onClick={(): void => {
-                      void navigate(
-                        `/signatures/${entry.signatureEventId}/verify`,
-                      );
+                      void navigate(`/signatures/${entry.signatureEventId}/verify`);
                     }}
                   >
                     {fr.audit.verifyCta}

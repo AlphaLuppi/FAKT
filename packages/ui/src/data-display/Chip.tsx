@@ -1,5 +1,5 @@
-import type { HTMLAttributes, ReactElement, ReactNode } from "react";
 import { tokens } from "@fakt/design-tokens";
+import type { HTMLAttributes, ReactElement, ReactNode } from "react";
 import { classNames } from "../utils/classNames.js";
 
 export interface ChipProps extends HTMLAttributes<HTMLSpanElement> {
@@ -16,7 +16,13 @@ const BG_FOR_TONE: Record<NonNullable<ChipProps["tone"]>, string> = {
   accent: tokens.color.accentSoft,
 };
 
-export function Chip({ tone = "neutral", className, style, children, ...rest }: ChipProps): ReactElement {
+export function Chip({
+  tone = "neutral",
+  className,
+  style,
+  children,
+  ...rest
+}: ChipProps): ReactElement {
   return (
     <span
       className={classNames("fakt-chip", className)}

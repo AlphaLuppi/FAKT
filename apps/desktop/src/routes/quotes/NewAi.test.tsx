@@ -1,8 +1,15 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  type AiProvider,
+  type AiStreamEvent,
+  type ChatMessage,
+  type CliInfo,
+  type ExtractedQuote,
+  setAi,
+} from "@fakt/ai";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { NewAi } from "./NewAi.js";
-import { setAi, type AiProvider, type AiStreamEvent, type ExtractedQuote, type CliInfo, type ChatMessage } from "@fakt/ai";
 import { installMockApis } from "./__test-helpers__/mockApis.js";
 
 function createProvider(opts: {
@@ -14,10 +21,7 @@ function createProvider(opts: {
     async healthCheck(): Promise<CliInfo> {
       return { installed: opts.installed };
     },
-    async *extractQuoteFromBrief(
-      _brief,
-      options,
-    ): AsyncIterable<AiStreamEvent<ExtractedQuote>> {
+    async *extractQuoteFromBrief(_brief, options): AsyncIterable<AiStreamEvent<ExtractedQuote>> {
       if (!opts.extractResult) {
         yield { type: "error", message: "no fixture" };
         return;
@@ -71,7 +75,7 @@ describe("NewAi", () => {
     render(
       <MemoryRouter>
         <NewAi />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
   }
 
@@ -84,9 +88,7 @@ describe("NewAi", () => {
   });
 
   it("lance l'extraction et affiche les lignes extraites", async () => {
-    setAi(
-      createProvider({ installed: true, extractResult: FIXTURE_EXTRACTED }),
-    );
+    setAi(createProvider({ installed: true, extractResult: FIXTURE_EXTRACTED }));
     renderRoute();
     await waitFor(() => {
       expect(screen.getByTestId("ai-brief")).toBeInTheDocument();

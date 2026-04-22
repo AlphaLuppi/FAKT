@@ -1,9 +1,15 @@
-import type { ReactNode, ReactElement } from "react";
-import { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router";
 import { fr } from "@fakt/shared";
-import { CommandPaletteProvider, useCommandPalette } from "../../components/command-palette/CommandPaletteProvider.js";
-import { ComposerSidebarProvider, useComposerSidebar } from "../../components/composer-sidebar/ComposerContext.js";
+import type { ReactElement, ReactNode } from "react";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router";
+import {
+  CommandPaletteProvider,
+  useCommandPalette,
+} from "../../components/command-palette/CommandPaletteProvider.js";
+import {
+  ComposerSidebarProvider,
+  useComposerSidebar,
+} from "../../components/composer-sidebar/ComposerContext.js";
 import { ComposerSidebar } from "../../components/composer-sidebar/ComposerSidebar.js";
 import { ShortcutsOverlay } from "../../components/shortcuts-overlay/ShortcutsOverlay.js";
 import { buildShortcuts, matchesShortcut } from "../../shortcuts.js";
@@ -243,7 +249,7 @@ function Topbar(): ReactElement {
   const { toggle: toggleComposer, isOpen: composerOpen } = useComposerSidebar();
 
   const currentNav = NAV_ITEMS.find((item) =>
-    item.path === "/" ? location.pathname === "/" : location.pathname.startsWith(item.path),
+    item.path === "/" ? location.pathname === "/" : location.pathname.startsWith(item.path)
   );
 
   const title = currentNav?.label ?? fr.nav.settings;

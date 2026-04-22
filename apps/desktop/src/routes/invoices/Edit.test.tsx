@@ -1,12 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter, Routes, Route } from "react-router";
-import { InvoiceEditRoute } from "./Edit.js";
-import {
-  installInvoiceMockApis,
-  FIXTURE_CLIENT,
-} from "./__test-helpers__/mockInvoiceApis.js";
 import type { Invoice } from "@fakt/shared";
+import { render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter, Route, Routes } from "react-router";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { InvoiceEditRoute } from "./Edit.js";
+import { FIXTURE_CLIENT, installInvoiceMockApis } from "./__test-helpers__/mockInvoiceApis.js";
 
 const now = Date.now();
 
@@ -45,7 +42,7 @@ function renderEdit(id: string): void {
         <Route path="/invoices/:id/edit" element={<InvoiceEditRoute />} />
         <Route path="/invoices/:id" element={<div data-testid="detail">detail</div>} />
       </Routes>
-    </MemoryRouter>,
+    </MemoryRouter>
   );
 }
 
@@ -63,9 +60,7 @@ describe("InvoiceEditRoute", () => {
     await waitFor(() => {
       // InvoiceForm avec editMode : pas de "Créer et émettre" mais Save draft present
       expect(screen.getByTestId("invoice-save-draft")).toBeInTheDocument();
-      expect(
-        screen.queryByTestId("invoice-create-and-issue"),
-      ).not.toBeInTheDocument();
+      expect(screen.queryByTestId("invoice-create-and-issue")).not.toBeInTheDocument();
     });
   });
 

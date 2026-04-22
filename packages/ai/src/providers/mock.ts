@@ -76,16 +76,12 @@ export function registerFixtures(map: FixtureMap): void {
  * Sends 3 delta events with a partial snapshot, then a final done event.
  * Simulates real streaming without any timing (synchronous in tests).
  */
-async function* simulateStream<T extends object>(
-  value: T
-): AsyncIterable<AiStreamEvent<T>> {
+async function* simulateStream<T extends object>(value: T): AsyncIterable<AiStreamEvent<T>> {
   // Emit partial data in two deltas, then the full result.
   const keys = Object.keys(value) as Array<keyof T>;
   const half = Math.ceil(keys.length / 2);
 
-  const partial1 = Object.fromEntries(
-    keys.slice(0, half).map((k) => [k, value[k]])
-  ) as Partial<T>;
+  const partial1 = Object.fromEntries(keys.slice(0, half).map((k) => [k, value[k]])) as Partial<T>;
   yield { type: "delta", data: partial1 };
 
   yield { type: "delta", data: value };
@@ -116,10 +112,7 @@ export class MockAiProvider implements AiProvider {
     }
   }
 
-  async *chat(
-    messages: ChatMessage[],
-    _opts?: ChatOpts
-  ): AsyncIterable<AiStreamEvent<string>> {
+  async *chat(messages: ChatMessage[], _opts?: ChatOpts): AsyncIterable<AiStreamEvent<string>> {
     const last = messages[messages.length - 1]?.content ?? "";
     const reply = `[Mock] Réponse à : "${last.slice(0, 60)}…"\n\nBien sûr, voici une relance professionnelle pour votre facture. Cordialement.`;
     yield { type: "delta", data: reply.slice(0, Math.ceil(reply.length / 2)) };

@@ -1,12 +1,12 @@
+import { tokens } from "@fakt/design-tokens";
+import { fr } from "@fakt/shared";
+import { Button } from "@fakt/ui";
 import type { ReactElement } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
-import { tokens } from "@fakt/design-tokens";
-import { Button } from "@fakt/ui";
-import { fr } from "@fakt/shared";
-import { QuoteForm, quoteToFormValues, type QuoteFormValues } from "./QuoteForm.js";
-import { useQuote } from "./hooks.js";
 import { quotesApi } from "../../features/doc-editor/quotes-api.js";
+import { QuoteForm, type QuoteFormValues, quoteToFormValues } from "./QuoteForm.js";
+import { useQuote } from "./hooks.js";
 
 export function QuoteEditRoute(): ReactElement {
   const params = useParams<{ id: string }>();
@@ -18,7 +18,7 @@ export function QuoteEditRoute(): ReactElement {
 
   const initial = useMemo<Partial<QuoteFormValues> | undefined>(
     () => (quote ? quoteToFormValues(quote) : undefined),
-    [quote],
+    [quote]
   );
 
   // Guard : redirige si non-draft.
@@ -28,10 +28,7 @@ export function QuoteEditRoute(): ReactElement {
     }
   }, [quote, navigate]);
 
-  async function handleSubmit(
-    values: QuoteFormValues,
-    _issueNumber: boolean,
-  ): Promise<void> {
+  async function handleSubmit(values: QuoteFormValues, _issueNumber: boolean): Promise<void> {
     if (!id) return;
     if (!values.clientId) {
       setSubmitError(fr.quotes.errors.missingClient);
@@ -59,9 +56,7 @@ export function QuoteEditRoute(): ReactElement {
       });
       void navigate(`/quotes/${id}`);
     } catch (err) {
-      setSubmitError(
-        err instanceof Error ? err.message : fr.quotes.errors.saveFailed,
-      );
+      setSubmitError(err instanceof Error ? err.message : fr.quotes.errors.saveFailed);
     } finally {
       setSubmitting(false);
     }

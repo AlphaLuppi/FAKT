@@ -4,7 +4,7 @@
  * Cette table mémorise path + niveau PAdES + TSA + lien vers event signature.
  */
 
-import { eq, and } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import type { DbInstance } from "../adapter.js";
 import { signedDocuments } from "../schema/index.js";
 

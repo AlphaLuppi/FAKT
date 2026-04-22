@@ -1,10 +1,10 @@
+import { tokens } from "@fakt/design-tokens";
+import { fr } from "@fakt/shared";
+import type { SignatureEvent } from "@fakt/shared";
+import { Button, Checkbox, Modal, Tabs, toast } from "@fakt/ui";
 import type { ReactElement } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
-import { tokens } from "@fakt/design-tokens";
-import { Button, Checkbox, Modal, Tabs, toast } from "@fakt/ui";
-import { fr } from "@fakt/shared";
-import type { SignatureEvent } from "@fakt/shared";
 import { signatureApi } from "../../features/doc-editor/signature-api.js";
 import { SignatureCanvas, type SignatureCanvasHandle } from "./SignatureCanvas.js";
 import { TypeSignature, type TypeSignatureHandle } from "./TypeSignature.js";
@@ -65,8 +65,7 @@ export function SignatureModal({
       : fr.signature.modal.titleInvoice(label);
   }, [docNumber, clientName, docType]);
 
-  const submitting =
-    submitState === "preparing" || submitState === "signing";
+  const submitting = submitState === "preparing" || submitState === "signing";
 
   async function getSignaturePng(): Promise<Uint8Array> {
     if (mode === "draw") {
@@ -241,15 +240,8 @@ export function SignatureModal({
             : fr.signature.modal.typeInstruction}
         </div>
 
-        <div
-          data-testid="signature-pane"
-          style={{ display: "flex", justifyContent: "center" }}
-        >
-          {mode === "draw" ? (
-            <SignatureCanvas ref={drawRef} />
-          ) : (
-            <TypeSignature ref={typeRef} />
-          )}
+        <div data-testid="signature-pane" style={{ display: "flex", justifyContent: "center" }}>
+          {mode === "draw" ? <SignatureCanvas ref={drawRef} /> : <TypeSignature ref={typeRef} />}
         </div>
 
         <Checkbox

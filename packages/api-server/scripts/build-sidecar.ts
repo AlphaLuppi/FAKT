@@ -22,7 +22,7 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, statSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { arch as processArch, platform } from "node:process";
+import { platform, arch as processArch } from "node:process";
 
 type Triple = {
   bunTarget: string;
@@ -55,7 +55,7 @@ function parseArgs(): { targets: Triple[] } {
     const hit = ALL_TARGETS.find((t) => t.bunTarget === wanted);
     if (!hit) {
       throw new Error(
-        `target inconnu: ${wanted}. Valides: ${ALL_TARGETS.map((t) => t.bunTarget).join(", ")}`,
+        `target inconnu: ${wanted}. Valides: ${ALL_TARGETS.map((t) => t.bunTarget).join(", ")}`
       );
     }
     return { targets: [hit] };
@@ -89,17 +89,13 @@ function buildOne(target: Triple, entry: string, outDir: string): void {
   console.log(`\n[build-sidecar] ${target.bunTarget} → ${outfile}`);
   const res = spawnSync(cmd, args, { stdio: "inherit" });
   if (res.status !== 0) {
-    throw new Error(
-      `bun build a échoué pour ${target.bunTarget} (exit=${res.status ?? "signal"})`,
-    );
+    throw new Error(`bun build a échoué pour ${target.bunTarget} (exit=${res.status ?? "signal"})`);
   }
   const size = statSync(outfile).size;
   console.log(`[build-sidecar] OK ${target.bunTarget} — taille: ${formatSize(size)}`);
   const MAX_BYTES = 100 * 1024 * 1024;
   if (size > MAX_BYTES) {
-    console.warn(
-      `[build-sidecar] WARNING taille > 100 MB (${formatSize(size)}) — voir NFR-003`,
-    );
+    console.warn(`[build-sidecar] WARNING taille > 100 MB (${formatSize(size)}) — voir NFR-003`);
   }
 }
 
@@ -113,8 +109,7 @@ function main(): void {
   const entry = resolve(packageRoot, "src", "index.ts");
   if (!existsSync(entry)) {
     console.error(
-      `[build-sidecar] entry introuvable: ${entry}\n` +
-        "  → Track α doit avoir livré packages/api-server/src/index.ts avant.",
+      `[build-sidecar] entry introuvable: ${entry}\n  → Track α doit avoir livré packages/api-server/src/index.ts avant.`
     );
     process.exit(2);
   }
@@ -123,10 +118,7 @@ function main(): void {
 
   console.log("[build-sidecar] entry:", entry);
   console.log("[build-sidecar] outDir:", outDir);
-  console.log(
-    "[build-sidecar] targets:",
-    targets.map((t) => t.bunTarget).join(", "),
-  );
+  console.log("[build-sidecar] targets:", targets.map((t) => t.bunTarget).join(", "));
 
   for (const target of targets) {
     buildOne(target, entry, outDir);

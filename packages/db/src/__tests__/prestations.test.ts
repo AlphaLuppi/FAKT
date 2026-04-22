@@ -1,14 +1,14 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { createTestDb, seedWorkspace, WORKSPACE_ID, SERVICE_ID_1 } from "./helpers.js";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
-  listPrestations,
-  getPrestation,
   createPrestation,
-  updatePrestation,
-  softDeletePrestation,
+  getPrestation,
+  listPrestations,
   restorePrestation,
   searchPrestations,
+  softDeletePrestation,
+  updatePrestation,
 } from "../queries/prestations.js";
+import { SERVICE_ID_1, WORKSPACE_ID, createTestDb, seedWorkspace } from "./helpers.js";
 import type { TestDb } from "./helpers.js";
 
 let db: TestDb;
@@ -80,7 +80,9 @@ describe("listPrestations", () => {
 
   it("inclut les archivées si demandé", () => {
     softDeletePrestation(db, SERVICE_ID_1);
-    expect(listPrestations(db, { workspaceId: WORKSPACE_ID, includeSoftDeleted: true })).toHaveLength(2);
+    expect(
+      listPrestations(db, { workspaceId: WORKSPACE_ID, includeSoftDeleted: true })
+    ).toHaveLength(2);
   });
 });
 
@@ -88,7 +90,10 @@ describe("updatePrestation", () => {
   beforeEach(() => makeService());
 
   it("met à jour les champs fournis", () => {
-    const updated = updatePrestation(db, SERVICE_ID_1, { unitPriceCents: 75000, tags: ["dev", "conseil"] });
+    const updated = updatePrestation(db, SERVICE_ID_1, {
+      unitPriceCents: 75000,
+      tags: ["dev", "conseil"],
+    });
     expect(updated.unitPriceCents).toBe(75000);
     expect(updated.tags).toEqual(["dev", "conseil"]);
   });
@@ -135,8 +140,20 @@ describe("restorePrestation", () => {
 
 describe("searchPrestations", () => {
   beforeEach(() => {
-    createPrestation(db, { id: SERVICE_ID_1, workspaceId: WORKSPACE_ID, name: "Audit UX", unit: "forfait", unitPriceCents: 90000 });
-    createPrestation(db, { id: SVC_2, workspaceId: WORKSPACE_ID, name: "Formation React", unit: "heure", unitPriceCents: 15000 });
+    createPrestation(db, {
+      id: SERVICE_ID_1,
+      workspaceId: WORKSPACE_ID,
+      name: "Audit UX",
+      unit: "forfait",
+      unitPriceCents: 90000,
+    });
+    createPrestation(db, {
+      id: SVC_2,
+      workspaceId: WORKSPACE_ID,
+      name: "Formation React",
+      unit: "heure",
+      unitPriceCents: 15000,
+    });
   });
 
   it("filtre par nom", () => {

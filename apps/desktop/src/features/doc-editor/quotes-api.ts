@@ -6,9 +6,9 @@
  * double.
  */
 
-import type { Quote, QuoteStatus, DocumentUnit, UUID } from "@fakt/shared";
-import { api as httpApi } from "../../api/index.js";
+import type { DocumentUnit, Quote, QuoteStatus, UUID } from "@fakt/shared";
 import { ApiError } from "../../api/client.js";
+import { api as httpApi } from "../../api/index.js";
 
 export interface QuoteItemInput {
   id: UUID;

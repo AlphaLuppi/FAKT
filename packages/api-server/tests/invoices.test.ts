@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
+import { CLIENT_ID_1, seedClient } from "@fakt/db/__tests__/helpers";
+import { describe, expect, it } from "vitest";
 import { createTestApp } from "./helpers.js";
-import { seedClient, CLIENT_ID_1 } from "@fakt/db/__tests__/helpers";
 
 const INVOICE_ID_1 = "11110000-0000-4000-8000-000000000001";
 const INVOICE_ID_2 = "11110000-0000-4000-8000-000000000002";
@@ -161,10 +161,9 @@ describe("GET /api/invoices/:id", () => {
 
   it("404 si inconnu", async () => {
     const { app, authHeaders } = setupWithClient();
-    const res = await app.request(
-      "/api/invoices/99999999-0000-4000-8000-999999999999",
-      { headers: authHeaders() }
-    );
+    const res = await app.request("/api/invoices/99999999-0000-4000-8000-999999999999", {
+      headers: authHeaders(),
+    });
     expect(res.status).toBe(404);
   });
 
@@ -195,14 +194,11 @@ describe("PATCH /api/invoices/:id", () => {
 
   it("404 si inconnu", async () => {
     const { app, authHeaders } = setupWithClient();
-    const res = await app.request(
-      "/api/invoices/99999999-0000-4000-8000-999999999999",
-      {
-        method: "PATCH",
-        headers: authHeaders(),
-        body: JSON.stringify({ title: "X" }),
-      }
-    );
+    const res = await app.request("/api/invoices/99999999-0000-4000-8000-999999999999", {
+      method: "PATCH",
+      headers: authHeaders(),
+      body: JSON.stringify({ title: "X" }),
+    });
     expect(res.status).toBe(404);
   });
 });

@@ -1,6 +1,6 @@
-import { defineConfig } from "vitest/config";
-import { resolve, dirname } from "node:path";
+import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { defineConfig } from "vitest/config";
 
 const pkg = dirname(fileURLToPath(import.meta.url));
 
@@ -22,7 +22,10 @@ export default defineConfig({
   },
   resolve: {
     alias: [
-      { find: "@fakt/db/__tests__/helpers", replacement: resolve(pkg, "../db/src/__tests__/helpers.ts") },
+      {
+        find: "@fakt/db/__tests__/helpers",
+        replacement: resolve(pkg, "../db/src/__tests__/helpers.ts"),
+      },
       { find: "@fakt/db/queries", replacement: resolve(pkg, "../db/src/queries/index.ts") },
       { find: "@fakt/db/schema", replacement: resolve(pkg, "../db/src/schema/index.ts") },
       { find: "@fakt/db/adapter", replacement: resolve(pkg, "../db/src/adapter.ts") },

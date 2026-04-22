@@ -1,13 +1,13 @@
-import type { ReactElement } from "react";
-import { useMemo, useState, useCallback } from "react";
-import { useNavigate, useSearchParams } from "react-router";
 import { tokens } from "@fakt/design-tokens";
-import { Button, Input, StatusPill, Table } from "@fakt/ui";
-import type { TableColumn, StatusKind } from "@fakt/ui";
-import { fr, formatEur, formatFrDate, today } from "@fakt/shared";
+import { formatEur, formatFrDate, fr, today } from "@fakt/shared";
 import type { Invoice, InvoiceStatus, UUID } from "@fakt/shared";
-import { useInvoices } from "./hooks.js";
+import { Button, Input, StatusPill, Table } from "@fakt/ui";
+import type { StatusKind, TableColumn } from "@fakt/ui";
+import type { ReactElement } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router";
 import { useClientsList } from "../quotes/hooks.js";
+import { useInvoices } from "./hooks.js";
 
 type StatusFilter = InvoiceStatus | "overdue" | "all";
 
@@ -48,7 +48,7 @@ export function InvoicesListRoute(): ReactElement {
         return next;
       });
     },
-    [setSearchParams],
+    [setSearchParams]
   );
 
   const clientMap = useMemo(() => {
@@ -98,7 +98,14 @@ export function InvoicesListRoute(): ReactElement {
         id: "number",
         header: fr.invoices.labels.number,
         accessor: (inv) => (
-          <span style={{ fontFamily: tokens.font.mono, fontSize: tokens.fontSize.xs, fontVariantNumeric: "tabular-nums", color: inv.number ? tokens.color.ink : tokens.color.muted }}>
+          <span
+            style={{
+              fontFamily: tokens.font.mono,
+              fontSize: tokens.fontSize.xs,
+              fontVariantNumeric: "tabular-nums",
+              color: inv.number ? tokens.color.ink : tokens.color.muted,
+            }}
+          >
             {inv.number ?? fr.invoices.labels.numberPending}
           </span>
         ),
@@ -118,7 +125,15 @@ export function InvoicesListRoute(): ReactElement {
         id: "title",
         header: fr.invoices.labels.title,
         accessor: (inv) => (
-          <span style={{ fontFamily: tokens.font.ui, fontSize: tokens.fontSize.sm, color: tokens.color.ink }}>{inv.title}</span>
+          <span
+            style={{
+              fontFamily: tokens.font.ui,
+              fontSize: tokens.fontSize.sm,
+              color: tokens.color.ink,
+            }}
+          >
+            {inv.title}
+          </span>
         ),
         sortable: true,
         sortValue: (inv) => inv.title,
@@ -127,7 +142,13 @@ export function InvoicesListRoute(): ReactElement {
         id: "total",
         header: fr.invoices.labels.totalTtc,
         accessor: (inv) => (
-          <span style={{ fontFamily: tokens.font.mono, fontVariantNumeric: "tabular-nums", fontWeight: Number(tokens.fontWeight.bold) }}>
+          <span
+            style={{
+              fontFamily: tokens.font.mono,
+              fontVariantNumeric: "tabular-nums",
+              fontWeight: Number(tokens.fontWeight.bold),
+            }}
+          >
             {formatEur(inv.totalHtCents)}
           </span>
         ),
@@ -152,7 +173,13 @@ export function InvoicesListRoute(): ReactElement {
         id: "issuedAt",
         header: fr.invoices.labels.issuedAt,
         accessor: (inv) => (
-          <span style={{ fontFamily: tokens.font.mono, fontSize: tokens.fontSize.xs, color: tokens.color.muted }}>
+          <span
+            style={{
+              fontFamily: tokens.font.mono,
+              fontSize: tokens.fontSize.xs,
+              color: tokens.color.muted,
+            }}
+          >
             {inv.issuedAt ? formatFrDate(inv.issuedAt) : "—"}
           </span>
         ),
@@ -161,7 +188,7 @@ export function InvoicesListRoute(): ReactElement {
         width: 120,
       },
     ],
-    [clientMap, now],
+    [clientMap, now]
   );
 
   const hasActiveFilters =
@@ -173,8 +200,22 @@ export function InvoicesListRoute(): ReactElement {
     overdueParam;
 
   return (
-    <div style={{ padding: tokens.spacing[6], display: "flex", flexDirection: "column", gap: tokens.spacing[5] }}>
-      <header style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: tokens.spacing[4] }}>
+    <div
+      style={{
+        padding: tokens.spacing[6],
+        display: "flex",
+        flexDirection: "column",
+        gap: tokens.spacing[5],
+      }}
+    >
+      <header
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          gap: tokens.spacing[4],
+        }}
+      >
         <div>
           <h1
             style={{
@@ -188,7 +229,13 @@ export function InvoicesListRoute(): ReactElement {
             {fr.invoices.title}
           </h1>
           <p
-            style={{ fontFamily: tokens.font.ui, fontSize: tokens.fontSize.sm, color: tokens.color.muted, marginTop: tokens.spacing[1], marginBottom: 0 }}
+            style={{
+              fontFamily: tokens.font.ui,
+              fontSize: tokens.fontSize.sm,
+              color: tokens.color.muted,
+              marginTop: tokens.spacing[1],
+              marginBottom: 0,
+            }}
             data-testid="invoices-count"
           >
             {invoices.length} {invoices.length > 1 ? "factures" : "facture"} ·{" "}
@@ -197,7 +244,11 @@ export function InvoicesListRoute(): ReactElement {
         </div>
 
         <div style={{ position: "relative" }}>
-          <Button variant="primary" onClick={() => setMenuOpen((v) => !v)} data-testid="new-invoice-menu">
+          <Button
+            variant="primary"
+            onClick={() => setMenuOpen((v) => !v)}
+            data-testid="new-invoice-menu"
+          >
             {fr.invoices.new}
           </Button>
           {menuOpen && (
@@ -219,7 +270,10 @@ export function InvoicesListRoute(): ReactElement {
               <button
                 type="button"
                 role="menuitem"
-                onClick={() => { setMenuOpen(false); void navigate("/invoices/new?from=quote"); }}
+                onClick={() => {
+                  setMenuOpen(false);
+                  void navigate("/invoices/new?from=quote");
+                }}
                 data-testid="new-invoice-from-quote"
                 className="fakt-btn fakt-btn--ghost"
                 style={{ justifyContent: "flex-start", height: 40 }}
@@ -229,7 +283,10 @@ export function InvoicesListRoute(): ReactElement {
               <button
                 type="button"
                 role="menuitem"
-                onClick={() => { setMenuOpen(false); void navigate("/invoices/new?from=scratch"); }}
+                onClick={() => {
+                  setMenuOpen(false);
+                  void navigate("/invoices/new?from=scratch");
+                }}
                 data-testid="new-invoice-from-scratch"
                 className="fakt-btn fakt-btn--ghost"
                 style={{ justifyContent: "flex-start", height: 40 }}
@@ -242,7 +299,10 @@ export function InvoicesListRoute(): ReactElement {
       </header>
 
       {/* Filters */}
-      <section aria-label="filtres" style={{ display: "flex", flexDirection: "column", gap: tokens.spacing[3] }}>
+      <section
+        aria-label="filtres"
+        style={{ display: "flex", flexDirection: "column", gap: tokens.spacing[3] }}
+      >
         {/* Status chips */}
         <div style={{ display: "flex", flexWrap: "wrap", gap: tokens.spacing[2] }}>
           {STATUS_CHIP_FILTERS.map((f) => {
@@ -268,7 +328,11 @@ export function InvoicesListRoute(): ReactElement {
                     setSearchParams((prev) => {
                       const next = new URLSearchParams(prev);
                       next.delete("overdue");
-                      if (!f.id || f.id === "all") { next.delete("status"); } else { next.set("status", f.id); }
+                      if (!f.id || f.id === "all") {
+                        next.delete("status");
+                      } else {
+                        next.set("status", f.id);
+                      }
                       return next;
                     });
                   }
@@ -296,7 +360,14 @@ export function InvoicesListRoute(): ReactElement {
         </div>
 
         {/* Second row */}
-        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: tokens.spacing[3] }}>
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            gap: tokens.spacing[3],
+          }}
+        >
           <div style={{ flex: "1 1 200px", minWidth: 180 }}>
             <Input
               type="search"
@@ -317,13 +388,24 @@ export function InvoicesListRoute(): ReactElement {
             >
               <option value="all">{fr.filters.clientPlaceholder}</option>
               {clients.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
               ))}
             </select>
           )}
 
           <div style={{ display: "flex", alignItems: "center", gap: tokens.spacing[2] }}>
-            <label style={{ fontFamily: tokens.font.ui, fontSize: tokens.fontSize.xs, fontWeight: Number(tokens.fontWeight.bold), textTransform: "uppercase", letterSpacing: "0.05em", color: tokens.color.muted }}>
+            <label
+              style={{
+                fontFamily: tokens.font.ui,
+                fontSize: tokens.fontSize.xs,
+                fontWeight: Number(tokens.fontWeight.bold),
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                color: tokens.color.muted,
+              }}
+            >
               {fr.filters.dateFromLabel}
             </label>
             <input
@@ -334,7 +416,16 @@ export function InvoicesListRoute(): ReactElement {
               className="fakt-input"
               style={{ width: 140 }}
             />
-            <label style={{ fontFamily: tokens.font.ui, fontSize: tokens.fontSize.xs, fontWeight: Number(tokens.fontWeight.bold), textTransform: "uppercase", letterSpacing: "0.05em", color: tokens.color.muted }}>
+            <label
+              style={{
+                fontFamily: tokens.font.ui,
+                fontSize: tokens.fontSize.xs,
+                fontWeight: Number(tokens.fontWeight.bold),
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                color: tokens.color.muted,
+              }}
+            >
               {fr.filters.dateToLabel}
             </label>
             <input
@@ -372,7 +463,13 @@ export function InvoicesListRoute(): ReactElement {
       </section>
 
       {loading ? (
-        <div style={{ fontFamily: tokens.font.ui, color: tokens.color.muted, padding: tokens.spacing[5] }}>
+        <div
+          style={{
+            fontFamily: tokens.font.ui,
+            color: tokens.color.muted,
+            padding: tokens.spacing[5],
+          }}
+        >
           Chargement…
         </div>
       ) : invoices.length === 0 ? (
@@ -391,7 +488,13 @@ export function InvoicesListRoute(): ReactElement {
           {fr.invoices.empty}
         </div>
       ) : (
-        <div style={{ border: `${tokens.stroke.bold} solid ${tokens.color.ink}`, background: tokens.color.surface, boxShadow: tokens.shadow.sm }}>
+        <div
+          style={{
+            border: `${tokens.stroke.bold} solid ${tokens.color.ink}`,
+            background: tokens.color.surface,
+            boxShadow: tokens.shadow.sm,
+          }}
+        >
           <Table
             rows={filtered}
             columns={columns}

@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { createTestApp } from "./helpers.js";
 
 const CLIENT_ID = "11111111-1111-4111-8111-111111111111";
@@ -141,10 +141,9 @@ describe("GET /api/clients/:id", () => {
 
   it("404 si inexistant", async () => {
     const { app, authHeaders } = createTestApp();
-    const res = await app.request(
-      "/api/clients/99999999-9999-4999-8999-999999999999",
-      { headers: authHeaders() }
-    );
+    const res = await app.request("/api/clients/99999999-9999-4999-8999-999999999999", {
+      headers: authHeaders(),
+    });
     expect(res.status).toBe(404);
   });
 
@@ -175,14 +174,11 @@ describe("PATCH /api/clients/:id", () => {
 
   it("404 si client absent", async () => {
     const { app, authHeaders } = createTestApp();
-    const res = await app.request(
-      "/api/clients/99999999-9999-4999-8999-999999999999",
-      {
-        method: "PATCH",
-        headers: authHeaders(),
-        body: JSON.stringify({ name: "X" }),
-      }
-    );
+    const res = await app.request("/api/clients/99999999-9999-4999-8999-999999999999", {
+      method: "PATCH",
+      headers: authHeaders(),
+      body: JSON.stringify({ name: "X" }),
+    });
     expect(res.status).toBe(404);
   });
 });

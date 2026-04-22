@@ -4,8 +4,8 @@
  * accidentels qui casseraient `include_str!` côté Rust.
  */
 import { readFileSync, statSync } from "node:fs";
-import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 

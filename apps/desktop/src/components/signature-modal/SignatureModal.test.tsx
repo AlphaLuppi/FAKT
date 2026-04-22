@@ -1,11 +1,11 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import type { SignatureEvent } from "@fakt/shared";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
-import type { SignatureEvent } from "@fakt/shared";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
-  setSignatureApi,
-  type SignatureApi,
   type SignDocumentOutput,
+  type SignatureApi,
+  setSignatureApi,
 } from "../../features/doc-editor/signature-api.js";
 import { SignatureModal } from "./SignatureModal.js";
 
@@ -63,7 +63,7 @@ function buildApi(override?: Partial<SignatureApi>): SignatureApi {
 
 beforeAll(() => {
   // jsdom : toBlob + toDataURL
-  HTMLCanvasElement.prototype.toBlob = function (cb: BlobCallback): void {
+  HTMLCanvasElement.prototype.toBlob = (cb: BlobCallback): void => {
     const blob = new Blob([new Uint8Array(PNG_BYTES)], { type: "image/png" });
     if (typeof (blob as Blob).arrayBuffer !== "function") {
       // jsdom Blob n'a pas arrayBuffer : on en ajoute un stub
@@ -76,7 +76,7 @@ beforeAll(() => {
     }
     cb(blob);
   };
-  HTMLCanvasElement.prototype.toDataURL = function (): string {
+  HTMLCanvasElement.prototype.toDataURL = (): string => {
     // base64 valide (PNG magic bytes)
     return "data:image/png;base64,iVBORw0KGgo=";
   };
@@ -109,7 +109,7 @@ function renderModal(apiOverride?: Partial<SignatureApi>): {
         pdfBytes={new Uint8Array([37, 80, 68, 70])}
         onSigned={onSigned}
       />
-    </MemoryRouter>,
+    </MemoryRouter>
   );
   return { onSigned, onClose, api };
 }

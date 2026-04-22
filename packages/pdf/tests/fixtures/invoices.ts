@@ -16,7 +16,7 @@ function line(
   description: string,
   qtyMilli: number,
   unit: DocumentLineInput["unit"],
-  unitPriceCents: number,
+  unitPriceCents: number
 ): DocumentLineInput {
   return {
     id: `00000000-0000-0000-0000-${(position + 500).toString().padStart(12, "0")}`,
@@ -65,13 +65,7 @@ export const invoiceSimple: InvoiceInput = {
   createdAt: ts("2026-04-21T00:00:00Z"),
   updatedAt: ts("2026-04-21T00:00:00Z"),
   items: [
-    line(
-      1,
-      "Refonte responsive du site vitrine (design + intégration)",
-      1000,
-      "forfait",
-      250000,
-    ),
+    line(1, "Refonte responsive du site vitrine (design + intégration)", 1000, "forfait", 250000),
   ],
 };
 
@@ -103,14 +97,11 @@ export const invoiceLong: InvoiceInput = {
       `Phase ${i + 1} — livrable technique (module ${String.fromCharCode(65 + (i % 26))})`,
       1000 + i * 250,
       i % 3 === 0 ? "jour" : "forfait",
-      50000 + i * 2500,
-    ),
+      50000 + i * 2500
+    )
   ),
 };
-invoiceLong.totalHtCents = invoiceLong.items.reduce(
-  (a, i) => a + i.lineTotalCents,
-  0,
-);
+invoiceLong.totalHtCents = invoiceLong.items.reduce((a, i) => a + i.lineTotalCents, 0);
 
 // ─── Invoice 3 : intl ───────────────────────────────────────────────────────
 export const invoiceIntl: InvoiceInput = {

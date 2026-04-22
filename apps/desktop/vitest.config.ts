@@ -1,5 +1,5 @@
-import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
+import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   plugins: [react()],
@@ -43,42 +43,16 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@fakt/shared": new URL(
-        "../../packages/shared/src/index.ts",
-        import.meta.url,
-      ).pathname,
-      "@fakt/design-tokens": new URL(
-        "../../packages/design-tokens/src/index.ts",
-        import.meta.url,
-      ).pathname,
-      "@fakt/core": new URL(
-        "../../packages/core/src/index.ts",
-        import.meta.url,
-      ).pathname,
-      "@fakt/legal": new URL(
-        "../../packages/legal/src/index.ts",
-        import.meta.url,
-      ).pathname,
-      "@fakt/config": new URL(
-        "../../packages/config/src/index.ts",
-        import.meta.url,
-      ).pathname,
-      "@fakt/ui": new URL(
-        "../../packages/ui/src/index.ts",
-        import.meta.url,
-      ).pathname,
-      "@fakt/ai": new URL(
-        "../../packages/ai/src/index.ts",
-        import.meta.url,
-      ).pathname,
-      "@fakt/pdf": new URL(
-        "../../packages/pdf/src/index.ts",
-        import.meta.url,
-      ).pathname,
-      "@fakt/email": new URL(
-        "../../packages/email/src/index.ts",
-        import.meta.url,
-      ).pathname,
+      "@fakt/shared": new URL("../../packages/shared/src/index.ts", import.meta.url).pathname,
+      "@fakt/design-tokens": new URL("../../packages/design-tokens/src/index.ts", import.meta.url)
+        .pathname,
+      "@fakt/core": new URL("../../packages/core/src/index.ts", import.meta.url).pathname,
+      "@fakt/legal": new URL("../../packages/legal/src/index.ts", import.meta.url).pathname,
+      "@fakt/config": new URL("../../packages/config/src/index.ts", import.meta.url).pathname,
+      "@fakt/ui": new URL("../../packages/ui/src/index.ts", import.meta.url).pathname,
+      "@fakt/ai": new URL("../../packages/ai/src/index.ts", import.meta.url).pathname,
+      "@fakt/pdf": new URL("../../packages/pdf/src/index.ts", import.meta.url).pathname,
+      "@fakt/email": new URL("../../packages/email/src/index.ts", import.meta.url).pathname,
     },
   },
 });

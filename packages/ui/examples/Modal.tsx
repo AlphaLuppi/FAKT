@@ -21,7 +21,9 @@ export function ModalExample(): ReactElement {
           </>
         }
       >
-        <p>Le devis sera envoyé à l'adresse email du client. Vous pourrez le suivre depuis la liste.</p>
+        <p>
+          Le devis sera envoyé à l'adresse email du client. Vous pourrez le suivre depuis la liste.
+        </p>
       </Modal>
     </div>
   );

@@ -1,15 +1,15 @@
-import type { ReactElement } from "react";
-import { useState, useEffect } from "react";
-import { invoke } from "@tauri-apps/api/core";
 import { tokens } from "@fakt/design-tokens";
-import { Button, Modal, toast } from "@fakt/ui";
 import { fr } from "@fakt/shared";
-import type { Quote, Invoice } from "@fakt/shared";
-import { quotesApi } from "../../features/doc-editor/quotes-api.js";
+import type { Invoice, Quote } from "@fakt/shared";
+import type { Client } from "@fakt/shared";
+import { Button, Modal, toast } from "@fakt/ui";
+import { invoke } from "@tauri-apps/api/core";
+import type { ReactElement } from "react";
+import { useEffect, useState } from "react";
+import { api } from "../../api/index.js";
 import { invoiceApi } from "../../features/doc-editor/invoice-api.js";
 import { pdfApi } from "../../features/doc-editor/pdf-api.js";
-import { api } from "../../api/index.js";
-import type { Client } from "@fakt/shared";
+import { quotesApi } from "../../features/doc-editor/quotes-api.js";
 import { useWorkspace } from "../quotes/hooks.js";
 
 function buildReadme(workspaceName: string, siret: string, isoDate: string): string {
@@ -43,22 +43,38 @@ ouvrir le PDF correspondant dans Adobe Reader ou equivalent.
 FAKT v0.1.0 -- AlphaLuppi -- https://fakt.alphaluppi.com`;
 }
 
-function buildClientsCsv(clients: Array<{ id: string; name: string; email: string | null; siret: string | null; address: string | null; contactName: string | null }>): string {
+function buildClientsCsv(
+  clients: Array<{
+    id: string;
+    name: string;
+    email: string | null;
+    siret: string | null;
+    address: string | null;
+    contactName: string | null;
+  }>
+): string {
   const header = "id,nom,contact,email,siret,adresse\n";
   const rows = clients
     .map((c) =>
-      [c.id, csvEscape(c.name), csvEscape(c.contactName ?? ""), csvEscape(c.email ?? ""), csvEscape(c.siret ?? ""), csvEscape(c.address ?? "")].join(","),
+      [
+        c.id,
+        csvEscape(c.name),
+        csvEscape(c.contactName ?? ""),
+        csvEscape(c.email ?? ""),
+        csvEscape(c.siret ?? ""),
+        csvEscape(c.address ?? ""),
+      ].join(",")
     )
     .join("\n");
   return header + rows;
 }
 
-function buildPrestationsCsv(services: Array<{ id: string; name: string; unit: string; unitPriceCents: number }>): string {
+function buildPrestationsCsv(
+  services: Array<{ id: string; name: string; unit: string; unitPriceCents: number }>
+): string {
   const header = "id,nom,unite,prix_ttc_cents,categorie\n";
   const rows = services
-    .map((s) =>
-      [s.id, csvEscape(s.name), s.unit, s.unitPriceCents, ""].join(","),
-    )
+    .map((s) => [s.id, csvEscape(s.name), s.unit, s.unitPriceCents, ""].join(","))
     .join("\n");
   return header + rows;
 }
@@ -100,7 +116,9 @@ export function ArchiveRoute(): ReactElement {
       }
     }
     void load();
-    return (): void => { cancelled = true; };
+    return (): void => {
+      cancelled = true;
+    };
   }, []);
 
   const issuedQuotes = quotes.filter((q) => q.number !== null);
@@ -120,7 +138,11 @@ export function ArchiveRoute(): ReactElement {
       const pdfsQuotes: Array<{ name: string; bytes: number[] }> = [];
       for (const q of issuedQuotes) {
         const client = clients.find((c) => c.id === q.clientId);
-        if (!client) { done++; setProgress(Math.round((done / total) * 90)); continue; }
+        if (!client) {
+          done++;
+          setProgress(Math.round((done / total) * 90));
+          continue;
+        }
         try {
           const bytes = await pdfApi.renderQuote({
             quote: q as Parameters<typeof pdfApi.renderQuote>[0]["quote"],
@@ -128,7 +150,9 @@ export function ArchiveRoute(): ReactElement {
             workspace,
           });
           pdfsQuotes.push({ name: `${q.number}.pdf`, bytes: Array.from(bytes) });
-        } catch { /* skip en cas d'erreur de rendu */ }
+        } catch {
+          /* skip en cas d'erreur de rendu */
+        }
         done++;
         setProgress(Math.round((done / total) * 90));
       }
@@ -136,7 +160,11 @@ export function ArchiveRoute(): ReactElement {
       const pdfsInvoices: Array<{ name: string; bytes: number[] }> = [];
       for (const inv of issuedInvoices) {
         const client = clients.find((c) => c.id === inv.clientId);
-        if (!client) { done++; setProgress(Math.round((done / total) * 90)); continue; }
+        if (!client) {
+          done++;
+          setProgress(Math.round((done / total) * 90));
+          continue;
+        }
         try {
           const bytes = await pdfApi.renderInvoice({
             invoice: inv as Parameters<typeof pdfApi.renderInvoice>[0]["invoice"],
@@ -144,7 +172,9 @@ export function ArchiveRoute(): ReactElement {
             workspace,
           });
           pdfsInvoices.push({ name: `${inv.number}.pdf`, bytes: Array.from(bytes) });
-        } catch { /* skip */ }
+        } catch {
+          /* skip */
+        }
         done++;
         setProgress(Math.round((done / total) * 90));
       }
@@ -205,7 +235,14 @@ export function ArchiveRoute(): ReactElement {
         gap: tokens.spacing[5],
       }}
     >
-      <header style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: tokens.spacing[4] }}>
+      <header
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          gap: tokens.spacing[4],
+        }}
+      >
         <div>
           <h1
             style={{
@@ -254,7 +291,10 @@ export function ArchiveRoute(): ReactElement {
       >
         <StatCard label={fr.archive.stats.quotesIssued} value={String(issuedQuotes.length)} />
         <StatCard label={fr.archive.stats.invoicesIssued} value={String(issuedInvoices.length)} />
-        <StatCard label={fr.archive.stats.estimatedSize} value={`~${estimatedSizeMb.toFixed(1)} Mo`} />
+        <StatCard
+          label={fr.archive.stats.estimatedSize}
+          value={`~${estimatedSizeMb.toFixed(1)} Mo`}
+        />
       </div>
 
       <div style={{ display: "flex", justifyContent: "flex-end" }}>
@@ -326,37 +366,53 @@ export function ArchiveRoute(): ReactElement {
           }}
         >
           {loading ? (
-            <div style={{ padding: tokens.spacing[5], textAlign: "center", fontFamily: tokens.font.ui, fontSize: tokens.fontSize.sm, color: tokens.color.muted }}>
+            <div
+              style={{
+                padding: tokens.spacing[5],
+                textAlign: "center",
+                fontFamily: tokens.font.ui,
+                fontSize: tokens.fontSize.sm,
+                color: tokens.color.muted,
+              }}
+            >
               {fr.archive.loading}
             </div>
           ) : (
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr>
-                  {[fr.archive.table.type, fr.archive.table.number, fr.archive.table.issuedAt].map((col) => (
-                    <th
-                      key={col}
-                      style={{
-                        padding: `${tokens.spacing[2]} ${tokens.spacing[4]}`,
-                        borderBottom: `${tokens.stroke.base} solid ${tokens.color.ink}`,
-                        fontFamily: tokens.font.ui,
-                        fontSize: tokens.fontSize.xs,
-                        fontWeight: Number(tokens.fontWeight.bold),
-                        textTransform: "uppercase",
-                        letterSpacing: "0.08em",
-                        textAlign: "left",
-                        color: tokens.color.muted,
-                      }}
-                    >
-                      {col}
-                    </th>
-                  ))}
+                  {[fr.archive.table.type, fr.archive.table.number, fr.archive.table.issuedAt].map(
+                    (col) => (
+                      <th
+                        key={col}
+                        style={{
+                          padding: `${tokens.spacing[2]} ${tokens.spacing[4]}`,
+                          borderBottom: `${tokens.stroke.base} solid ${tokens.color.ink}`,
+                          fontFamily: tokens.font.ui,
+                          fontSize: tokens.fontSize.xs,
+                          fontWeight: Number(tokens.fontWeight.bold),
+                          textTransform: "uppercase",
+                          letterSpacing: "0.08em",
+                          textAlign: "left",
+                          color: tokens.color.muted,
+                        }}
+                      >
+                        {col}
+                      </th>
+                    )
+                  )}
                 </tr>
               </thead>
               <tbody>
                 {[
-                  ...issuedQuotes.slice(-10).map((q) => ({ type: "Devis", number: q.number, issuedAt: q.issuedAt })),
-                  ...issuedInvoices.slice(-10).map((inv) => ({ type: "Facture", number: inv.number, issuedAt: inv.issuedAt })),
+                  ...issuedQuotes
+                    .slice(-10)
+                    .map((q) => ({ type: "Devis", number: q.number, issuedAt: q.issuedAt })),
+                  ...issuedInvoices.slice(-10).map((inv) => ({
+                    type: "Facture",
+                    number: inv.number,
+                    issuedAt: inv.issuedAt,
+                  })),
                 ]
                   .sort((a, b) => (b.issuedAt ?? 0) - (a.issuedAt ?? 0))
                   .slice(0, 15)
@@ -367,22 +423,49 @@ export function ArchiveRoute(): ReactElement {
                         borderBottom: `${tokens.stroke.hair} solid ${tokens.color.ink}`,
                       }}
                     >
-                      <td style={{ padding: `${tokens.spacing[2]} ${tokens.spacing[4]}`, fontFamily: tokens.font.ui, fontSize: tokens.fontSize.sm, color: tokens.color.muted }}>
+                      <td
+                        style={{
+                          padding: `${tokens.spacing[2]} ${tokens.spacing[4]}`,
+                          fontFamily: tokens.font.ui,
+                          fontSize: tokens.fontSize.sm,
+                          color: tokens.color.muted,
+                        }}
+                      >
                         {row.type}
                       </td>
-                      <td style={{ padding: `${tokens.spacing[2]} ${tokens.spacing[4]}`, fontFamily: tokens.font.mono, fontSize: tokens.fontSize.sm }}>
+                      <td
+                        style={{
+                          padding: `${tokens.spacing[2]} ${tokens.spacing[4]}`,
+                          fontFamily: tokens.font.mono,
+                          fontSize: tokens.fontSize.sm,
+                        }}
+                      >
                         {row.number}
                       </td>
-                      <td style={{ padding: `${tokens.spacing[2]} ${tokens.spacing[4]}`, fontFamily: tokens.font.ui, fontSize: tokens.fontSize.sm, color: tokens.color.muted }}>
-                        {row.issuedAt
-                          ? new Date(row.issuedAt).toLocaleDateString("fr-FR")
-                          : "—"}
+                      <td
+                        style={{
+                          padding: `${tokens.spacing[2]} ${tokens.spacing[4]}`,
+                          fontFamily: tokens.font.ui,
+                          fontSize: tokens.fontSize.sm,
+                          color: tokens.color.muted,
+                        }}
+                      >
+                        {row.issuedAt ? new Date(row.issuedAt).toLocaleDateString("fr-FR") : "—"}
                       </td>
                     </tr>
                   ))}
                 {issuedQuotes.length === 0 && issuedInvoices.length === 0 && (
                   <tr>
-                    <td colSpan={3} style={{ padding: tokens.spacing[5], textAlign: "center", fontFamily: tokens.font.ui, fontSize: tokens.fontSize.sm, color: tokens.color.muted }}>
+                    <td
+                      colSpan={3}
+                      style={{
+                        padding: tokens.spacing[5],
+                        textAlign: "center",
+                        fontFamily: tokens.font.ui,
+                        fontSize: tokens.fontSize.sm,
+                        color: tokens.color.muted,
+                      }}
+                    >
                       {fr.archive.empty}
                     </td>
                   </tr>
@@ -413,7 +496,14 @@ export function ArchiveRoute(): ReactElement {
           </>
         }
       >
-        <p style={{ margin: 0, fontFamily: tokens.font.ui, fontSize: tokens.fontSize.sm, lineHeight: 1.5 }}>
+        <p
+          style={{
+            margin: 0,
+            fontFamily: tokens.font.ui,
+            fontSize: tokens.fontSize.sm,
+            lineHeight: 1.5,
+          }}
+        >
           {fr.archive.confirmModal.body(issuedQuotes.length, issuedInvoices.length)}
         </p>
       </Modal>

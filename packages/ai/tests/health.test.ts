@@ -3,7 +3,7 @@
  * Does NOT require Claude CLI — mocks the Tauri invoke.
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { healthCheck } from "../src/health.ts";
 
 // ─── Mock @tauri-apps/api/core ────────────────────────────────────────────────

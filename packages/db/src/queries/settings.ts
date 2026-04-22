@@ -4,10 +4,10 @@
  * Les settings sont un K/V par workspace.
  */
 
-import { eq, and } from "drizzle-orm";
-import type { DbInstance } from "../adapter.js";
-import { workspaces, settings } from "../schema/index.js";
 import type { Workspace } from "@fakt/shared";
+import { and, eq } from "drizzle-orm";
+import type { DbInstance } from "../adapter.js";
+import { settings, workspaces } from "../schema/index.js";
 
 // ─── Input types ──────────────────────────────────────────────────────────────
 
@@ -129,12 +129,7 @@ export function getSetting(db: DbInstance, workspaceId: string, key: string): st
 }
 
 /** Upsert un paramètre workspace (insert ou update). */
-export function setSetting(
-  db: DbInstance,
-  workspaceId: string,
-  key: string,
-  value: string
-): void {
+export function setSetting(db: DbInstance, workspaceId: string, key: string, value: string): void {
   const now = Date.now();
   db.insert(settings)
     .values({ workspaceId, key, value, updatedAt: new Date(now) })

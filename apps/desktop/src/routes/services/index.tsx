@@ -1,12 +1,12 @@
-import type { ReactElement } from "react";
-import { useState, useCallback, useMemo } from "react";
-import { Table, Button, StatusPill, Chip } from "@fakt/ui";
-import type { TableColumn } from "@fakt/ui";
 import { fr } from "@fakt/shared";
-import type { Service, DocumentUnit } from "@fakt/shared";
+import type { DocumentUnit, Service } from "@fakt/shared";
+import { Button, Chip, StatusPill, Table } from "@fakt/ui";
+import type { TableColumn } from "@fakt/ui";
+import type { ReactElement } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { usePrestations } from "../../hooks/usePrestations.js";
 import { PrestationForm } from "./PrestationForm.js";
 import type { PrestationFormValues } from "./PrestationForm.js";
-import { usePrestations } from "../../hooks/usePrestations.js";
 
 function formatPrice(cents: number): string {
   return new Intl.NumberFormat(fr.format.currencyLocale, {
@@ -54,7 +54,7 @@ export function ServicesRoute(): ReactElement {
         });
       }
     },
-    [selectedPrestation, createPrestation, updatePrestation],
+    [selectedPrestation, createPrestation, updatePrestation]
   );
 
   const columns = useMemo(
@@ -62,9 +62,7 @@ export function ServicesRoute(): ReactElement {
       {
         id: "name",
         header: fr.services.labels.name,
-        accessor: (s) => (
-          <span style={{ fontWeight: 700, color: "var(--ink)" }}>{s.name}</span>
-        ),
+        accessor: (s) => <span style={{ fontWeight: 700, color: "var(--ink)" }}>{s.name}</span>,
         sortValue: (s) => s.name,
         sortable: true,
       },
@@ -132,9 +130,7 @@ export function ServicesRoute(): ReactElement {
         id: "status",
         header: "Statut",
         accessor: (s) =>
-          s.archivedAt ? (
-            <StatusPill status="cancelled" size="sm" label="Archivé" />
-          ) : null,
+          s.archivedAt ? <StatusPill status="cancelled" size="sm" label="Archivé" /> : null,
         width: 90,
       },
       {
@@ -184,11 +180,13 @@ export function ServicesRoute(): ReactElement {
         align: "right",
       },
     ],
-    [restorePrestation, deletePrestation],
+    [restorePrestation, deletePrestation]
   );
 
   return (
-    <div style={{ padding: "var(--s-6)", display: "flex", flexDirection: "column", gap: "var(--s-5)" }}>
+    <div
+      style={{ padding: "var(--s-6)", display: "flex", flexDirection: "column", gap: "var(--s-5)" }}
+    >
       {/* En-tête */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <h1

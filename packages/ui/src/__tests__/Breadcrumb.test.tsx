@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { Breadcrumb } from "../data-display/Breadcrumb.js";
 
 describe("Breadcrumb", () => {
@@ -10,7 +10,7 @@ describe("Breadcrumb", () => {
           { label: "Devis", onClick: () => {} },
           { label: "D2026-001", current: true },
         ]}
-      />,
+      />
     );
     expect(screen.getByRole("button", { name: "Devis" })).toBeInTheDocument();
     const curr = screen.getByRole("button", { name: "D2026-001" });

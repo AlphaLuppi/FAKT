@@ -1,6 +1,6 @@
+import type { CliInfo } from "@fakt/ai";
 import { createContext, useContext } from "react";
 import type { IdentityFormValues } from "./validators.js";
-import type { CliInfo } from "@fakt/ai";
 
 export interface CertInfo {
   dn: string;

@@ -1,13 +1,13 @@
+import { type ExtractedQuote, type ExtractedQuoteItem, getAi } from "@fakt/ai";
+import { tokens } from "@fakt/design-tokens";
+import { addDays, formatEur, fr, today } from "@fakt/shared";
+import type { DocumentUnit } from "@fakt/shared";
+import { Button, Textarea } from "@fakt/ui";
 import type { ReactElement } from "react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
-import { tokens } from "@fakt/design-tokens";
-import { Button, Textarea } from "@fakt/ui";
-import { fr, formatEur, today, addDays } from "@fakt/shared";
-import type { DocumentUnit } from "@fakt/shared";
-import { getAi, type ExtractedQuote, type ExtractedQuoteItem } from "@fakt/ai";
-import { QuoteForm, type QuoteFormValues } from "./QuoteForm.js";
 import { quotesApi } from "../../features/doc-editor/quotes-api.js";
+import { QuoteForm, type QuoteFormValues } from "./QuoteForm.js";
 
 function mapExtractedUnit(u: ExtractedQuoteItem["unit"]): DocumentUnit {
   switch (u) {
@@ -17,7 +17,6 @@ function mapExtractedUnit(u: ExtractedQuoteItem["unit"]): DocumentUnit {
       return "jour";
     case "forfait":
       return "forfait";
-    case "unit":
     default:
       return "unité";
   }
@@ -27,9 +26,7 @@ export function NewAi(): ReactElement {
   const navigate = useNavigate();
   const [brief, setBrief] = useState<string>("");
   const [extracting, setExtracting] = useState(false);
-  const [extracted, setExtracted] = useState<Partial<ExtractedQuote> | null>(
-    null,
-  );
+  const [extracted, setExtracted] = useState<Partial<ExtractedQuote> | null>(null);
   const [streamError, setStreamError] = useState<string | null>(null);
   const [cliMissing, setCliMissing] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
@@ -103,15 +100,11 @@ export function NewAi(): ReactElement {
       quantity: Math.round((it.quantity || 1) * 1000),
       unitPriceCents: Math.round((it.unitPrice || 0) * 100),
       unit: mapExtractedUnit(it.unit),
-      lineTotalCents: Math.round(
-        (it.quantity || 1) * (it.unitPrice || 0) * 100,
-      ),
+      lineTotalCents: Math.round((it.quantity || 1) * (it.unitPrice || 0) * 100),
       serviceId: null,
     }));
     const initial: Partial<QuoteFormValues> = {
-      title: extracted.client?.name
-        ? `Devis — ${extracted.client.name}`
-        : "Devis",
+      title: extracted.client?.name ? `Devis — ${extracted.client.name}` : "Devis",
       issuedAt,
       validityDate: extracted.validUntil
         ? new Date(extracted.validUntil).getTime()
@@ -126,10 +119,7 @@ export function NewAi(): ReactElement {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  async function handleSubmitApplied(
-    values: QuoteFormValues,
-    issueNumber: boolean,
-  ): Promise<void> {
+  async function handleSubmitApplied(values: QuoteFormValues, issueNumber: boolean): Promise<void> {
     if (!values.clientId) {
       setSubmitError(fr.quotes.errors.missingClient);
       return;
@@ -158,9 +148,7 @@ export function NewAi(): ReactElement {
       });
       void navigate(`/quotes/${created.id}`);
     } catch (err) {
-      setSubmitError(
-        err instanceof Error ? err.message : fr.quotes.errors.createFailed,
-      );
+      setSubmitError(err instanceof Error ? err.message : fr.quotes.errors.createFailed);
     } finally {
       setSubmitting(false);
     }
@@ -352,7 +340,7 @@ function ExtractedPreview({
 }): ReactElement {
   const total = (extracted.items ?? []).reduce(
     (s, it) => s + (it.quantity || 1) * (it.unitPrice || 0),
-    0,
+    0
   );
   return (
     <section
@@ -585,4 +573,3 @@ function CliMissingBlock({ onFallback }: { onFallback: () => void }): ReactEleme
     </div>
   );
 }
-

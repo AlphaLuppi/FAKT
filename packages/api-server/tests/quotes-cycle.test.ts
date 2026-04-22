@@ -3,7 +3,7 @@
  * et transitions invalides → 422.
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { createTestApp } from "./helpers.js";
 
 const CLIENT_ID = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
@@ -191,10 +191,10 @@ describe("Quote lifecycle — transitions invalides (422)", () => {
 
   it("issue sur quote absent → 404", async () => {
     const { app, authHeaders } = createTestApp();
-    const res = await app.request(
-      "/api/quotes/99999999-9999-4999-8999-999999999999/issue",
-      { method: "POST", headers: authHeaders() }
-    );
+    const res = await app.request("/api/quotes/99999999-9999-4999-8999-999999999999/issue", {
+      method: "POST",
+      headers: authHeaders(),
+    });
     expect(res.status).toBe(404);
   });
 });

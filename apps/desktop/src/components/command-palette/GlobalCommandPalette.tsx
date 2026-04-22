@@ -1,9 +1,9 @@
+import { fr } from "@fakt/shared";
+import { CommandPalette } from "@fakt/ui";
+import type { CommandItem } from "@fakt/ui";
 import type { ReactElement } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
-import { CommandPalette } from "@fakt/ui";
-import type { CommandItem } from "@fakt/ui";
-import { fr } from "@fakt/shared";
 import { useCommandPaletteIndex } from "./useCommandPaletteIndex.js";
 import type { SearchResult } from "./useCommandPaletteIndex.js";
 
@@ -41,7 +41,7 @@ export function GlobalCommandPalette({ open, onClose }: GlobalCommandPaletteProp
       void navigate(result.path);
       onClose();
     },
-    [navigate, onClose],
+    [navigate, onClose]
   );
 
   // Les items CommandPalette n'ont pas de setQuery intégré dans le composant de base,

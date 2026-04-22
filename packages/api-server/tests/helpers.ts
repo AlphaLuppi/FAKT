@@ -8,13 +8,8 @@
  *   expect(res.status).toBe(200);
  */
 
+import { type TestDb, WORKSPACE_ID, createTestDb, seedWorkspace } from "@fakt/db/__tests__/helpers";
 import type Database from "better-sqlite3";
-import {
-  createTestDb,
-  seedWorkspace,
-  WORKSPACE_ID,
-  type TestDb,
-} from "@fakt/db/__tests__/helpers";
 import type { Hono } from "hono";
 import { createApp } from "../src/app.js";
 import type { AppEnv } from "../src/types.js";

@@ -3,12 +3,8 @@
  * Simule 10 créations consécutives et vérifie F{YYYY}-001 à F{YYYY}-010.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import {
-  formatInvoiceNumber,
-  isValidInvoiceNumber,
-  parseDocumentNumber,
-} from "@fakt/core";
+import { formatInvoiceNumber, isValidInvoiceNumber, parseDocumentNumber } from "@fakt/core";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { invoiceApi } from "../../features/doc-editor/index.js";
 import { installInvoiceMockApis } from "./__test-helpers__/mockInvoiceApis.js";
 

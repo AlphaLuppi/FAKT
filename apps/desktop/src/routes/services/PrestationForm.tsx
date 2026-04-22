@@ -1,11 +1,11 @@
+import { fr } from "@fakt/shared";
+import type { DocumentUnit, Service } from "@fakt/shared";
+import { Button, Input, Modal, Select, Textarea } from "@fakt/ui";
+import { zodResolver } from "@hookform/resolvers/zod";
 import type { ReactElement } from "react";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Modal, Button, Input, Textarea, Select } from "@fakt/ui";
-import { fr } from "@fakt/shared";
-import type { Service, DocumentUnit } from "@fakt/shared";
 
 const UNIT_OPTIONS = Object.entries(fr.services.units).map(([value, label]) => ({
   value,
@@ -13,8 +13,16 @@ const UNIT_OPTIONS = Object.entries(fr.services.units).map(([value, label]) => (
 }));
 
 const PREDEFINED_TAGS = [
-  "dev", "design", "conseil", "formation", "rédaction",
-  "support", "maintenance", "audit", "web", "mobile",
+  "dev",
+  "design",
+  "conseil",
+  "formation",
+  "rédaction",
+  "support",
+  "maintenance",
+  "audit",
+  "web",
+  "mobile",
 ];
 
 const prestationFormSchema = z.object({
@@ -37,7 +45,12 @@ export interface PrestationFormProps {
   initial?: Service | null;
 }
 
-export function PrestationForm({ open, onClose, onSubmit, initial }: PrestationFormProps): ReactElement {
+export function PrestationForm({
+  open,
+  onClose,
+  onSubmit,
+  initial,
+}: PrestationFormProps): ReactElement {
   const {
     register,
     handleSubmit,
@@ -72,9 +85,7 @@ export function PrestationForm({ open, onClose, onSubmit, initial }: PrestationF
 
   const toggleTag = (tag: string): void => {
     const current = selectedTags ?? [];
-    const next = current.includes(tag)
-      ? current.filter((t) => t !== tag)
-      : [...current, tag];
+    const next = current.includes(tag) ? current.filter((t) => t !== tag) : [...current, tag];
     setValue("tags", next.length > 0 ? next : null);
   };
 
@@ -99,12 +110,7 @@ export function PrestationForm({ open, onClose, onSubmit, initial }: PrestationF
           <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>
             Annuler
           </Button>
-          <Button
-            variant="primary"
-            type="submit"
-            form="prestation-form"
-            disabled={isSubmitting}
-          >
+          <Button variant="primary" type="submit" form="prestation-form" disabled={isSubmitting}>
             {isSubmitting ? "Enregistrement…" : "Enregistrer"}
           </Button>
         </>
@@ -112,7 +118,9 @@ export function PrestationForm({ open, onClose, onSubmit, initial }: PrestationF
     >
       <form
         id="prestation-form"
-        onSubmit={(e) => { void handleFormSubmit(e); }}
+        onSubmit={(e) => {
+          void handleFormSubmit(e);
+        }}
         style={{ display: "flex", flexDirection: "column", gap: 16 }}
       >
         <Input
@@ -122,11 +130,7 @@ export function PrestationForm({ open, onClose, onSubmit, initial }: PrestationF
           {...register("name")}
         />
 
-        <Textarea
-          label={fr.services.labels.description}
-          rows={3}
-          {...register("description")}
-        />
+        <Textarea label={fr.services.labels.description} rows={3} {...register("description")} />
 
         <Select
           label={fr.services.labels.unit}
@@ -145,7 +149,7 @@ export function PrestationForm({ open, onClose, onSubmit, initial }: PrestationF
           hint={errors.unitPriceCents?.message ?? "Prix HT en euros (ex: 750.00)"}
           value={priceEuros}
           onChange={(e) => {
-            const euros = parseFloat(e.currentTarget.value) || 0;
+            const euros = Number.parseFloat(e.currentTarget.value) || 0;
             setValue("unitPriceCents", Math.round(euros * 100));
           }}
         />

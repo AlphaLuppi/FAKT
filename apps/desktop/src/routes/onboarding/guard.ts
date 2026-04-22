@@ -6,7 +6,7 @@
  * Si aucun workspace → setup non terminé.
  */
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export type OnboardingGuardStatus = "loading" | "needs-onboarding" | "ready";
 

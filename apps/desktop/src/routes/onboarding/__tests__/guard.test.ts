@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock @tauri-apps/api/core avant l'import du module
 vi.mock("@tauri-apps/api/core", () => ({
@@ -19,7 +19,11 @@ describe("useOnboardingGuard — comportement du guard", () => {
 
     // Bloquer la résolution pour observer l'état loading
     let resolve!: (v: boolean) => void;
-    vi.mocked(invoke).mockReturnValue(new Promise<boolean>((r) => { resolve = r; }));
+    vi.mocked(invoke).mockReturnValue(
+      new Promise<boolean>((r) => {
+        resolve = r;
+      })
+    );
 
     const { result } = renderHook(() => useOnboardingGuard());
     expect(result.current).toBe("loading");

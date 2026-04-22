@@ -1,9 +1,6 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+import { getSignedDocument, upsertSignedDocument } from "../queries/signedDocuments.js";
 import { createTestDb, seedWorkspace } from "./helpers.js";
-import {
-  getSignedDocument,
-  upsertSignedDocument,
-} from "../queries/signedDocuments.js";
 import type { TestDb } from "./helpers.js";
 
 let db: TestDb;

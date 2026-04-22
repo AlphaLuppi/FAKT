@@ -19,7 +19,7 @@ export const signatureSubmitSchema = z
 export type SignatureSubmitInput = z.infer<typeof signatureSubmitSchema>;
 
 export function validateSignatureSubmit(
-  input: unknown,
+  input: unknown
 ): z.SafeParseReturnType<unknown, SignatureSubmitInput> {
   return signatureSubmitSchema.safeParse(input);
 }

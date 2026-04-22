@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { Button } from "../primitives/Button.js";
 
 describe("Button", () => {
@@ -14,7 +14,7 @@ describe("Button", () => {
     render(
       <Button variant="danger" size="lg">
         Supprimer
-      </Button>,
+      </Button>
     );
     const btn = screen.getByRole("button");
     expect(btn).toHaveClass("fakt-btn", "fakt-btn--danger", "fakt-btn--lg");
@@ -32,7 +32,7 @@ describe("Button", () => {
     render(
       <Button onClick={onClick} disabled>
         Go
-      </Button>,
+      </Button>
     );
     fireEvent.click(screen.getByRole("button"));
     expect(onClick).not.toHaveBeenCalled();

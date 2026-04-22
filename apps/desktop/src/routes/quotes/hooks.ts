@@ -3,11 +3,11 @@
  * Pattern minimaliste — pas de React Query pour rester tauri-agnostic.
  */
 
-import { useEffect, useState, useCallback } from "react";
-import type { Quote, Client, Service, Workspace, UUID } from "@fakt/shared";
-import { quotesApi } from "../../features/doc-editor/quotes-api.js";
+import type { Client, Quote, Service, UUID, Workspace } from "@fakt/shared";
+import { useCallback, useEffect, useState } from "react";
 import { clientsApi } from "../../features/doc-editor/clients-api.js";
 import { prestationsApi } from "../../features/doc-editor/prestations-api.js";
+import { quotesApi } from "../../features/doc-editor/quotes-api.js";
 import { workspaceApi } from "../../features/doc-editor/workspace-api.js";
 
 interface UseQuotesState {

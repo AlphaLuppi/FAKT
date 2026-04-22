@@ -1,25 +1,25 @@
+import type { DbInstance } from "@fakt/db/adapter";
+import {
+  createPrestation,
+  getPrestation,
+  getWorkspace,
+  listPrestations,
+  restorePrestation,
+  searchPrestations,
+  softDeletePrestation,
+  updatePrestation,
+} from "@fakt/db/queries";
 import { Hono } from "hono";
-import type { AppEnv } from "../types.js";
 import { notFound } from "../errors.js";
-import { parseBody, parseQuery, parseParam } from "../middleware/zod.js";
+import { parseBody, parseParam, parseQuery } from "../middleware/zod.js";
 import { uuidSchema } from "../schemas/common.js";
 import {
   createServiceSchema,
-  updateServiceSchema,
   listServicesQuerySchema,
   serviceSearchQuerySchema,
+  updateServiceSchema,
 } from "../schemas/services.js";
-import {
-  getWorkspace,
-  listPrestations,
-  getPrestation,
-  createPrestation,
-  updatePrestation,
-  softDeletePrestation,
-  restorePrestation,
-  searchPrestations,
-} from "@fakt/db/queries";
-import type { DbInstance } from "@fakt/db/adapter";
+import type { AppEnv } from "../types.js";
 
 export const servicesRoutes = new Hono<AppEnv>();
 

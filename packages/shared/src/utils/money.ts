@@ -32,10 +32,7 @@ export function quantityToMilli(value: number): QuantityMilli {
  * Calcule le total d'une ligne (quantité × prix unitaire).
  * Utilise des entiers pour éviter les erreurs de virgule flottante.
  */
-export function computeLineTotal(
-  quantityMilli: QuantityMilli,
-  unitPriceCents: Cents
-): Cents {
+export function computeLineTotal(quantityMilli: QuantityMilli, unitPriceCents: Cents): Cents {
   // (q/1000) * price = (q * price) / 1000 — arrondi au centime
   return Math.round((quantityMilli * unitPriceCents) / 1000);
 }
@@ -44,7 +41,7 @@ export function computeLineTotal(
 export function parseEurInput(raw: string): Cents | null {
   // Supprime espaces et remplace virgule par point
   const normalized = raw.replace(/\s/g, "").replace(",", ".");
-  const value = parseFloat(normalized);
-  if (isNaN(value)) return null;
+  const value = Number.parseFloat(normalized);
+  if (Number.isNaN(value)) return null;
   return Math.round(value * 100);
 }

@@ -1,7 +1,7 @@
 import type { ErrorHandler } from "hono";
 import { ZodError } from "zod";
-import type { AppEnv, ApiErrorBody } from "../types.js";
 import { HttpError } from "../errors.js";
+import type { ApiErrorBody, AppEnv } from "../types.js";
 
 function zodIssueSummary(err: ZodError): { field?: string; message: string; issues: unknown } {
   const first = err.issues[0];

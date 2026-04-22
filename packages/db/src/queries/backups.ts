@@ -3,7 +3,7 @@
  * Les bytes ZIP restent sur disque, cette table ne mémorise que path + size + timestamp.
  */
 
-import { eq, desc } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import type { DbInstance } from "../adapter.js";
 import { backups } from "../schema/index.js";
 

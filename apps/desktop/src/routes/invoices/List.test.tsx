@@ -1,12 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
-import { InvoicesListRoute } from "./List.js";
-import {
-  installInvoiceMockApis,
-  FIXTURE_CLIENT,
-} from "./__test-helpers__/mockInvoiceApis.js";
 import type { Invoice } from "@fakt/shared";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { InvoicesListRoute } from "./List.js";
+import { FIXTURE_CLIENT, installInvoiceMockApis } from "./__test-helpers__/mockInvoiceApis.js";
 
 const now = Date.now();
 
@@ -76,7 +73,7 @@ describe("InvoicesListRoute", () => {
     render(
       <MemoryRouter>
         <InvoicesListRoute />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
   }
 

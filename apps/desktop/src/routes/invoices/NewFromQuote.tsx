@@ -1,22 +1,22 @@
+import { computeDepositAmount } from "@fakt/core";
+import { tokens } from "@fakt/design-tokens";
+import { buildLegalMentionsSnapshot } from "@fakt/legal";
+import { addDays, fr, today } from "@fakt/shared";
+import type { DocumentUnit, Quote, UUID } from "@fakt/shared";
+import { Button, Select } from "@fakt/ui";
 import type { ReactElement } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
-import { tokens } from "@fakt/design-tokens";
-import { Button, Select } from "@fakt/ui";
-import { fr, addDays, today } from "@fakt/shared";
-import type { Quote, UUID, DocumentUnit } from "@fakt/shared";
-import { computeDepositAmount } from "@fakt/core";
-import { buildLegalMentionsSnapshot } from "@fakt/legal";
+import { invalidateSearchIndex } from "../../components/command-palette/useCommandPaletteIndex.js";
 import {
+  type EditableItem,
   InvoiceForm,
   type InvoiceFormValues,
-  type EditableItem,
 } from "../../features/doc-editor/index.js";
-import { quotesApi } from "../../features/doc-editor/quotes-api.js";
 import { invoiceApi } from "../../features/doc-editor/invoice-api.js";
 import type { CreateFromQuoteMode } from "../../features/doc-editor/invoice-api.js";
+import { quotesApi } from "../../features/doc-editor/quotes-api.js";
 import { useClientsList, usePrestationsList, useWorkspace } from "../quotes/hooks.js";
-import { invalidateSearchIndex } from "../../components/command-palette/useCommandPaletteIndex.js";
 
 function newId(): UUID {
   if (
@@ -34,9 +34,7 @@ function computeDepositItems(quote: Quote): EditableItem[] {
     {
       id: newId(),
       position: 0,
-      description: fr.invoices.form.depositLabel(
-        quote.number ?? quote.id.slice(0, 6),
-      ),
+      description: fr.invoices.form.depositLabel(quote.number ?? quote.id.slice(0, 6)),
       quantity: 1000,
       unitPriceCents: depositCents,
       unit: "forfait" as DocumentUnit,
@@ -69,9 +67,7 @@ async function computeBalanceItems(quote: Quote): Promise<EditableItem[]> {
     {
       id: newId(),
       position: 0,
-      description: fr.invoices.form.balanceLabel(
-        quote.number ?? quote.id.slice(0, 6),
-      ),
+      description: fr.invoices.form.balanceLabel(quote.number ?? quote.id.slice(0, 6)),
       quantity: 1000,
       unitPriceCents: balance,
       unit: "forfait" as DocumentUnit,
@@ -90,12 +86,9 @@ export function NewFromQuote(): ReactElement {
   const { workspace } = useWorkspace();
 
   const [quotes, setQuotes] = useState<Quote[]>([]);
-  const [selectedQuoteId, setSelectedQuoteId] = useState<UUID | null>(
-    preselectedQuoteId ?? null,
-  );
+  const [selectedQuoteId, setSelectedQuoteId] = useState<UUID | null>(preselectedQuoteId ?? null);
   const [mode, setMode] = useState<CreateFromQuoteMode>("deposit30");
-  const [initialValues, setInitialValues] =
-    useState<Partial<InvoiceFormValues>>();
+  const [initialValues, setInitialValues] = useState<Partial<InvoiceFormValues>>();
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [loadingQuotes, setLoadingQuotes] = useState(true);
@@ -125,7 +118,7 @@ export function NewFromQuote(): ReactElement {
 
   const selectedQuote = useMemo(
     () => quotes.find((q) => q.id === selectedQuoteId) ?? null,
-    [quotes, selectedQuoteId],
+    [quotes, selectedQuoteId]
   );
 
   // Recalcule les items quand mode/quote change.
@@ -164,10 +157,7 @@ export function NewFromQuote(): ReactElement {
     };
   }, [selectedQuote, mode]);
 
-  async function handleSubmit(
-    values: InvoiceFormValues,
-    issueNumber: boolean,
-  ): Promise<void> {
+  async function handleSubmit(values: InvoiceFormValues, issueNumber: boolean): Promise<void> {
     if (!selectedQuote) {
       setSubmitError(fr.invoices.errors.missingQuote);
       return;
@@ -176,10 +166,7 @@ export function NewFromQuote(): ReactElement {
     setSubmitError(null);
     try {
       const items = values.items.map((item, idx) => ({
-        id:
-          item.id.startsWith("tmp-") || item.id.startsWith("item-")
-            ? newId()
-            : item.id,
+        id: item.id.startsWith("tmp-") || item.id.startsWith("item-") ? newId() : item.id,
         position: idx,
         description: item.description,
         quantity: item.quantity,
@@ -200,7 +187,7 @@ export function NewFromQuote(): ReactElement {
               iban: workspace.iban,
               tvaMention: workspace.tvaMention,
             },
-            30,
+            30
           )
         : "";
 
@@ -229,9 +216,7 @@ export function NewFromQuote(): ReactElement {
       invalidateSearchIndex();
       void navigate(`/invoices/${created.id}`);
     } catch (err) {
-      setSubmitError(
-        err instanceof Error ? err.message : fr.invoices.errors.createFailed,
-      );
+      setSubmitError(err instanceof Error ? err.message : fr.invoices.errors.createFailed);
     } finally {
       setSubmitting(false);
     }

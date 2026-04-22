@@ -5,9 +5,7 @@ import { uuidSchema } from "./common.js";
 
 export const documentTypeSchema = z.enum(["quote", "invoice"]);
 
-const hexSha256 = z
-  .string()
-  .regex(/^[0-9a-f]{64}$/i, "hash doit être 64 chars hex (SHA-256)");
+const hexSha256 = z.string().regex(/^[0-9a-f]{64}$/i, "hash doit être 64 chars hex (SHA-256)");
 
 const base64ish = z.string().min(1);
 

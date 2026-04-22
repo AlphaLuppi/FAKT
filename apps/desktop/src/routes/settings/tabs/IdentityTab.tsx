@@ -1,11 +1,11 @@
-import type { ReactElement } from "react";
-import { useState, useEffect } from "react";
-import { useForm, type SubmitHandler } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Button, Input, Select, Textarea, toast } from "@fakt/ui";
 import { fr } from "@fakt/shared";
 import type { Workspace } from "@fakt/shared";
-import { identitySchema, LEGAL_FORM_OPTIONS } from "../../onboarding/validators.js";
+import { Button, Input, Select, Textarea, toast } from "@fakt/ui";
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { ReactElement } from "react";
+import { useEffect, useState } from "react";
+import { type SubmitHandler, useForm } from "react-hook-form";
+import { LEGAL_FORM_OPTIONS, identitySchema } from "../../onboarding/validators.js";
 import type { IdentityFormValues } from "../../onboarding/validators.js";
 
 interface Props {
@@ -58,10 +58,15 @@ export function IdentityTab({ workspace, onSaved }: Props): ReactElement {
     } finally {
       setSaving(false);
     }
-  }
+  };
 
   return (
-    <form onSubmit={(e) => { void handleSubmit(onSubmit)(e); }} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+    <form
+      onSubmit={(e) => {
+        void handleSubmit(onSubmit)(e);
+      }}
+      style={{ display: "flex", flexDirection: "column", gap: 20 }}
+    >
       <div style={gridStyle}>
         <Input
           label={fr.settings.workspace.name}
@@ -103,11 +108,7 @@ export function IdentityTab({ workspace, onSaved }: Props): ReactElement {
           hint={errors.email?.message}
           {...register("email")}
         />
-        <Input
-          label={fr.settings.workspace.phone}
-          type="tel"
-          {...register("phone")}
-        />
+        <Input label={fr.settings.workspace.phone} type="tel" {...register("phone")} />
       </div>
 
       <Input

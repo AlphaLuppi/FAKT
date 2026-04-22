@@ -9,8 +9,8 @@
  * Rust (accès disque direct, pas DB).
  */
 
-import { invoke } from "@tauri-apps/api/core";
 import type { SignatureEvent, UUID } from "@fakt/shared";
+import { invoke } from "@tauri-apps/api/core";
 import { api as httpApi } from "../../api/index.js";
 
 export interface SignDocumentInput {
@@ -50,21 +50,11 @@ export interface VerifyReport {
 
 export interface SignatureApi {
   sign(input: SignDocumentInput): Promise<SignDocumentOutput>;
-  listEvents(
-    docType: "quote" | "invoice",
-    docId: UUID,
-  ): Promise<SignatureEvent[]>;
+  listEvents(docType: "quote" | "invoice", docId: UUID): Promise<SignatureEvent[]>;
   verify(docId: UUID, eventId: UUID): Promise<VerifyReport>;
   appendEvent(event: SignatureEvent): Promise<void>;
-  storeSignedPdf(
-    docType: "quote" | "invoice",
-    docId: UUID,
-    bytes: Uint8Array,
-  ): Promise<string>;
-  getSignedPdf(
-    docType: "quote" | "invoice",
-    docId: UUID,
-  ): Promise<Uint8Array | null>;
+  storeSignedPdf(docType: "quote" | "invoice", docId: UUID, bytes: Uint8Array): Promise<string>;
+  getSignedPdf(docType: "quote" | "invoice", docId: UUID): Promise<Uint8Array | null>;
 }
 
 interface RustSignatureEvent {
@@ -179,8 +169,7 @@ export const signatureApi: SignatureApi = {
   listEvents: (docType, docId) => _impl.listEvents(docType, docId),
   verify: (docId, eventId) => _impl.verify(docId, eventId),
   appendEvent: (event) => _impl.appendEvent(event),
-  storeSignedPdf: (docType, docId, bytes) =>
-    _impl.storeSignedPdf(docType, docId, bytes),
+  storeSignedPdf: (docType, docId, bytes) => _impl.storeSignedPdf(docType, docId, bytes),
   getSignedPdf: (docType, docId) => _impl.getSignedPdf(docType, docId),
 };
 

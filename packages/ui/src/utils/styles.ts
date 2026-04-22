@@ -1,5 +1,5 @@
-import type { CSSProperties } from "react";
 import { tokens } from "@fakt/design-tokens";
+import type { CSSProperties } from "react";
 
 /** Style de base pour un Card Brutal. */
 export const cardStyle = (shadow: "sm" | "base" | "lg" = "base"): CSSProperties => ({
@@ -21,7 +21,8 @@ export const baseButtonStyle: CSSProperties = {
   letterSpacing: "0.02em",
   border: `${tokens.stroke.base} solid ${tokens.color.ink}`,
   cursor: "pointer",
-  transition: "transform 40ms ease-out, box-shadow 40ms ease-out, background 80ms ease-out, color 80ms ease-out",
+  transition:
+    "transform 40ms ease-out, box-shadow 40ms ease-out, background 80ms ease-out, color 80ms ease-out",
   userSelect: "none",
 };
 

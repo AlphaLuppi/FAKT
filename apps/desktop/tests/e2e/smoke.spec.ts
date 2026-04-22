@@ -11,15 +11,13 @@
  *   - Linux : DISPLAY ou xvfb-run requis
  */
 
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 // En l'absence de tauri-driver configuré, ce smoke valide que Playwright
 // peut charger la page en mode devUrl (développement local).
 // En CI avec tauri-driver, remplacer le `page.goto` par la connexion WebDriver.
 test.describe("FAKT — smoke tests", () => {
-  test("la page principale se charge et contient FAKT dans le titre", async ({
-    page,
-  }) => {
+  test("la page principale se charge et contient FAKT dans le titre", async ({ page }) => {
     // Mode développement : valider que le frontend React se charge correctement.
     // En CI tauri-driver, ce test sera remplacé par un vrai launch natif.
     await page.goto("http://localhost:1420");
@@ -28,9 +26,7 @@ test.describe("FAKT — smoke tests", () => {
     await expect(page).toHaveTitle(/FAKT/, { timeout: 10_000 });
   });
 
-  test("la page charge sans erreurs JavaScript console critiques", async ({
-    page,
-  }) => {
+  test("la page charge sans erreurs JavaScript console critiques", async ({ page }) => {
     const errors: string[] = [];
     page.on("console", (msg) => {
       if (msg.type() === "error") {
@@ -46,7 +42,7 @@ test.describe("FAKT — smoke tests", () => {
     const criticalErrors = errors.filter(
       (e) =>
         !e.includes("ResizeObserver") && // Non-critique, fréquent en dev
-        !e.includes("favicon"), // Favicon manquant toléré
+        !e.includes("favicon") // Favicon manquant toléré
     );
     expect(criticalErrors).toHaveLength(0);
   });

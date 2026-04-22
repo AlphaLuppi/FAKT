@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import React from "react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockInvoke = vi.fn().mockResolvedValue(null);
 
@@ -25,8 +25,8 @@ vi.mock("@fakt/ui", async (importOriginal) => {
   };
 });
 
-import { SettingsRoute } from "../Settings.js";
 import { MemoryRouter } from "react-router";
+import { SettingsRoute } from "../Settings.js";
 
 const mockWorkspace = {
   id: "ws-1",
@@ -74,8 +74,14 @@ describe("SettingsRoute — rendu et tabs", () => {
 
   it("les autres tabs ont aria-selected=false par défaut", () => {
     renderSettings();
-    expect(screen.getByRole("tab", { name: /claude cli/i })).toHaveAttribute("aria-selected", "false");
-    expect(screen.getByRole("tab", { name: /certificat/i })).toHaveAttribute("aria-selected", "false");
+    expect(screen.getByRole("tab", { name: /claude cli/i })).toHaveAttribute(
+      "aria-selected",
+      "false"
+    );
+    expect(screen.getByRole("tab", { name: /certificat/i })).toHaveAttribute(
+      "aria-selected",
+      "false"
+    );
   });
 
   it("bascule vers le tab CLI au clic", async () => {
@@ -85,7 +91,10 @@ describe("SettingsRoute — rendu et tabs", () => {
     await user.click(screen.getByRole("tab", { name: /claude cli/i }));
 
     await waitFor(() => {
-      expect(screen.getByRole("tab", { name: /claude cli/i })).toHaveAttribute("aria-selected", "true");
+      expect(screen.getByRole("tab", { name: /claude cli/i })).toHaveAttribute(
+        "aria-selected",
+        "true"
+      );
     });
   });
 
@@ -96,7 +105,10 @@ describe("SettingsRoute — rendu et tabs", () => {
     await user.click(screen.getByRole("tab", { name: /t.l.m.trie/i }));
 
     await waitFor(() => {
-      expect(screen.getByRole("tab", { name: /t.l.m.trie/i })).toHaveAttribute("aria-selected", "true");
+      expect(screen.getByRole("tab", { name: /t.l.m.trie/i })).toHaveAttribute(
+        "aria-selected",
+        "true"
+      );
     });
   });
 });
@@ -109,10 +121,13 @@ describe("SettingsRoute — tab Identité", () => {
   it("pré-remplit le champ nom avec le workspace après chargement", async () => {
     renderSettings();
     // invokeGetWorkspace est async — attendre le chargement
-    await waitFor(() => {
-      const nameInput = screen.getByLabelText(/nom ou raison/i) as HTMLInputElement;
-      expect(nameInput.value).toBe("Atelier Mercier");
-    }, { timeout: 2000 });
+    await waitFor(
+      () => {
+        const nameInput = screen.getByLabelText(/nom ou raison/i) as HTMLInputElement;
+        expect(nameInput.value).toBe("Atelier Mercier");
+      },
+      { timeout: 2000 }
+    );
   });
 });
 

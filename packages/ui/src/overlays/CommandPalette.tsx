@@ -1,6 +1,6 @@
+import { tokens } from "@fakt/design-tokens";
 import type { ChangeEvent, KeyboardEvent, ReactElement, ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { tokens } from "@fakt/design-tokens";
 import { Overlay } from "./Overlay.js";
 
 export interface CommandItem {
@@ -59,7 +59,7 @@ export function CommandPalette({
       onSelect(item);
       onClose();
     },
-    [onSelect, onClose],
+    [onSelect, onClose]
   );
 
   const onKey = (e: KeyboardEvent<HTMLInputElement>): void => {
@@ -82,7 +82,6 @@ export function CommandPalette({
     <Overlay open={open} onClose={onClose}>
       <div className="fakt-cmdpalette" onClick={(e) => e.stopPropagation()}>
         <input
-          autoFocus
           className="fakt-cmdpalette__search"
           placeholder={placeholder}
           value={query}

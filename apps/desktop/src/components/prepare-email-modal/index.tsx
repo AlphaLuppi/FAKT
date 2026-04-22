@@ -1,16 +1,16 @@
-import type { ReactElement } from "react";
-import { useState, useEffect } from "react";
-import { invoke } from "@tauri-apps/api/core";
-import { Button, Modal, Input, Textarea, Select, toast } from "@fakt/ui";
-import type { SelectOption } from "@fakt/ui";
 import { tokens } from "@fakt/design-tokens";
-import { fr } from "@fakt/shared";
-import type { Quote, Invoice } from "@fakt/shared";
 import type { EmailTemplateKey } from "@fakt/email";
-import { renderTemplate, buildEml, buildMailtoUrl } from "@fakt/email";
-import { pdfApi } from "../../features/doc-editor/pdf-api.js";
-import type { RenderQuoteArgs, RenderInvoiceArgs } from "../../features/doc-editor/pdf-api.js";
+import { buildEml, buildMailtoUrl, renderTemplate } from "@fakt/email";
+import { fr } from "@fakt/shared";
+import type { Invoice, Quote } from "@fakt/shared";
+import { Button, Input, Modal, Select, Textarea, toast } from "@fakt/ui";
+import type { SelectOption } from "@fakt/ui";
+import { invoke } from "@tauri-apps/api/core";
+import type { ReactElement } from "react";
+import { useEffect, useState } from "react";
 import { api } from "../../api/index.js";
+import { pdfApi } from "../../features/doc-editor/pdf-api.js";
+import type { RenderInvoiceArgs, RenderQuoteArgs } from "../../features/doc-editor/pdf-api.js";
 
 type DocType = "quote" | "invoice";
 
@@ -49,10 +49,7 @@ const TEMPLATE_OPTIONS: SelectOption[] = [
   { value: "thanks", label: fr.email.templates.thanks },
 ];
 
-function defaultTemplate(
-  docType: DocType,
-  status: string,
-): EmailTemplateKey {
+function defaultTemplate(docType: DocType, status: string): EmailTemplateKey {
   if (docType === "quote") return "quote_sent";
   if (status === "overdue") return "reminder";
   if (status === "paid") return "thanks";
@@ -79,8 +76,8 @@ export function PrepareEmailModal(props: PrepareEmailModalProps): ReactElement {
   const { open, onClose, docType, clientName, clientEmail, workspaceName, workspaceEmail } = props;
   const doc = props.doc as Quote & Invoice;
 
-  const [templateKey, setTemplateKey] = useState<EmailTemplateKey>(
-    () => defaultTemplate(docType, doc.status),
+  const [templateKey, setTemplateKey] = useState<EmailTemplateKey>(() =>
+    defaultTemplate(docType, doc.status)
   );
   const [toEmail, setToEmail] = useState(clientEmail ?? "");
   const [subject, setSubject] = useState("");
@@ -144,7 +141,9 @@ export function PrepareEmailModal(props: PrepareEmailModalProps): ReactElement {
         if (docType === "quote") {
           pdfBytes = await pdfApi.renderQuote((props as PrepareEmailModalQuoteProps).renderArgs);
         } else {
-          pdfBytes = await pdfApi.renderInvoice((props as PrepareEmailModalInvoiceProps).renderArgs);
+          pdfBytes = await pdfApi.renderInvoice(
+            (props as PrepareEmailModalInvoiceProps).renderArgs
+          );
         }
       } catch {
         throw new Error(fr.email.errors.pdfFailed);
@@ -153,7 +152,7 @@ export function PrepareEmailModal(props: PrepareEmailModalProps): ReactElement {
       const b64 = btoa(
         Array.from(pdfBytes)
           .map((b) => String.fromCharCode(b))
-          .join(""),
+          .join("")
       );
       const filename = `${doc.number ?? "document"}.pdf`;
 
@@ -295,7 +294,15 @@ export function PrepareEmailModal(props: PrepareEmailModalProps): ReactElement {
             fontSize: tokens.fontSize.sm,
           }}
         >
-          <span style={{ fontWeight: Number(tokens.fontWeight.bold), textTransform: "uppercase", letterSpacing: "0.06em", fontSize: tokens.fontSize.xs, color: tokens.color.muted }}>
+          <span
+            style={{
+              fontWeight: Number(tokens.fontWeight.bold),
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+              fontSize: tokens.fontSize.xs,
+              color: tokens.color.muted,
+            }}
+          >
             {fr.email.fields.attachment}
           </span>
           <span>{doc.number ?? fr.quotes.labels.numberPending}.pdf</span>
@@ -345,9 +352,7 @@ export function PrepareEmailModal(props: PrepareEmailModalProps): ReactElement {
 
 async function saveEmlTemp(content: string, docNumber: string): Promise<string> {
   const filename = `${docNumber}-${Date.now()}.eml`;
-  const tmpPath = await invoke<string>("plugin:path|temp_dir").catch(
-    () => "/tmp",
-  );
+  const tmpPath = await invoke<string>("plugin:path|temp_dir").catch(() => "/tmp");
   const fullPath = `${tmpPath}/fakt-drafts/${filename}`;
 
   await invoke("plugin:fs|create_dir", {

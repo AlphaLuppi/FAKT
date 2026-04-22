@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { createTestDb, seedWorkspace, WORKSPACE_ID } from "./helpers.js";
-import { listActivity, insertActivity } from "../queries/activity.js";
+import { beforeEach, describe, expect, it } from "vitest";
+import { insertActivity, listActivity } from "../queries/activity.js";
+import { WORKSPACE_ID, createTestDb, seedWorkspace } from "./helpers.js";
 import type { TestDb } from "./helpers.js";
 
 let db: TestDb;

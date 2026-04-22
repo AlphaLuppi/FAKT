@@ -1,14 +1,11 @@
+import { tokens } from "@fakt/design-tokens";
+import { formatFrDateLong, fr } from "@fakt/shared";
+import type { SignatureEvent } from "@fakt/shared";
+import { Button, Chip, StatusPill } from "@fakt/ui";
 import type { ReactElement } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
-import { tokens } from "@fakt/design-tokens";
-import { Button, Chip, StatusPill } from "@fakt/ui";
-import { fr, formatFrDateLong } from "@fakt/shared";
-import type { SignatureEvent } from "@fakt/shared";
-import {
-  signatureApi,
-  type VerifyReport,
-} from "../../features/doc-editor/signature-api.js";
+import { type VerifyReport, signatureApi } from "../../features/doc-editor/signature-api.js";
 
 function hashOrDash(v: string | null | undefined): string {
   return v ?? "—";
@@ -123,10 +120,7 @@ export function VerifyRoute(): ReactElement {
   const downloadSignedPdf = async (): Promise<void> => {
     if (!report) return;
     try {
-      const bytes = await signatureApi.getSignedPdf(
-        report.documentType,
-        report.documentId,
-      );
+      const bytes = await signatureApi.getSignedPdf(report.documentType, report.documentId);
       if (!bytes) return;
       const blob = new Blob([bytes as BlobPart], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
@@ -194,7 +188,7 @@ export function VerifyRoute(): ReactElement {
                 void navigate(
                   report.documentType === "quote"
                     ? `/quotes/${report.documentId}`
-                    : `/invoices/${report.documentId}`,
+                    : `/invoices/${report.documentId}`
                 );
               } else {
                 void navigate(-1);
@@ -256,23 +250,10 @@ export function VerifyRoute(): ReactElement {
             }}
           >
             <SectionTitle>{fr.verify.sections.document}</SectionTitle>
-            <Row
-              label={fr.verify.fields.documentType}
-              value={report.documentType}
-            />
-            <Row
-              label={fr.verify.fields.documentNumber}
-              value={report.documentId}
-              mono
-            />
-            <Row
-              label={fr.verify.fields.signerName}
-              value={report.signerName}
-            />
-            <Row
-              label={fr.verify.fields.signerEmail}
-              value={report.signerEmail}
-            />
+            <Row label={fr.verify.fields.documentType} value={report.documentType} />
+            <Row label={fr.verify.fields.documentNumber} value={report.documentId} mono />
+            <Row label={fr.verify.fields.signerName} value={report.signerName} />
+            <Row label={fr.verify.fields.signerEmail} value={report.signerEmail} />
           </section>
 
           <section
@@ -292,14 +273,8 @@ export function VerifyRoute(): ReactElement {
               label={fr.verify.fields.tsaTimestamp}
               value={formatFrDateLong(Date.parse(report.timestampIso) || Date.now())}
             />
-            <Row
-              label={fr.verify.fields.tsaProvider}
-              value={report.tsaProvider ?? "—"}
-            />
-            <Row
-              label={fr.verify.fields.algorithm}
-              value={fr.verify.algorithmValue}
-            />
+            <Row label={fr.verify.fields.tsaProvider} value={report.tsaProvider ?? "—"} />
+            <Row label={fr.verify.fields.algorithm} value={fr.verify.algorithmValue} />
             <div style={{ display: "flex", gap: tokens.spacing[2] }}>
               <Chip tone="accent">
                 {fr.verify.levelStrict} : PAdES-{report.padesLevel}
@@ -379,35 +354,17 @@ export function VerifyRoute(): ReactElement {
               <SectionTitle>{fr.verify.sections.chain}</SectionTitle>
               <StatusPill
                 status={report.chainOk ? "paid" : "cancelled"}
-                label={
-                  report.chainOk
-                    ? fr.verify.status.ok
-                    : fr.verify.status.broken
-                }
+                label={report.chainOk ? fr.verify.status.ok : fr.verify.status.broken}
               />
             </div>
-            <Row
-              label={fr.verify.fields.chainLength}
-              value={String(report.chainLength)}
-            />
+            <Row label={fr.verify.fields.chainLength} value={String(report.chainLength)} />
             {brokenIndices.length > 0 && (
-              <Row
-                label={fr.verify.fields.chainBrokenIndices}
-                value={brokenIndices.join(", ")}
-              />
+              <Row label={fr.verify.fields.chainBrokenIndices} value={brokenIndices.join(", ")} />
             )}
             {eventRow && (
               <>
-                <Row
-                  label={fr.audit.fields.hashBefore}
-                  value={eventRow.docHashBefore}
-                  mono
-                />
-                <Row
-                  label={fr.audit.fields.hashAfter}
-                  value={eventRow.docHashAfter}
-                  mono
-                />
+                <Row label={fr.audit.fields.hashBefore} value={eventRow.docHashBefore} mono />
+                <Row label={fr.audit.fields.hashAfter} value={eventRow.docHashAfter} mono />
                 {eventRow.previousEventHash !== null && (
                   <Row
                     label={fr.audit.fields.previousEventHash}
@@ -425,8 +382,7 @@ export function VerifyRoute(): ReactElement {
                   color: tokens.color.muted,
                 }}
               >
-                {fr.audit.title} · {chain.length}{" "}
-                {chain.length > 1 ? "événements" : "événement"}
+                {fr.audit.title} · {chain.length} {chain.length > 1 ? "événements" : "événement"}
               </span>
             </div>
           </section>

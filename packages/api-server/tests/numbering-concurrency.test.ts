@@ -6,7 +6,7 @@
  * Si un agent modifie le code-path pour lire last_sequence hors transaction, ce test casse.
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { createTestApp } from "./helpers.js";
 
 describe("POST /api/numbering/next — concurrence 100× parallèles (CGI art. 289)", () => {
@@ -71,12 +71,8 @@ describe("POST /api/numbering/next — concurrence 100× parallèles (CGI art. 2
       formatted: string;
     }>;
 
-    const qSeqs = payloads
-      .filter((_, i) => i % 2 === 0)
-      .map((p) => p.sequence);
-    const iSeqs = payloads
-      .filter((_, i) => i % 2 === 1)
-      .map((p) => p.sequence);
+    const qSeqs = payloads.filter((_, i) => i % 2 === 0).map((p) => p.sequence);
+    const iSeqs = payloads.filter((_, i) => i % 2 === 1).map((p) => p.sequence);
 
     expect(new Set(qSeqs).size).toBe(250);
     expect(new Set(iSeqs).size).toBe(250);

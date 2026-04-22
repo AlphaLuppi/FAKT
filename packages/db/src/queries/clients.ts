@@ -3,10 +3,10 @@
  * Soft delete uniquement (archived_at) — contrainte légale archivage documents liés.
  */
 
-import { eq, and, like, isNull, isNotNull, or, asc } from "drizzle-orm";
+import type { Client } from "@fakt/shared";
+import { and, asc, eq, isNotNull, isNull, like, or } from "drizzle-orm";
 import type { DbInstance } from "../adapter.js";
 import { clients } from "../schema/index.js";
-import type { Client } from "@fakt/shared";
 
 // ─── Input types ──────────────────────────────────────────────────────────────
 
@@ -79,7 +79,8 @@ export function listClients(db: DbInstance, input: ListClientsInput): Client[] {
   if (search) {
     const pattern = `%${search}%`;
     conditions.push(
-      or(like(clients.name, pattern), like(clients.email, pattern)) ?? eq(clients.workspaceId, workspaceId)
+      or(like(clients.name, pattern), like(clients.email, pattern)) ??
+        eq(clients.workspaceId, workspaceId)
     );
   }
 
@@ -146,12 +147,7 @@ export function updateClient(db: DbInstance, id: string, input: UpdateClientInpu
   }
   if ("note" in input) updates.note = input.note ?? null;
 
-  const row = db
-    .update(clients)
-    .set(updates)
-    .where(eq(clients.id, id))
-    .returning()
-    .get();
+  const row = db.update(clients).set(updates).where(eq(clients.id, id)).returning().get();
 
   if (!row) throw new Error(`updateClient: client not found id=${id}`);
   return rowToClient(row);

@@ -1,14 +1,21 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { createTestDb, seedWorkspace, seedClient, WORKSPACE_ID, CLIENT_ID_1, CLIENT_ID_2 } from "./helpers.js";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
-  listClients,
-  getClient,
   createClient,
-  updateClient,
-  softDeleteClient,
+  getClient,
+  listClients,
   restoreClient,
   searchClients,
+  softDeleteClient,
+  updateClient,
 } from "../queries/clients.js";
+import {
+  CLIENT_ID_1,
+  CLIENT_ID_2,
+  WORKSPACE_ID,
+  createTestDb,
+  seedClient,
+  seedWorkspace,
+} from "./helpers.js";
 import type { TestDb } from "./helpers.js";
 
 let db: TestDb;
@@ -55,7 +62,12 @@ describe("createClient", () => {
   });
 
   it("updateClient avec firstCollaboration null", () => {
-    createClient(db, { id: CLIENT_ID_1, workspaceId: WORKSPACE_ID, name: "X", firstCollaboration: Date.now() });
+    createClient(db, {
+      id: CLIENT_ID_1,
+      workspaceId: WORKSPACE_ID,
+      name: "X",
+      firstCollaboration: Date.now(),
+    });
     const updated = updateClient(db, CLIENT_ID_1, { firstCollaboration: null });
     expect(updated.firstCollaboration).toBeNull();
   });
@@ -138,7 +150,7 @@ describe("softDeleteClient", () => {
     softDeleteClient(db, CLIENT_ID_1);
     const client = getClient(db, CLIENT_ID_1);
     expect(client?.archivedAt).toBeTypeOf("number");
-    expect(client!.archivedAt).toBeGreaterThan(0);
+    expect(client?.archivedAt).toBeGreaterThan(0);
   });
 
   it("lève une erreur si déjà archivé", () => {
@@ -174,8 +186,18 @@ describe("restoreClient", () => {
 
 describe("searchClients", () => {
   beforeEach(() => {
-    createClient(db, { id: CLIENT_ID_1, workspaceId: WORKSPACE_ID, name: "CASA MIA", email: "casa@test.fr" });
-    createClient(db, { id: CLIENT_ID_2, workspaceId: WORKSPACE_ID, name: "Maison Berthe", email: "berthe@test.fr" });
+    createClient(db, {
+      id: CLIENT_ID_1,
+      workspaceId: WORKSPACE_ID,
+      name: "CASA MIA",
+      email: "casa@test.fr",
+    });
+    createClient(db, {
+      id: CLIENT_ID_2,
+      workspaceId: WORKSPACE_ID,
+      name: "Maison Berthe",
+      email: "berthe@test.fr",
+    });
   });
 
   it("retourne les clients correspondant à la recherche", () => {

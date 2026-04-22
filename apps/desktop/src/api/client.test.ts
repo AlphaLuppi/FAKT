@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiClient, ApiError, getApiClient, setApiClient } from "./client.js";
 
 describe("ApiClient", () => {
@@ -48,7 +48,7 @@ describe("ApiClient", () => {
 
   it("mappe 404 vers ApiError code NOT_FOUND", async () => {
     fetchMock.mockResolvedValueOnce(
-      jsonResponse(404, { error: { code: "NOT_FOUND", message: "missing" } }),
+      jsonResponse(404, { error: { code: "NOT_FOUND", message: "missing" } })
     );
     const client = new ApiClient("http://x", "t");
     await expect(client.get("/api/clients/missing")).rejects.toMatchObject({
@@ -62,7 +62,7 @@ describe("ApiClient", () => {
     fetchMock.mockResolvedValueOnce(
       jsonResponse(422, {
         error: { code: "VALIDATION_ERROR", message: "invalid", details: { foo: "bar" } },
-      }),
+      })
     );
     const client = new ApiClient("http://x", "t");
     try {
@@ -78,7 +78,7 @@ describe("ApiClient", () => {
 
   it("mappe 409 CONFLICT", async () => {
     fetchMock.mockResolvedValueOnce(
-      jsonResponse(409, { error: { code: "CONFLICT", message: "dup" } }),
+      jsonResponse(409, { error: { code: "CONFLICT", message: "dup" } })
     );
     const client = new ApiClient("http://x", "t");
     await expect(client.post("/api/workspace", {})).rejects.toMatchObject({ code: "CONFLICT" });
@@ -86,7 +86,7 @@ describe("ApiClient", () => {
 
   it("mappe 401 UNAUTHORIZED", async () => {
     fetchMock.mockResolvedValueOnce(
-      jsonResponse(401, { error: { code: "UNAUTHORIZED", message: "nope" } }),
+      jsonResponse(401, { error: { code: "UNAUTHORIZED", message: "nope" } })
     );
     const client = new ApiClient("http://x", "t");
     await expect(client.get("/api/clients")).rejects.toMatchObject({ code: "UNAUTHORIZED" });
@@ -118,7 +118,7 @@ describe("ApiClient", () => {
       new Response(null, {
         status: 200,
         headers: { "Content-Length": "0" },
-      }),
+      })
     );
     const client = new ApiClient("http://x", "t");
     const res = await client.post<void>("/api/ping");
@@ -130,7 +130,7 @@ describe("ApiClient", () => {
       new Response("", {
         status: 200,
         headers: { "Content-Type": "application/json" },
-      }),
+      })
     );
     const client = new ApiClient("http://x", "t");
     const res = await client.post<void>("/api/ping");

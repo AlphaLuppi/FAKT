@@ -1,5 +1,5 @@
+import { normalizeSiret, validateSiret } from "@fakt/legal";
 import { z } from "zod";
-import { validateSiret, normalizeSiret } from "@fakt/legal";
 
 /** Validation IBAN France (FR76…, 27 caractères). */
 function isValidIban(raw: string): boolean {
@@ -18,7 +18,7 @@ function isValidIban(raw: string): boolean {
   // Modulo 97 sur grand entier
   let remainder = 0;
   for (const char of numeric) {
-    remainder = (remainder * 10 + parseInt(char, 10)) % 97;
+    remainder = (remainder * 10 + Number.parseInt(char, 10)) % 97;
   }
   return remainder === 1;
 }
@@ -31,10 +31,7 @@ export const identitySchema = z.object({
   siret: z
     .string()
     .min(14, "Le SIRET doit contenir 14 chiffres")
-    .refine(
-      (v) => validateSiret(normalizeSiret(v)),
-      "SIRET invalide (clé Luhn incorrecte)"
-    ),
+    .refine((v) => validateSiret(normalizeSiret(v)), "SIRET invalide (clé Luhn incorrecte)"),
   address: z.string().min(5, "L'adresse est trop courte"),
   email: z.string().email("Adresse email invalide"),
   iban: z

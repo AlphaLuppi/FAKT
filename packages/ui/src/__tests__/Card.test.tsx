@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
 import { Card } from "../layout/Card.js";
 
 describe("Card", () => {
@@ -7,7 +7,7 @@ describe("Card", () => {
     render(
       <Card eyebrow="KPI" title="CA SIGNÉ">
         <span>content</span>
-      </Card>,
+      </Card>
     );
     expect(screen.getByText("KPI")).toBeInTheDocument();
     expect(screen.getByText("CA SIGNÉ")).toBeInTheDocument();

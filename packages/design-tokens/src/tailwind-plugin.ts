@@ -5,7 +5,9 @@ import { tokens } from "./tokens.js";
  * Compatible Tailwind v4 (addBase API).
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function brutalInvoicePlugin({ addBase }: { addBase: (base: Record<string, unknown>) => void }): void {
+export function brutalInvoicePlugin({
+  addBase,
+}: { addBase: (base: Record<string, unknown>) => void }): void {
   addBase({
     ":root": {
       "--ink": tokens.color.ink,

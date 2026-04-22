@@ -9,10 +9,10 @@
  * `sys.inputs` change de nom entre versions).
  */
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, writeFileSync, readFileSync, existsSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
@@ -26,7 +26,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const templatesDir = resolve(here, "..", "templates");
 
 function hasTypst(): boolean {
-  const binary = process.env["FAKT_TYPST_PATH"] ?? "typst";
+  const binary = process.env.FAKT_TYPST_PATH ?? "typst";
   const r = spawnSync(binary, ["--version"], { stdio: "pipe" });
   return r.status === 0;
 }
@@ -45,7 +45,7 @@ describe.skipIf(!shouldRun)("Intégration Typst CLI", () => {
     writeFileSync(ctxPath, JSON.stringify(ctx));
 
     const out = resolve(tmp, "out.pdf");
-    const binary = process.env["FAKT_TYPST_PATH"] ?? "typst";
+    const binary = process.env.FAKT_TYPST_PATH ?? "typst";
     const r = spawnSync(
       binary,
       [
@@ -57,7 +57,7 @@ describe.skipIf(!shouldRun)("Intégration Typst CLI", () => {
         resolve(templatesDir, "quote.typ"),
         out,
       ],
-      { stdio: "pipe", cwd: templatesDir },
+      { stdio: "pipe", cwd: templatesDir }
     );
 
     // Cleanup JSON temp file before assertions (pattern "finally").
@@ -88,7 +88,7 @@ describe.skipIf(!shouldRun)("Intégration Typst CLI", () => {
     writeFileSync(ctxPath, JSON.stringify(ctx));
 
     const out = resolve(tmp, "out.pdf");
-    const binary = process.env["FAKT_TYPST_PATH"] ?? "typst";
+    const binary = process.env.FAKT_TYPST_PATH ?? "typst";
     const r = spawnSync(
       binary,
       [
@@ -100,7 +100,7 @@ describe.skipIf(!shouldRun)("Intégration Typst CLI", () => {
         resolve(templatesDir, "invoice.typ"),
         out,
       ],
-      { stdio: "pipe", cwd: templatesDir },
+      { stdio: "pipe", cwd: templatesDir }
     );
 
     try {

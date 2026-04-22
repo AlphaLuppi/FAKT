@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { Table } from "../data-display/Table.js";
 
 interface Row {
@@ -49,23 +49,14 @@ describe("Table", () => {
   });
 
   it("filtre avec filterText", () => {
-    render(
-      <Table rows={ROWS} columns={COLS} getRowId={(r) => r.id} filterText="char" />,
-    );
+    render(<Table rows={ROWS} columns={COLS} getRowId={(r) => r.id} filterText="char" />);
     expect(screen.getByText("Charlie")).toBeInTheDocument();
     expect(screen.queryByText("Alpha")).not.toBeInTheDocument();
   });
 
   it("déclenche onRowClick", () => {
     const onRowClick = vi.fn();
-    render(
-      <Table
-        rows={ROWS}
-        columns={COLS}
-        getRowId={(r) => r.id}
-        onRowClick={onRowClick}
-      />,
-    );
+    render(<Table rows={ROWS} columns={COLS} getRowId={(r) => r.id} onRowClick={onRowClick} />);
     fireEvent.click(screen.getByText("Bravo"));
     expect(onRowClick).toHaveBeenCalledWith(expect.objectContaining({ name: "Bravo" }));
   });
@@ -83,7 +74,7 @@ describe("Table", () => {
         getRowId={(r) => r.id}
         virtualThreshold={100}
         rowsPerPage={50}
-      />,
+      />
     );
     expect(screen.getByText(/page 1 \/ 3/i)).toBeInTheDocument();
   });

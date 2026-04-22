@@ -1,10 +1,10 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import type { ReactElement } from "react";
+import type { Client } from "@fakt/shared";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ReactElement } from "react";
 import { MemoryRouter } from "react-router";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ClientsRoute } from "../index.js";
-import type { Client } from "@fakt/shared";
 
 const mockClients: Client[] = [
   {

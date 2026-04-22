@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { Overlay } from "../overlays/Overlay.js";
 
 describe("Overlay", () => {
@@ -13,7 +13,7 @@ describe("Overlay", () => {
     render(
       <Overlay open onClose={onClose}>
         <div>content</div>
-      </Overlay>,
+      </Overlay>
     );
     fireEvent.click(screen.getByRole("dialog"));
     expect(onClose).toHaveBeenCalled();

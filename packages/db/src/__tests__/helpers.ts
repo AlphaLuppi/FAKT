@@ -3,21 +3,18 @@
  * Crée une DB SQLite :memory: avec le schéma complet + triggers.
  */
 
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import * as schema from "../schema/index.js";
-import { readFileSync } from "fs";
-import { fileURLToPath } from "url";
-import { dirname, join } from "path";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const TRIGGERS_SQL = readFileSync(
-  join(__dirname, "../migrations/0001_triggers.sql"),
-  "utf-8"
-);
+const TRIGGERS_SQL = readFileSync(join(__dirname, "../migrations/0001_triggers.sql"), "utf-8");
 
 /**
  * DDL des tables — reflète schema/index.ts.
@@ -59,7 +56,7 @@ const SCHEMA_DDL = [
     created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
     UNIQUE(workspace_id, email)
   )`,
-  `CREATE INDEX IF NOT EXISTS clients_name_idx ON clients(name)`,
+  "CREATE INDEX IF NOT EXISTS clients_name_idx ON clients(name)",
   `CREATE TABLE IF NOT EXISTS services (
     id TEXT PRIMARY KEY,
     workspace_id TEXT NOT NULL REFERENCES workspaces(id),
@@ -98,8 +95,8 @@ const SCHEMA_DDL = [
     updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
     UNIQUE(workspace_id, year, sequence)
   )`,
-  `CREATE INDEX IF NOT EXISTS quotes_status_idx ON quotes(status)`,
-  `CREATE INDEX IF NOT EXISTS quotes_client_idx ON quotes(client_id)`,
+  "CREATE INDEX IF NOT EXISTS quotes_status_idx ON quotes(status)",
+  "CREATE INDEX IF NOT EXISTS quotes_client_idx ON quotes(client_id)",
   `CREATE TABLE IF NOT EXISTS quote_items (
     id TEXT PRIMARY KEY,
     quote_id TEXT NOT NULL REFERENCES quotes(id) ON DELETE CASCADE,
@@ -111,7 +108,7 @@ const SCHEMA_DDL = [
     line_total_cents INTEGER NOT NULL,
     service_id TEXT REFERENCES services(id)
   )`,
-  `CREATE INDEX IF NOT EXISTS quote_items_pos_idx ON quote_items(quote_id, position)`,
+  "CREATE INDEX IF NOT EXISTS quote_items_pos_idx ON quote_items(quote_id, position)",
   `CREATE TABLE IF NOT EXISTS invoices (
     id TEXT PRIMARY KEY,
     workspace_id TEXT NOT NULL REFERENCES workspaces(id),
@@ -136,8 +133,8 @@ const SCHEMA_DDL = [
     updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
     UNIQUE(workspace_id, year, sequence)
   )`,
-  `CREATE INDEX IF NOT EXISTS invoices_status_idx ON invoices(status)`,
-  `CREATE INDEX IF NOT EXISTS invoices_due_idx ON invoices(due_date)`,
+  "CREATE INDEX IF NOT EXISTS invoices_status_idx ON invoices(status)",
+  "CREATE INDEX IF NOT EXISTS invoices_due_idx ON invoices(due_date)",
   `CREATE TABLE IF NOT EXISTS invoice_items (
     id TEXT PRIMARY KEY,
     invoice_id TEXT NOT NULL REFERENCES invoices(id) ON DELETE CASCADE,
@@ -165,8 +162,8 @@ const SCHEMA_DDL = [
     tsa_response TEXT,
     tsa_provider TEXT
   )`,
-  `CREATE INDEX IF NOT EXISTS sigevents_doc_idx ON signature_events(document_type, document_id)`,
-  `CREATE INDEX IF NOT EXISTS sigevents_prev_idx ON signature_events(previous_event_hash)`,
+  "CREATE INDEX IF NOT EXISTS sigevents_doc_idx ON signature_events(document_type, document_id)",
+  "CREATE INDEX IF NOT EXISTS sigevents_prev_idx ON signature_events(previous_event_hash)",
   `CREATE TABLE IF NOT EXISTS activity (
     id TEXT PRIMARY KEY,
     workspace_id TEXT NOT NULL REFERENCES workspaces(id),
@@ -176,7 +173,7 @@ const SCHEMA_DDL = [
     payload TEXT,
     created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
   )`,
-  `CREATE INDEX IF NOT EXISTS activity_created_idx ON activity(created_at)`,
+  "CREATE INDEX IF NOT EXISTS activity_created_idx ON activity(created_at)",
   `CREATE TABLE IF NOT EXISTS backups (
     id TEXT PRIMARY KEY,
     path TEXT NOT NULL,
@@ -193,7 +190,7 @@ const SCHEMA_DDL = [
     signature_event_id TEXT NOT NULL,
     PRIMARY KEY (document_type, document_id)
   )`,
-  `CREATE INDEX IF NOT EXISTS signed_documents_event_idx ON signed_documents(signature_event_id)`,
+  "CREATE INDEX IF NOT EXISTS signed_documents_event_idx ON signed_documents(signature_event_id)",
 ];
 
 export type TestDb = BetterSQLite3Database<typeof schema>;

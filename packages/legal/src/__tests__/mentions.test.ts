@@ -1,11 +1,11 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
+  LATE_PAYMENT_PENALTY_RATE,
+  LUMP_SUM_INDEMNITY,
+  TVA_MENTION_MICRO,
+  buildLegalMentionsSnapshot,
   getMandatoryMentions,
   isVatExempt,
-  buildLegalMentionsSnapshot,
-  TVA_MENTION_MICRO,
-  LUMP_SUM_INDEMNITY,
-  LATE_PAYMENT_PENALTY_RATE,
 } from "../mentions.js";
 
 describe("TVA_MENTION_MICRO", () => {

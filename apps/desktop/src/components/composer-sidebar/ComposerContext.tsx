@@ -1,6 +1,6 @@
-import type { ReactNode, ReactElement } from "react";
-import { createContext, useCallback, useContext, useState } from "react";
 import type { DocContext } from "@fakt/ai";
+import type { ReactElement, ReactNode } from "react";
+import { createContext, useCallback, useContext, useState } from "react";
 
 interface ComposerSidebarContextValue {
   isOpen: boolean;
@@ -53,7 +53,18 @@ export function ComposerSidebarProvider({ children }: ComposerSidebarProviderPro
   }, []);
 
   return (
-    <ComposerSidebarContext.Provider value={{ isOpen, open, close, toggle, openWithContext, pendingContext, pendingMessage, clearPending }}>
+    <ComposerSidebarContext.Provider
+      value={{
+        isOpen,
+        open,
+        close,
+        toggle,
+        openWithContext,
+        pendingContext,
+        pendingMessage,
+        clearPending,
+      }}
+    >
       {children}
     </ComposerSidebarContext.Provider>
   );

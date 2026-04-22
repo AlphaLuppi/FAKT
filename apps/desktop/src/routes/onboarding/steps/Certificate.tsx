@@ -1,7 +1,7 @@
+import { fr } from "@fakt/shared";
+import { Button, toast } from "@fakt/ui";
 import type { ReactElement } from "react";
 import { useState } from "react";
-import { Button, toast } from "@fakt/ui";
-import { fr } from "@fakt/shared";
 import { useOnboarding } from "../context.js";
 import type { CertInfo } from "../context.js";
 
@@ -89,7 +89,9 @@ export function CertificateStep({ onNext, onPrev }: Props): ReactElement {
           <div style={{ textAlign: "center", padding: "32px 16px" }}>
             <Button
               size="lg"
-              onClick={() => { void handleGenerate(); }}
+              onClick={() => {
+                void handleGenerate();
+              }}
               disabled={generating || identity === null}
             >
               {generating ? fr.onboarding.step3.generating : fr.onboarding.step3.generate}
@@ -133,7 +135,13 @@ export function CertificateStep({ onNext, onPrev }: Props): ReactElement {
         </Button>
         <div style={{ display: "flex", gap: 10 }}>
           {certInfo !== null && (
-            <Button variant="ghost" onClick={() => { void handleGenerate(); }} disabled={generating}>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                void handleGenerate();
+              }}
+              disabled={generating}
+            >
               {fr.onboarding.step3.retry}
             </Button>
           )}
@@ -155,15 +163,26 @@ interface MetaRowProps {
 function MetaRow({ label, value, mono }: MetaRowProps): ReactElement {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 2, marginBottom: 8 }}>
-      <span style={{ color: "var(--muted)", fontFamily: "var(--font-ui)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", fontSize: 11 }}>
+      <span
+        style={{
+          color: "var(--muted)",
+          fontFamily: "var(--font-ui)",
+          fontWeight: 700,
+          textTransform: "uppercase",
+          letterSpacing: "0.06em",
+          fontSize: 11,
+        }}
+      >
         {label}
       </span>
-      <span style={{
-        color: "var(--ink)",
-        fontFamily: mono === true ? "var(--font-mono)" : "var(--font-ui)",
-        fontSize: "var(--t-sm)",
-        wordBreak: "break-all",
-      }}>
+      <span
+        style={{
+          color: "var(--ink)",
+          fontFamily: mono === true ? "var(--font-mono)" : "var(--font-ui)",
+          fontSize: "var(--t-sm)",
+          wordBreak: "break-all",
+        }}
+      >
         {value}
       </span>
     </div>

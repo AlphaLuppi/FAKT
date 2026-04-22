@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { uuidSchema, paginationSchema } from "./common.js";
+import { paginationSchema, uuidSchema } from "./common.js";
 
 export const insertActivitySchema = z.object({
   id: uuidSchema,

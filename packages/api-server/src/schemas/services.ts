@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { uuidSchema, paginationSchema, booleanStringSchema } from "./common.js";
+import { booleanStringSchema, paginationSchema, uuidSchema } from "./common.js";
 
 const unitEnum = z.enum(["forfait", "jour", "heure", "unité", "mois", "semaine"]);
 
@@ -8,9 +8,7 @@ const optionalDescription = z
   .optional()
   .transform((v) => (v === undefined ? undefined : v));
 
-const optionalTags = z
-  .union([z.array(z.string().min(1).max(50)).max(20), z.null()])
-  .optional();
+const optionalTags = z.union([z.array(z.string().min(1).max(50)).max(20), z.null()]).optional();
 
 export const createServiceSchema = z.object({
   id: uuidSchema,

@@ -1,11 +1,6 @@
-import type {
-  InputHTMLAttributes,
-  ReactElement,
-  ReactNode,
-  TextareaHTMLAttributes,
-} from "react";
-import { forwardRef } from "react";
 import { tokens } from "@fakt/design-tokens";
+import type { InputHTMLAttributes, ReactElement, ReactNode, TextareaHTMLAttributes } from "react";
+import { forwardRef } from "react";
 import { classNames } from "../utils/classNames.js";
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -16,9 +11,11 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   { label, hint, invalid, id, className, ...rest },
-  ref,
+  ref
 ): ReactElement {
-  const inputId = id ?? (typeof label === "string" ? `input-${label.replace(/\s+/g, "-").toLowerCase()}` : undefined);
+  const inputId =
+    id ??
+    (typeof label === "string" ? `input-${label.replace(/\s+/g, "-").toLowerCase()}` : undefined);
   return (
     <label
       htmlFor={inputId}
@@ -68,9 +65,13 @@ export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElemen
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function Textarea(
   { label, hint, invalid, id, className, ...rest },
-  ref,
+  ref
 ): ReactElement {
-  const areaId = id ?? (typeof label === "string" ? `textarea-${label.replace(/\s+/g, "-").toLowerCase()}` : undefined);
+  const areaId =
+    id ??
+    (typeof label === "string"
+      ? `textarea-${label.replace(/\s+/g, "-").toLowerCase()}`
+      : undefined);
   return (
     <label
       htmlFor={areaId}

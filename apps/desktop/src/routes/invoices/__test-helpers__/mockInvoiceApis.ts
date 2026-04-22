@@ -1,27 +1,27 @@
+import { formatInvoiceNumber } from "@fakt/core";
 import type {
-  Invoice,
-  InvoiceStatus,
-  InvoiceKind,
   Client,
+  Invoice,
+  InvoiceKind,
+  InvoiceStatus,
+  PaymentMethod,
+  Quote,
   Service,
   Workspace,
-  Quote,
-  PaymentMethod,
 } from "@fakt/shared";
-import { formatInvoiceNumber } from "@fakt/core";
 import {
-  setInvoiceApi,
-  setQuotesApi,
-  setClientsApi,
-  setPrestationsApi,
-  setWorkspaceApi,
-  setPdfApi,
-  type InvoiceApi,
-  type QuotesApi,
   type ClientsApi,
-  type PrestationsApi,
-  type WorkspaceApi,
+  type InvoiceApi,
   type PdfApi,
+  type PrestationsApi,
+  type QuotesApi,
+  type WorkspaceApi,
+  setClientsApi,
+  setInvoiceApi,
+  setPdfApi,
+  setPrestationsApi,
+  setQuotesApi,
+  setWorkspaceApi,
 } from "../../../features/doc-editor/index.js";
 
 export const FIXTURE_WORKSPACE: Workspace = {
@@ -154,9 +154,7 @@ export function installInvoiceMockApis(options?: InstallOptions): {
         results = results.filter((i) => i.quoteId === input.quoteId);
       }
       if (input?.status) {
-        const statuses = Array.isArray(input.status)
-          ? input.status
-          : [input.status];
+        const statuses = Array.isArray(input.status) ? input.status : [input.status];
         results = results.filter((i) => statuses.includes(i.status));
       }
       return results;
@@ -227,8 +225,7 @@ export function installInvoiceMockApis(options?: InstallOptions): {
       if (input.mode === "deposit30") {
         kind = "deposit";
         depositPercent = 30;
-        totalHtCents =
-          input.totalHtCents ?? Math.floor((quote.totalHtCents * 30) / 100);
+        totalHtCents = input.totalHtCents ?? Math.floor((quote.totalHtCents * 30) / 100);
       } else if (input.mode === "full") {
         kind = "total";
         totalHtCents = input.totalHtCents ?? quote.totalHtCents;
@@ -307,9 +304,7 @@ export function installInvoiceMockApis(options?: InstallOptions): {
       const existing = store.invoices.get(id);
       if (!existing) throw new Error(`update: invoice not found ${id}`);
       if (existing.status !== "draft") {
-        throw new Error(
-          "invoice is not in draft status — cannot update",
-        );
+        throw new Error("invoice is not in draft status — cannot update");
       }
       const updated: Invoice = {
         ...existing,
@@ -319,9 +314,7 @@ export function installInvoiceMockApis(options?: InstallOptions): {
         ...(input.paymentMethod !== undefined
           ? { paymentMethod: input.paymentMethod ?? null }
           : {}),
-        ...(input.totalHtCents !== undefined
-          ? { totalHtCents: input.totalHtCents }
-          : {}),
+        ...(input.totalHtCents !== undefined ? { totalHtCents: input.totalHtCents } : {}),
         items:
           input.items?.map((item, idx) => ({
             id: item.id,
@@ -342,9 +335,7 @@ export function installInvoiceMockApis(options?: InstallOptions): {
       const existing = store.invoices.get(id);
       if (!existing) throw new Error(`updateStatus: invoice not found ${id}`);
       if (status === "sent" && existing.status !== "draft") {
-        throw new Error(
-          `updateStatus: invalid transition ${existing.status} → ${status}`,
-        );
+        throw new Error(`updateStatus: invalid transition ${existing.status} → ${status}`);
       }
       const updated: Invoice = {
         ...existing,
@@ -358,9 +349,7 @@ export function installInvoiceMockApis(options?: InstallOptions): {
       const existing = store.invoices.get(id);
       if (!existing) throw new Error(`markPaid: invoice not found ${id}`);
       if (existing.status !== "sent" && existing.status !== "overdue") {
-        throw new Error(
-          `markPaid: invalid transition ${existing.status} → paid`,
-        );
+        throw new Error(`markPaid: invalid transition ${existing.status} → paid`);
       }
       const updated: Invoice = {
         ...existing,
@@ -376,9 +365,7 @@ export function installInvoiceMockApis(options?: InstallOptions): {
       const existing = store.invoices.get(id);
       if (!existing) throw new Error(`delete: invoice not found ${id}`);
       if (deleteGuardEnabled && existing.status !== "draft") {
-        throw new Error(
-          "cannot hard delete non-draft invoice (archival mandatory 10y CGI)",
-        );
+        throw new Error("cannot hard delete non-draft invoice (archival mandatory 10y CGI)");
       }
       store.invoices.delete(id);
     },
@@ -388,9 +375,7 @@ export function installInvoiceMockApis(options?: InstallOptions): {
     async list(input): Promise<Quote[]> {
       let results = Array.from(store.quotes.values());
       if (input?.status) {
-        const statuses = Array.isArray(input.status)
-          ? input.status
-          : [input.status];
+        const statuses = Array.isArray(input.status) ? input.status : [input.status];
         results = results.filter((q) => statuses.includes(q.status));
       }
       return results;

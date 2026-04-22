@@ -1,4 +1,4 @@
-import type { DocumentLine, Quote, Invoice } from "@fakt/shared";
+import type { DocumentLine, Invoice, Quote } from "@fakt/shared";
 import type { Cents, QuantityMilli } from "@fakt/shared";
 
 /**
@@ -6,19 +6,13 @@ import type { Cents, QuantityMilli } from "@fakt/shared";
  * Arithmétique entière pour éviter les erreurs de virgule flottante.
  * Quantité en millièmes : 1.5 j = 1500.
  */
-export function computeLineTotal(
-  quantityMilli: QuantityMilli,
-  unitPriceCents: Cents
-): Cents {
+export function computeLineTotal(quantityMilli: QuantityMilli, unitPriceCents: Cents): Cents {
   return Math.round((quantityMilli * unitPriceCents) / 1000);
 }
 
 /** Calcule le total HT d'un ensemble de lignes. */
 export function computeLinesTotal(lines: DocumentLine[]): Cents {
-  return lines.reduce(
-    (sum, line) => sum + computeLineTotal(line.quantity, line.unitPriceCents),
-    0
-  );
+  return lines.reduce((sum, line) => sum + computeLineTotal(line.quantity, line.unitPriceCents), 0);
 }
 
 /** Calcule le total HT d'un devis depuis ses lignes. */
@@ -55,10 +49,7 @@ export function computeBalanceAmount(totalHtCents: Cents, depositPaidCents: Cent
  * Vérifie que la somme des lignes est cohérente avec le total stocké.
  * Retourne le delta en centimes (0 = cohérent).
  */
-export function checkTotalConsistency(
-  storedTotalCents: Cents,
-  lines: DocumentLine[]
-): number {
+export function checkTotalConsistency(storedTotalCents: Cents, lines: DocumentLine[]): number {
   const computed = computeLinesTotal(lines);
   return computed - storedTotalCents;
 }

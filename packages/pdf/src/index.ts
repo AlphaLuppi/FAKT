@@ -20,13 +20,13 @@
 import { invoke } from "@tauri-apps/api/core";
 
 import {
-  buildInvoiceContext,
-  buildQuoteContext,
   type BuildInvoiceCtxArgs,
   type BuildQuoteCtxArgs,
   type InvoiceCtx,
   type PdfCtx,
   type QuoteCtx,
+  buildInvoiceContext,
+  buildQuoteContext,
 } from "./context-builder.ts";
 
 // Public re-exports.
@@ -62,10 +62,7 @@ export type DocType = "quote" | "invoice";
  * En cas d'erreur Typst (template invalide, dépassement de mémoire, etc.),
  * la commande Rust remonte un String d'erreur qu'on propage tel quel.
  */
-async function invokeRender(
-  docType: DocType,
-  ctxJson: string,
-): Promise<Uint8Array> {
+async function invokeRender(docType: DocType, ctxJson: string): Promise<Uint8Array> {
   const bytes = await invoke<number[]>("render_pdf", {
     docType,
     dataJson: ctxJson,
@@ -87,17 +84,13 @@ export async function renderPdf(ctx: PdfCtx): Promise<Uint8Array> {
 // ─── API publique : render directement depuis un DTO métier ──────────────────
 
 /** Rend un devis en PDF à partir d'un QuoteInput + client + workspace. */
-export async function renderQuotePdf(
-  args: BuildQuoteCtxArgs,
-): Promise<Uint8Array> {
+export async function renderQuotePdf(args: BuildQuoteCtxArgs): Promise<Uint8Array> {
   const ctx: QuoteCtx = buildQuoteContext(args);
   return renderPdf(ctx);
 }
 
 /** Rend une facture en PDF à partir d'un InvoiceInput + client + workspace. */
-export async function renderInvoicePdf(
-  args: BuildInvoiceCtxArgs,
-): Promise<Uint8Array> {
+export async function renderInvoicePdf(args: BuildInvoiceCtxArgs): Promise<Uint8Array> {
   const ctx: InvoiceCtx = buildInvoiceContext(args);
   return renderPdf(ctx);
 }

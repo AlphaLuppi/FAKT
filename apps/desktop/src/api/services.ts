@@ -1,4 +1,4 @@
-import type { Service, DocumentUnit, Cents } from "@fakt/shared";
+import type { Cents, DocumentUnit, Service } from "@fakt/shared";
 import { getApiClient } from "./client.js";
 
 export interface ListServicesInput {
