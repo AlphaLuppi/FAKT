@@ -57,6 +57,13 @@ jobs:
         working-directory: apps/desktop
         run: bun run build
 
+      # build.rs Tauri vérifie l'existence du binaire sidecar déclaré dans
+      # tauri.conf.json bundle.externalBin AVANT cargo check. Sans ce build,
+      # cargo check échoue en "resource path binaries/fakt-api-<triple> doesn't exist".
+      # On compile uniquement le target natif du runner (pas --all) pour garder le job rapide.
+      - name: Build sidecar api-server (target natif runner)
+        run: bun run packages/api-server/scripts/build-sidecar.ts
+
       - name: Cargo check (backend Tauri)
         working-directory: apps/desktop/src-tauri
         run: cargo check --locked
