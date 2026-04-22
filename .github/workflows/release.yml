@@ -72,7 +72,7 @@ jobs:
         run: bun run packages/api-server/scripts/build-sidecar.ts --all
 
       - name: Build and release with tauri-action
-        uses: tauri-apps/tauri-action@v2
+        uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
