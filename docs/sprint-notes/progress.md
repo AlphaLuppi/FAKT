@@ -91,7 +91,7 @@ Agents :
 - `pm-acceptance` : DoD v0.1 cochée ou non, cohérence spec Phase 1
 - `docs-reviewer` : README, CHANGELOG, architecture.md à jour, pas de mentions obsolètes
 
-- [ ] Team créée
+- [x] Team créée
 - [ ] Tous agents terminés
 - [ ] `docs/sprint-notes/v01-review-findings.md` compilé avec tous les findings priorisés
 - [ ] Team shutdown
@@ -155,7 +155,8 @@ Agents dynamiques : un par groupe de findings P0/P1 (P2/P3 → dettes v0.1.1). R
 | Nom | Phase | Lead | Status | Créée | Terminée |
 |---|---|---|---|---|---|
 | fakt-phase1-design | 1 | lead-orchestrator | closed | 2026-04-22 | 2026-04-22 |
-| fakt-phase2-build | 2 | lead-orchestrator | active (Wave 1) | 2026-04-22 | — |
+| fakt-phase2-build | 2 | lead-orchestrator | closed (8 tracks) | 2026-04-22 | 2026-04-22 |
+| fakt-phase3-review | 3 | lead-orchestrator | active (6 agents spawned) | 2026-04-22 | — |
 
 Agents Phase 2 Wave 1 en arrière-plan (5 parallèles) :
 - `track-alpha` → scaffold `packages/api-server/` + endpoints workspace/clients/settings (~14 endpoints)
