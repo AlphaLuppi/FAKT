@@ -144,6 +144,36 @@ entrées ci-dessous fusionnent le MVP initial et le refacto pré-tag.
   `apps/desktop/src-tauri/capabilities/default.json`. Fix crashs runtime silencieux sur
   email draft (`plugin:fs|write_text_file`) et archive ZIP (`plugin:dialog|save`).
 
+#### Phase 4 pre-tag security + legal + UX fixes (2026-04-22)
+
+Review exhaustive Phase 3 + fixes Phase 4 sur `docs/sprint-notes/v01-review-findings.md`.
+12 P0 + 11 P1 release-blocking fixés avant tag :
+
+**Security (5 P0 · commit `1d96a43`)**
+- **Audit chain hash exhaustif** : `compute_self_hash()` inclut désormais `previous_event_hash` + tous les champs métier (`document_type`, `document_id`, `signer_name`, `doc_hash_before`, `ip_address`, `user_agent`, `signature_png_base64`, `tsa_response_base64`). Tampering rétroactif détecté par `verify_chain`.
+- **Command injection Windows** : `dispatch_open` utilise `rundll32.exe url.dll,FileProtocolHandler` au lieu de `cmd /C start` (fin du shell parsing `& | < >`).
+- **Path traversal** : `store_signed_pdf` / `load_signed_pdf` valident `doc_id` et `doc_type` via regex `^[A-Za-z0-9_-]{1,64}$` + `canonicalize()` + `starts_with(signed_dir)`.
+- **TSA URLs HTTPS** : `http://timestamp.digicert.com` et `sectigo.com` → HTTPS (élimine le MITM sur l'horodatage).
+- **CSP alignée** : `connect-src` inclut les 3 TSA endpoints HTTPS (freetsa + digicert + sectigo).
+
+**Bugs-legal (3 P0 · commit `8ab7ce8`)**
+- **`from-quote balance` filtre les acomptes légalement actifs** : `WHERE status IN (sent, paid, overdue)` — les acomptes `cancelled` ou `draft` n'affectent plus le calcul du solde (correction d'une fuite d'argent freelance).
+- **`deposit30` arrondi cohérent + redistribution cents** : `Math.round` sur le total 30% + redistribution de l'écart cents sur la dernière ligne. Invariant `Σ lines.totalHtCents === totalHtCents` verrouillé.
+- **`/cancel` invoice refuse `sent|paid|overdue → cancelled`** : `canTransitionInvoice` appelé systématiquement, renvoie 422 `INVALID_TRANSITION` avec message FR `CGI art. 289-I-4` (avoir obligatoire pour annuler une facture émise).
+
+**UX P1 release-blocking (5 P1 · commit `b34908d`)**
+- **Enum `legalForm` workspace accepte `EI`** (Entreprise Individuelle, statut FR post-réforme 15/05/2022).
+- **Archive ZIP exhaustif** : `limit=10000` sur `services.list` / `quotes.list` / `invoices.list` + `includeSoftDeleted` pour `clients.list` (archive ne tronque plus les workspaces > 50 entrées).
+- **`toast.error` au lieu de `toast.success`** sur échec export ZIP (UX cohérente).
+- **`ApiClient` gère 200 empty body** → `undefined` au lieu de cast string → crash appelant.
+- **Escape listener** sur `ShortcutsOverlay` + `QuickClientModal` (a11y WCAG 2.1.1 clavier).
+
+**Docs (4 P0 + 6 P1 · commit `f7e6f0b`)**
+- `.github/launch-messages/` + `product-brief.md` + `prd.md` + `architecture.md` : refs `~5 Mo` / `≤ 15 Mo` → `~100 Mo` (NFR-003 révisé).
+- CHANGELOG : fusion `[Unreleased]` + `[0.1.0]`, entries ajoutées pour commits `9715a90`, `b70a597`, `f32d089`, `0cfacaf`.
+- `docs/refacto-spec/test-plan.md` : `X-FAKT-Token` au lieu de `Bearer`, paths `tests/` au lieu de `__tests__/`.
+- `README.md` section Troubleshooting (sidecar crash-loop, port 3117, 401, logs OS).
+
 ### Security
 
 - Signature PAdES niveau eIDAS avancé (AdES-B-T) — **non qualifiée** (qualification impossible sans accréditation ANSSI, hors scope).
@@ -175,6 +205,18 @@ entrées ci-dessous fusionnent le MVP initial et le refacto pré-tag.
 - **macOS : notarisation conditionnelle** : si les secrets Apple Developer Program ne sont pas configurés
   dans GitHub Secrets au moment du tag v0.1.0, le .dmg sera créé mais non notarisé.
   Gatekeeper affichera un avertissement. Contournement : clic droit → Ouvrir.
+- **P2/P3 déférés v0.1.1** : 24 findings P2 (polish UI, cohérence copy tu/vous, tokens
+  `fontSize` numériques, ghost button press state, etc.) + 12 P3 (refacto suggestions)
+  documentés dans [`docs/sprint-notes/v01-review-findings.md`](docs/sprint-notes/v01-review-findings.md).
+  Non release-blocking : aucun n'affecte les flows business, la conformité légale FR ou
+  la sécurité de base.
+- **P1 non release-blocking déférés v0.1.1** : ~22 findings P1 restants (i18n
+  "Chargement…" hardcoded, empty states sans CTA, mélange tu/vous, nextNumber atomic
+  pour multi-workspace mode 2/3, LIKE wildcards `%`/`_` escape, `verify_signature`
+  validation CMS complète, PBKDF2 600k itérations, token sidecar via stdin au lieu
+  d'env var, retry ApiClient cold start, etc.) documentés dans
+  [`docs/sprint-notes/v01-review-findings.md`](docs/sprint-notes/v01-review-findings.md).
+  Le flow business end-to-end fonctionne sans eux (validé par qa-smoke-live le 2026-04-22).
 
 ---
 
