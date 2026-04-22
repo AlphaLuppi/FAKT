@@ -69,6 +69,20 @@ export function QuoteForm(props: QuoteFormProps): ReactElement {
   const [errors, setErrors] = useState<string[]>([]);
   const [quickClientModal, setQuickClientModal] = useState(false);
 
+  useEffect(() => {
+    if (!quickClientModal) return;
+    function handleKeyDown(e: KeyboardEvent): void {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setQuickClientModal(false);
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return (): void => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [quickClientModal]);
+
   const { clients } = useClientsList();
   const { prestations } = usePrestationsList();
 

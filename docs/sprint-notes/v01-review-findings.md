@@ -168,19 +168,19 @@ _Scope :_ logic errors, null safety, edge cases (from-quote deposit30 boundary 3
 **Impact:** bug UX subtil, la recherche renvoie des résultats inattendus. Pas de sécurité (pas d'injection via Drizzle parameterized) mais friction.
 **Fix suggéré:** avant d'interpoler : `const esc = q.replace(/[\\%_]/g, "\\$&");` puis `pattern = %${esc}%` avec `LIKE pattern ESCAPE '\\'` — ajouter support ESCAPE dans Drizzle `like()` (via `sql\`... LIKE \${pattern} ESCAPE '\\'\`` si besoin) ou concaténer manuellement.
 
-### [P1] `api.services.list({ includeSoftDeleted: true })` dans l'archive — paramètre ignoré ou cassant si pagination dépasse 50
+- [x] ### [P1] `api.services.list({ includeSoftDeleted: true })` dans l'archive — paramètre ignoré ou cassant si pagination dépasse 50
 **Path:** `apps/desktop/src/routes/archive/index.tsx:153-155`
 **Repro:** workspace avec 60 prestations actives + 10 archivées. `api.services.list({ includeSoftDeleted: true })` retourne au max 50 (limit défaut du listPrestations). Les 20 dernières manquent dans le CSV. Aucune pagination côté archive → **export ZIP incomplet**, données perdues pour l'utilisateur.
 **Impact:** dette légale potentielle — un utilisateur audité qui exporte son archive attend l'exhaustivité.
 **Fix suggéré:** soit passer `limit=1000` (ou loop paginée), soit créer un endpoint `GET /api/services?all=true` sans pagination pour les exports d'archive. Idem pour `quotesApi.list()` et `invoiceApi.list()` ligne 86-89 qui retombent dans la même limite 50 → archive ZIP ne contient que les 50 derniers devis et factures.
 
-### [P1] Archive export : `buildClientsCsv(clients)` utilise `useClientsList()` qui ne charge pas les clients archivés — CSV incomplet
+- [x] ### [P1] Archive export : `buildClientsCsv(clients)` utilise `useClientsList()` qui ne charge pas les clients archivés — CSV incomplet
 **Path:** `apps/desktop/src/routes/archive/index.tsx:74, 152`
 **Repro:** workspace avec 5 clients actifs + 3 archivés. L'archive.csv contient 5 clients. Pourtant un ex-client peut avoir reçu des factures dont l'intégrité dépend de son identité. La doc du README-compliance dit "clients.csv : actifs et archivés" (ligne 22 de buildReadme) — contradictoire.
 **Impact:** README du ZIP ment sur son propre contenu.
 **Fix suggéré:** charger `api.clients.list({ includeSoftDeleted: true })` au lieu d'utiliser `useClientsList()` pour la génération CSV.
 
-### [P1] `handleExport` attrape toutes les erreurs avec `toast.success(fr.errors.generic)` — affiche succès vert pour une erreur
+- [x] ### [P1] `handleExport` attrape toutes les erreurs avec `toast.success(fr.errors.generic)` — affiche succès vert pour une erreur
 **Path:** `apps/desktop/src/routes/archive/index.tsx:187-190`
 **Repro:** cut le disque pendant l'export (ou refuser permission fs) → `invoke("build_workspace_zip")` throw → catch appelle `toast.success(fr.errors.generic)` → utilisateur voit un toast vert "Erreur inattendue" (message d'erreur mais styling succès).
 **Impact:** UX incohérente, utilisateur ne réalise pas que l'archive n'est pas créée.
@@ -192,7 +192,7 @@ _Scope :_ logic errors, null safety, edge cases (from-quote deposit30 boundary 3
 **Impact:** empty workspace → tentative d'export ZIP : progress devient NaN puis 95 puis 100, mais `build_workspace_zip` est quand même appelé avec 2 CSV vides → le ZIP est créé mais ne contient que README + 2 CSV. Pas un crash mais comportement bizarre.
 **Fix suggéré:** garde `if (total === 0) { toast.info('Rien à archiver'); return; }` avant la boucle.
 
-### [P1] `client.ts` teste `Content-Length === "0"` mais Hono ne renvoie pas systématiquement ce header — 204 DELETE peut tenter `.json()` sur un body vide
+- [x] ### [P1] `client.ts` teste `Content-Length === "0"` mais Hono ne renvoie pas systématiquement ce header — 204 DELETE peut tenter `.json()` sur un body vide
 **Path:** `apps/desktop/src/api/client.ts:178-180`
 **Repro:** Hono retourne 204 avec `c.body(null, 204)` → pas de Content-Length, pas de body. `response.status === 204` → OK short-circuit. Mais si un endpoint renvoie 200 avec body vide (ex : un toggle best-effort qui ne retourne rien) → `contentType` fallback à `""`, `isJson = false`, `await response.text()` → `""` → `payload = ""` → return `"" as T` → appelant attend un objet, explose avec TypeError.
 **Impact:** edge case uniquement si un futur endpoint renvoie 200 empty. Pas critique v0.1 mais piège.
@@ -332,7 +332,7 @@ Frontend :
 **Résultat attendu:** en mode dev (`FAKT_MODE=1` ou détection `NODE_ENV=development`), le sidecar devrait autoriser `http://localhost:1420` en `Access-Control-Allow-Origin` et renvoyer les headers preflight OPTIONS. En mode prod Tauri, le webview utilise `tauri://localhost` et passe par `window.__FAKT_API_URL__` injecté — pas de CORS issue.
 **Fix suggéré:** brancher `hono/cors` sur `packages/api-server/src/app.ts` conditionné sur `process.env.FAKT_MODE === "1"` (dev) ou sur allowlist `["tauri://localhost", "http://localhost:1420"]`. Exemple : `app.use("*", cors({ origin: allowedOrigins, allowHeaders: ["X-FAKT-Token", "Content-Type"] }))` avant le middleware auth. Critère "app ne boot pas" discutable (Tauri boot OK) — classé P0 car bloque 100% la review agent/QA qui ne peut pas lancer Tauri, mais P1 si on admet que c'est acceptable de ne tester que dans Tauri.
 
-### [P1] Option "EI — Entreprise Individuelle" bloquée par l'API workspace
+- [x] ### [P1] Option "EI — Entreprise Individuelle" bloquée par l'API workspace
 **Step:** Settings → tab Identité → combobox FORME JURIDIQUE → l'option `"EI — Entreprise Individuelle"` est proposée (uid=6_10 sur Chrome snapshot).
 **Repro:** `curl -X PATCH http://127.0.0.1:8765/api/workspace -H "X-FAKT-Token: ..." -d '{"legalForm":"EI"}'`
 **Résultat observé:** HTTP 400 `{"error":{"code":"VALIDATION_ERROR","message":"Invalid enum value. Expected 'Micro-entreprise' | 'EURL' | 'SASU' | 'SAS' | 'SARL' | 'SA' | 'Autre', received 'EI'"}}`.
@@ -384,12 +384,12 @@ _Scope :_ Brutal Invoice strict (bordures 2-2.5px, shadows plates 3/5/8px, zéro
 - Mentions légales FR exactes présentes : `fr.invoices.vatNote = "TVA non applicable, art. 293 B du CGI (micro-entreprise)"`, `fr.pdf.tvaMicroEntreprise = "TVA non applicable, art. 293 B du CGI"`. OK.
 - Transparence limitée à deux scrims `rgba(0,0,0,0.4|0.5)` (ShortcutsOverlay, QuickClientModal) — tolérée.
 
-### [P1] ShortcutsOverlay ne ferme pas à Escape
+- [x] ### [P1] ShortcutsOverlay ne ferme pas à Escape
 **Path:** `apps/desktop/src/components/shortcuts-overlay/ShortcutsOverlay.tsx:17-34`
 **Violation DS/a11y:** aucune écoute `keydown` Escape — contradiction directe avec la spec a11y clavier "Escape : close modal/palette". Le `Modal` et `Overlay` de `@fakt/ui` gèrent Escape via `closeOnEscape` (cf. `packages/ui/src/overlays/Overlay.tsx:26-34`), mais ce composant n'utilise ni `Modal` ni `Overlay`.
 **Fix suggéré:** soit utiliser `<Modal>`/`<Overlay>` du design-system au lieu d'un `div` scrim custom, soit ajouter un `useEffect` avec `document.addEventListener("keydown", h)` filtrant `e.key === "Escape"`.
 
-### [P1] QuickClientModal dans QuoteForm ne ferme pas à Escape
+- [x] ### [P1] QuickClientModal dans QuoteForm ne ferme pas à Escape
 **Path:** `apps/desktop/src/routes/quotes/QuoteForm.tsx:356-371`
 **Violation a11y:** modal custom `role="dialog" aria-modal` sans listener Escape.
 **Fix suggéré:** remplacer par `<Modal open={quickClientModal} onClose={() => setQuickClientModal(false)}>` du package `@fakt/ui` (qui gère Escape), ou ajouter le listener Escape manuellement.

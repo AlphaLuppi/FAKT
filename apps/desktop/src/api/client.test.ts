@@ -113,6 +113,30 @@ describe("ApiClient", () => {
     expect(res).toBeUndefined();
   });
 
+  it("renvoie undefined sur 200 avec body vide (Content-Length: 0)", async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response(null, {
+        status: 200,
+        headers: { "Content-Length": "0" },
+      }),
+    );
+    const client = new ApiClient("http://x", "t");
+    const res = await client.post<void>("/api/ping");
+    expect(res).toBeUndefined();
+  });
+
+  it("renvoie undefined sur 200 JSON avec body vide sans Content-Length", async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response("", {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    const client = new ApiClient("http://x", "t");
+    const res = await client.post<void>("/api/ping");
+    expect(res).toBeUndefined();
+  });
+
   it("préserve l'ordre alphabétique des segments de path et gère les slashes", async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse(200, {}));
     const client = new ApiClient("http://127.0.0.1:8765/", "t");

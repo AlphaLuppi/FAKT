@@ -69,6 +69,8 @@ export interface ListInvoicesInput {
   clientId?: UUID | null;
   quoteId?: UUID | null;
   search?: string | null;
+  limit?: number;
+  offset?: number;
 }
 
 export interface MarkPaidInput {
@@ -118,6 +120,8 @@ const httpInvoiceApi: InvoiceApi = {
       ...(input.quoteId !== undefined && input.quoteId !== null
         ? { quoteId: input.quoteId }
         : {}),
+      ...(input.limit !== undefined ? { limit: input.limit } : {}),
+      ...(input.offset !== undefined ? { offset: input.offset } : {}),
     });
   },
   async get(id): Promise<Invoice | null> {

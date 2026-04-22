@@ -9,6 +9,17 @@ vi.mock("@tauri-apps/api/core", () => ({
   invoke: vi.fn(async () => null),
 }));
 
+vi.mock("../../api/index.js", async () => {
+  const actual = await vi.importActual<Record<string, unknown>>("../../api/index.js");
+  return {
+    ...actual,
+    api: {
+      clients: { list: vi.fn(async () => []) },
+      services: { list: vi.fn(async () => []) },
+    },
+  };
+});
+
 vi.mock("../quotes/hooks.js", () => ({
   useWorkspace: () => ({
     workspace: {
@@ -23,7 +34,6 @@ vi.mock("../quotes/hooks.js", () => ({
       createdAt: Date.now(),
     },
   }),
-  useClientsList: () => ({ clients: [] }),
 }));
 
 beforeEach(() => {

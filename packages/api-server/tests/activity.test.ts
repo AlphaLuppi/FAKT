@@ -138,9 +138,9 @@ describe("GET /api/activity", () => {
     expect(body.items).toHaveLength(2);
   });
 
-  it("400 si limit > 200", async () => {
+  it("400 si limit > 10000", async () => {
     const { app, authHeaders } = createTestApp();
-    const res = await app.request("/api/activity?limit=999", { headers: authHeaders() });
+    const res = await app.request("/api/activity?limit=10001", { headers: authHeaders() });
     expect(res.status).toBe(400);
   });
 });

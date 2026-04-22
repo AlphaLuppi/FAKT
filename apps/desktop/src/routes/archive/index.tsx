@@ -9,7 +9,8 @@ import { quotesApi } from "../../features/doc-editor/quotes-api.js";
 import { invoiceApi } from "../../features/doc-editor/invoice-api.js";
 import { pdfApi } from "../../features/doc-editor/pdf-api.js";
 import { api } from "../../api/index.js";
-import { useWorkspace, useClientsList } from "../quotes/hooks.js";
+import type { Client } from "@fakt/shared";
+import { useWorkspace } from "../quotes/hooks.js";
 
 function buildReadme(workspaceName: string, siret: string, isoDate: string): string {
   return `FAKT -- Archive workspace
@@ -71,7 +72,7 @@ function csvEscape(value: string): string {
 
 export function ArchiveRoute(): ReactElement {
   const { workspace } = useWorkspace();
-  const { clients } = useClientsList();
+  const [clients, setClients] = useState<Client[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
@@ -83,13 +84,15 @@ export function ArchiveRoute(): ReactElement {
     let cancelled = false;
     async function load(): Promise<void> {
       try {
-        const [qs, invs] = await Promise.all([
-          quotesApi.list(),
-          invoiceApi.list(),
+        const [qs, invs, cls] = await Promise.all([
+          quotesApi.list({ limit: 10000 }),
+          invoiceApi.list({ limit: 10000 }),
+          api.clients.list({ includeSoftDeleted: true, limit: 10000 }).catch(() => []),
         ]);
         if (!cancelled) {
           setQuotes(qs.filter((q) => q.number !== null));
           setInvoices(invs.filter((inv) => inv.number !== null));
+          setClients(cls);
           setLoading(false);
         }
       } catch {
@@ -151,7 +154,7 @@ export function ArchiveRoute(): ReactElement {
 
       const csvClients = buildClientsCsv(clients);
       const services = await api.services
-        .list({ includeSoftDeleted: true })
+        .list({ includeSoftDeleted: true, limit: 10000 })
         .catch(() => []);
       const csvPrestations = buildPrestationsCsv(services);
 
@@ -185,7 +188,7 @@ export function ArchiveRoute(): ReactElement {
       setProgress(100);
       toast.success(`${fr.archive.exportSuccess} ${zipPath}`);
     } catch (err) {
-      toast.success(fr.errors.generic);
+      toast.error(fr.errors.generic);
       console.error("export zip failed", err);
     } finally {
       setExporting(false);

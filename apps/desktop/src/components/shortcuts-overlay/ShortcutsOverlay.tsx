@@ -1,4 +1,5 @@
 import type { ReactElement } from "react";
+import { useEffect } from "react";
 import { tokens } from "@fakt/design-tokens";
 import { fr } from "@fakt/shared";
 
@@ -15,6 +16,19 @@ interface ShortcutsOverlayProps {
 }
 
 export function ShortcutsOverlay({ onClose }: ShortcutsOverlayProps): ReactElement {
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent): void {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onClose();
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return (): void => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onClose]);
+
   return (
     <div
       data-testid="shortcuts-overlay"

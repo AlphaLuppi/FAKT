@@ -181,7 +181,20 @@ export class ApiClient {
 
     const contentType = response.headers.get("Content-Type") ?? "";
     const isJson = contentType.includes("application/json");
-    const payload: unknown = isJson ? await response.json() : await response.text();
+    let payload: unknown;
+    if (isJson) {
+      const text = await response.text();
+      if (text.length === 0) {
+        return undefined as T;
+      }
+      payload = JSON.parse(text);
+    } else {
+      const text = await response.text();
+      if (response.ok && text.length === 0) {
+        return undefined as T;
+      }
+      payload = text;
+    }
 
     if (!response.ok) {
       if (isApiErrorBody(payload)) {

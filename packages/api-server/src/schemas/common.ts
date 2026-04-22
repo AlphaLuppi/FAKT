@@ -30,7 +30,7 @@ export const paginationSchema = z.object({
     .string()
     .optional()
     .transform((v) => (v ? Number(v) : 50))
-    .pipe(z.number().int().min(1).max(200)),
+    .pipe(z.number().int().min(1).max(10000)),
   offset: z
     .string()
     .optional()

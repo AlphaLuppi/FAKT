@@ -25,6 +25,7 @@ export const documentUnitSchema = z.enum([
 
 export const legalFormSchema = z.enum([
   "Micro-entreprise",
+  "EI",
   "EURL",
   "SASU",
   "SAS",

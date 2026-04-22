@@ -120,9 +120,9 @@ describe("GET /api/clients", () => {
     expect(body.items[0]?.name).toBe("Acme SAS");
   });
 
-  it("400 si limit > 200", async () => {
+  it("400 si limit > 10000", async () => {
     const { app, authHeaders } = createTestApp();
-    const res = await app.request("/api/clients?limit=500", { headers: authHeaders() });
+    const res = await app.request("/api/clients?limit=10001", { headers: authHeaders() });
     expect(res.status).toBe(400);
   });
 });

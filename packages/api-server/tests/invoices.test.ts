@@ -137,9 +137,9 @@ describe("GET /api/invoices", () => {
     expect(body.items).toHaveLength(1);
   });
 
-  it("400 si limit > 200", async () => {
+  it("400 si limit > 10000", async () => {
     const { app, authHeaders } = setupWithClient();
-    const res = await app.request("/api/invoices?limit=999", { headers: authHeaders() });
+    const res = await app.request("/api/invoices?limit=10001", { headers: authHeaders() });
     expect(res.status).toBe(400);
   });
 });

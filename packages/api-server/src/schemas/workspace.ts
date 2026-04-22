@@ -3,6 +3,7 @@ import { uuidSchema, siretSchema } from "./common.js";
 
 const LEGAL_FORMS = [
   "Micro-entreprise",
+  "EI",
   "EURL",
   "SASU",
   "SAS",

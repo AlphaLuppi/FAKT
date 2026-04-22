@@ -47,6 +47,8 @@ export interface ListQuotesInput {
   status?: QuoteStatus | QuoteStatus[];
   clientId?: UUID | null;
   search?: string | null;
+  limit?: number;
+  offset?: number;
 }
 
 export interface QuotesApi {
@@ -78,6 +80,8 @@ const httpQuotesApi: QuotesApi = {
       ...(input.clientId !== undefined && input.clientId !== null
         ? { clientId: input.clientId }
         : {}),
+      ...(input.limit !== undefined ? { limit: input.limit } : {}),
+      ...(input.offset !== undefined ? { offset: input.offset } : {}),
     });
   },
   async get(id): Promise<Quote | null> {

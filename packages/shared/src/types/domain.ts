@@ -8,6 +8,7 @@ export type QuantityMilli = number;
 
 export type LegalForm =
   | "Micro-entreprise"
+  | "EI"
   | "EURL"
   | "SASU"
   | "SAS"

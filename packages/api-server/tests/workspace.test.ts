@@ -161,4 +161,16 @@ describe("PATCH /api/workspace", () => {
     });
     expect(res.status).toBe(404);
   });
+
+  it("200 avec legalForm=EI (statut FR post-réforme 15/05/2022)", async () => {
+    const { app, authHeaders } = createTestApp();
+    const res = await app.request("/api/workspace", {
+      method: "PATCH",
+      headers: authHeaders(),
+      body: JSON.stringify({ legalForm: "EI" }),
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { legalForm: string };
+    expect(body.legalForm).toBe("EI");
+  });
 });
