@@ -95,23 +95,23 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-          # ── macOS signing + notarization ───────────────────────────────────────
-          # Ces secrets sont à configurer dans GitHub → Settings → Secrets
-          # (repository ou organisation AlphaLuppi) dès que Tom a souscrit
-          # à l'Apple Developer Program.
-          # Sans ces secrets : le .dmg sera créé mais non notarisé, Gatekeeper
-          # affichera un avertissement. Acceptable en v0.1.0.
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          # APPIMAGE_EXTRACT_AND_RUN : GitHub Actions runners n'ont pas FUSE,
+          # donc linuxdeploy AppImage ne peut pas s'exécuter directement. Ce flag
+          # fait extract le AppImage avant de l'exécuter (slower mais fonctionnel).
+          APPIMAGE_EXTRACT_AND_RUN: 1
 
-          # ── Windows signing — INTENTIONNELLEMENT ABSENT v0.1.0 ────────────────
-          # WINDOWS_CERTIFICATE et WINDOWS_CERTIFICATE_PASSWORD seront déclarés
-          # en v0.1.1. Ne pas déclarer les secrets non-disponibles évite les
-          # erreurs GitHub "secret not found".
+          # ── macOS signing + notarization — SKIP v0.1.0 ──────────────────────
+          # Les APPLE_* secrets ne sont PAS configurés dans GitHub Secrets en v0.1.0
+          # (Tom n'a pas encore souscrit Apple Developer Program). Passer des env
+          # vars APPLE_* vides fait fail tauri-action à l'import keychain.
+          # On ne déclare donc PAS les env APPLE_* : tauri-action skip codesign
+          # silencieusement. Le .dmg produit n'est pas notarisé — Gatekeeper
+          # affichera un avertissement, contournement clic droit → Ouvrir.
+          # À activer en v0.1.1 dès que Tom aura configuré les secrets.
+
+          # ── Windows signing — SKIP v0.1.0 ────────────────────────────────────
+          # Certificat OV Authenticode pas encore commandé. SmartScreen affichera
+          # "Unknown Publisher". Activation v0.1.1.
 
         with:
           tagName: ${{ github.ref_name }}
