@@ -19,6 +19,7 @@
         "@fakt/config": "workspace:*",
         "@fakt/core": "workspace:*",
         "@fakt/design-tokens": "workspace:*",
+        "@fakt/email": "workspace:*",
         "@fakt/legal": "workspace:*",
         "@fakt/pdf": "workspace:*",
         "@fakt/shared": "workspace:*",

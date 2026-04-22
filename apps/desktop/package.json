@@ -31,7 +31,8 @@
     "@fakt/config": "workspace:*",
     "@fakt/ui": "workspace:*",
     "@fakt/ai": "workspace:*",
-    "@fakt/pdf": "workspace:*"
+    "@fakt/pdf": "workspace:*",
+    "@fakt/email": "workspace:*"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3",
