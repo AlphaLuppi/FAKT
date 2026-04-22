@@ -22,7 +22,11 @@ jobs:
             # Universal binary macOS (Intel + Apple Silicon en un seul .dmg)
             args: "--target universal-apple-darwin"
           - os: ubuntu-latest
-            args: ""
+            # AppImage skip en v0.1.0 : linuxdeploy AppImage nécessite FUSE absent
+            # des runners GitHub Actions (APPIMAGE_EXTRACT_AND_RUN=1 ne suffit pas).
+            # .deb couvre Debian/Ubuntu/Mint/Pop!_OS — majorité des users Linux desktop.
+            # AppImage reviendra en v0.1.1 avec containerized build ou patch linuxdeploy.
+            args: "--bundles deb"
           - os: windows-latest
             # WINDOWS CODE SIGNING — SKIP v0.1.0 (décision Tom Andrieu 2026-04-22)
             # Le certificat OV Authenticode n'est pas encore commandé.
