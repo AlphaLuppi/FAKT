@@ -191,8 +191,10 @@ async fn stream_inner(
                         let _ = channel.send(AiStreamEvent::Error { message: msg.clone() });
                         return Err(msg);
                     }
-                    Ok(CliLine::Other) | Err(_) => {
-                        // Unknown line format — skip silently.
+                    Ok(CliLine::Result { .. })
+                    | Ok(CliLine::Other)
+                    | Err(_) => {
+                        // Unknown / incomplete line format — skip silently.
                     }
                 }
             }
@@ -217,15 +219,35 @@ async fn stream_inner(
 /// Health check command: detects Claude CLI on the current OS.
 /// FR-003: used by onboarding wizard and settings.
 /// Never panics — returns structured result.
+///
+/// Sur Windows, les binaires globaux npm sont distribués en tant que scripts
+/// `.cmd` (ex: `claude.cmd`). `tokio::process::Command` ne les trouve pas
+/// directement — on retombe sur `cmd /C claude --version` pour que le shell
+/// résolve PATHEXT.
 #[tauri::command]
 pub async fn check_claude_cli() -> Result<CliCheckResult, String> {
     let binary = claude_binary();
 
-    // Try `claude --version` first.
-    let version_output = Command::new(&binary)
-        .arg("--version")
-        .output()
-        .await;
+    // Tentative directe (exe réel).
+    let direct = Command::new(&binary).arg("--version").output().await;
+
+    let version_output = match direct {
+        Ok(out) => Ok(out),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+            #[cfg(target_os = "windows")]
+            {
+                Command::new("cmd")
+                    .args(["/C", &binary, "--version"])
+                    .output()
+                    .await
+            }
+            #[cfg(not(target_os = "windows"))]
+            {
+                Err(e)
+            }
+        }
+        Err(e) => Err(e),
+    };
 
     match version_output {
         Ok(out) if out.status.success() => {

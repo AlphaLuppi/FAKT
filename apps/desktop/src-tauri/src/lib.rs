@@ -1,3 +1,4 @@
+pub mod ai;
 pub mod commands;
 pub mod crypto;
 mod pdf;
@@ -68,6 +69,8 @@ pub fn run() {
             commands::open_email_draft,
             commands::open_mailto_fallback,
             commands::build_workspace_zip,
+            ai::cli::check_claude_cli,
+            ai::cli::spawn_claude,
         ])
         .run(tauri::generate_context!())
         .expect("erreur lors du lancement de l'application FAKT");
