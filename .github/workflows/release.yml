@@ -63,6 +63,14 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      # Build sidecar api-server en Bun-compiled pour chaque target supporté.
+      # `--all` compile les 4 targets (win-x64, darwin-x64, darwin-arm64, linux-x64)
+      # — overhead ~2 min par runner mais garantit que tauri-action trouve toujours
+      # le bon binaire selon la cible bundlée (notamment pour macOS universal qui
+      # nécessite arm64 + x64 co-présents).
+      - name: Build sidecar api-server (all targets)
+        run: bun run packages/api-server/scripts/build-sidecar.ts --all
+
       - name: Build and release with tauri-action
         uses: tauri-apps/tauri-action@v2
         env:
@@ -98,6 +106,6 @@ jobs:
             La signature Authenticode sera ajoutée en v0.1.1.
 
             **Note macOS :** si Gatekeeper bloque, clic droit → Ouvrir.
-          releaseDraft: true
-          prerelease: false
+          releaseDraft: false
+          prerelease: ${{ contains(github.ref_name, '-rc') || contains(github.ref_name, '-beta') || contains(github.ref_name, '-alpha') }}
           args: ${{ matrix.args }}
