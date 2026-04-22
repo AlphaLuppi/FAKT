@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { invoke } from "@tauri-apps/api/core";
-import { IPC_COMMANDS } from "@fakt/shared";
 import type { Service, DocumentUnit } from "@fakt/shared";
+import { api } from "../api/index.js";
 
 interface UsePrestationsOptions {
   search?: string;
@@ -34,6 +33,17 @@ interface UsePrestationsResult {
   refresh: () => void;
 }
 
+function genUuid(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 export function usePrestations(options: UsePrestationsOptions = {}): UsePrestationsResult {
   const [prestations, setPrestations] = useState<Service[]>([]);
   const [loading, setLoading] = useState(false);
@@ -45,10 +55,13 @@ export function usePrestations(options: UsePrestationsOptions = {}): UsePrestati
     let cancelled = false;
     setLoading(true);
 
-    invoke<Service[]>(IPC_COMMANDS.LIST_SERVICES, {
-      search: options.search ?? null,
-      includeSoftDeleted: options.includeSoftDeleted ?? false,
-    })
+    api.services
+      .list({
+        ...(options.search !== undefined ? { search: options.search } : {}),
+        ...(options.includeSoftDeleted !== undefined
+          ? { includeSoftDeleted: options.includeSoftDeleted }
+          : {}),
+      })
       .then((data) => {
         if (!cancelled) {
           setPrestations(data);
@@ -69,7 +82,7 @@ export function usePrestations(options: UsePrestationsOptions = {}): UsePrestati
 
   const createPrestation = useCallback(
     async (input: CreatePrestationInput): Promise<void> => {
-      await invoke<Service>(IPC_COMMANDS.CREATE_SERVICE, { input });
+      await api.services.create({ id: genUuid(), ...input });
       refresh();
     },
     [refresh],
@@ -77,7 +90,7 @@ export function usePrestations(options: UsePrestationsOptions = {}): UsePrestati
 
   const updatePrestation = useCallback(
     async (id: string, input: UpdatePrestationInput): Promise<void> => {
-      await invoke<Service>(IPC_COMMANDS.UPDATE_SERVICE, { id, input });
+      await api.services.update(id, input);
       refresh();
     },
     [refresh],
@@ -85,7 +98,7 @@ export function usePrestations(options: UsePrestationsOptions = {}): UsePrestati
 
   const deletePrestation = useCallback(
     async (id: string): Promise<void> => {
-      await invoke<void>(IPC_COMMANDS.ARCHIVE_SERVICE, { id });
+      await api.services.archive(id);
       refresh();
     },
     [refresh],
@@ -93,7 +106,7 @@ export function usePrestations(options: UsePrestationsOptions = {}): UsePrestati
 
   const restorePrestation = useCallback(
     async (id: string): Promise<void> => {
-      await invoke<Service>(IPC_COMMANDS.UPDATE_SERVICE, { id, input: { restore: true } });
+      await api.services.restore(id);
       refresh();
     },
     [refresh],

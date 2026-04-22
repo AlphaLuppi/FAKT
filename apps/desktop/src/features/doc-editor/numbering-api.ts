@@ -1,14 +1,9 @@
 /**
  * Bridge Numérotation séquentielle CGI art. 289.
- *
- * TODO Track D — Wave 2 : cette commande doit être remplacée par une Tauri
- * command Rust atomique (BEGIN IMMEDIATE SQLite) pour garantir zéro trou
- * en accès concurrent. Le stub TS actuel (packages/db/src/queries/numbering.ts)
- * est non-atomique mais acceptable en mode solo-local mono-user v0.1.
+ * Délègue au sidecar Bun+Hono qui garantit l'atomicité via BEGIN IMMEDIATE côté SQLite.
  */
 
-import { invoke } from "@tauri-apps/api/core";
-import { IPC_COMMANDS } from "@fakt/shared";
+import { api as httpApi } from "../../api/index.js";
 
 export interface NumberingResult {
   year: number;
@@ -20,20 +15,18 @@ export interface NumberingApi {
   peekNextQuote(): Promise<NumberingResult>;
 }
 
-const tauriNumberingApi: NumberingApi = {
+const httpNumberingApi: NumberingApi = {
   async peekNextQuote(): Promise<NumberingResult> {
-    return invoke<NumberingResult>(IPC_COMMANDS.PREVIEW_NEXT_NUMBER, {
-      type: "quote",
-    });
+    return httpApi.numbering.peek("quote");
   },
 };
 
-let _impl: NumberingApi = tauriNumberingApi;
+let _impl: NumberingApi = httpNumberingApi;
 
 export const numberingApi: NumberingApi = {
   peekNextQuote: () => _impl.peekNextQuote(),
 };
 
 export function setNumberingApi(api: NumberingApi | null): void {
-  _impl = api ?? tauriNumberingApi;
+  _impl = api ?? httpNumberingApi;
 }

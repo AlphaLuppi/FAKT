@@ -10,6 +10,7 @@ import type { EmailTemplateKey } from "@fakt/email";
 import { renderTemplate, buildEml, buildMailtoUrl } from "@fakt/email";
 import { pdfApi } from "../../features/doc-editor/pdf-api.js";
 import type { RenderQuoteArgs, RenderInvoiceArgs } from "../../features/doc-editor/pdf-api.js";
+import { api } from "../../api/index.js";
 
 type DocType = "quote" | "invoice";
 
@@ -167,16 +168,27 @@ export function PrepareEmailModal(props: PrepareEmailModalProps): ReactElement {
       });
 
       const emlPath = await saveEmlTemp(emlContent, doc.number ?? "draft");
+      let fellBackToMailto = false;
       await invoke("open_email_draft", { emlPath }).catch(async () => {
+        fellBackToMailto = true;
         const url = buildMailtoUrl({ to: toEmail, subject, body });
         await invoke("open_mailto_fallback", { url });
         toast.success(fr.email.success.fallbackUsed);
       });
 
-      // TODO(track-ε-wave3): insérer l'événement `email_drafted` dans l'activity feed via
-      // `await api.post('/api/activity', { type: 'email_drafted', entityType: docType, entityId: doc.id })`
-      // dès que hooks React refactorés (invoke → fetch) et endpoint POST /api/activity livré (track γ).
-      // Actuellement l'événement n'est jamais tracké côté DB (gap e2e-wiring-audit §7).
+      // Log l'évent dans l'activity feed — best-effort, ne doit pas bloquer l'UX.
+      api.activity
+        .append({
+          type: "email_drafted",
+          entityType: docType,
+          entityId: doc.id,
+          payload: JSON.stringify({
+            template: templateKey,
+            to: toEmail,
+            fallback: fellBackToMailto ? "mailto" : null,
+          }),
+        })
+        .catch(() => {});
 
       toast.success(fr.email.success.draftOpened);
       onClose();

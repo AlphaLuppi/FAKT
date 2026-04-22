@@ -1,13 +1,17 @@
 /**
- * Bridge IPC Tauri pour la signature PAdES B-T et l'audit trail.
+ * Bridge signature PAdES B-T + audit trail.
  *
- * Le bridge expose des méthodes haut niveau consommées par SignatureModal,
- * AuditTimeline et la route Verify. Les appels Tauri sont centralisés ici ;
- * les tests injectent un double via setSignatureApi.
+ * Les opérations cryptographiques (sign/verify) restent en commandes Rust
+ * via Tauri invoke — c'est là que vivent les clés X.509 et la libsignpdf.
+ *
+ * Les lectures d'audit (`listEvents`, `appendEvent`) passent par le sidecar
+ * Bun+Hono pour factorer l'accès DB. Les PDF signés sont également lus via
+ * Rust (accès disque direct, pas DB).
  */
 
 import { invoke } from "@tauri-apps/api/core";
 import type { SignatureEvent, UUID } from "@fakt/shared";
+import { api as httpApi } from "../../api/index.js";
 
 export interface SignDocumentInput {
   docId: UUID;
@@ -107,27 +111,7 @@ function rustEventToTs(ev: RustSignatureEvent): SignatureEvent {
   };
 }
 
-function tsEventToRust(ev: SignatureEvent): RustSignatureEvent {
-  return {
-    id: ev.id,
-    document_type: ev.documentType,
-    document_id: ev.documentId,
-    signer_name: ev.signerName,
-    signer_email: ev.signerEmail,
-    ip_address: ev.ipAddress,
-    user_agent: ev.userAgent,
-    timestamp_iso: new Date(ev.timestamp).toISOString().replace(/\.\d{3}Z$/, "Z"),
-    doc_hash_before: ev.docHashBefore,
-    doc_hash_after: ev.docHashAfter,
-    signature_png_base64:
-      ev.signaturePngBase64 !== "" ? ev.signaturePngBase64 : null,
-    tsa_provider: ev.tsaProvider,
-    tsa_response_base64: ev.tsaResponse,
-    previous_event_hash: ev.previousEventHash,
-  };
-}
-
-const tauriSignatureApi: SignatureApi = {
+const defaultSignatureApi: SignatureApi = {
   async sign(input): Promise<SignDocumentOutput> {
     const result = await invoke<TauriSignResult>("sign_document", {
       args: {
@@ -149,18 +133,27 @@ const tauriSignatureApi: SignatureApi = {
     };
   },
   async listEvents(docType, docId): Promise<SignatureEvent[]> {
-    const rows = await invoke<RustSignatureEvent[]>("get_signature_events", {
-      docType,
-      docId,
-    });
-    return rows.map(rustEventToTs);
+    return httpApi.signatures.listEvents(docType, docId);
   },
   async verify(docId, eventId): Promise<VerifyReport> {
     return invoke<VerifyReport>("verify_signature", { docId, eventId });
   },
   async appendEvent(event): Promise<void> {
-    await invoke<void>("append_signature_event", {
-      event: tsEventToRust(event),
+    await httpApi.signatures.appendEvent({
+      id: event.id,
+      documentType: event.documentType,
+      documentId: event.documentId,
+      signerName: event.signerName,
+      signerEmail: event.signerEmail,
+      ipAddress: event.ipAddress,
+      userAgent: event.userAgent,
+      timestamp: event.timestamp,
+      docHashBefore: event.docHashBefore,
+      docHashAfter: event.docHashAfter,
+      signaturePngBase64: event.signaturePngBase64,
+      previousEventHash: event.previousEventHash,
+      tsaResponse: event.tsaResponse,
+      tsaProvider: event.tsaProvider,
     });
   },
   async storeSignedPdf(docType, docId, bytes): Promise<string> {
@@ -179,7 +172,7 @@ const tauriSignatureApi: SignatureApi = {
   },
 };
 
-let _impl: SignatureApi = tauriSignatureApi;
+let _impl: SignatureApi = defaultSignatureApi;
 
 export const signatureApi: SignatureApi = {
   sign: (input) => _impl.sign(input),
@@ -191,7 +184,7 @@ export const signatureApi: SignatureApi = {
   getSignedPdf: (docType, docId) => _impl.getSignedPdf(docType, docId),
 };
 
-/** Injection pour tests. Passer `null` pour restaurer Tauri. */
+/** Injection pour tests. Passer `null` pour restaurer le défaut (HTTP+invoke). */
 export function setSignatureApi(api: SignatureApi | null): void {
-  _impl = api ?? tauriSignatureApi;
+  _impl = api ?? defaultSignatureApi;
 }

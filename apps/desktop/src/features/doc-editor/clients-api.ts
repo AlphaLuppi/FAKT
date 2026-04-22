@@ -1,29 +1,34 @@
 /**
- * Bridge Clients — lecture seule pour H1, création déléguée à Track G.
+ * Bridge Clients — lecture via sidecar Bun+Hono.
+ * Le `get` renvoie `null` si 404 pour préserver la sémantique existante.
  */
 
-import { invoke } from "@tauri-apps/api/core";
-import { IPC_COMMANDS } from "@fakt/shared";
 import type { Client, UUID } from "@fakt/shared";
+import { api as httpApi } from "../../api/index.js";
+import { ApiError } from "../../api/client.js";
 
 export interface ClientsApi {
   list(options?: { search?: string }): Promise<Client[]>;
   get(id: UUID): Promise<Client | null>;
 }
 
-const tauriClientsApi: ClientsApi = {
+const httpClientsApi: ClientsApi = {
   async list(options = {}): Promise<Client[]> {
-    return invoke<Client[]>(IPC_COMMANDS.LIST_CLIENTS, {
-      search: options.search ?? null,
-      includeSoftDeleted: false,
+    return httpApi.clients.list({
+      ...(options.search !== undefined ? { search: options.search } : {}),
     });
   },
   async get(id): Promise<Client | null> {
-    return invoke<Client | null>(IPC_COMMANDS.GET_CLIENT, { id });
+    try {
+      return await httpApi.clients.get(id);
+    } catch (err) {
+      if (err instanceof ApiError && err.code === "NOT_FOUND") return null;
+      throw err;
+    }
   },
 };
 
-let _impl: ClientsApi = tauriClientsApi;
+let _impl: ClientsApi = httpClientsApi;
 
 export const clientsApi: ClientsApi = {
   list: (options) => _impl.list(options),
@@ -31,5 +36,5 @@ export const clientsApi: ClientsApi = {
 };
 
 export function setClientsApi(api: ClientsApi | null): void {
-  _impl = api ?? tauriClientsApi;
+  _impl = api ?? httpClientsApi;
 }

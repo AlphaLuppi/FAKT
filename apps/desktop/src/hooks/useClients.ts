@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { invoke } from "@tauri-apps/api/core";
-import { IPC_COMMANDS } from "@fakt/shared";
 import type { Client, Quote, Invoice } from "@fakt/shared";
+import { api } from "../api/index.js";
 
 interface UseClientsOptions {
   search?: string;
@@ -40,6 +39,17 @@ interface UseClientsResult {
   refresh: () => void;
 }
 
+function genUuid(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 export function useClients(options: UseClientsOptions = {}): UseClientsResult {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(false);
@@ -51,10 +61,13 @@ export function useClients(options: UseClientsOptions = {}): UseClientsResult {
     let cancelled = false;
     setLoading(true);
 
-    invoke<Client[]>(IPC_COMMANDS.LIST_CLIENTS, {
-      search: options.search ?? null,
-      includeSoftDeleted: options.includeSoftDeleted ?? false,
-    })
+    api.clients
+      .list({
+        ...(options.search !== undefined ? { search: options.search } : {}),
+        ...(options.includeSoftDeleted !== undefined
+          ? { includeSoftDeleted: options.includeSoftDeleted }
+          : {}),
+      })
       .then((data) => {
         if (!cancelled) {
           setClients(data);
@@ -75,7 +88,7 @@ export function useClients(options: UseClientsOptions = {}): UseClientsResult {
 
   const createClient = useCallback(
     async (input: CreateClientInput): Promise<void> => {
-      await invoke<Client>(IPC_COMMANDS.CREATE_CLIENT, { input });
+      await api.clients.create({ id: genUuid(), ...input });
       refresh();
     },
     [refresh],
@@ -83,7 +96,7 @@ export function useClients(options: UseClientsOptions = {}): UseClientsResult {
 
   const updateClient = useCallback(
     async (id: string, input: UpdateClientInput): Promise<void> => {
-      await invoke<Client>(IPC_COMMANDS.UPDATE_CLIENT, { id, input });
+      await api.clients.update(id, input);
       refresh();
     },
     [refresh],
@@ -91,7 +104,7 @@ export function useClients(options: UseClientsOptions = {}): UseClientsResult {
 
   const deleteClient = useCallback(
     async (id: string): Promise<void> => {
-      await invoke<void>(IPC_COMMANDS.ARCHIVE_CLIENT, { id });
+      await api.clients.archive(id);
       refresh();
     },
     [refresh],
@@ -99,8 +112,7 @@ export function useClients(options: UseClientsOptions = {}): UseClientsResult {
 
   const restoreClient = useCallback(
     async (id: string): Promise<void> => {
-      // restore = update avec archivedAt = null via UPDATE_CLIENT
-      await invoke<Client>(IPC_COMMANDS.UPDATE_CLIENT, { id, input: { restore: true } });
+      await api.clients.restore(id);
       refresh();
     },
     [refresh],
@@ -118,7 +130,8 @@ export function useClientQuotes(clientId: string | null): { quotes: Quote[] } {
       return;
     }
 
-    invoke<Quote[]>(IPC_COMMANDS.LIST_QUOTES, { clientId })
+    api.quotes
+      .list({ clientId })
       .then(setQuotes)
       .catch(() => setQuotes([]));
   }, [clientId]);
@@ -135,7 +148,8 @@ export function useClientInvoices(clientId: string | null): { invoices: Invoice[
       return;
     }
 
-    invoke<Invoice[]>(IPC_COMMANDS.LIST_INVOICES, { clientId })
+    api.invoices
+      .list({ clientId })
       .then(setInvoices)
       .catch(() => setInvoices([]));
   }, [clientId]);

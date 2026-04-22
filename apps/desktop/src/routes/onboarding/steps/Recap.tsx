@@ -1,8 +1,9 @@
 import type { ReactElement } from "react";
 import { useState } from "react";
 import { Button, toast } from "@fakt/ui";
-import { fr } from "@fakt/shared";
+import { fr, type LegalForm } from "@fakt/shared";
 import { useOnboarding } from "../context.js";
+import { api, ApiError } from "../../../api/index.js";
 
 interface WorkspaceData {
   name: string;
@@ -15,65 +16,54 @@ interface WorkspaceData {
   certPem?: string | null;
 }
 
-interface FaktApiGlobals {
-  __FAKT_API_URL__?: string;
-  __FAKT_API_TOKEN__?: string;
-}
+const LEGAL_FORMS: readonly LegalForm[] = [
+  "Micro-entreprise",
+  "EURL",
+  "SASU",
+  "SAS",
+  "SARL",
+  "SA",
+  "Autre",
+];
 
-function apiGlobals(): FaktApiGlobals {
-  if (typeof window === "undefined") return {};
-  return window as unknown as FaktApiGlobals;
+function asLegalForm(v: string): LegalForm {
+  return (LEGAL_FORMS as readonly string[]).includes(v) ? (v as LegalForm) : "Autre";
 }
 
 /**
- * Persiste le workspace via le sidecar Hono (POST /api/workspace si absent,
- * PATCH sinon). Mode dev standalone (pas de sidecar injecté) : no-op, pour
- * permettre à l'onboarding de terminer sans crash.
+ * Persiste le workspace via le sidecar Bun+Hono (PATCH si existant, POST
+ * sinon — capture l'erreur NOT_FOUND pour basculer en création).
+ * En dev web standalone sans sidecar injecté, l'ApiError NETWORK_ERROR est
+ * remontée pour que l'utilisateur voie le problème.
  */
 async function persistWorkspace(data: WorkspaceData): Promise<void> {
-  const g = apiGlobals();
-  if (g.__FAKT_API_URL__ === undefined || g.__FAKT_API_TOKEN__ === undefined) {
-    // Dev standalone sans sidecar — on ne bloque pas l'onboarding.
-    return;
-  }
-  const baseUrl = g.__FAKT_API_URL__;
-  const token = g.__FAKT_API_TOKEN__;
-
-  const body = JSON.stringify({
+  const payload = {
     name: data.name,
-    legalForm: data.legalForm,
+    legalForm: asLegalForm(data.legalForm),
     siret: data.siret,
     address: data.address,
     email: data.email,
-    ...(data.iban !== null && data.iban !== undefined ? { iban: data.iban } : {}),
-  });
+    iban: data.iban ?? null,
+  };
 
-  const headers = {
-    "Content-Type": "application/json",
-    "X-FAKT-Token": token,
-  } as const;
-
-  // Tente PATCH d'abord (workspace existant) ; si 404, bascule en POST (create).
-  const patchRes = await fetch(`${baseUrl}/api/workspace`, {
-    method: "PATCH",
-    headers,
-    body,
-  }).catch(() => null);
-
-  if (patchRes !== null && patchRes.ok) return;
-
-  const postRes = await fetch(`${baseUrl}/api/workspace`, {
-    method: "POST",
-    headers,
-    body,
-  }).catch(() => null);
-
-  if (postRes === null) {
-    throw new Error("Impossible de joindre l'API locale FAKT.");
+  try {
+    await api.workspace.update(payload);
+    return;
+  } catch (err) {
+    if (!(err instanceof ApiError) || err.code !== "NOT_FOUND") {
+      throw err;
+    }
   }
-  if (!postRes.ok && postRes.status !== 409) {
-    const text = await postRes.text().catch(() => "");
-    throw new Error(`Enregistrement workspace échoué : ${postRes.status} ${text}`);
+
+  try {
+    await api.workspace.create(payload);
+  } catch (err) {
+    if (err instanceof ApiError && err.code === "CONFLICT") {
+      // Race : un autre onglet a créé entre-temps — on retente un update.
+      await api.workspace.update(payload);
+      return;
+    }
+    throw err;
   }
 }
 

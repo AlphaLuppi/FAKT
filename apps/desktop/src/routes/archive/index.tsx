@@ -8,6 +8,7 @@ import type { Quote, Invoice } from "@fakt/shared";
 import { quotesApi } from "../../features/doc-editor/quotes-api.js";
 import { invoiceApi } from "../../features/doc-editor/invoice-api.js";
 import { pdfApi } from "../../features/doc-editor/pdf-api.js";
+import { api } from "../../api/index.js";
 import { useWorkspace, useClientsList } from "../quotes/hooks.js";
 
 function buildReadme(workspaceName: string, siret: string, isoDate: string): string {
@@ -149,12 +150,10 @@ export function ArchiveRoute(): ReactElement {
       const readme = buildReadme(workspace.name, workspace.siret, isoDate);
 
       const csvClients = buildClientsCsv(clients);
-      // TODO(track-ε-wave3): remplacer par `await api.get<Service[]>('/api/services', { archived: '1' })`
-      // dès que track ε refactor hooks (invoke → fetch) et track β endpoints services sont livrés.
-      // Actuellement le CSV prestations est vide : source hardcodée car `invoke('list_services')` a été
-      // supprimé par track ζ (remplacé par REST). Laisse le gap temporaire plutôt que de câbler deux
-      // fois le même chemin d'accès.
-      const csvPrestations = buildPrestationsCsv([]);
+      const services = await api.services
+        .list({ includeSoftDeleted: true })
+        .catch(() => []);
+      const csvPrestations = buildPrestationsCsv(services);
 
       const destPath = await invoke<string | null>("plugin:dialog|save", {
         options: {

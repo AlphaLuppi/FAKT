@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { ReactElement } from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -6,50 +6,42 @@ import { MemoryRouter } from "react-router";
 import { ClientsRoute } from "../index.js";
 import type { Client } from "@fakt/shared";
 
-// Stub Tauri
-vi.mock("@tauri-apps/api/core", () => {
-  const mockClients: Client[] = [
-    {
-      id: "c1",
-      workspaceId: "ws-1",
-      name: "Atelier Mercier",
-      legalForm: "Micro-entreprise",
-      siret: null,
-      address: "12 rue Pasteur, 84000 Avignon",
-      contactName: "Tom",
-      email: "tom@mercier.fr",
-      sector: "design",
-      firstCollaboration: null,
-      note: null,
-      archivedAt: null,
-      createdAt: 1700000000000,
-    },
-    {
-      id: "c2",
-      workspaceId: "ws-1",
-      name: "StartupTech",
-      legalForm: "SAS",
-      siret: null,
-      address: null,
-      contactName: "Alice",
-      email: "alice@startuptech.io",
-      sector: "tech",
-      firstCollaboration: null,
-      note: null,
-      archivedAt: null,
-      createdAt: 1700100000000,
-    },
-  ];
+const mockClients: Client[] = [
+  {
+    id: "c1",
+    workspaceId: "ws-1",
+    name: "Atelier Mercier",
+    legalForm: "Micro-entreprise",
+    siret: null,
+    address: "12 rue Pasteur, 84000 Avignon",
+    contactName: "Tom",
+    email: "tom@mercier.fr",
+    sector: "design",
+    firstCollaboration: null,
+    note: null,
+    archivedAt: null,
+    createdAt: 1700000000000,
+  },
+  {
+    id: "c2",
+    workspaceId: "ws-1",
+    name: "StartupTech",
+    legalForm: "SAS",
+    siret: null,
+    address: null,
+    contactName: "Alice",
+    email: "alice@startuptech.io",
+    sector: "tech",
+    firstCollaboration: null,
+    note: null,
+    archivedAt: null,
+    createdAt: 1700100000000,
+  },
+];
 
-  return {
-    invoke: vi.fn().mockImplementation((command: string) => {
-      if (command === "list_clients") return Promise.resolve(mockClients);
-      if (command === "list_quotes") return Promise.resolve([]);
-      if (command === "list_invoices") return Promise.resolve([]);
-      return Promise.resolve([]);
-    }),
-  };
-});
+vi.mock("@tauri-apps/api/core", () => ({
+  invoke: vi.fn().mockResolvedValue(null),
+}));
 
 vi.mock("@fakt/design-tokens", () => ({
   tokens: {
@@ -72,10 +64,41 @@ vi.mock("@fakt/design-tokens", () => ({
   },
 }));
 
+function jsonResponse(status: number, body: unknown): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
 const renderWithRouter = (ui: ReactElement): ReturnType<typeof render> =>
   render(<MemoryRouter initialEntries={["/clients"]}>{ui}</MemoryRouter>);
 
+const originalFetch = globalThis.fetch;
+const fetchMock = vi.fn();
+
 describe("ClientsRoute", () => {
+  beforeEach(() => {
+    fetchMock.mockReset();
+    fetchMock.mockImplementation((url: string) => {
+      if (url.includes("/api/clients")) {
+        return Promise.resolve(jsonResponse(200, { items: mockClients }));
+      }
+      if (url.includes("/api/quotes")) {
+        return Promise.resolve(jsonResponse(200, { items: [] }));
+      }
+      if (url.includes("/api/invoices")) {
+        return Promise.resolve(jsonResponse(200, { items: [] }));
+      }
+      return Promise.resolve(jsonResponse(404, { error: { code: "NOT_FOUND", message: "x" } }));
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+  });
+
   it("affiche la liste des clients", async () => {
     renderWithRouter(<ClientsRoute />);
     await waitFor(() => {

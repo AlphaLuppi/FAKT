@@ -1,13 +1,7 @@
 /**
- * Bridge IPC Tauri pour les factures.
- *
- * Contract de swapabilité : les composants importent `invoiceApi` et
- * type-hint contre `InvoiceApi`. En tests, `setInvoiceApi()` injecte un
- * double. Les appels Tauri restent centralisés ici.
+ * Bridge Invoice — consomme le sidecar Bun+Hono.
  */
 
-import { invoke } from "@tauri-apps/api/core";
-import { IPC_COMMANDS } from "@fakt/shared";
 import type {
   Invoice,
   InvoiceStatus,
@@ -17,6 +11,8 @@ import type {
   UUID,
   TimestampMs,
 } from "@fakt/shared";
+import { api as httpApi } from "../../api/index.js";
+import { ApiError } from "../../api/client.js";
 
 export interface InvoiceItemInput {
   id: UUID;
@@ -40,7 +36,7 @@ export interface CreateInvoiceInput {
   paymentMethod?: PaymentMethod | null;
   legalMentions: string;
   items: InvoiceItemInput[];
-  /** Si vrai, attribue un numéro F{year}-{NNN} et passe issuedAt = today. */
+  /** Si vrai, attribue un numéro F{year}-{NNN} et issuedAt = today. */
   issueNumber: boolean;
 }
 
@@ -53,9 +49,7 @@ export interface CreateFromQuoteInput {
   dueDate?: TimestampMs | null;
   paymentMethod?: PaymentMethod | null;
   legalMentions: string;
-  /** Items éventuellement édités par l'utilisateur avant création. */
   items?: InvoiceItemInput[];
-  /** Montant HT total (si l'utilisateur a ajusté les items). */
   totalHtCents?: number;
   issueNumber: boolean;
 }
@@ -94,49 +88,121 @@ export interface InvoiceApi {
   delete(id: UUID): Promise<void>;
 }
 
-const tauriInvoiceApi: InvoiceApi = {
+function genUuid(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
+function firstStatus(s: InvoiceStatus | InvoiceStatus[] | null | undefined): InvoiceStatus | undefined {
+  if (s === null || s === undefined) return undefined;
+  return Array.isArray(s) ? s[0] : s;
+}
+
+const httpInvoiceApi: InvoiceApi = {
   async list(input = {}): Promise<Invoice[]> {
-    return invoke<Invoice[]>(IPC_COMMANDS.LIST_INVOICES, {
-      status: input.status ?? null,
-      clientId: input.clientId ?? null,
-      quoteId: input.quoteId ?? null,
-      search: input.search ?? null,
+    if (input.search !== undefined && input.search !== null && input.search !== "") {
+      return httpApi.invoices.search(input.search);
+    }
+    const status = firstStatus(input.status);
+    return httpApi.invoices.list({
+      ...(status !== undefined ? { status } : {}),
+      ...(input.clientId !== undefined && input.clientId !== null
+        ? { clientId: input.clientId }
+        : {}),
+      ...(input.quoteId !== undefined && input.quoteId !== null
+        ? { quoteId: input.quoteId }
+        : {}),
     });
   },
   async get(id): Promise<Invoice | null> {
-    return invoke<Invoice | null>(IPC_COMMANDS.GET_INVOICE, { id });
+    try {
+      return await httpApi.invoices.get(id);
+    } catch (err) {
+      if (err instanceof ApiError && err.code === "NOT_FOUND") return null;
+      throw err;
+    }
   },
   async create(input): Promise<Invoice> {
-    return invoke<Invoice>(IPC_COMMANDS.CREATE_INVOICE_INDEPENDENT, { input });
+    const created = await httpApi.invoices.create({
+      id: genUuid(),
+      clientId: input.clientId,
+      quoteId: input.quoteId ?? null,
+      kind: input.kind,
+      depositPercent: input.depositPercent ?? null,
+      title: input.title,
+      totalHtCents: input.totalHtCents,
+      dueDate: input.dueDate ?? null,
+      legalMentions: input.legalMentions,
+      items: input.items.map((it) => ({
+        ...it,
+        serviceId: it.serviceId ?? null,
+      })),
+    });
+    if (input.issueNumber) {
+      return httpApi.invoices.issue(created.id);
+    }
+    return created;
   },
   async createFromQuote(input): Promise<Invoice> {
-    return invoke<Invoice>(IPC_COMMANDS.CREATE_INVOICE_FROM_QUOTE, { input });
+    const created = await httpApi.invoices.createFromQuote(input.quoteId, {
+      id: genUuid(),
+      mode: input.mode,
+      legalMentions: input.legalMentions,
+      ...(input.dueDate !== undefined ? { dueDate: input.dueDate } : {}),
+    });
+    if (input.issueNumber) {
+      return httpApi.invoices.issue(created.id);
+    }
+    return created;
   },
   async update(id, input): Promise<Invoice> {
-    return invoke<Invoice>("update_invoice", { id, input });
+    return httpApi.invoices.update(id, {
+      ...(input.clientId !== undefined ? { clientId: input.clientId } : {}),
+      ...(input.title !== undefined ? { title: input.title } : {}),
+      ...("dueDate" in input ? { dueDate: input.dueDate ?? null } : {}),
+      ...(input.totalHtCents !== undefined ? { totalHtCents: input.totalHtCents } : {}),
+      ...(input.legalMentions !== undefined ? { legalMentions: input.legalMentions } : {}),
+      ...(input.items !== undefined
+        ? {
+            items: input.items.map((it) => ({
+              ...it,
+              serviceId: it.serviceId ?? null,
+            })),
+          }
+        : {}),
+    });
   },
   async updateStatus(id, status): Promise<Invoice> {
     if (status === "sent") {
-      return invoke<Invoice>("mark_invoice_sent", { id });
+      return httpApi.invoices.markSent(id);
     }
-    throw new Error(
-      `invoiceApi.updateStatus: transition non exposée vers ${status}`,
-    );
+    if (status === "overdue") {
+      return httpApi.invoices.markOverdue(id);
+    }
+    if (status === "cancelled") {
+      return httpApi.invoices.cancel(id);
+    }
+    throw new Error(`invoiceApi.updateStatus: transition non exposée vers ${status}`);
   },
   async markPaid(id, input): Promise<Invoice> {
-    return invoke<Invoice>(IPC_COMMANDS.MARK_INVOICE_PAID, {
-      id,
+    return httpApi.invoices.markPaid(id, {
       paidAt: input.paidAt,
       method: input.method,
       notes: input.notes ?? null,
     });
   },
   async delete(id): Promise<void> {
-    await invoke<void>("delete_invoice", { id });
+    await httpApi.invoices.delete(id);
   },
 };
 
-let _impl: InvoiceApi = tauriInvoiceApi;
+let _impl: InvoiceApi = httpInvoiceApi;
 
 export const invoiceApi: InvoiceApi = {
   list: (input) => _impl.list(input),
@@ -149,7 +215,7 @@ export const invoiceApi: InvoiceApi = {
   delete: (id) => _impl.delete(id),
 };
 
-/** Injection pour tests. Passer `null` pour restaurer Tauri. */
+/** Injection pour tests. Passer `null` pour restaurer le défaut HTTP. */
 export function setInvoiceApi(api: InvoiceApi | null): void {
-  _impl = api ?? tauriInvoiceApi;
+  _impl = api ?? httpInvoiceApi;
 }
