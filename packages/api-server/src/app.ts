@@ -11,6 +11,13 @@ import {
   workspaceRoutes,
   settingsRoutes,
   clientsRoutes,
+  servicesRoutes,
+  numberingRoutes,
+  quotesRoutes,
+  invoicesRoutes,
+  activityRoutes,
+  signaturesRoutes,
+  backupsRoutes,
 } from "./routes/index.js";
 
 /**
@@ -25,6 +32,7 @@ export function createApp(config: AppConfig): Hono<AppEnv> {
 
   app.use("*", async (c, next) => {
     c.set("db", config.db);
+    c.set("sqlite", config.sqlite);
     c.set("authToken", config.authToken);
     c.header("X-FAKT-Api-Version", API_VERSION);
     await next();
@@ -38,6 +46,13 @@ export function createApp(config: AppConfig): Hono<AppEnv> {
   app.route("/api/workspace", workspaceRoutes);
   app.route("/api/settings", settingsRoutes);
   app.route("/api/clients", clientsRoutes);
+  app.route("/api/services", servicesRoutes);
+  app.route("/api/numbering", numberingRoutes);
+  app.route("/api/quotes", quotesRoutes);
+  app.route("/api/invoices", invoicesRoutes);
+  app.route("/api/activity", activityRoutes);
+  app.route("/api", signaturesRoutes);
+  app.route("/api/backups", backupsRoutes);
 
   app.notFound((c) =>
     c.json(

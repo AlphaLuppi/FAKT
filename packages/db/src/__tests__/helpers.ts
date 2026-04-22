@@ -183,6 +183,17 @@ const SCHEMA_DDL = [
     size_bytes INTEGER NOT NULL,
     created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
   )`,
+  `CREATE TABLE IF NOT EXISTS signed_documents (
+    document_type TEXT NOT NULL CHECK (document_type IN ('quote', 'invoice')),
+    document_id TEXT NOT NULL,
+    path TEXT NOT NULL,
+    pades_level TEXT NOT NULL CHECK (pades_level IN ('B', 'B-T')),
+    tsa_provider TEXT,
+    signed_at INTEGER NOT NULL,
+    signature_event_id TEXT NOT NULL,
+    PRIMARY KEY (document_type, document_id)
+  )`,
+  `CREATE INDEX IF NOT EXISTS signed_documents_event_idx ON signed_documents(signature_event_id)`,
 ];
 
 export type TestDb = BetterSQLite3Database<typeof schema>;

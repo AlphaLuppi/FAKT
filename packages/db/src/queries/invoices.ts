@@ -397,3 +397,148 @@ export function markInvoicePaid(
   if (!updated) throw new Error(`markInvoicePaid: could not reload invoice id=${id}`);
   return updated;
 }
+
+/**
+ * Hard delete — autorisé uniquement sur draft.
+ * Le trigger SQL `invoices_no_hard_delete_issued` renforce côté DB.
+ * Les invoice_items sont supprimés en cascade par la FK.
+ */
+export function deleteInvoice(db: DbInstance, id: string): void {
+  const row = db
+    .select({ id: invoices.id, status: invoices.status })
+    .from(invoices)
+    .where(eq(invoices.id, id))
+    .get();
+
+  if (!row) throw new Error(`deleteInvoice: invoice not found id=${id}`);
+  if (cannotDeleteIssued(row.status as InvoiceStatus)) {
+    throw new Error(
+      `deleteInvoice: hard delete interdit sur status=${row.status} (archivage légal 10 ans)`
+    );
+  }
+
+  db.delete(invoices).where(eq(invoices.id, id)).run();
+}
+
+/** Transition de statut validée via canTransitionInvoice. */
+export function updateInvoiceStatus(
+  db: DbInstance,
+  id: string,
+  newStatus: InvoiceStatus
+): Invoice {
+  const row = db
+    .select({ id: invoices.id, status: invoices.status })
+    .from(invoices)
+    .where(eq(invoices.id, id))
+    .get();
+
+  if (!row) throw new Error(`updateInvoiceStatus: invoice not found id=${id}`);
+
+  const current = row.status as InvoiceStatus;
+  if (!canTransitionInvoice(current, newStatus)) {
+    throw new Error(
+      `updateInvoiceStatus: invalid transition ${current} → ${newStatus}`
+    );
+  }
+
+  const updates: Partial<typeof invoices.$inferInsert> = {
+    status: newStatus,
+    updatedAt: new Date(Date.now()),
+  };
+
+  if (newStatus === "sent") updates.issuedAt = new Date(Date.now());
+
+  db.update(invoices).set(updates).where(eq(invoices.id, id)).run();
+
+  const updated = getInvoice(db, id);
+  if (!updated) throw new Error(`updateInvoiceStatus: could not reload invoice id=${id}`);
+  return updated;
+}
+
+/** Archive la facture (soft — archivage légal 10 ans, jamais hard delete sur issued). */
+export function archiveInvoice(db: DbInstance, id: string): Invoice {
+  const row = db.select({ id: invoices.id }).from(invoices).where(eq(invoices.id, id)).get();
+  if (!row) throw new Error(`archiveInvoice: invoice not found id=${id}`);
+
+  db.update(invoices)
+    .set({
+      archivedAt: new Date(Date.now()),
+      updatedAt: new Date(Date.now()),
+    })
+    .where(eq(invoices.id, id))
+    .run();
+
+  const updated = getInvoice(db, id);
+  if (!updated) throw new Error(`archiveInvoice: could not reload invoice id=${id}`);
+  return updated;
+}
+
+/** Recherche de factures par titre ou numéro (prefix/infix simple). */
+export function searchInvoices(db: DbInstance, workspaceId: string, q: string): Invoice[] {
+  const pattern = `%${q}%`;
+  const rows = db
+    .select()
+    .from(invoices)
+    .where(
+      and(
+        eq(invoices.workspaceId, workspaceId),
+        isNull(invoices.archivedAt),
+        or(like(invoices.title, pattern), like(invoices.number, pattern))
+      )
+    )
+    .orderBy(desc(invoices.createdAt))
+    .limit(20)
+    .all();
+
+  if (rows.length === 0) return [];
+  const invoiceIds = rows.map((r) => r.id);
+  const allItems = db
+    .select()
+    .from(invoiceItems)
+    .where(inArray(invoiceItems.invoiceId, invoiceIds))
+    .all();
+  return rows.map((row) =>
+    rowToInvoice(
+      row,
+      allItems.filter((i) => i.invoiceId === row.id)
+    )
+  );
+}
+
+/**
+ * Marque une facture comme émise : attribue number+year+sequence et transitionne draft→sent.
+ * Opération atomique logique : numérotation + issuedAt + status.
+ */
+export function issueInvoice(
+  db: DbInstance,
+  id: string,
+  numbering: { formatted: string; year: number; sequence: number }
+): Invoice {
+  const row = db
+    .select({ id: invoices.id, status: invoices.status, number: invoices.number })
+    .from(invoices)
+    .where(eq(invoices.id, id))
+    .get();
+
+  if (!row) throw new Error(`issueInvoice: invoice not found id=${id}`);
+  if (row.status !== "draft") {
+    throw new Error(`issueInvoice: only draft can be issued (current: ${row.status})`);
+  }
+
+  const now = new Date(Date.now());
+  db.update(invoices)
+    .set({
+      number: numbering.formatted,
+      year: numbering.year,
+      sequence: numbering.sequence,
+      status: "sent",
+      issuedAt: now,
+      updatedAt: now,
+    })
+    .where(eq(invoices.id, id))
+    .run();
+
+  const updated = getInvoice(db, id);
+  if (!updated) throw new Error(`issueInvoice: could not reload invoice id=${id}`);
+  return updated;
+}

@@ -5,3 +5,6 @@ export * from "./invoices.js";
 export * from "./numbering.js";
 export * from "./signatures.js";
 export * from "./settings.js";
+export * from "./activity.js";
+export * from "./signedDocuments.js";
+export * from "./backups.js";
