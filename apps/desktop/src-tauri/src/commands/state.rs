@@ -18,8 +18,6 @@ use parking_lot::Mutex;
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
 
-use crate::crypto::audit::SignatureEvent;
-
 #[derive(Debug, thiserror::Error)]
 pub enum FaktError {
     #[error("sqlite: {0}")]
@@ -41,13 +39,16 @@ impl serde::Serialize for FaktError {
 }
 
 /// Conteneur global pour l'état runtime FAKT.
+///
+/// Note : à partir de Track η, les `SignatureEvent` ne sont plus mis en cache
+/// en RAM ici — ils sont persistés en SQLite via l'api-server sidecar (POST
+/// /api/signature-events). Cf. `docs/sprint-notes/e2e-wiring-audit.md` §6.2.
 #[derive(Debug)]
 pub struct AppState {
     pub db_path: PathBuf,
     pub numbering_db: Mutex<Option<Connection>>,
     pub setup_flag: Mutex<bool>,
     pub signed_pdfs: Mutex<HashMap<(String, String), PathBuf>>,
-    pub signature_events: Mutex<Vec<SignatureEvent>>,
     pub signed_dir: PathBuf,
 }
 
@@ -89,7 +90,6 @@ impl AppState {
             numbering_db: Mutex::new(Some(conn)),
             setup_flag: Mutex::new(setup_flag),
             signed_pdfs: Mutex::new(HashMap::new()),
-            signature_events: Mutex::new(Vec::new()),
             signed_dir,
         }))
     }
@@ -185,31 +185,6 @@ impl AppState {
         Ok(None)
     }
 
-    pub fn append_signature_event(&self, event: SignatureEvent) -> FaktResult<()> {
-        self.signature_events.lock().push(event);
-        Ok(())
-    }
-
-    pub fn list_signature_events(
-        &self,
-        doc_type: &str,
-        doc_id: &str,
-    ) -> Vec<SignatureEvent> {
-        self.signature_events
-            .lock()
-            .iter()
-            .filter(|e| e.document_type == doc_type && e.document_id == doc_id)
-            .cloned()
-            .collect()
-    }
-
-    pub fn find_event(&self, event_id: &str) -> Option<SignatureEvent> {
-        self.signature_events
-            .lock()
-            .iter()
-            .find(|e| e.id == event_id)
-            .cloned()
-    }
 }
 
 /// Payload léger retourné par numbering_next_quote / numbering_next_invoice.

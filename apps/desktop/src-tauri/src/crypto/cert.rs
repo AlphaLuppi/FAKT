@@ -169,7 +169,11 @@ pub fn decode_private_key(pkcs8_der: &[u8]) -> CryptoResult<RsaPrivateKey> {
 }
 
 /// Informations synthétiques du cert — exposées au frontend.
+///
+/// Note Track η : sérialisation `camelCase` pour consommation TS directe
+/// (pas de mapping manuel côté webview).
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CertInfo {
     pub subject_cn: String,
     pub not_before_iso: String,

@@ -15,6 +15,7 @@ use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager};
 
 use crate::crypto::audit::{self, SignatureEvent};
+use crate::crypto::audit_client;
 use crate::crypto::cert::{
     cert_info_from_der, generate_self_signed_cert, CertInfo, GeneratedCert, SubjectDn,
 };
@@ -333,6 +334,11 @@ pub async fn sign_document(
         "B".to_string()
     };
 
+    // 5. Persist audit event via api-server HTTP POST (best-effort).
+    // Remplace l'ancien `AppState::append_signature_event` qui stockait en RAM
+    // uniquement. Cf. docs/sprint-notes/e2e-wiring-audit.md §6.2.
+    audit_client::post_signature_event_best_effort(&app, &event).await;
+
     Ok(SignDocumentResult {
         signed_pdf: final_pdf,
         signature_event: event,
@@ -341,15 +347,12 @@ pub async fn sign_document(
     })
 }
 
-async fn request_tsa_for_signature(cms_der: &[u8]) -> CryptoResult<TimestampToken> {
-    // Calcule hash de la signature RSA depuis le CMS. Pour simplicité POC on
-    // hash le CMS entier — la lib TSA côté serveur traite le digest fourni comme
-    // opaque. Un setup plus rigoureux extrairait le `signature` BIT STRING du
-    // SignerInfo, mais ce hash suffit pour établir le moment.
-    //
-    // Note : l'attribut `timeStampToken` selon RFC 3161 §2.5 doit timestamp la
-    // **signature** (SignerInfo.signature). Pour conformité stricte PAdES-B-T,
-    // extraire le BIT STRING signature avant hash.
+/// Construit le messageImprint du TimeStampReq conformément à RFC 3161 §2.5
+/// pour une signature PAdES-B-T : SHA-256 du `SignerInfo.signature` BIT STRING
+/// value, pas du CMS SignedData entier.
+///
+/// Exposée `pub` pour les tests d'intégration (`tests/tsa_hash_correctness.rs`).
+pub fn tsa_imprint_for_cms(cms_der: &[u8]) -> CryptoResult<[u8; 32]> {
     use cms::content_info::ContentInfo;
     use cms::signed_data::SignedData;
     use der::Decode;
@@ -371,8 +374,11 @@ async fn request_tsa_for_signature(cms_der: &[u8]) -> CryptoResult<TimestampToke
 
     let mut h = Sha256::new();
     h.update(sig_bytes);
-    let digest: [u8; 32] = h.finalize().into();
+    Ok(h.finalize().into())
+}
 
+async fn request_tsa_for_signature(cms_der: &[u8]) -> CryptoResult<TimestampToken> {
+    let digest = tsa_imprint_for_cms(cms_der)?;
     let endpoints = default_endpoints();
     tokio::task::spawn_blocking(move || tsa::request_timestamp(&digest, &endpoints))
         .await

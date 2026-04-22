@@ -4,20 +4,17 @@ import { Button, Modal, toast } from "@fakt/ui";
 import { fr } from "@fakt/shared";
 import type { Workspace } from "@fakt/shared";
 
+/// Miroir de `crypto::cert::CertInfo` côté Rust (serde rename_all camelCase).
 interface CertInfo {
-  dn: string;
-  fingerprint: string;
-  notBefore: string;
-  notAfter: string;
+  subjectCn: string;
+  notBeforeIso: string;
+  notAfterIso: string;
+  serialHex: string;
+  fingerprintSha256Hex: string;
 }
 
 interface CertGenerationResult {
-  info: {
-    subject_dn: string;
-    fingerprint_sha256: string;
-    not_before: string;
-    not_after: string;
-  };
+  info: CertInfo;
   cert_pem: string;
   storage: { kind: "keychain" } | { kind: "fallback-file"; path: string };
 }
@@ -25,14 +22,7 @@ interface CertGenerationResult {
 async function invokeGetCertInfo(): Promise<CertInfo | null> {
   try {
     const { invoke } = await import("@tauri-apps/api/core");
-    const result = await invoke<CertInfo | null>("get_cert_info", { fallbackPassword: null });
-    if (result === null) return null;
-    return {
-      dn: (result as unknown as { subject_dn: string }).subject_dn ?? "",
-      fingerprint: (result as unknown as { fingerprint_sha256: string }).fingerprint_sha256 ?? "",
-      notBefore: (result as unknown as { not_before: string }).not_before ?? "",
-      notAfter: (result as unknown as { not_after: string }).not_after ?? "",
-    };
+    return await invoke<CertInfo | null>("get_cert_info", { fallbackPassword: null });
   } catch {
     return null;
   }
@@ -88,12 +78,7 @@ export function CertificateTab({ workspace }: Props): ReactElement {
     setShowWarning(false);
     try {
       const result = await invokeRotateCert(workspace);
-      setCertInfo({
-        dn: result.info.subject_dn,
-        fingerprint: result.info.fingerprint_sha256,
-        notBefore: result.info.not_before,
-        notAfter: result.info.not_after,
-      });
+      setCertInfo(result.info);
       toast.success("Certificat régénéré avec succès");
     } catch (err) {
       const msg = err instanceof Error ? err.message : fr.errors.keychainError;
@@ -118,11 +103,11 @@ export function CertificateTab({ workspace }: Props): ReactElement {
             <span style={statusTextStyle}>{fr.settings.certificate.generated}</span>
           </div>
           <div style={metaStyle}>
-            <MetaRow label={fr.settings.certificate.dn} value={certInfo.dn} mono />
-            <MetaRow label={fr.settings.certificate.fingerprint} value={certInfo.fingerprint} mono />
+            <MetaRow label={fr.settings.certificate.dn} value={certInfo.subjectCn} mono />
+            <MetaRow label={fr.settings.certificate.fingerprint} value={certInfo.fingerprintSha256Hex} mono />
             <MetaRow
               label={fr.settings.certificate.expiry}
-              value={`${certInfo.notAfter} — ${computeValidityRemaining(certInfo.notAfter)}`}
+              value={`${certInfo.notAfterIso} — ${computeValidityRemaining(certInfo.notAfterIso)}`}
             />
           </div>
         </div>

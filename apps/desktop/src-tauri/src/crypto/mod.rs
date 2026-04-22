@@ -10,6 +10,7 @@
 //! - `commands` : Tauri commands exposées à la webview.
 
 pub mod audit;
+pub mod audit_client;
 pub mod cert;
 pub mod commands;
 pub mod error;

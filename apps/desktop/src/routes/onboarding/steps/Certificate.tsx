@@ -12,13 +12,17 @@ interface SubjectDn {
   email: string;
 }
 
+/// Miroir de `crypto::cert::CertInfo` côté Rust (serde rename_all camelCase).
+interface RustCertInfo {
+  subjectCn: string;
+  notBeforeIso: string;
+  notAfterIso: string;
+  serialHex: string;
+  fingerprintSha256Hex: string;
+}
+
 interface CertGenerationResult {
-  info: {
-    subject_dn: string;
-    fingerprint_sha256: string;
-    not_before: string;
-    not_after: string;
-  };
+  info: RustCertInfo;
   cert_pem: string;
   storage: { kind: "keychain" } | { kind: "fallback-file"; path: string };
 }
@@ -56,10 +60,10 @@ export function CertificateStep({ onNext, onPrev }: Props): ReactElement {
       };
       const result = await invokeCertGenerate(subjectDn);
       const cert: CertInfo = {
-        dn: result.info.subject_dn,
-        fingerprint: result.info.fingerprint_sha256,
-        notBefore: result.info.not_before,
-        notAfter: result.info.not_after,
+        dn: result.info.subjectCn,
+        fingerprint: result.info.fingerprintSha256Hex,
+        notBefore: result.info.notBeforeIso,
+        notAfter: result.info.notAfterIso,
         certPem: result.cert_pem,
         storage: result.storage.kind === "keychain" ? "keychain" : "fallback-file",
       };
