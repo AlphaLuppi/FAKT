@@ -1,0 +1,27 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "noEmit": true,
+    "types": ["node"],
+    "paths": {
+      "@fakt/shared": ["../shared/src/index.ts"],
+      "@fakt/db": ["../db/src/index.ts"],
+      "@fakt/db/queries": ["../db/src/queries/index.ts"],
+      "@fakt/db/schema": ["../db/src/schema/index.ts"],
+      "@fakt/db/adapter": ["../db/src/adapter.ts"],
+      "@fakt/db/__tests__/helpers": ["../db/src/__tests__/helpers.ts"]
+    }
+  },
+  "include": [
+    "src/**/*",
+    "tests/**/*",
+    "../shared/src/**/*",
+    "../db/src/**/*"
+  ],
+  "exclude": [
+    "../db/src/__tests__/invoices-payment-notes.test.ts",
+    "../db/src/seed/**",
+    "../db/src/migrations/**"
+  ]
+}

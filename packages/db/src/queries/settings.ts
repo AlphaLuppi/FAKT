@@ -11,6 +11,17 @@ import type { Workspace } from "@fakt/shared";
 
 // ─── Input types ──────────────────────────────────────────────────────────────
 
+export interface CreateWorkspaceInput {
+  id: string;
+  name: string;
+  legalForm: string;
+  siret: string;
+  address: string;
+  email: string;
+  iban?: string | null;
+  tvaMention?: string;
+}
+
 export interface UpdateWorkspaceInput {
   name?: string;
   legalForm?: string;
@@ -51,6 +62,33 @@ function rowToWorkspace(row: typeof workspaces.$inferSelect): Workspace {
 export function getWorkspace(db: DbInstance): Workspace | null {
   const row = db.select().from(workspaces).limit(1).get();
   return row ? rowToWorkspace(row) : null;
+}
+
+/**
+ * Crée le workspace singleton au premier onboarding.
+ * Retourne l'entité créée. Lève si un workspace existe déjà (PK sur id
+ * + enforce singleton côté handler via getWorkspace()).
+ */
+export function createWorkspace(db: DbInstance, input: CreateWorkspaceInput): Workspace {
+  const now = new Date(Date.now());
+  const row = db
+    .insert(workspaces)
+    .values({
+      id: input.id,
+      name: input.name,
+      legalForm: input.legalForm,
+      siret: input.siret,
+      address: input.address,
+      email: input.email,
+      iban: input.iban ?? null,
+      tvaMention: input.tvaMention ?? "TVA non applicable, art. 293 B du CGI",
+      createdAt: now,
+    })
+    .returning()
+    .get();
+
+  if (!row) throw new Error(`createWorkspace: insert returned no row for id=${input.id}`);
+  return rowToWorkspace(row);
 }
 
 /** Met à jour les champs du workspace. */

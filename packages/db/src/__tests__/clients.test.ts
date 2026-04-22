@@ -6,6 +6,7 @@ import {
   createClient,
   updateClient,
   softDeleteClient,
+  restoreClient,
   searchClients,
 } from "../queries/clients.js";
 import type { TestDb } from "./helpers.js";
@@ -147,6 +148,27 @@ describe("softDeleteClient", () => {
 
   it("lève une erreur pour un ID inexistant", () => {
     expect(() => softDeleteClient(db, "bad-id")).toThrow();
+  });
+});
+
+describe("restoreClient", () => {
+  beforeEach(() => seedClient(db));
+
+  it("restaure un client archivé (archived_at → null)", () => {
+    softDeleteClient(db, CLIENT_ID_1);
+    expect(getClient(db, CLIENT_ID_1)?.archivedAt).toBeTypeOf("number");
+
+    const restored = restoreClient(db, CLIENT_ID_1);
+    expect(restored.archivedAt).toBeNull();
+    expect(getClient(db, CLIENT_ID_1)?.archivedAt).toBeNull();
+  });
+
+  it("lève une erreur si le client n'est pas archivé", () => {
+    expect(() => restoreClient(db, CLIENT_ID_1)).toThrow();
+  });
+
+  it("lève une erreur pour un ID inexistant", () => {
+    expect(() => restoreClient(db, "bad-id")).toThrow();
   });
 });
 

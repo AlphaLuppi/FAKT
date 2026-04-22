@@ -3,7 +3,7 @@
  * Soft delete uniquement (archived_at) — contrainte légale archivage documents liés.
  */
 
-import { eq, and, like, isNull, isNotNull, or, desc, asc } from "drizzle-orm";
+import { eq, and, like, isNull, isNotNull, or, asc } from "drizzle-orm";
 import type { DbInstance } from "../adapter.js";
 import { clients } from "../schema/index.js";
 import type { Client } from "@fakt/shared";
@@ -167,6 +167,19 @@ export function softDeleteClient(db: DbInstance, id: string): void {
     .get();
 
   if (!result) throw new Error(`softDeleteClient: client not found or already archived id=${id}`);
+}
+
+/** Restore : lève l'archivage (archived_at → null). Retourne le client restauré. */
+export function restoreClient(db: DbInstance, id: string): Client {
+  const row = db
+    .update(clients)
+    .set({ archivedAt: null })
+    .where(and(eq(clients.id, id), isNotNull(clients.archivedAt)))
+    .returning()
+    .get();
+
+  if (!row) throw new Error(`restoreClient: client not found or not archived id=${id}`);
+  return rowToClient(row);
 }
 
 /** Recherche de clients par nom ou email (full-text simple LIKE). */

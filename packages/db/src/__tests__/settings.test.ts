@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { createTestDb, seedWorkspace, WORKSPACE_ID } from "./helpers.js";
 import {
   getWorkspace,
+  createWorkspace,
   updateWorkspace,
   getSetting,
   setSetting,
@@ -27,6 +28,61 @@ describe("getWorkspace", () => {
   it("retourne null si aucun workspace", () => {
     const { db: emptyDb } = createTestDb();
     expect(getWorkspace(emptyDb)).toBeNull();
+  });
+});
+
+describe("createWorkspace", () => {
+  it("insère un workspace avec la mention TVA micro-entreprise par défaut", () => {
+    const { db: freshDb } = createTestDb();
+    const ws = createWorkspace(freshDb, {
+      id: "00000000-0000-0000-0000-0000000000aa",
+      name: "Atelier Test",
+      legalForm: "Micro-entreprise",
+      siret: "81234567800014",
+      address: "12 rue du Test, 75001 Paris",
+      email: "hello@atelier.fr",
+    });
+
+    expect(ws.id).toBe("00000000-0000-0000-0000-0000000000aa");
+    expect(ws.name).toBe("Atelier Test");
+    expect(ws.tvaMention).toBe("TVA non applicable, art. 293 B du CGI");
+    expect(ws.iban).toBeNull();
+    expect(ws.createdAt).toBeGreaterThan(0);
+
+    const reread = getWorkspace(freshDb);
+    expect(reread?.id).toBe(ws.id);
+  });
+
+  it("respecte les champs optionnels fournis (iban, tvaMention custom)", () => {
+    const { db: freshDb } = createTestDb();
+    const ws = createWorkspace(freshDb, {
+      id: "00000000-0000-0000-0000-0000000000bb",
+      name: "SARL Test",
+      legalForm: "SARL",
+      siret: "82345678900019",
+      address: "5 avenue TVA, 69002 Lyon",
+      email: "contact@sarl.fr",
+      iban: "FR7612345987650123456789014",
+      tvaMention: "TVA intracommunautaire FR12345678900",
+    });
+
+    expect(ws.iban).toBe("FR7612345987650123456789014");
+    expect(ws.tvaMention).toBe("TVA intracommunautaire FR12345678900");
+    expect(ws.legalForm).toBe("SARL");
+  });
+
+  it("lève une erreur si un workspace avec le même ID existe déjà", () => {
+    // `seedWorkspace` a inséré WORKSPACE_ID dans `beforeEach`.
+    expect(() =>
+      createWorkspace(db, {
+        id: WORKSPACE_ID,
+        name: "Conflit",
+        legalForm: "Micro-entreprise",
+        siret: "11111111111111",
+        address: "X",
+        email: "conflit@test.fr",
+      })
+    ).toThrow();
   });
 });
 
