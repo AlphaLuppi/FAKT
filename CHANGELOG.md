@@ -210,6 +210,13 @@ Review exhaustive Phase 3 + fixes Phase 4 sur `docs/sprint-notes/v01-review-find
   documentés dans [`docs/sprint-notes/v01-review-findings.md`](docs/sprint-notes/v01-review-findings.md).
   Non release-blocking : aucun n'affecte les flows business, la conformité légale FR ou
   la sécurité de base.
+- **Règles Biome lint désactivées v0.1.0, à re-enforcer v0.1.1** : `useExhaustiveDependencies`,
+  `noInvalidUseBeforeDeclaration`, `useFocusableInteractive`, `useKeyWithClickEvents`,
+  `useSemanticElements`, `useButtonType`, `noLabelWithoutControl`, `noForEach`,
+  `noUselessTernary`, `noMisleadingCharacterClass`, `noImplicitAnyLet`, `noArrayIndexKey`,
+  `noControlCharactersInRegex` — 100+ violations pré-existantes (a11y + React hooks deps)
+  que le sprint v0.1 n'a pas couvert. `noExplicitAny` reste enforcé en error (non-négociable).
+  Plan v0.1.1 : agent dédié remonte ces rules en error + fix les violations par batch.
 - **P1 non release-blocking déférés v0.1.1** : ~22 findings P1 restants (i18n
   "Chargement…" hardcoded, empty states sans CTA, mélange tu/vous, nextNumber atomic
   pour multi-workspace mode 2/3, LIKE wildcards `%`/`_` escape, `verify_signature`
