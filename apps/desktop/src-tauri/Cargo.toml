@@ -18,6 +18,8 @@ tauri-build = { version = "2", features = [] }
 [dependencies]
 tauri = { version = "2", features = [] }
 tauri-plugin-shell = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-dialog = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tokio = { version = "1", features = ["full"] }
@@ -54,8 +56,10 @@ hmac = "0.12"
 # PDF manipulation (PAdES)
 lopdf = "0.34"
 
-# TSA RFC 3161
-reqwest = { version = "0.12", default-features = false, features = ["blocking", "rustls-tls"] }
+# TSA RFC 3161 (blocking sync) + audit client / sidecar healthcheck (async client + JSON).
+# `http2` et `charset` permettent au client async par défaut de fonctionner sans enable
+# `default-features`, et `json` expose `.json()` sur RequestBuilder/Response.
+reqwest = { version = "0.12", default-features = false, features = ["blocking", "rustls-tls", "json", "http2", "charset"] }
 
 # SQLite pour atomic numbering (CGI art. 289) + persistance signed PDFs
 rusqlite = { version = "0.31", features = ["bundled"] }

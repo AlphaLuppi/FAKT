@@ -1,6 +1,7 @@
 pub mod commands;
 pub mod crypto;
 mod pdf;
+pub mod sidecar;
 
 use commands::AppState;
 use tauri::Manager;
@@ -9,6 +10,8 @@ use tauri::Manager;
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             let app_data_dir = app
                 .path()
@@ -29,14 +32,6 @@ pub fn run() {
             crypto::sign_document,
             commands::is_setup_completed,
             commands::complete_setup,
-            commands::mark_quote_invoiced,
-            commands::mark_invoice_sent,
-            commands::update_invoice,
-            commands::delete_invoice,
-            commands::numbering_next_quote,
-            commands::numbering_next_invoice,
-            commands::get_signature_events,
-            commands::append_signature_event,
             commands::store_signed_pdf,
             commands::get_signed_pdf,
             commands::verify_signature,
