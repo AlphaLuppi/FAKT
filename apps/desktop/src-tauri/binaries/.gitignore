@@ -1,0 +1,4 @@
+# Binaires sidecar fakt-api compilés par `bun run build:sidecar`.
+# Générés en CI (release-desktop.yml) et en local. Jamais commités.
+fakt-api-*
+!.gitignore

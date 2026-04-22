@@ -10,24 +10,15 @@
     "frontendDist": "../dist"
   },
   "app": {
-    "windows": [
-      {
-        "title": "FAKT",
-        "width": 1280,
-        "height": 800,
-        "minWidth": 900,
-        "minHeight": 600,
-        "resizable": true,
-        "fullscreen": false
-      }
-    ],
+    "windows": [],
     "security": {
-      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://freetsa.org"
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' http://127.0.0.1:* https://freetsa.org"
     }
   },
   "bundle": {
     "active": true,
     "targets": ["app", "dmg", "msi", "appimage", "deb"],
+    "externalBin": ["binaries/fakt-api"],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

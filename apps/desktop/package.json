@@ -10,7 +10,8 @@
     "test": "vitest run",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "tauri:build": "bun run build:sidecar && tauri build",
+    "build:sidecar": "bun run ../../packages/api-server/scripts/build-sidecar.ts"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.1",
