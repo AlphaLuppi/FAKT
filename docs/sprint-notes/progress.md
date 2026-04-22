@@ -199,8 +199,23 @@ Agents Phase 2 Wave 1 en arrière-plan (5 parallèles) :
   - `8571edb` : fix tauri-action@v2→@v0
   - `6361f81` : fix build sidecar conditionnel par OS (cross-compile Bun Windows→Darwin fail)
   - `a17f61a` : fix macOS universal (lipo merge arm64+x64) + Linux FUSE (libfuse2+fuse apt install pour linuxdeploy AppImage)
-- 2026-04-23 · **Release v0.1.0 PUBLIÉE** sur GitHub : https://github.com/AlphaLuppi/FAKT/releases/tag/v0.1.0
-  - Windows MSI `FAKT_0.1.0_x64_en-US.msi` (45 MB) **attaché** par release.yml run 24804631781 (Windows SUCCESS, macOS+Linux FAIL).
-  - Release run 24805248184 **en cours** avec fixes macOS lipo + Linux FUSE — ajout DMG universel + AppImage/deb attendu. Watcher b1qrhtd9j.
-  - Tom peut déjà télécharger Windows MSI dès maintenant sur l'onglet Releases.
-  - macOS + Linux binaires seront ajoutés automatiquement à la même Release dès que le run 24805248184 termine. Découpage : (a) **fix-security** 5 P0 crypto/commands (audit chain hash exhaustif avec previous_event_hash, command injection cmd /C start → rundll32, path traversal store_signed_pdf regex+canonicalize, TSA URLs HTTP→HTTPS, CSP whitelist aligner digicert/sectigo) ; (b) **fix-bugs-legal** 3 P0 conformité FR (from-quote balance filtre status IN sent|paid|overdue, deposit30 Math.round + redistribution cents, /cancel invoice refuser sent→cancelled selon state machine) ; (c) **fix-docs-release** 4 P0 docs + P1 CHANGELOG (remplace "~5-8 Mo / ≤ 15 Mo" → "~100 Mo (objectif v0.2 ~20 Mo)" dans 4 launch-messages + product-brief + prd + architecture, ajoute entries CHANGELOG pour b70a597/9715a90/f32d089/0cfacaf, fusionne Unreleased/0.1.0, README Troubleshooting sidecar, test-plan.md X-FAKT-Token vs Bearer) ; (d) **fix-ux-p1-critical** P1 UX release-blocking (EI enum workspace, archive pagination limit 50→all, toast.success→error sur export fail, handling 200 empty body client.ts, Escape ShortcutsOverlay + QuickClientModal a11y). Les P2/P3 restants → CHANGELOG Known Issues v0.1.1, pas fixés en v0.1.0.
+- 2026-04-23 · **Release v0.1.0 PUBLIÉE COMPLÈTE** sur https://github.com/AlphaLuppi/FAKT/releases/tag/v0.1.0. Run 24806062703 (4ᵉ tentative) : **3 OS SUCCESS**. 4 binaires attachés :
+  - `FAKT_0.1.0_x64_en-US.msi` (44 MB) — Windows installer
+  - `FAKT_0.1.0_universal.dmg` (55 MB) — macOS Apple Silicon + Intel universal (Gatekeeper warning non-notarisé, clic droit → Ouvrir)
+  - `FAKT_universal.app.tar.gz` (54 MB) — macOS .app bundle archive
+  - `FAKT_0.1.0_amd64.deb` (42 MB) — Debian/Ubuntu/Mint/Pop!_OS package
+
+- 2026-04-23 · **Fixes cumulés release.yml (4 runs avant le succès)** :
+  - Fix 1 `tauri-action@v2`→`@v0` (la version v2 n'existe pas)
+  - Fix 2 build sidecar conditionnel par OS (cross-compile Bun Win→Darwin fail)
+  - Fix 3 macOS `lipo` merge arm64+x64 → universal binary + Linux libfuse2 apt install
+  - Fix 4 APPIMAGE_EXTRACT_AND_RUN=1 + retire APPLE_* env vides (codesign skip) + Linux `--bundles deb` (AppImage skip car FUSE absent runner)
+
+- 2026-04-23 · **v0.1.0 DoD finale cochée** :
+  - [x] Fonctionnel : flow business end-to-end validé par qa-smoke-live (workspace → client → devis D2026-001 → signed → facture F2026-001 → paid)
+  - [x] Technique : `bun run typecheck && bun run test && bun run build` all-green, `cargo check --locked` all-green, 755+ tests passent
+  - [x] Légal FR : mentions TVA art. 293 B, numérotation CGI art. 289 atomique, pas de hard-delete issued, signature « avancée » uniquement
+  - [x] Architecture pérenne : api-server indépendant Tauri (packages/api-server), adapter Drizzle SQLite posé pour Postgres
+  - [x] Release : README troubleshooting, CHANGELOG [0.1.0] exhaustif, docs/architecture.md 3 modes, tag v0.1.0 posé, 4 binaires sur GitHub Release publique
+
+- 2026-04-23 · **AppImage Linux + codesign macOS/Windows** → Known Issues v0.1.1 (cf CHANGELOG.md). Découpage : (a) **fix-security** 5 P0 crypto/commands (audit chain hash exhaustif avec previous_event_hash, command injection cmd /C start → rundll32, path traversal store_signed_pdf regex+canonicalize, TSA URLs HTTP→HTTPS, CSP whitelist aligner digicert/sectigo) ; (b) **fix-bugs-legal** 3 P0 conformité FR (from-quote balance filtre status IN sent|paid|overdue, deposit30 Math.round + redistribution cents, /cancel invoice refuser sent→cancelled selon state machine) ; (c) **fix-docs-release** 4 P0 docs + P1 CHANGELOG (remplace "~5-8 Mo / ≤ 15 Mo" → "~100 Mo (objectif v0.2 ~20 Mo)" dans 4 launch-messages + product-brief + prd + architecture, ajoute entries CHANGELOG pour b70a597/9715a90/f32d089/0cfacaf, fusionne Unreleased/0.1.0, README Troubleshooting sidecar, test-plan.md X-FAKT-Token vs Bearer) ; (d) **fix-ux-p1-critical** P1 UX release-blocking (EI enum workspace, archive pagination limit 50→all, toast.success→error sur export fail, handling 200 empty body client.ts, Escape ShortcutsOverlay + QuickClientModal a11y). Les P2/P3 restants → CHANGELOG Known Issues v0.1.1, pas fixés en v0.1.0.
