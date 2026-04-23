@@ -7,6 +7,29 @@ et [Semantic Versioning 2.0.0](https://semver.org/lang/fr/).
 
 ---
 
+## [0.1.1] - 2026-04-23
+
+Patch hotfix : déblocage de l'onboarding et de toutes les requêtes XHR du
+webview vers le sidecar bloquées par CORS depuis 0.1.0.
+
+### Fixed
+
+- **CORS sidecar Hono** : le sidecar `packages/api-server/` n'envoyait aucun
+  header `Access-Control-Allow-*`. Conséquence : depuis le webview Tauri (origin
+  `http(s)://tauri.localhost` sous Windows, `tauri://localhost` sous macOS/Linux)
+  ou depuis Vite dev (`http://localhost:1420`), le navigateur bloquait toutes les
+  requêtes `/api/*` au preflight (`Network error: Failed to fetch` au clic
+  "C'est parti !" en fin d'onboarding). Ajout du middleware `hono/cors` avec
+  whitelist explicite des 4 origins légitimes + variable `FAKT_API_EXTRA_ORIGINS`
+  pour les déploiements self-host (`packages/api-server/src/app.ts`).
+
+### Changed
+
+- `API_VERSION` constant `0.1.0` → `0.1.1` (`packages/api-server/src/types.ts`),
+  exposé via header `X-FAKT-Api-Version`.
+
+---
+
 ## [0.1.0] - 2026-05-12
 
 Première release publique de FAKT. Milestone v0.1.0 PUBLIC atteint.
