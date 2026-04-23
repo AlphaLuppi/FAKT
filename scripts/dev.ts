@@ -4,7 +4,7 @@
 //
 // Pourquoi pas `&` en shell : `bun run <script>` n'accepte pas les commandes
 // background dans les scripts npm (erreur "Background commands & are not
-// supported yet"). On utilise Bun.spawn pour contrôler les 2 process en TS.
+// supported yet"). On utilise child_process.spawn pour contrôler les 2 process en TS.
 //
 // Pourquoi pas le binaire compilé du sidecar : `bun build --compile` bundle
 // mal les modules natifs (better-sqlite3 → crash `bindings` au runtime). Pour
@@ -13,7 +13,7 @@
 //
 // Usage : bun run dev (depuis la racine monorepo)
 
-import { spawn } from "node:child_process";
+import { spawn, type ChildProcess } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import { homedir, platform } from "node:os";
 import { dirname, resolve } from "node:path";
@@ -31,6 +31,31 @@ mkdirSync(dirname(dbPath), { recursive: true });
 
 console.log(`[FAKT] api-server: port=${port} db=${dbPath}`);
 
+// Variables déclarées en tête pour éviter la TDZ : si api-server crash
+// immédiatement (ex : EADDRINUSE), son callback "exit" peut fire AVANT que
+// `tauri` / `tauriExited` soient assignés plus bas. On init avec des valeurs
+// neutres puis on les assigne après le spawn.
+let api: ChildProcess | null = null;
+let tauri: ChildProcess | null = null;
+let apiExited = false;
+let tauriExited = false;
+let shuttingDown = false;
+
+const killAll = () => {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  if (api && !apiExited) {
+    try {
+      api.kill();
+    } catch {}
+  }
+  if (tauri && !tauriExited) {
+    try {
+      tauri.kill();
+    } catch {}
+  }
+};
+
 const apiEnv: NodeJS.ProcessEnv = {
   ...process.env,
   FAKT_API_PORT: port,
@@ -39,23 +64,33 @@ const apiEnv: NodeJS.ProcessEnv = {
   FAKT_MODE: mode,
 };
 
-const api = spawn("bun", ["--cwd", "packages/api-server", "src/index.ts"], {
+api = spawn("bun", ["--cwd", "packages/api-server", "src/index.ts"], {
   cwd: repoRoot,
   env: apiEnv,
   stdio: "inherit",
   shell: platform() === "win32",
 });
 
-let apiExited = false;
 api.on("exit", (code, signal) => {
   apiExited = true;
   console.log(`[FAKT] api-server exited code=${code} signal=${signal}`);
-  if (!tauriExited) {
-    tauri?.kill();
+  if (tauri && !tauriExited) {
+    try {
+      tauri.kill();
+    } catch {}
+  }
+  // Si api crash avant que tauri soit lancé, on sort avec le code d'api.
+  if (!tauri) {
+    process.exit(code ?? 1);
   }
 });
 
 await new Promise((r) => setTimeout(r, 1000));
+
+if (apiExited) {
+  console.error("[FAKT] api-server a crashé au démarrage — abort.");
+  process.exit(1);
+}
 
 console.log("[FAKT] Démarrage Tauri en mode FAKT_API_EXTERNAL=1...");
 
@@ -66,32 +101,30 @@ const tauriEnv: NodeJS.ProcessEnv = {
   FAKT_API_TOKEN: token,
 };
 
-const tauri = spawn("bun", ["run", "tauri", "dev"], {
+tauri = spawn("bun", ["run", "tauri", "dev"], {
   cwd: resolve(repoRoot, "apps/desktop"),
   env: tauriEnv,
   stdio: "inherit",
   shell: platform() === "win32",
 });
 
-let tauriExited = false;
 tauri.on("exit", (code, signal) => {
   tauriExited = true;
   console.log(`[FAKT] tauri exited code=${code} signal=${signal}`);
-  if (!apiExited) {
-    api?.kill();
+  if (api && !apiExited) {
+    try {
+      api.kill();
+    } catch {}
   }
   process.exit(code ?? 0);
 });
 
-const cleanup = (sig: NodeJS.Signals) => {
-  console.log(`[FAKT] signal ${sig} reçu, arrêt des process...`);
-  if (!apiExited) api?.kill();
-  if (!tauriExited) tauri?.kill();
-};
-
-process.on("SIGINT", () => cleanup("SIGINT"));
-process.on("SIGTERM", () => cleanup("SIGTERM"));
-process.on("exit", () => {
-  if (!apiExited) api?.kill();
-  if (!tauriExited) tauri?.kill();
+process.on("SIGINT", () => {
+  console.log("[FAKT] SIGINT reçu, arrêt des process...");
+  killAll();
 });
+process.on("SIGTERM", () => {
+  console.log("[FAKT] SIGTERM reçu, arrêt des process...");
+  killAll();
+});
+process.on("exit", killAll);
