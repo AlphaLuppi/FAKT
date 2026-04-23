@@ -19,8 +19,14 @@ export function isValidSiret(siret: string): boolean {
   return sum % 10 === 0;
 }
 
+/** Retire espaces, tirets et underscores, pour accepter "853 665 842 00029" comme "85366584200029". */
+function normalizeSiretInput(v: string): string {
+  return v.replace(/[\s\-_]/g, "");
+}
+
 export const siretSchema = z
   .string()
+  .transform(normalizeSiretInput)
   .refine(isValidSiret, { message: "SIRET invalide (14 chiffres + Luhn)" });
 
 export const optionalSiret = z.union([siretSchema, z.null(), z.literal("")]).optional();

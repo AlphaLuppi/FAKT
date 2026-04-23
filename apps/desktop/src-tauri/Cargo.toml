@@ -1,6 +1,6 @@
 [package]
 name = "fakt"
-version = "0.1.1"
+version = "0.1.2"
 description = "FAKT — Devis et factures freelance FR. Signé."
 authors = ["Tom Andrieu <contact@alphaluppi.com>"]
 license = "BUSL-1.1"
@@ -80,4 +80,8 @@ codegen-units = 1
 lto = true
 opt-level = "s"
 panic = "abort"
-strip = true
+# strip = true a cause des crashes 0xc0000409 silencieux au boot Windows
+# (combinaison LTO + opt-s + strip + Tauri 2 + WebView2). Garder symbols.
+strip = false
+# debug = "line-tables-only" donne des backtraces lisibles sans gonfler le bundle.
+debug = "line-tables-only"

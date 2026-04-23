@@ -1,3 +1,4 @@
+import { normalizeSiret } from "@fakt/legal";
 import { type LegalForm, fr } from "@fakt/shared";
 import { Button, toast } from "@fakt/ui";
 import type { ReactElement } from "react";
@@ -40,7 +41,9 @@ async function persistWorkspace(data: WorkspaceData): Promise<void> {
   const payload = {
     name: data.name,
     legalForm: asLegalForm(data.legalForm),
-    siret: data.siret,
+    // Normalise pour retirer les espaces/tirets — le validator client accepte
+    // "853 665 842 00029" mais l'API attend strictement 14 chiffres.
+    siret: normalizeSiret(data.siret),
     address: data.address,
     email: data.email,
     iban: data.iban ?? null,

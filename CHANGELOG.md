@@ -7,6 +7,44 @@ et [Semantic Versioning 2.0.0](https://semver.org/lang/fr/).
 
 ---
 
+## [0.1.2] - 2026-04-23
+
+Patch hotfix : déblocage du lancement de l'application Windows (crash silencieux
+au boot 0.1.1) et acceptation des SIRET avec espaces dans l'onboarding.
+
+### Fixed
+
+- **Crash silencieux au boot Windows release (0xc0000409 / `__fastfail`)** :
+  la combinaison `[profile.release] lto = true + opt-level = "s" + strip = true`
+  produisait un binaire `fakt.exe` qui plantait avant l'ouverture de la fenêtre
+  WebView2. Reproduit en local avec un build `cargo build --release` ; corrigé
+  en passant à `strip = false` + `debug = "line-tables-only"`. Bundle MSI
+  passe de ~9.7 Mo à ~10 Mo (acceptable).
+- **SIRET avec espaces rejeté par l'API** (`SIRET INVALIDE (14 chiffres + Luhn)`
+  alors que la valeur normalisée est valide). L'écran récap onboarding envoyait
+  `data.siret` brut (`"853 665 842 00029"`, 17 chars) au lieu du SIRET normalisé
+  (`"85366584200029"`, 14 chars). Double fix défensif :
+  - `apps/desktop/src/routes/onboarding/steps/Recap.tsx` : appelle
+    `normalizeSiret()` avant POST.
+  - `packages/api-server/src/schemas/common.ts` : `siretSchema` applique
+    désormais un `transform` Zod qui retire espaces, tirets et underscores
+    avant validation Luhn — toute consommation de l'API (frontend, scripts,
+    intégrations futures) bénéficie du fix.
+
+### Added
+
+- **Panic hook + traceur d'exécution** dans `apps/desktop/src-tauri/src/lib.rs` :
+  écrit dans `%TEMP%/fakt-trace.log` (Windows) / `/tmp/fakt-trace.log` (Unix)
+  chaque étape de `run() → setup() → window` + tout panic non rattrapé avec
+  backtrace complète. Indispensable sous `windows_subsystem = "windows"` où
+  stderr est silencieusement avalé.
+
+### Changed
+
+- `API_VERSION` constant `0.1.1` → `0.1.2`.
+
+---
+
 ## [0.1.1] - 2026-04-23
 
 Patch hotfix : déblocage de l'onboarding et de toutes les requêtes XHR du
