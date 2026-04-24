@@ -3,10 +3,45 @@ import userEvent from "@testing-library/user-event";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mockInvoke = vi.fn().mockResolvedValue(null);
+// `vi.mock` est hoisté en haut du fichier. Pour partager des spies entre la
+// factory et les tests, on utilise `vi.hoisted` qui garantit la déclaration
+// avant le mock.
+const { mockInvoke, mockWorkspaceGet, mockSettingsSet } = vi.hoisted(() => ({
+  mockInvoke: vi.fn().mockResolvedValue(null),
+  // Par défaut retourne null (pas d'onboarding fait). Les describe qui
+  // ont besoin du workspace le configurent explicitement en beforeEach.
+  mockWorkspaceGet: vi.fn<() => Promise<unknown>>().mockResolvedValue(null),
+  mockSettingsSet: vi.fn<(key: string, value: string) => Promise<unknown>>().mockResolvedValue({
+    key: "x",
+    value: "y",
+  }),
+}));
 
 vi.mock("@tauri-apps/api/core", () => ({
   invoke: mockInvoke,
+}));
+
+// `Settings.tsx` utilise l'API sidecar (api.workspace.get, api.settings.set),
+// pas les Tauri commands. On mock le client API pour que les tests fonctionnent
+// sans sidecar réel.
+vi.mock("../../../api/index.js", () => ({
+  api: {
+    workspace: {
+      get: mockWorkspaceGet,
+    },
+    settings: {
+      set: mockSettingsSet,
+    },
+  },
+  ApiError: class ApiError extends Error {
+    code: string;
+    status: number;
+    constructor(code: string, message: string, status: number) {
+      super(message);
+      this.code = code;
+      this.status = status;
+    }
+  },
 }));
 
 vi.mock("@fakt/ai", () => ({
@@ -116,11 +151,12 @@ describe("SettingsRoute — rendu et tabs", () => {
 describe("SettingsRoute — tab Identité", () => {
   beforeEach(() => {
     mockInvoke.mockResolvedValue(mockWorkspace);
+    mockWorkspaceGet.mockResolvedValue(mockWorkspace);
   });
 
   it("pré-remplit le champ nom avec le workspace après chargement", async () => {
     renderSettings();
-    // invokeGetWorkspace est async — attendre le chargement
+    // api.workspace.get() est async — attendre le chargement
     await waitFor(
       () => {
         const nameInput = screen.getByLabelText(/nom ou raison/i) as HTMLInputElement;

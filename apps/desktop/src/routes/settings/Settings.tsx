@@ -3,6 +3,7 @@ import type { Workspace } from "@fakt/shared";
 import { Toaster } from "@fakt/ui";
 import type { ReactElement } from "react";
 import { useEffect, useState } from "react";
+import { ApiError, api } from "../../api/index.js";
 import { CertificateTab } from "./tabs/CertificateTab.js";
 import { ClaudeCliTab } from "./tabs/ClaudeCliTab.js";
 import { IdentityTab } from "./tabs/IdentityTab.js";
@@ -22,18 +23,34 @@ const TABS: TabDef[] = [
   { id: "telemetry", label: fr.settings.tabs.telemetry },
 ];
 
-async function invokeGetWorkspace(): Promise<Workspace | null> {
+/**
+ * Charge le workspace via le sidecar. Retourne null si absent (onboarding
+ * pas encore fait) ou si le sidecar n'est pas joignable (mode dev web
+ * standalone).
+ *
+ * Note historique : utilisait auparavant un command Tauri `get_workspace`
+ * qui n'existait PAS côté Rust — le workspace était toujours null et
+ * l'écran Identity apparaissait vide. Switch vers `api.workspace.get()`.
+ */
+async function loadWorkspace(): Promise<Workspace | null> {
   try {
-    const { invoke } = await import("@tauri-apps/api/core");
-    return invoke<Workspace | null>("get_workspace");
-  } catch {
-    return null;
+    return await api.workspace.get();
+  } catch (err) {
+    // NOT_FOUND = onboarding pas encore fait, pas une erreur.
+    if (err instanceof ApiError && err.code === "NOT_FOUND") return null;
+    // NETWORK_ERROR en dev web pur : on retourne null pour ne pas casser l'UI.
+    if (err instanceof ApiError && err.code === "NETWORK_ERROR") return null;
+    throw err;
   }
 }
 
-async function invokeTelemetryOpt(enabled: boolean): Promise<void> {
-  const { invoke } = await import("@tauri-apps/api/core");
-  await invoke("update_settings", { key: "telemetry_enabled", value: String(enabled) });
+/**
+ * Persiste un flag telemetry via l'API settings.
+ * Historique : utilisait `invoke("update_settings")` qui n'existait pas côté
+ * Rust — le toggle ne persistait rien.
+ */
+async function saveTelemetryOpt(enabled: boolean): Promise<void> {
+  await api.settings.set("telemetry_enabled", String(enabled));
 }
 
 export function SettingsRoute(): ReactElement {
@@ -43,13 +60,22 @@ export function SettingsRoute(): ReactElement {
   const [verboseLogs, setVerboseLogs] = useState(false);
 
   useEffect(() => {
-    void invokeGetWorkspace().then((ws) => {
-      setWorkspace(ws);
-    });
+    let cancelled = false;
+    loadWorkspace()
+      .then((ws) => {
+        if (!cancelled) setWorkspace(ws);
+      })
+      .catch(() => {
+        // Silencieux : ErrorBoundary attrape les erreurs fatales, ici on veut
+        // que l'écran settings reste utilisable même si le fetch workspace rate.
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   async function handleTelemetryChange(enabled: boolean): Promise<void> {
-    await invokeTelemetryOpt(enabled);
+    await saveTelemetryOpt(enabled);
     setTelemetryEnabled(enabled);
   }
 
