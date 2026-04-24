@@ -28,9 +28,20 @@ import type {
 
 // ─── Tauri IPC types (mirrored from Rust AiStreamEvent) ──────────────────────
 
-/** Raw events as serialised by the Rust Channel<AiStreamEvent>. */
+/**
+ * Raw events as serialised by the Rust Channel<AiStreamEvent>.
+ *
+ * Les noms en snake_case reflètent le rename_all du tag serde côté Rust
+ * (`apps/desktop/src-tauri/src/ai/cli.rs::AiStreamEvent`). Toute évolution
+ * du contrat doit rester synchrone des deux côtés.
+ */
 type RustAiEvent =
   | { type: "token"; text: string }
+  | { type: "thinking_delta"; text: string }
+  | { type: "tool_use_start"; id: string; name: string }
+  | { type: "tool_use_delta"; id: string; partial_json: string }
+  | { type: "tool_use_stop"; id: string }
+  | { type: "tool_result"; tool_use_id: string; content: string; is_error: boolean }
   | { type: "done"; result: unknown }
   | { type: "error"; message: string };
 
@@ -79,6 +90,27 @@ async function* invokeStream<T>(
       // Partial<T> is a structural superset — cast via unknown is intentional.
       // Token events carry a text field; consumers treat it as a partial result.
       events.push({ type: "delta", data: { text: event.text } as unknown as Partial<T> });
+    } else if (event.type === "thinking_delta") {
+      events.push({ type: "thinking_delta", text: event.text });
+    } else if (event.type === "tool_use_start") {
+      events.push({ type: "tool_use_start", id: event.id, name: event.name });
+    } else if (event.type === "tool_use_delta") {
+      // Normalise snake_case → camelCase à la frontière Rust/TS, ainsi les
+      // consumers gardent une API purement TS sans leaker le format CLI.
+      events.push({
+        type: "tool_use_delta",
+        id: event.id,
+        partialJson: event.partial_json,
+      });
+    } else if (event.type === "tool_use_stop") {
+      events.push({ type: "tool_use_stop", id: event.id });
+    } else if (event.type === "tool_result") {
+      events.push({
+        type: "tool_result",
+        toolUseId: event.tool_use_id,
+        content: event.content,
+        isError: event.is_error,
+      });
     } else if (event.type === "done") {
       events.push({ type: "done", data: event.result as T });
       done = true;
@@ -121,6 +153,8 @@ async function* invokeStream<T>(
     if (event === undefined) continue;
     yield event;
 
+    // Seul `done` et `error` terminent le stream — les events thinking/tool_*
+    // sont intercalaires et la boucle continue jusqu'à recevoir le final.
     if (event.type === "done" || event.type === "error") {
       break;
     }

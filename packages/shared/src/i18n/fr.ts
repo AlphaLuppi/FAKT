@@ -670,6 +670,10 @@ export const fr = {
       title: "Sessions IA",
       description:
         "Historique des appels IA (génération de devis, chat, brouillon d'email). Utile pour diagnostiquer les erreurs silencieuses.",
+      verboseModeTitle: "Mode verbose — Afficher les étapes de l'IA",
+      verboseModeHint:
+        "Affiche dans le chat les blocs de raisonnement (thinking), les appels d'outils MCP (tool_use) et leurs résultats, comme dans Claude Desktop. Préférence enregistrée sur cet appareil.",
+      verboseModeLabel: "Afficher les étapes de raisonnement et les appels d'outils",
       empty:
         "Aucune session IA pour le moment. Lance une génération de devis ou ouvre le chat IA pour voir apparaître les runs ici.",
       refresh: "Rafraîchir",

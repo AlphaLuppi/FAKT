@@ -3,25 +3,32 @@
  *
  * Responsabilites :
  * 1. Router chaque AiStreamEvent vers la bonne structure de bloc
- *    (text | thinking | tool_use | tool_result). Le provider CLI emet des
- *    deltas sous la forme `{ type:"delta", data: { text: string } }`
- *    (cf. packages/ai/src/providers/claude-cli.ts). Le provider Mock et
- *    certains tests emettent `data: string` directement. Ce hook gere les
- *    deux formats de facon totalement transparente.
+ *    (text | thinking | tool_use | tool_result). Les deltas et les events
+ *    structurés (thinking_delta, tool_use_*, tool_result) sont acheminés par
+ *    le provider CLI (`packages/ai/src/providers/claude-cli.ts`) depuis le
+ *    stream-json de Claude CLI. Le provider Mock emet `data: string`
+ *    directement pour les tests.
  *
  * 2. Extraire proprement la string du delta : historique - le composer faisait
  *    `String(event.data)` qui produit `"[object Object]"` pour un payload
  *    object, d'ou l'affichage `[object Object][object Object]...` qui flippait
  *    en markdown propre au moment du `done`.
  *
- * 3. Preparer la structure par blocs pour les evolutions (thinking / tool_use)
- *    meme si pour l'instant on ne recoit que du texte - l'API reste stable
- *    quand on branchera les blocs Claude Desktop.
+ * 3. Accumuler les chunks par bloc :
+ *      - thinking_delta → concat dans le dernier ThinkingBlock (en crée un
+ *        si le bloc précédent n'est pas de type thinking).
+ *      - tool_use_start → nouveau ToolUseBlock avec input = "" (string, on
+ *        accumule le JSON partiel avant parse).
+ *      - tool_use_delta → append partialJson au ToolUseBlock matching id.
+ *      - tool_use_stop → tente JSON.parse(input) et remplace par l'objet
+ *        (fallback : garde la string pour debug).
+ *      - tool_result → nouveau ToolResultBlock.
+ *      - delta text → concat dans le dernier TextBlock.
  *
  * Swapability : respecte le contrat AiProvider (voir architecture section 8).
  */
 
-import type { ChatMessage, ChatOpts } from "@fakt/ai";
+import type { AiStreamEvent, ChatMessage, ChatOpts } from "@fakt/ai";
 import { getAi } from "@fakt/ai";
 import { useCallback, useRef, useState } from "react";
 
@@ -113,6 +120,120 @@ export function extractFinalText(data: unknown, fallback: string): string {
   return fallback;
 }
 
+/**
+ * Applique un `AiStreamEvent<string>` sur un tableau de blocks et retourne
+ * le nouveau tableau. Pure : ne modifie pas l'entrée.
+ *
+ * Contrat :
+ *   - delta (text)           → append au dernier TextBlock (ou en crée un)
+ *   - thinking_delta         → append au dernier ThinkingBlock (ou nouveau)
+ *   - tool_use_start         → nouveau ToolUseBlock { input: "" }
+ *   - tool_use_delta         → append partialJson à l'input (string) du
+ *                              ToolUseBlock matching id
+ *   - tool_use_stop          → parse JSON final ou garde la string si invalide
+ *   - tool_result            → nouveau ToolResultBlock
+ *   - done / error           → aucune mutation ici (géré dans le hook)
+ *
+ * Retourne `null` si l'event n'implique pas de mutation de blocks (done /
+ * error / event inconnu) — l'appelant gère alors la finalisation.
+ */
+export function applyStreamEventToBlocks(
+  blocks: ChatBlock[],
+  event: AiStreamEvent<string>
+): { blocks: ChatBlock[]; textAccumulator?: string } | null {
+  if (event.type === "delta") {
+    const chunk = extractDeltaText(event.data);
+    if (!chunk) return null;
+    const next = [...blocks];
+    const last = next[next.length - 1];
+    if (last && last.type === "text") {
+      next[next.length - 1] = { type: "text", text: last.text + chunk };
+    } else {
+      next.push({ type: "text", text: chunk });
+    }
+    const textAccumulator = next
+      .filter((b): b is TextBlock => b.type === "text")
+      .map((b) => b.text)
+      .join("");
+    return { blocks: next, textAccumulator };
+  }
+
+  if (event.type === "thinking_delta") {
+    const next = [...blocks];
+    const last = next[next.length - 1];
+    if (last && last.type === "thinking") {
+      next[next.length - 1] = { type: "thinking", thinking: last.thinking + event.text };
+    } else {
+      next.push({ type: "thinking", thinking: event.text });
+    }
+    return { blocks: next };
+  }
+
+  if (event.type === "tool_use_start") {
+    // `input` commence comme string (accumulateur JSON). Le parse final est
+    // fait dans tool_use_stop. Cela permet de streamer même un JSON invalide
+    // sans crasher la vue.
+    return {
+      blocks: [...blocks, { type: "tool_use", id: event.id, name: event.name, input: "" }],
+    };
+  }
+
+  if (event.type === "tool_use_delta") {
+    const next = blocks.map((b) => {
+      if (b.type !== "tool_use") return b;
+      if (b.id !== event.id && event.id !== "") return b;
+      // id vide = fallback sur le DERNIER tool_use (le parser Rust peut
+      // envoyer un delta sans id si le content_block_start a été raté).
+      if (event.id === "" && !isLastToolUse(blocks, b)) return b;
+      const current = typeof b.input === "string" ? b.input : JSON.stringify(b.input ?? "");
+      return { ...b, input: current + event.partialJson };
+    });
+    return { blocks: next };
+  }
+
+  if (event.type === "tool_use_stop") {
+    const next = blocks.map((b) => {
+      if (b.type !== "tool_use" || b.id !== event.id) return b;
+      if (typeof b.input !== "string") return b;
+      // Tente le parse JSON. Si le modèle n'a pas fini d'émettre (stream
+      // coupé) on garde la string pour que la pretty-print JSON fallback
+      // sur l'input brut.
+      try {
+        return { ...b, input: JSON.parse(b.input) as unknown };
+      } catch {
+        return b;
+      }
+    });
+    return { blocks: next };
+  }
+
+  if (event.type === "tool_result") {
+    return {
+      blocks: [
+        ...blocks,
+        {
+          type: "tool_result",
+          toolUseId: event.toolUseId,
+          content: event.content,
+          isError: event.isError,
+        },
+      ],
+    };
+  }
+
+  return null;
+}
+
+function isLastToolUse(blocks: ChatBlock[], candidate: ToolUseBlock): boolean {
+  for (let i = blocks.length - 1; i >= 0; i--) {
+    const b = blocks[i];
+    if (b && b.type === "tool_use") {
+      return b === candidate;
+    }
+  }
+  return false;
+}
+
 // --- Hook -------------------------------------------------------------------
 
 export interface UseChatStreamOptions {
@@ -170,32 +291,35 @@ export function useChatStream(options: UseChatStreamOptions = {}): UseChatStream
       try {
         const ai = getAi();
         let textAcc = "";
-        let textBlockIdx = -1;
 
         for await (const event of ai.chat(fullHistory, chatOpts)) {
           if (controller.signal.aborted) break;
 
-          if (event.type === "delta") {
-            const chunk = extractDeltaText(event.data);
-            if (!chunk) continue;
-            textAcc += chunk;
-            if (textBlockIdx === -1) {
-              assistantMsg.blocks = [...assistantMsg.blocks, { type: "text", text: textAcc }];
-              textBlockIdx = assistantMsg.blocks.length - 1;
-            } else {
-              const nextBlocks = [...assistantMsg.blocks];
-              nextBlocks[textBlockIdx] = { type: "text", text: textAcc };
-              assistantMsg.blocks = nextBlocks;
-            }
-            onAssistantUpdate?.({ ...assistantMsg });
-          } else if (event.type === "done") {
+          if (event.type === "done") {
+            // Le `done` peut arriver vide (ex : toute la réponse était du
+            // thinking + tool_use + re-thinking sans text final côté CLI).
+            // Dans ce cas on garde les blocks déjà streamés ; sinon on
+            // remplace le dernier bloc text par la version finale propre.
             const final = extractFinalText(event.data, textAcc);
-            const finalBlocks: ChatBlock[] =
-              textBlockIdx === -1
-                ? [{ type: "text", text: final }]
-                : assistantMsg.blocks.map((b, i) =>
-                    i === textBlockIdx ? { type: "text", text: final } : b
-                  );
+            let finalBlocks = assistantMsg.blocks;
+            if (final.length > 0) {
+              // Cherche le dernier TextBlock à écraser ; sinon on append.
+              let lastTextIdx = -1;
+              for (let i = finalBlocks.length - 1; i >= 0; i--) {
+                const b = finalBlocks[i];
+                if (b && b.type === "text") {
+                  lastTextIdx = i;
+                  break;
+                }
+              }
+              if (lastTextIdx === -1) {
+                finalBlocks = [...finalBlocks, { type: "text", text: final }];
+              } else {
+                finalBlocks = finalBlocks.map((b, i) =>
+                  i === lastTextIdx ? { type: "text", text: final } : b
+                );
+              }
+            }
             const finalMsg: ChatMessageRich = {
               ...assistantMsg,
               blocks: finalBlocks,
@@ -203,7 +327,9 @@ export function useChatStream(options: UseChatStreamOptions = {}): UseChatStream
             };
             onAssistantDone?.(finalMsg);
             break;
-          } else if (event.type === "error") {
+          }
+
+          if (event.type === "error") {
             const finalMsg: ChatMessageRich = {
               ...assistantMsg,
               blocks: [{ type: "text", text: `Erreur : ${event.message}` }],
@@ -212,6 +338,14 @@ export function useChatStream(options: UseChatStreamOptions = {}): UseChatStream
             onAssistantDone?.(finalMsg);
             break;
           }
+
+          const applied = applyStreamEventToBlocks(assistantMsg.blocks, event);
+          if (applied === null) continue;
+          assistantMsg.blocks = applied.blocks;
+          if (applied.textAccumulator !== undefined) {
+            textAcc = applied.textAccumulator;
+          }
+          onAssistantUpdate?.({ ...assistantMsg });
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);

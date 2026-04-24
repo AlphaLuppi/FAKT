@@ -51,11 +51,29 @@ export interface EmailContext {
  * Generic streaming event emitted by every provider method.
  *
  * - `delta`: partial data arriving token by token (UI renders incrementally).
+ * - `thinking_delta`: chunk du raisonnement interne du modèle (extended
+ *   thinking). Émis uniquement par le provider CLI avec Claude CLI ≥ 2.x
+ *   en mode stream-json. L'UI les regroupe dans un ThinkingBlock repliable.
+ * - `tool_use_start`: déclaration d'un appel d'outil MCP (id + name).
+ * - `tool_use_delta`: chunk JSON partiel de l'input du tool_use.
+ *   L'UI accumule les `partialJson` et parse au `tool_use_stop`.
+ * - `tool_use_stop`: fin de l'input JSON d'un tool_use, l'UI peut finaliser.
+ * - `tool_result`: résultat du tool (content + isError) renvoyé par le MCP.
  * - `done`: final validated result.
  * - `error`: unrecoverable failure; stream terminates.
+ *
+ * Les variants `thinking_delta` et `tool_*` sont optionnels à gérer — un
+ * consumer qui ne les écoute pas verra un UX dégradé propre (pas de
+ * blocks thinking / tool, mais le texte final sera toujours émis via
+ * `delta` puis `done`).
  */
 export type AiStreamEvent<T> =
   | { type: "delta"; data: Partial<T> }
+  | { type: "thinking_delta"; text: string }
+  | { type: "tool_use_start"; id: string; name: string }
+  | { type: "tool_use_delta"; id: string; partialJson: string }
+  | { type: "tool_use_stop"; id: string }
+  | { type: "tool_result"; toolUseId: string; content: string; isError: boolean }
   | { type: "done"; data: T }
   | { type: "error"; message: string };
 

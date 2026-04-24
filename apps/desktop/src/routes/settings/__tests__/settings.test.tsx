@@ -201,3 +201,54 @@ describe("SettingsRoute — tab Télémétrie", () => {
     });
   });
 });
+
+describe("SettingsRoute — tab Sessions IA (verbose mode)", () => {
+  beforeEach(() => {
+    // Par défaut, list_ai_sessions retourne une liste vide.
+    mockInvoke.mockImplementation((cmd: string) => {
+      if (cmd === "list_ai_sessions") {
+        return Promise.resolve({ active: [], history: [] });
+      }
+      return Promise.resolve(null);
+    });
+    window.localStorage.clear();
+  });
+
+  it("affiche la section toggle verbose", async () => {
+    const user = userEvent.setup();
+    renderSettings();
+
+    await user.click(screen.getByRole("tab", { name: /sessions ia/i }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("ai-verbose-section")).toBeInTheDocument();
+    });
+  });
+
+  it("toggle verbose persistant par défaut sur ON", async () => {
+    const user = userEvent.setup();
+    renderSettings();
+
+    await user.click(screen.getByRole("tab", { name: /sessions ia/i }));
+
+    const checkbox = await waitFor(
+      () => screen.getByTestId("ai-verbose-toggle") as HTMLInputElement
+    );
+    expect(checkbox.checked).toBe(true);
+  });
+
+  it("décocher le toggle verbose écrit false dans localStorage", async () => {
+    const user = userEvent.setup();
+    renderSettings();
+
+    await user.click(screen.getByRole("tab", { name: /sessions ia/i }));
+
+    const checkbox = await waitFor(
+      () => screen.getByTestId("ai-verbose-toggle") as HTMLInputElement
+    );
+    await user.click(checkbox);
+    await waitFor(() => {
+      expect(window.localStorage.getItem("fakt:ai:verbose-mode")).toBe("false");
+    });
+  });
+});
