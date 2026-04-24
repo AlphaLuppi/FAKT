@@ -20,14 +20,7 @@ describe("AutoGrowTextarea", () => {
   });
 
   it("overflow devient auto quand maxHeight est fourni", () => {
-    render(
-      <AutoGrowTextarea
-        value=""
-        onChange={() => {}}
-        aria-label="d"
-        maxHeight={200}
-      />
-    );
+    render(<AutoGrowTextarea value="" onChange={() => {}} aria-label="d" maxHeight={200} />);
     const ta = screen.getByRole("textbox") as HTMLTextAreaElement;
     expect(ta.style.overflow).toBe("auto");
     expect(ta.style.maxHeight).toBe("200px");
@@ -36,14 +29,7 @@ describe("AutoGrowTextarea", () => {
   it("appelle onInput et onChange quand on tape", () => {
     const onChange = vi.fn();
     const onInput = vi.fn();
-    render(
-      <AutoGrowTextarea
-        value="foo"
-        onChange={onChange}
-        onInput={onInput}
-        aria-label="d"
-      />
-    );
+    render(<AutoGrowTextarea value="foo" onChange={onChange} onInput={onInput} aria-label="d" />);
     fireEvent.input(screen.getByRole("textbox"), { target: { value: "foobar" } });
     expect(onInput).toHaveBeenCalled();
   });
@@ -74,16 +60,12 @@ describe("AutoGrowTextarea", () => {
   });
 
   it("passe data-testid au textarea", () => {
-    render(
-      <AutoGrowTextarea value="" onChange={() => {}} data-testid="grow-desc" />
-    );
+    render(<AutoGrowTextarea value="" onChange={() => {}} data-testid="grow-desc" />);
     expect(screen.getByTestId("grow-desc")).toBeInTheDocument();
   });
 
   it("applique aria-invalid=true quand invalid prop", () => {
-    render(
-      <AutoGrowTextarea value="" onChange={() => {}} aria-label="d" invalid />
-    );
+    render(<AutoGrowTextarea value="" onChange={() => {}} aria-label="d" invalid />);
     expect(screen.getByRole("textbox")).toHaveAttribute("aria-invalid", "true");
   });
 });

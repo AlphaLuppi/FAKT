@@ -254,9 +254,7 @@ function ItemRow(props: ItemRowProps): ReactElement {
 
   const suggestions = useMemo(
     () =>
-      prestations && prestations.length > 0
-        ? filterPrestations(item.description, prestations)
-        : [],
+      prestations && prestations.length > 0 ? filterPrestations(item.description, prestations) : [],
     [item.description, prestations]
   );
 

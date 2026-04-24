@@ -507,8 +507,7 @@ export const fr = {
       titleInvoice: (numberAndClient: string) => `Signer la facture : ${numberAndClient}`,
       tabDraw: "Dessiner au trackpad",
       tabType: "Taper au clavier",
-      drawInstruction:
-        "Signe dans la zone ci-dessous avec ton trackpad, ta souris ou ton stylet.",
+      drawInstruction: "Signe dans la zone ci-dessous avec ton trackpad, ta souris ou ton stylet.",
       drawUndoHint: "Ctrl+Z (ou ⌘+Z) pour annuler le dernier trait.",
       typeInstruction: "Saisis ton nom. Il sera converti en signature cursive pour le document.",
       typePlaceholder: "Tom Andrieu",
@@ -653,7 +652,8 @@ export const fr = {
       title: "Sessions IA",
       description:
         "Historique des appels IA (génération de devis, chat, brouillon d'email). Utile pour diagnostiquer les erreurs silencieuses.",
-      empty: "Aucune session IA pour le moment. Lance une génération de devis ou ouvre le chat IA pour voir apparaître les runs ici.",
+      empty:
+        "Aucune session IA pour le moment. Lance une génération de devis ou ouvre le chat IA pour voir apparaître les runs ici.",
       refresh: "Rafraîchir",
       clearHistory: "Vider l'historique",
       autoRefresh: "Rafraîchissement auto",

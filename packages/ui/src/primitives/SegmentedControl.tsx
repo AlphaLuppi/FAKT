@@ -114,9 +114,7 @@ export function SegmentedControl<T extends string>({
               letterSpacing: "0.04em",
               padding: `${tokens.spacing[2]} ${tokens.spacing[4]}`,
               border: "none",
-              borderRight: isLast
-                ? "none"
-                : `${tokens.stroke.base} solid ${tokens.color.ink}`,
+              borderRight: isLast ? "none" : `${tokens.stroke.base} solid ${tokens.color.ink}`,
               cursor: option.disabled ? "not-allowed" : "pointer",
               opacity: option.disabled ? 0.45 : 1,
               height: 40,

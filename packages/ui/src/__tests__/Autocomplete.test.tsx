@@ -112,9 +112,7 @@ describe("Autocomplete", () => {
     const option0 = screen.getAllByRole("option")[0];
     expect(option0).toBeDefined();
     fireEvent.mouseDown(option0 as HTMLElement);
-    expect(onSelect).toHaveBeenCalledWith(
-      expect.objectContaining({ value: OPTS[0]?.value })
-    );
+    expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ value: OPTS[0]?.value }));
   });
 
   it("Tab sélectionne aussi l'élément highlighté", () => {

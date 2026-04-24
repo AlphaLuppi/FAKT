@@ -154,9 +154,7 @@ export function Autocomplete<T = unknown>(props: AutocompleteProps<T>): ReactEle
         aria-autocomplete="list"
         aria-expanded={shouldShow}
         aria-controls={shouldShow ? listboxId : undefined}
-        aria-activedescendant={
-          shouldShow ? `${baseId}-option-${highlighted}` : undefined
-        }
+        aria-activedescendant={shouldShow ? `${baseId}-option-${highlighted}` : undefined}
         role="combobox"
         disabled={disabled}
         onChange={handleChange}
@@ -175,7 +173,7 @@ export function Autocomplete<T = unknown>(props: AutocompleteProps<T>): ReactEle
         }}
       />
       {shouldShow && (
-        <ul
+        <div
           role="listbox"
           id={listboxId}
           aria-label={ariaLabel ? `${ariaLabel} — suggestions` : "Suggestions"}
@@ -188,7 +186,6 @@ export function Autocomplete<T = unknown>(props: AutocompleteProps<T>): ReactEle
             right: 0,
             margin: 0,
             padding: 0,
-            listStyle: "none",
             border: `${tokens.stroke.base} solid ${tokens.color.ink}`,
             background: tokens.color.surface,
             boxShadow: tokens.shadow.sm,
@@ -199,11 +196,12 @@ export function Autocomplete<T = unknown>(props: AutocompleteProps<T>): ReactEle
           {suggestions.map((opt, idx) => {
             const isHighlighted = idx === highlighted;
             return (
-              <li
+              <div
                 key={opt.value}
                 id={`${baseId}-option-${idx}`}
                 role="option"
                 aria-selected={isHighlighted}
+                tabIndex={-1}
                 onMouseDown={(e): void => {
                   // onMouseDown pour devancer le blur du textarea.
                   e.preventDefault();
@@ -219,16 +217,14 @@ export function Autocomplete<T = unknown>(props: AutocompleteProps<T>): ReactEle
                   background: isHighlighted ? tokens.color.ink : tokens.color.surface,
                   cursor: "pointer",
                   borderBottom:
-                    idx < suggestions.length - 1
-                      ? `1.5px solid ${tokens.color.line}`
-                      : "none",
+                    idx < suggestions.length - 1 ? `1.5px solid ${tokens.color.line}` : "none",
                 }}
               >
                 {renderOption ? renderOption(opt, isHighlighted) : opt.label}
-              </li>
+              </div>
             );
           })}
-        </ul>
+        </div>
       )}
     </div>
   );

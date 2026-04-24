@@ -10,12 +10,7 @@ describe("SegmentedControl", () => {
 
   it("rend un tablist avec N tabs", () => {
     render(
-      <SegmentedControl
-        options={OPTIONS}
-        value="draw"
-        onChange={() => {}}
-        ariaLabel="mode"
-      />
+      <SegmentedControl options={OPTIONS} value="draw" onChange={() => {}} ariaLabel="mode" />
     );
     const tablist = screen.getByRole("tablist", { name: /mode/i });
     expect(tablist).toBeInTheDocument();
@@ -24,13 +19,7 @@ describe("SegmentedControl", () => {
   });
 
   it("marque le segment actif avec aria-selected", () => {
-    render(
-      <SegmentedControl
-        options={OPTIONS}
-        value="type"
-        onChange={() => {}}
-      />
-    );
+    render(<SegmentedControl options={OPTIONS} value="type" onChange={() => {}} />);
     const active = screen.getByRole("tab", { name: /clavier/i });
     expect(active).toHaveAttribute("aria-selected", "true");
     const inactive = screen.getByRole("tab", { name: /trackpad/i });
@@ -71,12 +60,7 @@ describe("SegmentedControl", () => {
 
   it("respecte fullWidth=false → inline-grid, width auto", () => {
     const { container } = render(
-      <SegmentedControl
-        options={OPTIONS}
-        value="draw"
-        onChange={() => {}}
-        fullWidth={false}
-      />
+      <SegmentedControl options={OPTIONS} value="draw" onChange={() => {}} fullWidth={false} />
     );
     const root = container.firstChild as HTMLElement;
     expect(root.style.display).toBe("inline-grid");

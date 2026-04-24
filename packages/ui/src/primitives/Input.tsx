@@ -107,11 +107,7 @@ export const AutoGrowTextarea = forwardRef<HTMLTextAreaElement, AutoGrowTextarea
           el.style.height = `${el.scrollHeight}px`;
           if (onInput) onInput(e);
         }}
-        className={classNames(
-          "fakt-input",
-          invalid === true && "fakt-input--invalid",
-          className
-        )}
+        className={classNames("fakt-input", invalid === true && "fakt-input--invalid", className)}
         aria-invalid={invalid === true ? true : undefined}
         style={{
           resize: "none",
