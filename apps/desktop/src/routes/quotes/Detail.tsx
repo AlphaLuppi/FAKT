@@ -124,6 +124,9 @@ export function QuoteDetailRoute(): ReactElement {
 
   async function handleMarkSent(): Promise<void> {
     if (!quote) return;
+    // Guard synchrone double-submit : un double-clic sur "Émettre" allouait
+    // 2 numéros séquentiels (seq 1 + seq 2) pour un seul devis côté UI.
+    if (markSentSubmitting) return;
     setMarkSentSubmitting(true);
     setMarkSentError(null);
     try {

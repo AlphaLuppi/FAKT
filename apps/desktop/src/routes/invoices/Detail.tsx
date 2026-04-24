@@ -152,6 +152,9 @@ export function InvoiceDetailRoute(): ReactElement {
 
   async function handleMarkSent(): Promise<void> {
     if (!invoice) return;
+    // Guard synchrone double-submit : un double-clic sur "Émettre" allouait
+    // 2 numéros F-séquentiels (CGI art. 289) pour une seule facture côté UI.
+    if (markSentSubmitting) return;
     setMarkSentSubmitting(true);
     setMarkSentError(null);
     try {
@@ -168,6 +171,8 @@ export function InvoiceDetailRoute(): ReactElement {
 
   async function handleMarkPaid(payload: MarkPaidPayload): Promise<void> {
     if (!invoice) return;
+    // Guard synchrone double-submit.
+    if (markPaidSubmitting) return;
     setMarkPaidSubmitting(true);
     setMarkPaidError(null);
     try {
