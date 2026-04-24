@@ -151,11 +151,19 @@ export function QuoteDetailRoute(): ReactElement {
       });
       const filename = `Devis-${quote.number ?? "draft"}-${slugify(client.name)}.pdf`;
       const path = await pdfApi.saveDialog(filename);
-      if (path) {
+      if (!path) return; // user annule dialog, pas d'erreur
+      try {
         await pdfApi.writeFile(path, bytes);
+        toast.success(fr.quotes.detail.pdfSaved);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : fr.quotes.detail.pdfSaveFailed;
+        setPdfError(msg);
+        toast.error(`${fr.quotes.detail.pdfSaveFailed} — ${msg}`);
       }
     } catch (err) {
-      setPdfError(err instanceof Error ? err.message : fr.quotes.errors.pdfFailed);
+      const msg = err instanceof Error ? err.message : fr.quotes.errors.pdfFailed;
+      setPdfError(msg);
+      toast.error(msg);
     }
   }
 

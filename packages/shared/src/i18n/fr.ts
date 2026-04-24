@@ -254,6 +254,8 @@ export const fr = {
         "Le devis passera au statut « Envoyé » et ne sera plus modifiable directement. Le client pourra ensuite signer, refuser ou laisser expirer le devis.",
       markSentSuccess: "Devis marqué comme envoyé.",
       markSentError: "Impossible de marquer le devis comme envoyé.",
+      pdfSaved: "PDF enregistré.",
+      pdfSaveFailed: "Impossible d'enregistrer le PDF.",
     },
     empty: "Aucun devis pour le moment. Crée ton premier devis avec l'IA.",
     errors: {
@@ -389,6 +391,8 @@ export const fr = {
         "La facture passera au statut « Envoyée ». Elle sera en attente de paiement jusqu'à la date d'échéance.",
       markSentSuccess: "Facture marquée comme envoyée.",
       markSentError: "Impossible de marquer la facture comme envoyée.",
+      pdfSaved: "PDF enregistré.",
+      pdfSaveFailed: "Impossible d'enregistrer le PDF.",
     },
     empty: "Aucune facture pour le moment.",
     errors: {

@@ -51,9 +51,13 @@ const tauriPdfApi: PdfApi = {
     }
   },
   async writeFile(path, bytes): Promise<void> {
-    await invoke<void>("plugin:fs|write_file", {
+    // Commande custom cote Rust : contourne le plugin-fs (permission
+    // `fs:allow-write-file` non expose par default.json) et log chaque etape
+    // via tracing::info/error. Cf. bug "Telecharger PDF - dialog save silencieux"
+    // signale lors du test 2026-04-24.
+    await invoke<void>("write_pdf_file", {
       path,
-      contents: Array.from(bytes),
+      bytes: Array.from(bytes),
     });
   },
 };

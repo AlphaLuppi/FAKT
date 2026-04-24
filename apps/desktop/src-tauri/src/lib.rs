@@ -128,6 +128,7 @@ fn run_inner() -> Result<(), String> {
             commands::open_email_draft,
             commands::open_mailto_fallback,
             commands::build_workspace_zip,
+            commands::write_pdf_file,
             ai::cli::check_claude_cli,
             ai::cli::spawn_claude,
             ai::sessions::list_ai_sessions,
