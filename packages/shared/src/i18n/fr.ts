@@ -242,6 +242,14 @@ export const fr = {
       extractedItems: "Lignes proposées",
       extractedTotal: "Total HT estimé",
       applyAndEdit: "Utiliser cet extrait",
+      noItemsHint:
+        "Aucune ligne extraite — reformule ton brief en précisant les prestations (quantités, unités, prix). Exemple : « Refonte du site Shopify, 5 jours à 600€ / jour. »",
+      showRawOutput: "Voir la sortie brute",
+      hideRawOutput: "Masquer la sortie brute",
+      rawOutputTitle: "Sortie brute de la CLI",
+      extractFailedTitle: "Extraction impossible",
+      extractFailedDetail:
+        "La CLI n'a pas retourné de JSON structuré. Reformule ton brief ou consulte la sortie brute ci-dessous pour diagnostiquer.",
     },
     detail: {
       previewTitle: "Aperçu PDF",
