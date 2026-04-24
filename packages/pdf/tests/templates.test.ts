@@ -38,6 +38,7 @@ describe("arborescence templates Typst", () => {
     expect(exists("partials/totals.typ")).toBe(true);
     expect(exists("partials/legal-mentions.typ")).toBe(true);
     expect(exists("partials/signature-block.typ")).toBe(true);
+    expect(exists("partials/quote-legal.typ")).toBe(true);
   });
 });
 
@@ -64,5 +65,77 @@ describe("charte Brutal Invoice héritée des skills legacy", () => {
   it("invoice.typ impose mention 'Pas d'escompte'", () => {
     const src = read("invoice.typ");
     expect(src).toContain("Pas d'escompte");
+  });
+});
+
+describe("mentions légales obligatoires FR — facture", () => {
+  it("invoice.typ renvoie aux articles L441-10 et D441-5", () => {
+    const src = read("invoice.typ");
+    expect(src).toContain("L441-10");
+    expect(src).toContain("D441-5");
+  });
+
+  it("invoice.typ mentionne l'indemnité forfaitaire de 40 €", () => {
+    const src = read("invoice.typ");
+    expect(src).toContain("40 €");
+    expect(src).toContain("Indemnité forfaitaire");
+  });
+
+  it("invoice.typ appelle le bloc modalités de paiement", () => {
+    const src = read("invoice.typ");
+    expect(src).toContain("Modalités de paiement");
+    expect(src).toContain("Virement bancaire");
+    expect(src).toContain("IBAN");
+  });
+
+  it("header-workspace.typ rend l'adresse, SIRET, TVA mention, email", () => {
+    const src = read("partials/header-workspace.typ");
+    expect(src).toContain("ws.address");
+    expect(src).toContain("SIRET");
+    expect(src).toContain("ws.tvaMention");
+    expect(src).toContain("ws.email");
+  });
+});
+
+describe("mentions légales obligatoires FR — devis", () => {
+  it("quote.typ importe et appelle le bloc CGV légales", () => {
+    const src = read("quote.typ");
+    expect(src).toContain("quote-legal");
+    expect(src).toContain("Conditions générales");
+  });
+
+  it("quote.typ inclut un bloc modalités de paiement", () => {
+    const src = read("quote.typ");
+    expect(src).toContain("Modalités de paiement");
+    expect(src).toContain("Virement bancaire");
+  });
+
+  it("quote-legal.typ énumère les CGV non négociables droit français", () => {
+    const src = read("partials/quote-legal.typ");
+    // Facturation & paiement
+    expect(src).toContain("Pénalités de retard");
+    expect(src).toContain("L441-10");
+    expect(src).toContain("Indemnité forfaitaire");
+    expect(src).toContain("D441-5");
+    expect(src).toContain("40 €");
+    expect(src).toContain("293 B");
+    expect(src).toContain("Pas d'escompte");
+    // Propriété intellectuelle
+    expect(src).toContain("Propriété intellectuelle");
+    expect(src).toContain("Cession des droits");
+    // Garantie
+    expect(src).toContain("Garantie");
+    expect(src).toContain("responsabilité");
+    // Résiliation
+    expect(src).toContain("Résiliation");
+    expect(src).toContain("lettre recommandée");
+    // Confidentialité
+    expect(src).toContain("Confidentialité");
+    // Loi applicable
+    expect(src).toContain("Loi applicable");
+    expect(src).toContain("Droit français");
+    // Validité
+    expect(src).toContain("Validité");
+    expect(src).toContain("90");
   });
 });

@@ -5,6 +5,8 @@
 //   - name, legalForm, siret, address, email
 //   - tvaMention (ex: "TVA non applicable, art. 293 B du CGI")
 //   - iban (optionnel, string ou none)
+//   - apeCode (optionnel, ex "6201Z")
+//   - tvaIntracom (optionnel, n° TVA intracom si assujetti)
 
 #import "../base.typ": color-accent, color-dark, color-gray, size-sm, size-md, size-lg
 
@@ -20,6 +22,16 @@
     #text(size: size-sm)[#ws.address]
     #v(2pt)
     #text(size: size-sm)[SIRET : #ws.siret]
+  ]
+  if ws.at("apeCode", default: none) != none and ws.apeCode != "" [
+    #v(2pt)
+    #text(size: size-sm)[Code APE : #ws.apeCode]
+  ]
+  if ws.at("tvaIntracom", default: none) != none and ws.tvaIntracom != "" [
+    #v(2pt)
+    #text(size: size-sm)[TVA intracom. : #ws.tvaIntracom]
+  ]
+  [
     #v(2pt)
     #text(size: size-sm)[#ws.tvaMention]
     #v(2pt)

@@ -15,6 +15,7 @@
 #import "partials/items-table.typ": items-table
 #import "partials/totals.typ": totals-block
 #import "partials/signature-block.typ": signature-block
+#import "partials/quote-legal.typ": quote-legal
 
 // ─── Lecture du contexte JSON ────────────────────────────────────────────────
 // Le wrapper Rust passe le JSON path en input `ctx-path`. Typst 0.11 lit
@@ -97,15 +98,25 @@
 // ─── Totaux ──────────────────────────────────────────────────────────────────
 #totals-block(total: ctx.total, tvaApplicable: false)
 
-// ─── Conditions + notes (optionnels) ─────────────────────────────────────────
+// ─── Modalités de paiement (information complémentaire, renvoi facture) ─────
+#v(14pt)
+#h2("Modalités de paiement")
+#label-value("Mode :", "Virement bancaire")
+#label-value("Bénéficiaire :", ctx.workspace.name)
+#if ctx.workspace.at("iban", default: none) != none and ctx.workspace.iban != "" [
+  #label-value("IBAN :", ctx.workspace.iban)
+]
+
+// ─── Conditions particulières (texte libre — acompte, délai spécifique…) ────
 #if ctx.at("conditions", default: none) != none and ctx.conditions != "" [
   #v(14pt)
-  #h1("Conditions")
+  #h1("Conditions particulières")
   #block(
     text(size: size-sm, fill: color-dark)[#ctx.conditions],
   )
 ]
 
+// ─── Notes libres ────────────────────────────────────────────────────────────
 #if ctx.at("notes", default: none) != none and ctx.notes != "" [
   #v(14pt)
   #h2("Notes")
@@ -113,6 +124,14 @@
     text(size: size-sm, fill: color-gray, style: "italic")[#ctx.notes],
   )
 ]
+
+// ─── Conditions générales de vente (obligatoires FR) ─────────────────────────
+// Mentions non négociables : pénalités L441-10, indemnité D441-5, art. 293 B,
+// PI, résiliation, confidentialité, loi applicable. Source skill /devis-freelance.
+#v(14pt)
+#quote-legal(
+  tvaMention: ctx.workspace.tvaMention,
+)
 
 // ─── Signature ───────────────────────────────────────────────────────────────
 #v(20pt)

@@ -100,6 +100,33 @@ describe("QuoteDetailRoute", () => {
     });
   });
 
+  it("le bouton Éditer disabled expose un tooltip explicatif (hors draft)", async () => {
+    renderAt("/quotes/q-issued", ISSUED_QUOTE);
+    await waitFor(() => {
+      const btn = screen.getByTestId("detail-edit");
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveAttribute("title");
+      expect(btn.getAttribute("title")).toMatch(/duplique/i);
+    });
+  });
+
+  it("affiche un bouton Dupliquer hors draft à côté de Éditer", async () => {
+    renderAt("/quotes/q-issued", ISSUED_QUOTE);
+    await waitFor(() => {
+      const dup = screen.getByTestId("detail-duplicate");
+      expect(dup).toBeInTheDocument();
+      expect(dup).not.toBeDisabled();
+    });
+  });
+
+  it("ne rend pas Dupliquer sur un devis en draft", async () => {
+    renderAt("/quotes/q-draft", DRAFT_QUOTE);
+    await waitFor(() => {
+      expect(screen.getByTestId("detail-edit")).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId("detail-duplicate")).not.toBeInTheDocument();
+  });
+
   it("expose le bouton Préparer email (Track K) hors draft", async () => {
     renderAt("/quotes/q-issued", ISSUED_QUOTE);
     await waitFor(() => {

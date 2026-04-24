@@ -2,6 +2,10 @@ import { fr } from "@fakt/shared";
 import type { Client, Invoice, Quote } from "@fakt/shared";
 import { Button, Modal, StatusPill } from "@fakt/ui";
 import type { ReactElement, ReactNode } from "react";
+import { useNavigate } from "react-router";
+
+/** Plafond d'items par liste dans la modale détail client. */
+const MAX_PREVIEW_ITEMS = 5;
 
 interface ClientDetailProps {
   open: boolean;
@@ -37,7 +41,29 @@ export function ClientDetail({
   onEdit,
   onDelete,
 }: ClientDetailProps): ReactElement {
+  const navigate = useNavigate();
+
   if (!client) return <></>;
+
+  function goToQuote(id: string): void {
+    onClose();
+    void navigate(`/quotes/${id}`);
+  }
+
+  function goToInvoice(id: string): void {
+    onClose();
+    void navigate(`/invoices/${id}`);
+  }
+
+  function goToQuotesFilteredByClient(clientId: string): void {
+    onClose();
+    void navigate(`/quotes?client=${encodeURIComponent(clientId)}`);
+  }
+
+  function goToInvoicesFilteredByClient(clientId: string): void {
+    onClose();
+    void navigate(`/invoices?client=${encodeURIComponent(clientId)}`);
+  }
 
   return (
     <Modal
@@ -88,8 +114,13 @@ export function ClientDetail({
             <Empty>Aucun devis pour ce client.</Empty>
           ) : (
             <CompactList>
-              {quotes.slice(0, 5).map((q) => (
-                <CompactRow key={q.id}>
+              {quotes.slice(0, MAX_PREVIEW_ITEMS).map((q) => (
+                <CompactRow
+                  key={q.id}
+                  onClick={(): void => goToQuote(q.id)}
+                  label={`Ouvrir le devis ${q.number ?? "brouillon"}`}
+                  testId={`client-detail-quote-${q.id}`}
+                >
                   <span style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>
                     {q.number ?? "—"}
                   </span>
@@ -100,6 +131,14 @@ export function ClientDetail({
                   <StatusPill status={q.status} size="sm" />
                 </CompactRow>
               ))}
+              {quotes.length > MAX_PREVIEW_ITEMS && (
+                <MoreLink
+                  onClick={(): void => goToQuotesFilteredByClient(client.id)}
+                  testId="client-detail-more-quotes"
+                >
+                  Voir les {quotes.length} devis de ce client →
+                </MoreLink>
+              )}
             </CompactList>
           )}
         </section>
@@ -111,8 +150,13 @@ export function ClientDetail({
             <Empty>Aucune facture pour ce client.</Empty>
           ) : (
             <CompactList>
-              {invoices.slice(0, 5).map((inv) => (
-                <CompactRow key={inv.id}>
+              {invoices.slice(0, MAX_PREVIEW_ITEMS).map((inv) => (
+                <CompactRow
+                  key={inv.id}
+                  onClick={(): void => goToInvoice(inv.id)}
+                  label={`Ouvrir la facture ${inv.number ?? "brouillon"}`}
+                  testId={`client-detail-invoice-${inv.id}`}
+                >
                   <span style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>
                     {inv.number ?? "—"}
                   </span>
@@ -128,6 +172,14 @@ export function ClientDetail({
                   )}
                 </CompactRow>
               ))}
+              {invoices.length > MAX_PREVIEW_ITEMS && (
+                <MoreLink
+                  onClick={(): void => goToInvoicesFilteredByClient(client.id)}
+                  testId="client-detail-more-invoices"
+                >
+                  Voir les {invoices.length} factures de ce client →
+                </MoreLink>
+              )}
             </CompactList>
           )}
         </section>
@@ -201,9 +253,39 @@ function CompactList({ children }: { children: ReactNode }): ReactElement {
   return <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>{children}</div>;
 }
 
-function CompactRow({ children }: { children: ReactNode }): ReactElement {
+function CompactRow({
+  children,
+  onClick,
+  label,
+  testId,
+}: {
+  children: ReactNode;
+  onClick?: () => void;
+  label?: string;
+  testId?: string;
+}): ReactElement {
+  if (!onClick) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          padding: "6px 8px",
+          border: "1.5px solid var(--line)",
+          background: "var(--paper)",
+        }}
+      >
+        {children}
+      </div>
+    );
+  }
   return (
-    <div
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      data-testid={testId}
       style={{
         display: "flex",
         alignItems: "center",
@@ -211,9 +293,57 @@ function CompactRow({ children }: { children: ReactNode }): ReactElement {
         padding: "6px 8px",
         border: "1.5px solid var(--line)",
         background: "var(--paper)",
+        textAlign: "left",
+        cursor: "pointer",
+        width: "100%",
+        font: "inherit",
+        color: "inherit",
+      }}
+      onKeyDown={(e): void => {
+        // Enter/Space déclenchent le clic — comportement natif button déjà OK
+        // mais on garde explicite pour une cohérence éventuelle.
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
       }}
     >
       {children}
-    </div>
+    </button>
+  );
+}
+
+function MoreLink({
+  onClick,
+  children,
+  testId,
+}: {
+  onClick: () => void;
+  children: ReactNode;
+  testId?: string;
+}): ReactElement {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      data-testid={testId}
+      style={{
+        alignSelf: "flex-end",
+        border: "none",
+        background: "transparent",
+        padding: "4px 0",
+        marginTop: 4,
+        fontFamily: "var(--font-ui)",
+        fontSize: 12,
+        fontWeight: 700,
+        letterSpacing: "0.04em",
+        textTransform: "uppercase",
+        color: "var(--ink)",
+        cursor: "pointer",
+        textDecoration: "underline",
+      }}
+    >
+      {children}
+    </button>
   );
 }

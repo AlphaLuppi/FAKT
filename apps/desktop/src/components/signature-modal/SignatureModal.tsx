@@ -1,7 +1,7 @@
 import { tokens } from "@fakt/design-tokens";
 import { fr } from "@fakt/shared";
 import type { SignatureEvent } from "@fakt/shared";
-import { Button, Checkbox, Modal, Tabs, toast } from "@fakt/ui";
+import { Button, Checkbox, Modal, SegmentedControl, toast } from "@fakt/ui";
 import type { ReactElement } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
@@ -218,8 +218,8 @@ export function SignatureModal({
           gap: tokens.spacing[4],
         }}
       >
-        <Tabs
-          items={[
+        <SegmentedControl
+          options={[
             { value: "draw", label: fr.signature.modal.tabDraw },
             { value: "type", label: fr.signature.modal.tabType },
           ]}
@@ -233,11 +233,27 @@ export function SignatureModal({
             fontFamily: tokens.font.ui,
             fontSize: tokens.fontSize.sm,
             color: tokens.color.ink,
+            display: "flex",
+            flexDirection: "column",
+            gap: tokens.spacing[1],
           }}
         >
-          {mode === "draw"
-            ? fr.signature.modal.drawInstruction
-            : fr.signature.modal.typeInstruction}
+          <span>
+            {mode === "draw"
+              ? fr.signature.modal.drawInstruction
+              : fr.signature.modal.typeInstruction}
+          </span>
+          {mode === "draw" && (
+            <span
+              style={{
+                fontSize: tokens.fontSize.xs,
+                color: tokens.color.muted,
+                fontFamily: tokens.font.mono,
+              }}
+            >
+              {fr.signature.modal.drawUndoHint}
+            </span>
+          )}
         </div>
 
         <div data-testid="signature-pane" style={{ display: "flex", justifyContent: "center" }}>

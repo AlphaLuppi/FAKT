@@ -112,13 +112,25 @@
 #label-value("Échéance :", ctx.dueDate)
 
 // ─── Mentions légales (FR-016) ───────────────────────────────────────────────
+// Le snapshot `legalMentions` contient déjà identité émetteur, SIRET, adresse,
+// IBAN, mention TVA 293 B, délai paiement, pénalités L441-10, indemnité D441-5.
+// On y ajoute systématiquement les dash-items non présents dans le snapshot.
 #v(14pt)
 #legal-mentions(mentions: ctx.legalMentions, extras: ())
 
 // ─── Dash items supplémentaires garantis ─────────────────────────────────────
+// Ces mentions doivent SYSTÉMATIQUEMENT apparaître sur toute facture FR :
 #dash-item-bold(
   "Pas d'escompte",
   [pour paiement anticipé.],
+)
+#dash-item-bold(
+  "Taux pénalité :",
+  [BCE + 10 points (article L441-10 du Code de commerce) — dû de plein droit dès le lendemain de la date d'échéance, sans rappel préalable.],
+)
+#dash-item-bold(
+  "Indemnité forfaitaire :",
+  [40 € pour frais de recouvrement (article D441-5 du Code de commerce).],
 )
 #if ctx.at("quoteReference", default: none) != none and ctx.quoteReference != "" [
   #dash-item-bold(

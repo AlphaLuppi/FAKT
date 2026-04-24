@@ -57,6 +57,9 @@ const TPL_LEGAL_MENTIONS: &str = include_str!(
 const TPL_SIGNATURE_BLOCK: &str = include_str!(
     "../../../../../packages/pdf/templates/partials/signature-block.typ"
 );
+const TPL_QUOTE_LEGAL: &str = include_str!(
+    "../../../../../packages/pdf/templates/partials/quote-legal.typ"
+);
 
 // Pour le fallback (mode sans Typst CLI), nous exposons un PDF stub minimal
 // PDF 1.4 byte-parfait (1 page A4, même bytes à chaque call — déterministe).
@@ -162,6 +165,7 @@ pub(crate) async fn render_pdf_internal(
     write_file(partials.join("totals.typ"), TPL_TOTALS).await?;
     write_file(partials.join("legal-mentions.typ"), TPL_LEGAL_MENTIONS).await?;
     write_file(partials.join("signature-block.typ"), TPL_SIGNATURE_BLOCK).await?;
+    write_file(partials.join("quote-legal.typ"), TPL_QUOTE_LEGAL).await?;
 
     // Écrit le contexte.
     let ctx_path = root.join("ctx.json");

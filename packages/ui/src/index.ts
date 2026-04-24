@@ -3,8 +3,12 @@
 // Primitives
 export { Button } from "./primitives/Button.js";
 export type { ButtonProps, ButtonSize, ButtonVariant } from "./primitives/Button.js";
-export { Input, Textarea } from "./primitives/Input.js";
-export type { InputProps, TextareaProps } from "./primitives/Input.js";
+export { AutoGrowTextarea, Input, Textarea } from "./primitives/Input.js";
+export type {
+  AutoGrowTextareaProps,
+  InputProps,
+  TextareaProps,
+} from "./primitives/Input.js";
 export { Select } from "./primitives/Select.js";
 export type { SelectOption, SelectProps } from "./primitives/Select.js";
 export { Checkbox } from "./primitives/Checkbox.js";
@@ -13,6 +17,13 @@ export { Radio, RadioGroup } from "./primitives/Radio.js";
 export type { RadioGroupProps, RadioProps } from "./primitives/Radio.js";
 export { Tabs, getTabPanelId } from "./primitives/Tabs.js";
 export type { TabItem, TabsProps } from "./primitives/Tabs.js";
+export { SegmentedControl } from "./primitives/SegmentedControl.js";
+export type {
+  SegmentedControlOption,
+  SegmentedControlProps,
+} from "./primitives/SegmentedControl.js";
+export { Autocomplete } from "./primitives/Autocomplete.js";
+export type { AutocompleteOption, AutocompleteProps } from "./primitives/Autocomplete.js";
 
 // Layout
 export { Card } from "./layout/Card.js";

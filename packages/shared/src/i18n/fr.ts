@@ -250,6 +250,9 @@ export const fr = {
       noPdfDraft: "Ce devis est en brouillon — aucun numéro n'a été attribué.",
       signedOn: "Signé le",
       draftOnlyEdit: "Seuls les devis en brouillon peuvent être édités.",
+      editDisabledTooltip:
+        "Impossible d'éditer un devis envoyé ou signé — duplique-le pour créer une nouvelle version.",
+      duplicateHint: "Créer un nouveau brouillon pré-rempli à partir de ce devis.",
       markSentTitle: "Marquer ce devis comme envoyé ?",
       markSentBody:
         "Le devis passera au statut « Envoyé » et ne sera plus modifiable directement. Le client pourra ensuite signer, refuser ou laisser expirer le devis.",
@@ -515,6 +518,7 @@ export const fr = {
       tabDraw: "Dessiner au trackpad",
       tabType: "Taper au clavier",
       drawInstruction: "Signe dans la zone ci-dessous avec ton trackpad, ta souris ou ton stylet.",
+      drawUndoHint: "Ctrl+Z (ou ⌘+Z) pour annuler le dernier trait.",
       typeInstruction: "Saisis ton nom. Il sera converti en signature cursive pour le document.",
       typePlaceholder: "Tom Andrieu",
       ackLabel:

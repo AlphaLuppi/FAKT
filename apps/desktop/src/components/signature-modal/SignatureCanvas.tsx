@@ -5,6 +5,8 @@ import { type Point, drawSmoothPath } from "./smoothing.js";
 
 export interface SignatureCanvasHandle {
   clear: () => void;
+  /** Retire le dernier trait (Ctrl+Z) et re-peint. Retourne false si aucun trait. */
+  undoLastStroke: () => boolean;
   isEmpty: () => boolean;
   toDataURL: () => string;
   toPngBytes: () => Promise<Uint8Array>;
@@ -16,6 +18,8 @@ export interface SignatureCanvasProps {
   strokeColor?: string;
   strokeWidth?: number;
   onStrokeEnd?: () => void;
+  /** Capture Ctrl+Z / Cmd+Z globalement pour undo (défaut true). */
+  undoWithKeyboard?: boolean;
 }
 
 function decodeDataURL(dataUrl: string): Uint8Array {
@@ -30,7 +34,14 @@ function decodeDataURL(dataUrl: string): Uint8Array {
 
 export const SignatureCanvas = forwardRef<SignatureCanvasHandle, SignatureCanvasProps>(
   function SignatureCanvas(
-    { width = 600, height = 200, strokeColor, strokeWidth = 2.5, onStrokeEnd },
+    {
+      width = 600,
+      height = 200,
+      strokeColor,
+      strokeWidth = 2.5,
+      onStrokeEnd,
+      undoWithKeyboard = true,
+    },
     ref
   ): ReactElement {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -68,6 +79,37 @@ export const SignatureCanvas = forwardRef<SignatureCanvasHandle, SignatureCanvas
       }
     }, [configureCtx]);
 
+    const undoLastStrokeImpl = useCallback((): boolean => {
+      if (allStrokesRef.current.length === 0) return false;
+      allStrokesRef.current = allStrokesRef.current.slice(0, -1);
+      if (allStrokesRef.current.length === 0 && pointsRef.current.length === 0) {
+        hasInkRef.current = false;
+      }
+      repaint();
+      return true;
+    }, [repaint]);
+
+    // Capture globale Ctrl+Z / Cmd+Z — seul le dernier trait est retiré.
+    // Attaché sur window pour fonctionner sans focus explicite sur le canvas.
+    useEffect(() => {
+      if (!undoWithKeyboard) return undefined;
+      function onKey(e: KeyboardEvent): void {
+        const isMod = e.ctrlKey || e.metaKey;
+        if (!isMod) return;
+        if (e.key.toLowerCase() !== "z") return;
+        // On ignore Shift+Ctrl+Z (qui est conventionnellement redo).
+        if (e.shiftKey) return;
+        const c = canvasRef.current;
+        if (!c) return;
+        // Ne capture que si le canvas est visible / dans le DOM.
+        if (!document.body.contains(c)) return;
+        const did = undoLastStrokeImpl();
+        if (did) e.preventDefault();
+      }
+      window.addEventListener("keydown", onKey);
+      return (): void => window.removeEventListener("keydown", onKey);
+    }, [undoWithKeyboard, undoLastStrokeImpl]);
+
     useImperativeHandle(
       ref,
       () => ({
@@ -80,6 +122,7 @@ export const SignatureCanvas = forwardRef<SignatureCanvasHandle, SignatureCanvas
           const ctx = configureCtx();
           if (c && ctx) ctx.clearRect(0, 0, c.width, c.height);
         },
+        undoLastStroke: undoLastStrokeImpl,
         isEmpty: (): boolean => !hasInkRef.current,
         toDataURL: (): string => {
           const c = canvasRef.current;
@@ -108,7 +151,7 @@ export const SignatureCanvas = forwardRef<SignatureCanvasHandle, SignatureCanvas
           return decodeDataURL(c.toDataURL("image/png"));
         },
       }),
-      [configureCtx]
+      [configureCtx, undoLastStrokeImpl]
     );
 
     function pointFromEvent(e: ReactPointerEvent<HTMLCanvasElement>): Point {
