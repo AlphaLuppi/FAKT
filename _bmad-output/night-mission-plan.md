@@ -169,6 +169,31 @@ Bugs P0 connus AU DÉPART (à valider/affiner avec audit) :
 - 4 binaires attachés : MSI / DMG / DEB / .app.tar.gz
 - URL : https://github.com/AlphaLuppi/FAKT/releases/tag/v0.1.3
 
+### 09h30 — 🚨 BUG CRITIQUE DÉCOUVERT PAR TOM APRÈS RÉVEIL
+- Tom installe v0.1.5 MSI, clic "Lancer FAKT" → rien ne s'ouvre
+- `fakt-trace.log` persistant (ajouté v0.1.3) révèle :
+  `PANIC: spawn api-server: sidecar terminé avant ready, code=Some(1)`
+- Lancement sidecar manuel depuis Program Files →
+  `error: migrations introuvables dans : B:\db\src\migrations | C:\packages\db\src\migrations | C:\Program Files\FAKT\packages\db\src\migrations`
+- **Root cause** : `bun build --compile --minify` n'embed PAS les fichiers
+  `.sql` lus via `readFileSync` runtime. Toutes les versions v0.1.1 → v0.1.5
+  étaient CASSÉES en prod (marchaient en dev uniquement car path relatif
+  au repo fonctionnait).
+- **Pourquoi invisible cette nuit** : mes tests de binaire release local
+  tournaient depuis le repo cwd (où `packages/db/src/migrations` existe),
+  donc le sidecar trouvait les SQL. En prod MSI, cwd = Program Files → bug.
+
+### 09h30 → 09h40 — Fix + v0.1.6
+- `scripts/generate-migrations.ts` lit les 4 SQL au build-time, stringifie
+  dans `src/migrations-embedded.ts` (10 kB total, committé).
+- `build-sidecar.ts` invoque `generate-migrations` AVANT chaque
+  `bun build --compile` (local + CI).
+- `src/index.ts` : `resolveMigrationsDir` supprimée, remplacée par
+  import `EMBEDDED_MIGRATIONS` array. Tests 776/776 OK.
+- Validation : sidecar rebuild local lancé depuis `C:\Program Files\FAKT`
+  cwd → `FAKT_API_READY:port=50161` ✅
+- Commit 944e5d4 + tag v0.1.6 + push → CI run 24878069959
+
 ## Tom au réveil — actions
 
 **État final :** FAKT **v0.1.5** est la release grand public finale.
@@ -178,19 +203,21 @@ Bugs P0 connus AU DÉPART (à valider/affiner avec audit) :
 
 | Version | Quoi | Status |
 |---------|------|--------|
-| v0.1.0 (la veille) | MVP initial | Bug onboarding (CORS) |
-| v0.1.1 | Fix CORS sidecar | Bug crash boot Windows (profile release) |
-| v0.1.2 | Fix crash Windows (strip=false) + SIRET espaces | Marche mais bugs settings |
-| v0.1.3 | Hardening audit nuit (2 P0 + 5 P1 + 4 CVE deps + SECURITY.md) | Bug settings découvert post-tag |
-| v0.1.4 | Fix Tauri commands fantômes Settings | Guards double-submit manquants |
-| **v0.1.5** ✅ | Guards synchrones double-submit (9 handlers sensibles) | **Version finale** |
+| v0.1.0 (la veille) | MVP initial | Bug onboarding (CORS) + migrations pas bundled |
+| v0.1.1 | Fix CORS sidecar | Bug crash boot Windows + migrations pas bundled |
+| v0.1.2 | Fix crash Windows (strip=false) + SIRET espaces | Sidecar crashait toujours (migrations) |
+| v0.1.3 | Hardening audit nuit (2 P0 + 5 P1 + 4 CVE deps + SECURITY.md + fakt-trace.log) | Sidecar crashait toujours (migrations) |
+| v0.1.4 | Fix Tauri commands fantômes Settings | Sidecar crashait toujours (migrations) |
+| v0.1.5 | Guards synchrones double-submit (9 handlers sensibles) | **Sidecar crashait toujours** — découvert par Tom au réveil |
+| **v0.1.6** ✅ | Hotfix embed SQL migrations dans binaire Bun | **Version qui marche VRAIMENT** |
 
 **À faire au réveil :**
 
 1. **Désinstaller FAKT 0.1.0/0.1.1/0.1.2** (Paramètres Windows → Apps → FAKT → Désinstaller). Ça enlève le binaire mais garde `%APPDATA%\com.alphaluppi.fakt\` et `~\.fakt\db.sqlite`.
 
-2. **Télécharger le MSI 0.1.5** (release FINALE) :
-   https://github.com/AlphaLuppi/FAKT/releases/download/v0.1.5/FAKT_0.1.5_x64_en-US.msi
+2. **Télécharger le MSI 0.1.6** (release FINALE qui marche vraiment) :
+   https://github.com/AlphaLuppi/FAKT/releases/download/v0.1.6/FAKT_0.1.6_x64_en-US.msi
+   (v0.1.1 → v0.1.5 étaient cassées par un bug migrations pas bundled)
 
 3. **Installer** : double-clic, SmartScreen → *Plus d'infos* → *Exécuter quand même* (pas de signature Authenticode en v0.1.x, prévu v0.2).
 
