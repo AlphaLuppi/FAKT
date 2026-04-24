@@ -1,0 +1,25 @@
+# cargo-audit configuration for FAKT.
+# Les avertissements ignorés ci-dessous ont été évalués et documentés dans
+# ../../../SECURITY.md — chaque entrée doit avoir une justification + un
+# plan de sortie (version amont qui corrige).
+
+[advisories]
+# RUSTSEC-2023-0071 : rsa 0.9.x — Marvin Attack timing sidechannel.
+# Pas de fix upstream disponible. Impact FAKT : négligeable (app 100% locale).
+# Cf. SECURITY.md "Known issues".
+ignore = [
+  "RUSTSEC-2023-0071",
+  # RUSTSEC-2026-0097 : rand 0.7 transitive via tauri-utils → kuchikiki →
+  # selectors → phf_generator. Non exploitable dans notre usage (on ne
+  # passe pas de custom logger à rand). Sera fixé au prochain bump tauri.
+  "RUSTSEC-2026-0097",
+]
+
+# Warnings "unmaintained" des crates gtk-rs / unic-* / proc-macro-error —
+# connus de l'écosystème Rust Linux desktop, pas de fix court terme.
+# On ne les ignore pas ici (ce serait trop permissif) mais on les documente
+# comme non-bloquants dans la CI.
+informational_warnings = [
+  "unmaintained",
+  "notice",
+]
