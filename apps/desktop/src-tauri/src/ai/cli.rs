@@ -214,6 +214,22 @@ fn claude_cli_args() -> Vec<&'static str> {
     ]
 }
 
+/// Applique CREATE_NO_WINDOW (0x08000000) sur Windows pour éviter qu'une
+/// fenêtre terminale ne flashe à chaque invocation de `cmd /C claude ...`.
+/// Bug P0 release grand public : Tom voyait une cmd.exe popper sur chaque
+/// extraction IA / draft email / chat.
+#[inline]
+fn silence_console_window(cmd: &mut Command) {
+    #[cfg(target_os = "windows")]
+    {
+        cmd.creation_flags(0x08000000);
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        let _ = cmd;
+    }
+}
+
 /// Crée la Command avec les bons args. Sur Windows, `claude` installé via
 /// `npm -g` est un script `.cmd` que `tokio::process::Command::new("claude")`
 /// ne résout pas. On retombe sur `cmd /C` pour que le shell applique PATHEXT.
@@ -227,6 +243,7 @@ fn build_command(binary: &str) -> Command {
     for arg in claude_cli_args() {
         cmd.arg(arg);
     }
+    silence_console_window(&mut cmd);
     cmd
 }
 
@@ -236,6 +253,7 @@ fn build_command(binary: &str) -> Command {
     for arg in claude_cli_args() {
         cmd.arg(arg);
     }
+    silence_console_window(&mut cmd);
     cmd
 }
 
@@ -727,17 +745,20 @@ pub async fn check_claude_cli() -> Result<CliCheckResult, String> {
     let binary = claude_binary();
 
     // Tentative directe (exe réel).
-    let direct = Command::new(&binary).arg("--version").output().await;
+    let mut direct_cmd = Command::new(&binary);
+    direct_cmd.arg("--version");
+    silence_console_window(&mut direct_cmd);
+    let direct = direct_cmd.output().await;
 
     let version_output = match direct {
         Ok(out) => Ok(out),
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
             #[cfg(target_os = "windows")]
             {
-                Command::new("cmd")
-                    .args(["/C", &binary, "--version"])
-                    .output()
-                    .await
+                let mut shell_cmd = Command::new("cmd");
+                shell_cmd.args(["/C", &binary, "--version"]);
+                silence_console_window(&mut shell_cmd);
+                shell_cmd.output().await
             }
             #[cfg(not(target_os = "windows"))]
             {
@@ -896,11 +917,10 @@ async fn resolve_binary_path(binary: &str) -> Option<String> {
     #[cfg(not(target_os = "windows"))]
     let which_cmd = ("which", binary);
 
-    let out = Command::new(which_cmd.0)
-        .arg(which_cmd.1)
-        .output()
-        .await
-        .ok()?;
+    let mut which_child = Command::new(which_cmd.0);
+    which_child.arg(which_cmd.1);
+    silence_console_window(&mut which_child);
+    let out = which_child.output().await.ok()?;
 
     if out.status.success() {
         let path = String::from_utf8_lossy(&out.stdout)

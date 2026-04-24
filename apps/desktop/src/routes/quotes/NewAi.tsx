@@ -211,7 +211,8 @@ export function NewAi(): ReactElement {
     if (!extracted || !extracted.items) return;
     const issuedAt = today();
     const items = (extracted.items ?? []).map((it, idx) => ({
-      id: `tmp-${idx}-${Date.now().toString(36)}`,
+      // UUID v4 : le backend valide le schéma Zod strictement (items[*].id).
+      id: crypto.randomUUID(),
       position: idx,
       description: it.description,
       quantity: Math.round((it.quantity || 1) * 1000),

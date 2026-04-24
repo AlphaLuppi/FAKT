@@ -7,6 +7,24 @@ et [Semantic Versioning 2.0.0](https://semver.org/lang/fr/).
 
 ---
 
+## [0.1.9] - 2026-04-25
+
+Hotfix 2 bugs P0 découverts par Tom sur v0.1.8 grand public.
+
+### Fixed
+- **Terminal Windows qui popait sur chaque invocation Claude CLI**
+  (`cmd /C claude ...`). Ajout du flag `CREATE_NO_WINDOW` (0x08000000) sur
+  toutes les `tokio::process::Command` qui spawn claude / cmd / where.
+  Helper `silence_console_window` appliqué à `build_command`,
+  `check_claude_cli` (direct + fallback shell) et `resolve_binary_path`.
+- **"id doit être un UUID v4"** à la création de devis via le flow IA
+  (`NewAi.tsx`) et à la duplication (`NewManual.tsx`) : les ids temp étaient
+  générés en `tmp-${idx}-${Date.now()}` ou `item-${id}-${random}`, rejetés
+  par le schéma Zod `uuidSchema` côté API. Remplacé par `crypto.randomUUID()`
+  / helper `newId()` pour garantir l'UUID v4 canonique côté front.
+
+---
+
 ## [0.1.8] - 2026-04-24
 
 Session test + fix UI massive (16 retours utilisateur + plusieurs améliorations

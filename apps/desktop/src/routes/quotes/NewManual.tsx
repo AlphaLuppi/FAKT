@@ -39,7 +39,8 @@ export function NewManual(): ReactElement {
           title: src.title,
           notes: src.notes ?? "",
           items: src.items.map((it) => ({
-            id: `item-${it.id}-${Math.random().toString(36).slice(2, 6)}`,
+            // UUID v4 neuf : l'item dupliqué doit avoir son propre id (Zod backend).
+            id: newId(),
             position: it.position,
             description: it.description,
             quantity: it.quantity,
