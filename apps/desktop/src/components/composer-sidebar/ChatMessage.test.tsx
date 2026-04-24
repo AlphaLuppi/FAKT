@@ -62,10 +62,10 @@ describe("ChatMessage", () => {
     expect(screen.getByTestId("tool-result-badge")).toHaveTextContent("OK");
   });
 
-  it("affiche loader ... quand blocks vide et streaming=true", () => {
+  it("affiche le status streaming quand streaming=true (même sans blocs)", () => {
     const m = make({ role: "assistant", blocks: [], streaming: true });
     render(<ChatMessage message={m} timestamp="" />);
-    expect(screen.getByTestId("msg-loading")).toBeInTheDocument();
+    expect(screen.getByTestId("streaming-status")).toBeInTheDocument();
   });
 
   it("affiche un curseur clignotant quand streaming + blocs", () => {

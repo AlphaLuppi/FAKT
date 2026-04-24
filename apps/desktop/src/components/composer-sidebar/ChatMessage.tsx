@@ -15,6 +15,7 @@
 import { tokens } from "@fakt/design-tokens";
 import type { ReactElement } from "react";
 import { ChatMessageContent } from "./ChatMessageContent.js";
+import { StreamingStatus } from "./StreamingStatus.js";
 import { StreamingText } from "./StreamingText.js";
 import { ThinkingBlock } from "./ThinkingBlock.js";
 import { ToolResultBlock } from "./ToolResultBlock.js";
@@ -111,14 +112,6 @@ export function ChatMessage({ message, timestamp }: ChatMessageProps): ReactElem
           wordBreak: "break-word",
         }}
       >
-        {message.blocks.length === 0 && message.streaming && (
-          <div
-            data-testid="msg-loading"
-            style={{ fontFamily: font.mono, fontSize: fontSize.xs, color: color.muted }}
-          >
-            ...
-          </div>
-        )}
         {message.blocks.map((block, idx) =>
           renderBlock(block, `${message.id}-b${idx}`, message.streaming)
         )}
@@ -138,6 +131,7 @@ export function ChatMessage({ message, timestamp }: ChatMessageProps): ReactElem
             {" "}
           </span>
         )}
+        {message.streaming && <StreamingStatus />}
       </div>
       <div style={{ fontFamily: font.mono, fontSize: fontSize.xs, color: color.muted }}>
         {timestamp}
