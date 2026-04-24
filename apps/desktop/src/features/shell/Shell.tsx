@@ -112,58 +112,7 @@ function Sidebar(): ReactElement {
         flexShrink: 0,
       }}
     >
-      <div
-        style={{
-          padding: "18px 16px 12px",
-          borderBottom: "2px solid var(--line)",
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-        }}
-      >
-        <div
-          style={{
-            width: 28,
-            height: 28,
-            background: "var(--ink)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-          }}
-        >
-          <span
-            style={{
-              color: "var(--accent-soft)",
-              fontWeight: 800,
-              fontSize: 13,
-              fontFamily: "var(--font-ui)",
-              letterSpacing: "-0.02em",
-            }}
-          >
-            F
-          </span>
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div
-            style={{
-              fontWeight: 800,
-              fontSize: 14,
-              color: "var(--ink)",
-              fontFamily: "var(--font-ui)",
-              letterSpacing: "-0.02em",
-              textTransform: "uppercase",
-            }}
-          >
-            {fr.app.name}
-          </div>
-          <div style={{ fontSize: 11, color: "var(--muted)", fontFamily: "var(--font-ui)" }}>
-            v0.1.0
-          </div>
-        </div>
-      </div>
-
-      <div style={{ padding: "12px 10px 8px" }}>
+      <div style={{ padding: "18px 10px 8px" }}>
         <button
           style={{
             width: "100%",
