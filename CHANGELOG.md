@@ -7,6 +7,111 @@ et [Semantic Versioning 2.0.0](https://semver.org/lang/fr/).
 
 ---
 
+## [0.1.3] - 2026-04-24
+
+Release de durcissement pour grand public. Audit complet de nuit (3 agents en
+parallèle : code-reviewer Rust + code-reviewer TypeScript + audit deps/lint/tests)
+a identifié 2 P0 + 5 P1 sécurité + 1 CVE HIGH dépendance — tous fixés dans
+cette release.
+
+### Security
+
+- **SQL injection `drizzle-orm`** : bump `0.44.x` → **`0.45.2`** pour patcher
+  GHSA-gpj5-g38j-94v9 (HIGH) — identifiers mal échappés dans certaines
+  requêtes Drizzle. Impact direct `@fakt/db` + `@fakt/api-server`.
+- **Zip Slip dans `build_workspace_zip`** (Rust, commands/backup.rs) : un
+  `entry.name` contrôlé par le frontend (XSS WebView) pouvait contenir
+  `../../evil.bin` et produire un chemin ZIP interne traversant la hiérarchie
+  cible à l'extraction par un archiveur naïf (Windows Explorer, macOS Archive
+  Utility). Tous les `entry.name` sont désormais sanitisés (basename uniquement,
+  retrait des caractères Windows-reserved).
+- **Path arbitraire sur `dest_path`** (Rust, commands/backup.rs) : `dest_path`
+  passé directement à `File::create` sans validation. Désormais vérifié :
+  extension `.zip` requise, parent existant, dossiers système bloqués
+  (C:\Windows, C:\Program Files, /etc, /usr, /bin, /sbin, /system).
+- **Symlink bypass `open_email_draft`** (Rust, commands/email.rs) : un symlink
+  `evil.eml → /etc/passwd` passait le check d'extension mais ouvrait le
+  fichier résolu dans l'app mail. Désormais `canonicalize()` + re-check
+  extension sur le chemin résolu avant dispatch.
+- **`SECURITY.md` + `audit.toml`** : politique de rapport de vulnérabilités
+  publiée, CVE Rust acceptées (RUSTSEC-2023-0071 rsa Marvin + RUSTSEC-2026-0097
+  rand transitive tauri-utils) documentées avec justification.
+- **Deps dev moyenne** : bump `vite 6→8`, `astro 5→6`, `esbuild 0.24→0.28`
+  (3 CVE MODERATE dev-only GHSA-4w7w/-j687/-67mh).
+
+### Fixed
+
+- **Crash silencieux `.expect()` sur `.run()` Tauri** (Rust, lib.rs) : sous
+  `panic = "abort"` (release Windows), tout `.expect()` atteint produit un
+  crash 0xc0000409 **silencieux** (WER seul — stderr avalé par
+  `windows_subsystem = "windows"`). L'entrée `run()` convertit désormais
+  toute `Err` retournée par Tauri Builder en `process::exit(1)` + log trace
+  propre, sans panic.
+- **Crash `.unwrap()` UTF-8 dans `to_pem`** (Rust, crypto/commands.rs) :
+  `std::str::from_utf8(chunk).unwrap()` sur une sortie base64 — ASCII en
+  pratique, mais un `.unwrap()` de trop peut crash silencieusement. Remplacé
+  par `String::from_utf8_lossy(chunk)`.
+- **Sidecar zombie si fenêtre ne s'ouvre pas** (Rust, lib.rs + sidecar.rs) :
+  si `WebviewWindowBuilder::build()` échoue après que `spawn_api_server`
+  ait réussi, le child sidecar Bun restait vivant avec son port pris.
+  Désormais `sidecar::shutdown()` appelé explicitement dans le chemin
+  d'erreur.
+- **Panic `pad_to_width` underflow défensif** (Rust, crypto/pades.rs) :
+  `usize::saturating_sub` + garde `target >= 2` pour éviter un underflow
+  théorique sur PDF malformé.
+- **Numérotation factures non-atomique** (TS, api-server/routes/invoices.ts) :
+  `POST /api/invoices/:id/issue` et `/mark-sent` appelaient
+  `nextInvoiceNumber` sans transaction, alors que `quotes.ts` utilise
+  correctement `nextNumberAtomic(sqlite, db, ws, "invoice")` avec
+  `BEGIN IMMEDIATE`. Aligné — CGI art. 289 respecté sous concurrence.
+- **SIRET La Poste refusé côté API** (TS, api-server/schemas/common.ts) :
+  divergence client/serveur — le validateur client (@fakt/legal) acceptait
+  l'exception SIREN `356000000` (La Poste) mais l'API ne le faisait pas,
+  donc un client institutionnel passait le frontend mais était rejeté au
+  POST. Exception ajoutée côté API.
+- **HTTP 409 vs 422 vs 404 cohérence** (TS, api-server/routes) :
+  `PATCH /api/invoices/:id` sur facture émise → 422 INVALID_TRANSITION
+  (pas 409 CONFLICT). `DELETE /api/clients/:id` sur client déjà archivé
+  et `POST /api/clients/:id/restore` sur client non archivé → 409 CONFLICT
+  (pas 404 NOT_FOUND). Convention alignée avec `errors.ts`.
+- **Facture / devis émis à 0€** (TS, api-server/routes/invoices.ts + quotes.ts) :
+  une facture ou un devis à 0€ émis occupe un slot de numérotation séquentielle
+  CGI sans contrepartie. Garde `totalHtCents <= 0 → 422` ajoutée au moment
+  de l'émission (draft à 0€ reste valide pendant la composition).
+- **Pagination `limit` 10 000** (TS, api-server/schemas/common.ts) : une
+  requête `?limit=10000` saturait la webview Tauri en mémoire avec items
+  joints. Cap réduit à `max(500)` (plus raisonnable pour un outil
+  freelance).
+- **Double-submit `RecapStep`** (TS, onboarding/steps/Recap.tsx) : le bouton
+  `disabled={saving}` ne suffisait pas car React batche les renders — un
+  double-clic rapide pouvait lancer 2 POST workspace en parallèle. Guard
+  synchrone `if (saving) return` ajouté en entrée de `handleFinish`.
+
+### Added
+
+- **Module `trace.rs`** : logger centralisé qui promote vers
+  `app_data_dir/logs/fakt-trace.log` (persistant) après setup Tauri, fallback
+  `%TEMP%/fakt-trace.log` (Windows) / `/tmp/fakt-trace.log` (Unix) avant que
+  le path resolver Tauri ne soit disponible. Remplace les 3 copies locales de
+  la fonction `trace` dans `lib.rs`. Utilisé par le panic hook + les étapes
+  de `setup()` pour diagnostiquer les crashes silencieux sous
+  `windows_subsystem = "windows"`.
+
+### Changed
+
+- `API_VERSION` `0.1.2` → `0.1.3`.
+- Lint Biome : 1 erreur (`noNonNullAssertion`) + 5 warnings corrigés. `bun
+  run lint` exit 0.
+
+### Developer notes
+
+- Suite de tests : 776 passed / 1 skipped / 0 failed après tous les fixes.
+- Typecheck Turbo : 12/12 packages OK.
+- `cargo audit` : clean après ignore des 2 CVE documentées dans `audit.toml`.
+- Couverture `@fakt/api-server` : 89.86% (statements), 70.3% (branches).
+
+---
+
 ## [0.1.2] - 2026-04-23
 
 Patch hotfix : déblocage du lancement de l'application Windows (crash silencieux
