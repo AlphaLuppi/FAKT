@@ -8,7 +8,8 @@ import { useLocation } from "react-router";
 import { ChatMessage as ChatMessageView } from "./ChatMessage.js";
 import { useComposerSidebar } from "./ComposerContext.js";
 import type { ChatBlock, ChatMessageRich } from "./useChatStream.js";
-import { extractDeltaText, extractFinalText } from "./useChatStream.js";
+import { applyStreamEventToBlocks, extractFinalText } from "./useChatStream.js";
+import { useVerboseAiMode } from "../../hooks/useVerboseAiMode.js";
 import "highlight.js/styles/github-dark.css";
 
 /**
@@ -23,6 +24,37 @@ function blocksToString(blocks: ChatBlock[]): string {
       return "";
     })
     .join("");
+}
+
+/**
+ * À la réception du `done`, remplace le dernier TextBlock par la version
+ * finale (proprement markdownifiée côté CLI) ou append un nouveau bloc si
+ * aucun TextBlock n'avait été streamé (ex : message 100% tool_use).
+ */
+function finalizeBlocksWithText(blocks: ChatBlock[], final: string): ChatBlock[] {
+  if (final.length === 0) return blocks;
+  let lastTextIdx = -1;
+  for (let i = blocks.length - 1; i >= 0; i--) {
+    const b = blocks[i];
+    if (b && b.type === "text") {
+      lastTextIdx = i;
+      break;
+    }
+  }
+  if (lastTextIdx === -1) {
+    return [...blocks, { type: "text", text: final }];
+  }
+  return blocks.map((b, i) => (i === lastTextIdx ? { type: "text", text: final } : b));
+}
+
+/**
+ * Filtre les blocs "verbeux" (thinking / tool_use / tool_result) quand
+ * l'utilisateur a désactivé le mode verbose IA dans Settings. Conserve
+ * toujours les TextBlock et l'ordre d'origine.
+ */
+function filterVerboseBlocks(blocks: ChatBlock[], verbose: boolean): ChatBlock[] {
+  if (verbose) return blocks;
+  return blocks.filter((b) => b.type === "text");
 }
 
 function formatTimestamp(at: number): string {
@@ -51,6 +83,7 @@ const SUGGESTIONS = [
 export function ComposerSidebar(): ReactElement {
   const { isOpen, close, pendingContext, pendingMessage, clearPending } = useComposerSidebar();
   const routeContext = useDocContextFromRoute();
+  const { verbose } = useVerboseAiMode();
   const [messages, setMessages] = useState<ChatMessageRich[]>([]);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
@@ -118,38 +151,41 @@ export function ComposerSidebar(): ReactElement {
         const chatOpts = activeContext
           ? { context: activeContext, signal: controller.signal }
           : { signal: controller.signal };
-        // Helper qui ecrit le bloc texte courant dans le message assistant.
-        // Garantit qu'on a au plus UN bloc text dans blocks[] (les blocs
-        // thinking / tool_* sont inserted par d'autres types d'events quand
-        // l'API Claude les enverra - l'ordre d'arrivee sera respecte).
-        const setTextBlock = (content: string, isStreaming: boolean): void => {
+        // Helper qui remplace la liste de blocs du message assistant courant.
+        // On merge la fonction d'update via setMessages et on laisse le
+        // helper pur `applyStreamEventToBlocks` gérer le routage text /
+        // thinking / tool_use / tool_result.
+        const updateBlocks = (mutator: (prev: ChatBlock[]) => ChatBlock[]): void => {
           setMessages((prev) =>
-            prev.map((m) => {
-              if (m.id !== assistantMsgId) return m;
-              const nonText = m.blocks.filter((b) => b.type !== "text");
-              const textBlock: ChatBlock = { type: "text", text: content };
-              return { ...m, blocks: [...nonText, textBlock], streaming: isStreaming };
-            })
+            prev.map((m) => (m.id === assistantMsgId ? { ...m, blocks: mutator(m.blocks) } : m))
+          );
+        };
+        const finalizeBlocks = (mutator: (prev: ChatBlock[]) => ChatBlock[]): void => {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantMsgId ? { ...m, blocks: mutator(m.blocks), streaming: false } : m
+            )
           );
         };
         for await (const event of ai.chat(history, chatOpts)) {
-          if (event.type === "delta") {
-            // Historique - `String(event.data)` produisait "[object Object]" quand
-            // le provider CLI Rust envoie `data: { text: "..." }`. On route
-            // proprement via `extractDeltaText` qui gere mock (string) + CLI
-            // (object) + Anthropic SDK (delta.text / delta.thinking).
-            const delta = extractDeltaText(event.data);
-            if (!delta) continue;
-            accumulated += delta;
-            setTextBlock(accumulated, true);
-          } else if (event.type === "done") {
+          if (event.type === "done") {
             const final = extractFinalText(event.data, accumulated);
-            setTextBlock(final, false);
-            break;
-          } else if (event.type === "error") {
-            setTextBlock(`Erreur : ${event.message}`, false);
+            finalizeBlocks((blocks) => finalizeBlocksWithText(blocks, final));
             break;
           }
+          if (event.type === "error") {
+            const msg = event.message;
+            finalizeBlocks(() => [{ type: "text", text: `Erreur : ${msg}` }]);
+            break;
+          }
+          updateBlocks((blocks) => {
+            const applied = applyStreamEventToBlocks(blocks, event);
+            if (applied === null) return blocks;
+            if (applied.textAccumulator !== undefined) {
+              accumulated = applied.textAccumulator;
+            }
+            return applied.blocks;
+          });
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
@@ -377,9 +413,22 @@ export function ComposerSidebar(): ReactElement {
             {fr.composer.placeholder}
           </div>
         )}
-        {messages.map((msg) => (
-          <ChatMessageView key={msg.id} message={msg} timestamp={formatTimestamp(msg.at)} />
-        ))}
+        {messages.map((msg) => {
+          // Lorsque le mode verbose est OFF, on n'altère pas les données
+          // stockées (on pourra rallumer et retrouver les blocs) — on masque
+          // juste au rendu en reshape-ant les blocks du message à la volée.
+          const displayMsg: ChatMessageRich =
+            msg.role === "assistant" && !verbose
+              ? { ...msg, blocks: filterVerboseBlocks(msg.blocks, verbose) }
+              : msg;
+          return (
+            <ChatMessageView
+              key={msg.id}
+              message={displayMsg}
+              timestamp={formatTimestamp(msg.at)}
+            />
+          );
+        })}
       </div>
 
       {/* Suggestions */}
