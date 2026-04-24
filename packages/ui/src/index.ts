@@ -3,8 +3,12 @@
 // Primitives
 export { Button } from "./primitives/Button.js";
 export type { ButtonProps, ButtonSize, ButtonVariant } from "./primitives/Button.js";
-export { Input, Textarea } from "./primitives/Input.js";
-export type { InputProps, TextareaProps } from "./primitives/Input.js";
+export { AutoGrowTextarea, Input, Textarea } from "./primitives/Input.js";
+export type {
+  AutoGrowTextareaProps,
+  InputProps,
+  TextareaProps,
+} from "./primitives/Input.js";
 export { Select } from "./primitives/Select.js";
 export type { SelectOption, SelectProps } from "./primitives/Select.js";
 export { Checkbox } from "./primitives/Checkbox.js";

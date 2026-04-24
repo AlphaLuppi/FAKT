@@ -7,7 +7,7 @@ import type {
   ReactNode,
   TextareaHTMLAttributes,
 } from "react";
-import { useCallback, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { classNames } from "../utils/classNames.js";
 
 export interface AutocompleteOption<T = unknown> {
@@ -74,6 +74,14 @@ export function Autocomplete<T = unknown>(props: AutocompleteProps<T>): ReactEle
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [open, setOpen] = useState(false);
   const [highlighted, setHighlighted] = useState(0);
+
+  // Auto-grow : recalcule la hauteur en fonction du contenu à chaque render.
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [value]);
 
   const shouldShow = useMemo(
     () => open && value.length >= minChars && suggestions.length > 0,
