@@ -7,6 +7,35 @@ et [Semantic Versioning 2.0.0](https://semver.org/lang/fr/).
 
 ---
 
+## [Unreleased]
+
+### Added
+- **Mises à jour in-app via `tauri-plugin-updater` v2.** Au boot, FAKT
+  contacte `releases/latest/download/latest.json` sur le repo GitHub. Si
+  une release plus récente est dispo, une bannière jaune Brutal apparaît
+  en haut de l'app : « Mise à jour disponible — vX.Y.Z ». Un clic sur
+  « Installer maintenant » ouvre une modale avec les notes de release
+  (markdown), une progress bar, puis DL + vérification de la signature
+  ed25519 minisign + install + relaunch automatique via `tauri-plugin-process`.
+  Composants : `apps/desktop/src/features/updater/` (UpdaterContext +
+  UpdateBanner + UpdateModal). Procédure de release dans
+  `docs/release-process.md`.
+- **Bundle Windows NSIS** ajouté à `tauri.conf.json` → `bundle.targets`.
+  L'installeur `.exe` setup NSIS supporte le silent install (`installMode:
+  passive`) requis par l'updater. Le `.msi` reste pour le 1er install
+  manuel.
+
+### Changed
+- CSP étendu pour autoriser le DL des assets de release GitHub
+  (`https://github.com`, `https://*.githubusercontent.com`,
+  `https://objects.githubusercontent.com`).
+- `.github/workflows/release.yml` : injection des secrets
+  `TAURI_SIGNING_PRIVATE_KEY` + `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` pour
+  signer les artifacts updater. Génération + upload automatique de
+  `latest.json` via `tauri-action` (paramètre `updaterJsonPreferNsis: true`).
+
+---
+
 ## [0.1.9] - 2026-04-25
 
 Hotfix 2 bugs P0 découverts par Tom sur v0.1.8 grand public.
