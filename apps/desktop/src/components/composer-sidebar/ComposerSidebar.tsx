@@ -6,6 +6,7 @@ import type { KeyboardEvent, ReactElement } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router";
 import { useComposerSidebar } from "./ComposerContext.js";
+import { extractDeltaText, extractFinalText } from "./useChatStream.js";
 
 interface DisplayMessage {
   id: string;
@@ -109,13 +110,18 @@ export function ComposerSidebar(): ReactElement {
           : { signal: controller.signal };
         for await (const event of ai.chat(history, chatOpts)) {
           if (event.type === "delta") {
-            const delta = typeof event.data === "string" ? event.data : String(event.data);
+            // Historique - `String(event.data)` produisait "[object Object]" quand
+            // le provider CLI Rust envoie `data: { text: "..." }`. On route
+            // proprement via `extractDeltaText` qui gere mock (string) + CLI
+            // (object) + Anthropic SDK (delta.text / delta.thinking).
+            const delta = extractDeltaText(event.data);
+            if (!delta) continue;
             accumulated += delta;
             setMessages((prev) =>
               prev.map((m) => (m.id === assistantMsgId ? { ...m, content: accumulated } : m))
             );
           } else if (event.type === "done") {
-            const final = typeof event.data === "string" ? event.data : accumulated;
+            const final = extractFinalText(event.data, accumulated);
             setMessages((prev) =>
               prev.map((m) =>
                 m.id === assistantMsgId ? { ...m, content: final, streaming: false } : m
