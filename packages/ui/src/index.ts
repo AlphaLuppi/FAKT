@@ -13,6 +13,11 @@ export { Radio, RadioGroup } from "./primitives/Radio.js";
 export type { RadioGroupProps, RadioProps } from "./primitives/Radio.js";
 export { Tabs, getTabPanelId } from "./primitives/Tabs.js";
 export type { TabItem, TabsProps } from "./primitives/Tabs.js";
+export { SegmentedControl } from "./primitives/SegmentedControl.js";
+export type {
+  SegmentedControlOption,
+  SegmentedControlProps,
+} from "./primitives/SegmentedControl.js";
 
 // Layout
 export { Card } from "./layout/Card.js";
