@@ -5,8 +5,10 @@ import { fr } from "@fakt/shared";
 import type { KeyboardEvent, ReactElement } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router";
+import { ChatMessageContent } from "./ChatMessageContent.js";
 import { useComposerSidebar } from "./ComposerContext.js";
 import { extractDeltaText, extractFinalText } from "./useChatStream.js";
+import "highlight.js/styles/github-dark.css";
 
 interface DisplayMessage {
   id: string;
@@ -503,11 +505,14 @@ function MessageBubble({ message }: { message: DisplayMessage }): ReactElement {
           fontFamily: tokens.font.ui,
           fontSize: tokens.fontSize.sm,
           color: tokens.color.ink,
-          whiteSpace: "pre-wrap",
           wordBreak: "break-word",
         }}
       >
-        {message.content}
+        {isUser ? (
+          <div style={{ whiteSpace: "pre-wrap" }}>{message.content}</div>
+        ) : (
+          <ChatMessageContent content={message.content} />
+        )}
         {message.streaming && (
           <span
             style={{
@@ -516,6 +521,7 @@ function MessageBubble({ message }: { message: DisplayMessage }): ReactElement {
               height: 14,
               background: tokens.color.ink,
               marginLeft: 4,
+              verticalAlign: "middle",
             }}
           >
             {" "}
