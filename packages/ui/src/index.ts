@@ -24,6 +24,8 @@ export type {
 } from "./primitives/SegmentedControl.js";
 export { Autocomplete } from "./primitives/Autocomplete.js";
 export type { AutocompleteOption, AutocompleteProps } from "./primitives/Autocomplete.js";
+export { Dropzone } from "./primitives/Dropzone.js";
+export type { DropzoneProps } from "./primitives/Dropzone.js";
 
 // Layout
 export { Card } from "./layout/Card.js";

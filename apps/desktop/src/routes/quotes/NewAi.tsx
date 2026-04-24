@@ -1,8 +1,14 @@
-import { type ExtractedQuote, type ExtractedQuoteItem, getAi } from "@fakt/ai";
+import {
+  type ExtractedQuote,
+  type ExtractedQuoteItem,
+  SUPPORTED_ACCEPT,
+  getAi,
+  parseFile,
+} from "@fakt/ai";
 import { tokens } from "@fakt/design-tokens";
 import { addDays, formatEur, fr, today } from "@fakt/shared";
 import type { DocumentUnit } from "@fakt/shared";
-import { Button, Textarea } from "@fakt/ui";
+import { Button, Dropzone, Textarea } from "@fakt/ui";
 import type { ReactElement } from "react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
@@ -64,6 +70,8 @@ export function NewAi(): ReactElement {
   const [cliMissing, setCliMissing] = useState(false);
   const [rawOutput, setRawOutput] = useState<string | null>(null);
   const [showRawOutput, setShowRawOutput] = useState(false);
+  const [parsingFiles, setParsingFiles] = useState(false);
+  const [fileErrors, setFileErrors] = useState<string[]>([]);
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -142,6 +150,36 @@ export function NewAi(): ReactElement {
     abortRef.current?.abort();
     abortRef.current = null;
     setExtracting(false);
+  }
+
+  async function handleDroppedFiles(files: File[]): Promise<void> {
+    if (files.length === 0) return;
+    setParsingFiles(true);
+    setFileErrors([]);
+    const errors: string[] = [];
+    const chunks: string[] = [];
+    for (const file of files) {
+      try {
+        const parsed = await parseFile(file);
+        if (parsed.text.trim().length > 0) {
+          chunks.push(`--- Contenu de ${parsed.filename} ---\n\n${parsed.text}`);
+        } else {
+          errors.push(`${file.name} : fichier vide ou non-lisible.`);
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        errors.push(`${file.name} : ${msg}`);
+      }
+    }
+    if (chunks.length > 0) {
+      setBrief((prev) => {
+        const joined = chunks.join("\n\n");
+        if (prev.trim().length === 0) return joined;
+        return `${prev}\n\n${joined}`;
+      });
+    }
+    setFileErrors(errors);
+    setParsingFiles(false);
   }
 
   async function handleApply(): Promise<void> {
@@ -317,16 +355,101 @@ export function NewAi(): ReactElement {
           gap: tokens.spacing[3],
         }}
       >
-        <Textarea
-          aria-label={fr.quotes.ai.briefLabel}
-          label={fr.quotes.ai.briefLabel}
-          placeholder={fr.quotes.ai.briefPlaceholder}
-          value={brief}
-          rows={6}
-          onChange={(e) => setBrief(e.target.value)}
-          disabled={extracting}
-          data-testid="ai-brief"
-        />
+        <Dropzone
+          onFiles={handleDroppedFiles}
+          accept={SUPPORTED_ACCEPT}
+          disabled={extracting || parsingFiles}
+          label="DÉPOSE TON FICHIER ICI"
+          data-testid="ai-dropzone"
+        >
+          <Textarea
+            aria-label={fr.quotes.ai.briefLabel}
+            label={fr.quotes.ai.briefLabel}
+            placeholder={fr.quotes.ai.briefPlaceholder}
+            value={brief}
+            rows={6}
+            onChange={(e) => setBrief(e.target.value)}
+            disabled={extracting || parsingFiles}
+            data-testid="ai-brief"
+          />
+        </Dropzone>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: tokens.spacing[2],
+            fontFamily: tokens.font.ui,
+            fontSize: tokens.fontSize.xs,
+            fontWeight: 700,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            color: tokens.color.ink,
+          }}
+          data-testid="ai-dropzone-hint"
+        >
+          <span
+            aria-hidden="true"
+            style={{
+              display: "inline-block",
+              padding: "2px 6px",
+              background: tokens.color.accentSoft,
+              border: `1.5px solid ${tokens.color.ink}`,
+            }}
+          >
+            ⬇
+          </span>
+          <span>Ou glisse un fichier ici · TXT · MD · EML · PDF · DOCX</span>
+        </div>
+
+        {parsingFiles && (
+          <div
+            data-testid="ai-parsing"
+            style={{
+              border: `${tokens.stroke.base} dashed ${tokens.color.ink}`,
+              padding: tokens.spacing[3],
+              textAlign: "center",
+              fontFamily: tokens.font.ui,
+              fontSize: tokens.fontSize.sm,
+              color: tokens.color.muted,
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+            }}
+          >
+            Extraction du contenu…
+          </div>
+        )}
+
+        {fileErrors.length > 0 && (
+          <div
+            role="alert"
+            data-testid="ai-file-errors"
+            style={{
+              border: `${tokens.stroke.bold} solid ${tokens.color.ink}`,
+              background: tokens.color.dangerBg,
+              padding: tokens.spacing[3],
+              fontFamily: tokens.font.ui,
+              fontSize: tokens.fontSize.sm,
+            }}
+          >
+            <strong
+              style={{
+                display: "block",
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+                fontSize: tokens.fontSize.xs,
+                marginBottom: tokens.spacing[1],
+              }}
+            >
+              Fichier(s) non lus :
+            </strong>
+            <ul style={{ margin: 0, paddingLeft: tokens.spacing[4] }}>
+              {fileErrors.map((msg, i) => (
+                <li key={i}>{msg}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <div
           style={{
             display: "flex",
@@ -342,7 +465,7 @@ export function NewAi(): ReactElement {
             <Button
               variant="primary"
               onClick={() => void handleExtract()}
-              disabled={brief.trim().length === 0}
+              disabled={brief.trim().length === 0 || parsingFiles}
               data-testid="ai-extract"
             >
               {fr.quotes.ai.extract}

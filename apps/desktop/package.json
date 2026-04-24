@@ -29,6 +29,8 @@
     "@tauri-apps/plugin-shell": "^2.0",
     "highlight.js": "^11.11.1",
     "lucide-react": "^0.460",
+    "mammoth": "^1.8.0",
+    "pdfjs-dist": "^4.7.76",
     "react": "^19.0",
     "react-dom": "^19.0",
     "react-hook-form": "^7.53",

@@ -155,7 +155,6 @@ describe("NewAi", () => {
       expect(screen.getByTestId("ai-extracted")).toBeInTheDocument();
     });
 
-    // 2500 + 3 * 1200 = 6100 €
     const total = screen.getByTestId("ai-extracted-total");
     expect(total.textContent).toMatch(/6\s*100/);
     expect(screen.getByTestId("ai-apply")).not.toBeDisabled();
@@ -203,16 +202,63 @@ describe("NewAi", () => {
     await waitFor(() => {
       expect(screen.getByTestId("ai-error")).toBeInTheDocument();
     });
-    // Le bouton "Voir la sortie brute" doit être visible.
     expect(screen.getByTestId("ai-raw-output-toggle")).toBeInTheDocument();
-    // Par défaut le contenu brut est masqué.
     expect(screen.queryByTestId("ai-raw-output-content")).toBeNull();
 
-    // Toggle : on clique et le contenu apparaît.
     fireEvent.click(screen.getByTestId("ai-raw-output-toggle"));
     await waitFor(() => {
       expect(screen.getByTestId("ai-raw-output-content")).toBeInTheDocument();
     });
     expect(screen.getByTestId("ai-raw-output-content").textContent).toMatch(/reformuler/);
+  });
+
+  it("drag-drop d'un .txt pré-remplit le brief", async () => {
+    setAi(createProvider({ installed: true, extractResult: FIXTURE_EXTRACTED }));
+    renderRoute();
+    await waitFor(() => {
+      expect(screen.getByTestId("ai-dropzone")).toBeInTheDocument();
+    });
+
+    const zone = screen.getByTestId("ai-dropzone");
+    const file = new File(["Mission refonte site Maison Berthe — budget 8k€"], "brief.txt", {
+      type: "text/plain",
+    });
+    fireEvent.drop(zone, { dataTransfer: { files: [file] } });
+
+    const area = await waitFor(() => {
+      const el = screen.getByTestId("ai-brief") as HTMLTextAreaElement;
+      if (!el.value.includes("Maison Berthe")) throw new Error("not yet");
+      return el;
+    });
+    expect(area.value).toContain("Contenu de brief.txt");
+    expect(area.value).toContain("budget 8k€");
+  });
+
+  it("drag-drop d'un format non supporté affiche une erreur fichier", async () => {
+    setAi(createProvider({ installed: true, extractResult: FIXTURE_EXTRACTED }));
+    renderRoute();
+    await waitFor(() => {
+      expect(screen.getByTestId("ai-dropzone")).toBeInTheDocument();
+    });
+
+    const zone = screen.getByTestId("ai-dropzone");
+    const file = new File(["content"], "bad.png", { type: "image/png" });
+    fireEvent.drop(zone, { dataTransfer: { files: [file] } });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("ai-file-errors")).toBeInTheDocument();
+    });
+    expect(screen.getByTestId("ai-file-errors").textContent).toContain("bad.png");
+  });
+
+  it("affiche un hint 'Ou glisse un fichier ici' sous la dropzone", async () => {
+    setAi(createProvider({ installed: true, extractResult: FIXTURE_EXTRACTED }));
+    renderRoute();
+    await waitFor(() => {
+      expect(screen.getByTestId("ai-dropzone-hint")).toBeInTheDocument();
+    });
+    expect(screen.getByTestId("ai-dropzone-hint").textContent?.toLowerCase()).toContain(
+      "glisse un fichier"
+    );
   });
 });

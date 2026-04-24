@@ -57,6 +57,7 @@ export const clientsTools: ToolRegistration[] = [
       sector: z.string().optional(),
       note: z.string().optional(),
     },
-    handler: async (args) => safeCall(() => apiClient.post("/api/clients", args)),
+    handler: async (args) =>
+      safeCall(() => apiClient.post("/api/clients", { id: crypto.randomUUID(), ...args })),
   },
 ];

@@ -24,6 +24,25 @@ export type {
 
 export { healthCheck } from "./health.ts";
 
+// ─── File parsers (Dropzone brief IA) ────────────────────────────────────────
+export {
+  FileParseError,
+  SUPPORTED_ACCEPT,
+  SUPPORTED_EXTS,
+  UnsupportedFileError,
+  __setMammothForTests,
+  __setPdfjsForTests,
+  detectExt,
+  parseDocxFile,
+  parseEmlFile,
+  parseEmlText,
+  parseFile,
+  parsePdfFile,
+  parseTextFile,
+  readFileAsText,
+} from "./file-parsers/index.ts";
+export type { ParsedFile, SupportedExt } from "./file-parsers/index.ts";
+
 // ─── Provider registry (singleton) ───────────────────────────────────────────
 
 import type { AiProvider } from "./provider.ts";
