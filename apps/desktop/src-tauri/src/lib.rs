@@ -53,7 +53,15 @@ fn run_inner() -> Result<(), String> {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_process::init())
         .setup(|app| {
+            // Updater : desktop seulement. Le check() est explicitement
+            // déclenché par le front (UpdaterContext) au mount du Shell, pas
+            // ici, pour ne pas bloquer le boot sur un timeout réseau.
+            #[cfg(desktop)]
+            app.handle()
+                .plugin(tauri_plugin_updater::Builder::new().build())
+                .map_err(|e| format!("updater plugin: {}", e))?;
             trace::log("setup start");
 
             let app_data_dir = app
