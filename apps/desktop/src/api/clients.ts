@@ -42,9 +42,9 @@ interface SearchResponse<T> {
   items: T[];
 }
 
-function normalizeBool(v: 0 | 1 | boolean | undefined): 0 | 1 | undefined {
+function normalizeBool(v: 0 | 1 | boolean | undefined): "true" | "false" | undefined {
   if (v === undefined) return undefined;
-  return v === 1 || v === true ? 1 : 0;
+  return v === 1 || v === true ? "true" : "false";
 }
 
 export const clientsApi = {
