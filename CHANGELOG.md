@@ -7,6 +7,52 @@ et [Semantic Versioning 2.0.0](https://semver.org/lang/fr/).
 
 ---
 
+## [0.1.6] - 2026-04-24
+
+🚨 **Hotfix critique** : le sidecar `fakt-api.exe` crashait au boot en prod
+(MSI Windows) avec `error: migrations introuvables dans : B:\db\src\migrations
+| C:\packages\db\src\migrations | C:\Program Files\FAKT\packages\db\src\migrations`
+— les versions 0.1.0 → 0.1.5 étaient **toutes affectées**. L'app installée
+ne démarrait pas (pas de fenêtre).
+
+### Fixed
+
+- **Sidecar crash "migrations introuvables" en prod MSI** : `bun build
+  --compile --minify` ne bundle PAS les fichiers `.sql` lus via
+  `readFileSync` à runtime. En prod, le sidecar cherchait les SQL dans 3
+  paths relatifs au cwd (`C:\Program Files\FAKT`) qui n'existent pas dans
+  l'installation, et crashait avec exit code 1. Tauri détectait
+  `sidecar terminé avant ready, code=Some(1)` → setup panic → pas de
+  fenêtre.
+
+  Fix en 3 volets :
+  1. Nouveau script `packages/api-server/scripts/generate-migrations.ts`
+     qui génère `src/migrations-embedded.ts` au build-time en stringifiant
+     les 4 migrations SQL (0000 zippy_nextwave, 0001 triggers, 0002
+     signed_pdf, 0003 payment_notes — 10 kB total).
+  2. `build-sidecar.ts` invoque `generate-migrations` AVANT chaque
+     `bun build --compile` (local + CI).
+  3. `packages/api-server/src/index.ts` utilise désormais
+     `EMBEDDED_MIGRATIONS` au lieu de `readdirSync + readFileSync`. La
+     fonction `resolveMigrationsDir` est supprimée.
+
+  Validation : binaire local rebuild + lancé depuis
+  `C:\Program Files\FAKT` cwd → `FAKT_API_READY:port=50161` ✅.
+
+### Developer notes
+
+- Ce bug explique pourquoi v0.1.1 → v0.1.5 ne démarraient pas une fois
+  installées. En dev (`bun run dev`), le sidecar trouve les SQL via le
+  path du repo, donc le bug était invisible. Idem pour mes tests locaux
+  de binaire release : je les lançais depuis le repo cwd.
+- Les tests Vitest ne sont pas impactés (ils utilisent la DB test in-memory
+  sans migrations SQL externe via `@fakt/db/__tests__/helpers`).
+- `migrations-embedded.ts` est committé (pas gitignored) pour que
+  `bun run test` et `bun run typecheck` fonctionnent en dev sans
+  regénération systématique.
+
+---
+
 ## [0.1.5] - 2026-04-24
 
 Release finale de la nuit de hardening. Ajoute les guards double-submit sur

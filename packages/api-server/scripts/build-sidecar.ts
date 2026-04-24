@@ -114,6 +114,17 @@ function main(): void {
     process.exit(2);
   }
 
+  // Regenere migrations-embedded.ts AVANT le build pour etre sur que les
+  // SQL les plus recents sont embarques dans le binaire.
+  const generateScript = resolve(packageRoot, "scripts", "generate-migrations.ts");
+  console.log("[build-sidecar] generate-migrations:", generateScript);
+  const genRes = spawnSync("bun", ["run", generateScript], { stdio: "inherit" });
+  if (genRes.status !== 0) {
+    throw new Error(
+      `generate-migrations a echoue (exit=${genRes.status ?? "signal"}) — sans migrations embarquees, le sidecar crash au boot en prod.`
+    );
+  }
+
   const outDir = resolve(repoRoot, "apps", "desktop", "src-tauri", "binaries");
 
   console.log("[build-sidecar] entry:", entry);

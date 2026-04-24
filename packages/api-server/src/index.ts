@@ -15,11 +15,10 @@
  */
 
 import { Database } from "bun:sqlite";
-import { readFileSync, readdirSync } from "node:fs";
-import { resolve } from "node:path";
 import * as schema from "@fakt/db/schema";
 import { drizzle } from "drizzle-orm/bun-sqlite";
 import { createApp } from "./app.js";
+import { EMBEDDED_MIGRATIONS } from "./migrations-embedded.js";
 import type { SqliteLike } from "./types.js";
 
 function fail(reason: string): never {
@@ -108,9 +107,15 @@ process.on("SIGINT", () => shutdown("SIGINT"));
 process.on("SIGTERM", () => shutdown("SIGTERM"));
 
 /**
- * Applique les migrations SQL présentes dans `packages/db/src/migrations/`
- * en ordre alphabétique, uniquement si la DB est vide (pas de table
- * `__fakt_migrations`).
+ * Applique les migrations embarquées dans `migrations-embedded.ts`
+ * (généré au build-time depuis `packages/db/src/migrations/*.sql`).
+ *
+ * Rationale : `bun build --compile` ne bundle PAS les fichiers `.sql` lus
+ * via `readFileSync` à runtime. Avant v0.1.6, le sidecar cherchait les SQL
+ * dans 3 paths relatifs au cwd qui n'existent pas en prod MSI (cwd =
+ * `C:\Program Files\FAKT`), et le sidecar crashait au boot avec
+ * "migrations introuvables". Fix : embed des SQL au build-time via
+ * `scripts/generate-migrations.ts`.
  *
  * Utilise une table de tracking simple (`__fakt_migrations`) plutôt que le
  * système drizzle-kit standard, pour rester portable entre runtimes
@@ -121,11 +126,6 @@ function applyMigrationsIfNeeded(db: Database): void {
     "CREATE TABLE IF NOT EXISTS __fakt_migrations (name TEXT PRIMARY KEY, applied_at INTEGER NOT NULL);"
   );
 
-  const migrationsDir = resolveMigrationsDir();
-  const files = readdirSync(migrationsDir)
-    .filter((f) => f.endsWith(".sql"))
-    .sort();
-
   const applied = new Set(
     db
       .query<{ name: string }, []>("SELECT name FROM __fakt_migrations")
@@ -133,9 +133,8 @@ function applyMigrationsIfNeeded(db: Database): void {
       .map((r) => r.name)
   );
 
-  for (const f of files) {
-    if (applied.has(f)) continue;
-    const sql = readFileSync(resolve(migrationsDir, f), "utf8");
+  for (const { name, sql } of EMBEDDED_MIGRATIONS) {
+    if (applied.has(name)) continue;
     // Les migrations Drizzle utilisent `--> statement-breakpoint` pour séparer
     // les statements. bun:sqlite accepte plusieurs statements via `exec` /
     // `run` séparés — on split manuellement pour portabilité.
@@ -159,31 +158,9 @@ function applyMigrationsIfNeeded(db: Database): void {
         if (!ignorable) throw err;
       }
     }
-    db.run("INSERT INTO __fakt_migrations (name, applied_at) VALUES (?, ?)", [f, Date.now()]);
+    db.run("INSERT INTO __fakt_migrations (name, applied_at) VALUES (?, ?)", [name, Date.now()]);
     process.stdout.write(
-      `${JSON.stringify({ level: "info", event: "migration_applied", file: f })}\n`
+      `${JSON.stringify({ level: "info", event: "migration_applied", file: name })}\n`
     );
   }
-}
-
-function resolveMigrationsDir(): string {
-  // En dev (bun run src/index.ts) : packages/api-server/src → remonter à
-  // packages/db/src/migrations. En prod (binaire compilé) : `import.meta.dir`
-  // pointe sur le répertoire du binaire ; on laisse Bun trouver via les paths
-  // d'import (le binaire embarque les .sql via `bun build --compile` s'ils
-  // sont importés en tant qu'assets — sinon fallback cwd).
-  const candidates = [
-    resolve(import.meta.dir, "../../db/src/migrations"),
-    resolve(process.cwd(), "../../packages/db/src/migrations"),
-    resolve(process.cwd(), "packages/db/src/migrations"),
-  ];
-  for (const c of candidates) {
-    try {
-      readdirSync(c);
-      return c;
-    } catch {
-      /* try next */
-    }
-  }
-  throw new Error(`migrations introuvables dans : ${candidates.join(" | ")}`);
 }
