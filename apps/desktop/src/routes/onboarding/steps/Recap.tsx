@@ -110,6 +110,14 @@ export function RecapStep({ onPrev, onFinish }: Props): ReactElement {
         certPem: certInfo?.certPem ?? null,
       });
       await invokeSetupComplete();
+      // Force un full reload du webview pour que `useOnboardingGuard` re-fetch
+      // `is_setup_completed` (sans ça le guard garde son état "needs-onboarding"
+      // cached et re-redirige vers /onboarding -> étape 1).
+      // Cf. Tom bug report 2026-04-24 matin — onboarding en boucle.
+      if (typeof window !== "undefined") {
+        window.location.href = "/";
+        return;
+      }
       onFinish();
     } catch (err) {
       const msg = err instanceof Error ? err.message : fr.errors.generic;

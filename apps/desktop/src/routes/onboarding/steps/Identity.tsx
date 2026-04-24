@@ -2,7 +2,9 @@ import { fr } from "@fakt/shared";
 import { Button, Input, Select, Textarea } from "@fakt/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { ReactElement } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { ApiError, api } from "../../../api/index.js";
 import { useOnboarding } from "../context.js";
 import { LEGAL_FORM_OPTIONS, identitySchema } from "../validators.js";
 import type { IdentityFormValues } from "../validators.js";
@@ -17,6 +19,7 @@ export function IdentityStep({ onNext }: Props): ReactElement {
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors, isValid },
   } = useForm<IdentityFormValues>({
     resolver: zodResolver(identitySchema),
@@ -31,6 +34,41 @@ export function IdentityStep({ onNext }: Props): ReactElement {
       phone: "",
     },
   });
+
+  // Pré-remplir depuis le workspace existant (si l'utilisateur revient sur
+  // l'onboarding alors que son workspace est déjà créé — soit après un wipe
+  // de `setup_state.completed_at`, soit après un bug qui re-redirige vers
+  // /onboarding). Evite à l'utilisateur de tout resaisir.
+  useEffect(() => {
+    // Ne pas écraser les valeurs déjà saisies pendant le flow.
+    if (state.identity !== null) return;
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const ws = await api.workspace.get();
+        if (cancelled || !ws) return;
+        reset({
+          name: ws.name,
+          legalForm:
+            (ws.legalForm as IdentityFormValues["legalForm"]) ?? "Micro-entreprise",
+          siret: ws.siret,
+          address: ws.address,
+          email: ws.email,
+          iban: ws.iban ?? "",
+          phone: "",
+        });
+      } catch (err) {
+        // Workspace pas encore créé (NOT_FOUND) ou sidecar injoignable
+        // (NETWORK_ERROR) — on laisse les defaults vides.
+        if (err instanceof ApiError) return;
+        // Autre erreur silencieuse : ne pas casser l'onboarding.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [state.identity, reset]);
 
   function onSubmit(values: IdentityFormValues): void {
     setIdentity(values);

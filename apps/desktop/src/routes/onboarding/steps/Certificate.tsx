@@ -1,7 +1,7 @@
 import { fr } from "@fakt/shared";
 import { Button, toast } from "@fakt/ui";
 import type { ReactElement } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useOnboarding } from "../context.js";
 import type { CertInfo } from "../context.js";
 
@@ -35,6 +35,18 @@ async function invokeCertGenerate(subjectDn: SubjectDn): Promise<CertGenerationR
   });
 }
 
+async function invokeGetExistingCert(): Promise<RustCertInfo | null> {
+  try {
+    const { invoke } = await import("@tauri-apps/api/core");
+    return await invoke<RustCertInfo | null>("get_cert_info", {
+      fallbackPassword: null,
+    });
+  } catch {
+    // Cert absent ou erreur keychain — on laisse l'utilisateur générer.
+    return null;
+  }
+}
+
 interface Props {
   onNext: () => void;
   onPrev: () => void;
@@ -46,6 +58,33 @@ export function CertificateStep({ onNext, onPrev }: Props): ReactElement {
   const [certInfo, setLocalCertInfo] = useState<CertInfo | null>(state.certInfo);
 
   const identity = state.identity;
+
+  // Au mount : check si un cert existe déjà dans le keychain OS. Evite de
+  // re-générer à chaque fois que l'utilisateur revient sur l'onboarding
+  // (cf. bug report Tom 2026-04-24 matin).
+  useEffect(() => {
+    if (certInfo !== null) return; // déjà chargé depuis state/context
+    let cancelled = false;
+    void invokeGetExistingCert().then((existing) => {
+      if (cancelled || !existing) return;
+      const cert: CertInfo = {
+        dn: existing.subjectCn,
+        fingerprint: existing.fingerprintSha256Hex,
+        notBefore: existing.notBeforeIso,
+        notAfter: existing.notAfterIso,
+        // Pas de cert_pem retourné par get_cert_info (il retourne uniquement
+        // la partie publique stockée en DB `settings`, pas la clé privée
+        // keychain). Le pem sera récupéré via l'API settings si nécessaire.
+        certPem: null,
+        storage: "keychain",
+      };
+      setLocalCertInfo(cert);
+      setCertInfo(cert);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [certInfo, setCertInfo]);
 
   async function handleGenerate(): Promise<void> {
     if (identity === null) return;

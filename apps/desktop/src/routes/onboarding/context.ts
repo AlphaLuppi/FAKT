@@ -7,7 +7,10 @@ export interface CertInfo {
   fingerprint: string;
   notBefore: string;
   notAfter: string;
-  certPem: string;
+  /** Null si on a chargé un cert existant via `get_cert_info` (qui ne retourne
+   * pas le PEM). Présent quand on génère via `generate_cert`. Le PEM peut
+   * aussi être récupéré ultérieurement via l'API settings. */
+  certPem: string | null;
   storage: "keychain" | "fallback-file";
 }
 
