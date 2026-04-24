@@ -312,7 +312,7 @@ pub async fn sign_document(
     let previous_hash_hex = audit::compute_previous_hash(args.previous_event.as_ref());
 
     let event = SignatureEvent {
-        id: new_uuid_like(),
+        id: new_uuid_v4(),
         document_type: args.doc_type,
         document_id: args.doc_id,
         signer_name: args.signer_name,
@@ -426,9 +426,69 @@ fn days_to_ymd(mut days: i64) -> (i32, u32, u32) {
     (y as i32, m as u32, d as u32)
 }
 
-fn new_uuid_like() -> String {
+/// Génère un UUID v4 (RFC 4122) formaté canonique `xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx`.
+///
+/// Le schéma Zod côté api-server valide les ids via `z.string().uuid()` — un
+/// hex brut 32 chars n'est pas accepté. Cf. bug "id doit être un UUID v4"
+/// signalé lors du test du flux signature (2026-04-24).
+fn new_uuid_v4() -> String {
     use rand::RngCore;
     let mut b = [0u8; 16];
     rand::rngs::OsRng.fill_bytes(&mut b);
-    hex::encode(b)
+    // Version 4 (random) : bits 48-51 = 0b0100
+    b[6] = (b[6] & 0x0f) | 0x40;
+    // Variant RFC 4122 : bits 64-65 = 0b10
+    b[8] = (b[8] & 0x3f) | 0x80;
+    format!(
+        "{:02x}{:02x}{:02x}{:02x}-{:02x}{:02x}-{:02x}{:02x}-{:02x}{:02x}-{:02x}{:02x}{:02x}{:02x}{:02x}{:02x}",
+        b[0], b[1], b[2], b[3],
+        b[4], b[5],
+        b[6], b[7],
+        b[8], b[9],
+        b[10], b[11], b[12], b[13], b[14], b[15],
+    )
+}
+
+#[cfg(test)]
+mod uuid_v4_tests {
+    use super::new_uuid_v4;
+
+    #[test]
+    fn new_uuid_v4_matches_canonical_v4_regex() {
+        let re_compatible = |s: &str| {
+            let bytes = s.as_bytes();
+            if bytes.len() != 36 {
+                return false;
+            }
+            for (i, b) in bytes.iter().enumerate() {
+                match i {
+                    8 | 13 | 18 | 23 => {
+                        if *b != b'-' {
+                            return false;
+                        }
+                    }
+                    14 => {
+                        if *b != b'4' {
+                            return false;
+                        }
+                    }
+                    19 => {
+                        if !matches!(*b, b'8' | b'9' | b'a' | b'b') {
+                            return false;
+                        }
+                    }
+                    _ => {
+                        if !b.is_ascii_hexdigit() {
+                            return false;
+                        }
+                    }
+                }
+            }
+            true
+        };
+        for _ in 0..64 {
+            let id = new_uuid_v4();
+            assert!(re_compatible(&id), "id n'est pas UUID v4: {}", id);
+        }
+    }
 }
