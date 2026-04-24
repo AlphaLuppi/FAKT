@@ -13,6 +13,7 @@ import {
 import { ComposerSidebar } from "../../components/composer-sidebar/ComposerSidebar.js";
 import { ShortcutsOverlay } from "../../components/shortcuts-overlay/ShortcutsOverlay.js";
 import { buildShortcuts, matchesShortcut } from "../../shortcuts.js";
+import { UpdateBanner, UpdaterProvider } from "../updater/index.js";
 
 const NAV_ITEMS = [
   { id: "dashboard", label: fr.nav.dashboard, path: "/" },
@@ -29,11 +30,13 @@ interface ShellProps {
 
 export function Shell({ children }: ShellProps): ReactElement {
   return (
-    <CommandPaletteProvider>
-      <ComposerSidebarProvider>
-        <ShellInner>{children}</ShellInner>
-      </ComposerSidebarProvider>
-    </CommandPaletteProvider>
+    <UpdaterProvider>
+      <CommandPaletteProvider>
+        <ComposerSidebarProvider>
+          <ShellInner>{children}</ShellInner>
+        </ComposerSidebarProvider>
+      </CommandPaletteProvider>
+    </UpdaterProvider>
   );
 }
 
@@ -79,6 +82,7 @@ function ShellInner({ children }: ShellProps): ReactElement {
     >
       <Sidebar />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        <UpdateBanner />
         <Topbar />
         <main
           style={{
