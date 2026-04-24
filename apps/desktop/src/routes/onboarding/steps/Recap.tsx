@@ -91,7 +91,11 @@ export function RecapStep({ onPrev, onFinish }: Props): ReactElement {
   const { identity, cliInfo, cliSkipped, certInfo } = state;
 
   async function handleFinish(): Promise<void> {
-    if (identity === null) return;
+    // Guard synchrone AVANT tout `await` : si l'utilisateur double-clique
+    // très vite, le bouton `disabled={saving}` peut encore être actif car
+    // React batche les renders. Un check sur `saving` ici empêche le
+    // deuxième appel de lancer un second POST workspace en parallèle.
+    if (saving || identity === null) return;
 
     setSaving(true);
     try {

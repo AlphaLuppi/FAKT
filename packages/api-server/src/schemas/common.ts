@@ -2,9 +2,15 @@ import { z } from "zod";
 
 export const uuidSchema = z.string().uuid({ message: "id doit être un UUID v4" });
 
-/** Validation SIRET : 14 chiffres, algorithme de Luhn. */
+/**
+ * Validation SIRET : 14 chiffres, algorithme de Luhn.
+ * Exception documentée : les SIREN commençant par "356000000" (La Poste) ne
+ * suivent PAS Luhn mais sont néanmoins valides par décret INSEE.
+ */
 export function isValidSiret(siret: string): boolean {
   if (!/^\d{14}$/.test(siret)) return false;
+  // Exception La Poste (356 000 000) — même règle que `@fakt/legal/siret.ts`.
+  if (siret.startsWith("356000000")) return true;
   let sum = 0;
   for (let i = 0; i < 14; i++) {
     const ch = siret.charAt(13 - i);
@@ -32,11 +38,14 @@ export const siretSchema = z
 export const optionalSiret = z.union([siretSchema, z.null(), z.literal("")]).optional();
 
 export const paginationSchema = z.object({
+  // `max(500)` — une page trop grande bloque la webview Tauri (saturation
+  // mémoire sur 10 000 lignes avec items joints). 500 = compromis raisonnable
+  // pour un freelance FR typique (pas de page imprimable à plus de 500 items).
   limit: z
     .string()
     .optional()
     .transform((v) => (v ? Number(v) : 50))
-    .pipe(z.number().int().min(1).max(10000)),
+    .pipe(z.number().int().min(1).max(500)),
   offset: z
     .string()
     .optional()

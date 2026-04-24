@@ -11,7 +11,7 @@ import {
   issueInvoice,
   listInvoices,
   markInvoicePaid,
-  nextInvoiceNumber,
+  nextNumberAtomic,
   searchInvoices,
   updateInvoice,
   updateInvoiceStatus,
@@ -178,7 +178,10 @@ invoicesRoutes.patch("/:id", async (c) => {
   const existing = getInvoice(c.var.db, id);
   if (!existing) throw notFound(`invoice ${id} introuvable`);
   if (existing.status !== "draft") {
-    throw conflict(`invoice ${id} non modifiable (status=${existing.status})`);
+    // 422 INVALID_TRANSITION — cohérent avec quotes (mark-signed sur draft),
+    // et non 409 CONFLICT qui est réservé aux conflits de ressource (unique
+    // violation). Aligne sur la convention documentée errors.ts.
+    throw invalidTransition(`invoice ${id} non modifiable (status=${existing.status})`);
   }
   const body = await parseBody(c, updateInvoiceSchema);
 
@@ -225,7 +228,11 @@ invoicesRoutes.delete("/:id", (c) => {
   return c.body(null, 204);
 });
 
-/** POST /api/invoices/:id/issue — attribue numéro + transition draft → sent. */
+/**
+ * POST /api/invoices/:id/issue — attribue numéro + transition draft → sent.
+ * Utilise `nextNumberAtomic` (BEGIN IMMEDIATE SQLite) pour garantir CGI 289 :
+ * pas de trou dans la séquence, pas de doublon même sous concurrence.
+ */
 invoicesRoutes.post("/:id/issue", (c) => {
   const id = parseParam(c, "id", uuidSchema);
   const existing = getInvoice(c.var.db, id);
@@ -233,8 +240,16 @@ invoicesRoutes.post("/:id/issue", (c) => {
   if (existing.status !== "draft") {
     throw invalidTransition(`issue : transition ${existing.status} → sent invalide (draft requis)`);
   }
+  // Garde CGI : une facture à 0€ émise occupe un slot de numérotation sans
+  // contrepartie économique. Refuser explicitement ici plutôt que produire
+  // une facture invalide (audit TS P1-5).
+  if (existing.totalHtCents <= 0) {
+    throw invalidTransition(
+      `issue : totalHtCents doit être > 0 avant émission (got ${existing.totalHtCents}¢)`
+    );
+  }
   const workspaceId = requireWorkspaceId(c.var.db);
-  const numbering = nextInvoiceNumber(c.var.db, workspaceId);
+  const numbering = nextNumberAtomic(c.var.sqlite, c.var.db, workspaceId, "invoice");
   const issued = issueInvoice(c.var.db, id, numbering);
   logActivity(c.var.db, workspaceId, "invoice.issued", issued.id, {
     number: issued.number,
@@ -251,8 +266,14 @@ invoicesRoutes.post("/:id/mark-sent", (c) => {
   if (existing.status !== "draft") {
     throw invalidTransition(`mark-sent : transition ${existing.status} → sent invalide`);
   }
+  // Même garde CGI qu'au POST /issue.
+  if (existing.totalHtCents <= 0) {
+    throw invalidTransition(
+      `mark-sent : totalHtCents doit être > 0 avant émission (got ${existing.totalHtCents}¢)`
+    );
+  }
   const workspaceId = requireWorkspaceId(c.var.db);
-  const numbering = nextInvoiceNumber(c.var.db, workspaceId);
+  const numbering = nextNumberAtomic(c.var.sqlite, c.var.db, workspaceId, "invoice");
   const issued = issueInvoice(c.var.db, id, numbering);
   logActivity(c.var.db, workspaceId, "invoice.issued", issued.id, {
     number: issued.number,

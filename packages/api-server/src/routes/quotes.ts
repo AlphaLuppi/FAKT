@@ -157,6 +157,13 @@ quotesRoutes.post("/:id/issue", (c) => {
   if (existing.status !== "draft") {
     throw invalidTransition(`quote ${id} déjà émis (status=${existing.status})`);
   }
+  // Garde : un devis à 0€ émis occupe un slot de numérotation sans
+  // contrepartie économique — anti-pattern. Bloquer à l'émission.
+  if (existing.totalHtCents <= 0) {
+    throw invalidTransition(
+      `issue : totalHtCents doit être > 0 avant émission (got ${existing.totalHtCents}¢)`
+    );
+  }
   const workspaceId = requireWorkspaceId(c.var.db);
 
   const numberResult = nextNumberAtomic(c.var.sqlite, c.var.db, workspaceId, "quote");

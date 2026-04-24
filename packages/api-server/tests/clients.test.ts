@@ -201,7 +201,9 @@ describe("DELETE /api/clients/:id + restore", () => {
       method: "DELETE",
       headers: authHeaders(),
     });
-    expect(redel.status).toBe(404);
+    // 409 CONFLICT (pas 404) : le client existe mais est déjà archivé. Fix
+    // audit TS 2026-04-23 — 404 réservé aux ressources manquantes.
+    expect(redel.status).toBe(409);
 
     const restore = await app.request(`/api/clients/${CLIENT_ID}/restore`, {
       method: "POST",
@@ -212,7 +214,7 @@ describe("DELETE /api/clients/:id + restore", () => {
     expect(body.archivedAt).toBe(null);
   });
 
-  it("404 sur restore si non archivé", async () => {
+  it("409 sur restore si non archivé", async () => {
     const { app, authHeaders } = createTestApp();
     await app.request("/api/clients", {
       method: "POST",
@@ -223,7 +225,8 @@ describe("DELETE /api/clients/:id + restore", () => {
       method: "POST",
       headers: authHeaders(),
     });
-    expect(res.status).toBe(404);
+    // 409 CONFLICT : le client existe mais pas dans l'état cible (archived).
+    expect(res.status).toBe(409);
   });
 });
 

@@ -9,7 +9,7 @@ import {
   updateClient,
 } from "@fakt/db/queries";
 import { Hono } from "hono";
-import { notFound } from "../errors.js";
+import { conflict, notFound } from "../errors.js";
 import { parseBody, parseParam, parseQuery } from "../middleware/zod.js";
 import {
   clientSearchQuerySchema,
@@ -106,7 +106,9 @@ clientsRoutes.delete("/:id", (c) => {
   const id = parseParam(c, "id", uuidSchema);
   const existing = getClient(c.var.db, id);
   if (!existing) throw notFound(`client ${id} introuvable`);
-  if (existing.archivedAt !== null) throw notFound(`client ${id} déjà archivé`);
+  // 409 CONFLICT (pas 404) : le client existe mais est déjà dans l'état
+  // cible — c'est un conflit d'état, pas une ressource manquante.
+  if (existing.archivedAt !== null) throw conflict(`client ${id} déjà archivé`);
   softDeleteClient(c.var.db, id);
   return c.body(null, 204);
 });
@@ -116,7 +118,9 @@ clientsRoutes.post("/:id/restore", (c) => {
   const id = parseParam(c, "id", uuidSchema);
   const existing = getClient(c.var.db, id);
   if (!existing) throw notFound(`client ${id} introuvable`);
-  if (existing.archivedAt === null) throw notFound(`client ${id} non archivé`);
+  // 409 CONFLICT (pas 404) : le client existe mais n'est pas en état cible
+  // (archived) — on ne peut pas "restaurer" un client actif.
+  if (existing.archivedAt === null) throw conflict(`client ${id} non archivé`);
   const restored = restoreClient(c.var.db, id);
   return c.json(restored);
 });
