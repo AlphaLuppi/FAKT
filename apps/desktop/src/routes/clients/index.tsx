@@ -1,3 +1,4 @@
+import { tokens } from "@fakt/design-tokens";
 import { fr } from "@fakt/shared";
 import type { Client, Invoice, Quote } from "@fakt/shared";
 import { Button, Chip, StatusPill, Table } from "@fakt/ui";
@@ -199,15 +200,39 @@ export function ClientsRoute(): ReactElement {
       </div>
 
       {/* Table */}
-      <Table<Client>
-        rows={clients}
-        columns={columns}
-        getRowId={(c) => c.id}
-        onRowClick={handleRowClick}
-        filterText=""
-        empty={fr.clients.empty}
-        rowsPerPage={50}
-      />
+      {clients.length === 0 ? (
+        <div
+          style={{
+            border: `${tokens.stroke.bold} solid ${tokens.color.ink}`,
+            padding: tokens.spacing[7],
+            textAlign: "center",
+            background: tokens.color.surface,
+            boxShadow: tokens.shadow.sm,
+            fontFamily: tokens.font.ui,
+            color: tokens.color.muted,
+          }}
+        >
+          {fr.clients.empty}
+        </div>
+      ) : (
+        <div
+          style={{
+            border: `${tokens.stroke.bold} solid ${tokens.color.ink}`,
+            background: tokens.color.surface,
+            boxShadow: tokens.shadow.sm,
+          }}
+        >
+          <Table<Client>
+            rows={clients}
+            columns={columns}
+            getRowId={(c) => c.id}
+            onRowClick={handleRowClick}
+            filterText=""
+            empty={fr.clients.empty}
+            rowsPerPage={50}
+          />
+        </div>
+      )}
 
       {/* Modaux */}
       <ClientForm

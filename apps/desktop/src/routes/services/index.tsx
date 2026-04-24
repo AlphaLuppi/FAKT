@@ -1,3 +1,4 @@
+import { tokens } from "@fakt/design-tokens";
 import { fr } from "@fakt/shared";
 import type { DocumentUnit, Service } from "@fakt/shared";
 import { Button, Chip, StatusPill, Table } from "@fakt/ui";
@@ -225,15 +226,39 @@ export function ServicesRoute(): ReactElement {
       </div>
 
       {/* Table */}
-      <Table<Service>
-        rows={prestations}
-        columns={columns}
-        getRowId={(s) => s.id}
-        onRowClick={handleRowClick}
-        filterText=""
-        empty={fr.services.empty}
-        rowsPerPage={50}
-      />
+      {prestations.length === 0 ? (
+        <div
+          style={{
+            border: `${tokens.stroke.bold} solid ${tokens.color.ink}`,
+            padding: tokens.spacing[7],
+            textAlign: "center",
+            background: tokens.color.surface,
+            boxShadow: tokens.shadow.sm,
+            fontFamily: tokens.font.ui,
+            color: tokens.color.muted,
+          }}
+        >
+          {fr.services.empty}
+        </div>
+      ) : (
+        <div
+          style={{
+            border: `${tokens.stroke.bold} solid ${tokens.color.ink}`,
+            background: tokens.color.surface,
+            boxShadow: tokens.shadow.sm,
+          }}
+        >
+          <Table<Service>
+            rows={prestations}
+            columns={columns}
+            getRowId={(s) => s.id}
+            onRowClick={handleRowClick}
+            filterText=""
+            empty={fr.services.empty}
+            rowsPerPage={50}
+          />
+        </div>
+      )}
 
       {/* Modal formulaire */}
       <PrestationForm
