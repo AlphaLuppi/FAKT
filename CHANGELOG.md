@@ -7,6 +7,43 @@ et [Semantic Versioning 2.0.0](https://semver.org/lang/fr/).
 
 ---
 
+## [0.1.4] - 2026-04-24
+
+Patch : chasse aux Tauri commands fantômes dans l'écran Settings. v0.1.3
+(nuit hardening) a publié les binaires CI, mais le bug settings a été
+découvert juste après pendant la revue de cohérence invokes vs handlers.
+
+### Fixed
+
+- **Settings `IdentityTab` sauvegarde ne marchait pas** — le bouton
+  "Enregistrer" invoquait la Tauri command `update_workspace` qui n'est
+  **pas déclarée** dans `invoke_handler![...]` de `lib.rs`. L'invoke
+  rejettait silencieusement et le toast erreur affichait "Command
+  update_workspace not found" (illisible). Switch vers l'API sidecar
+  `api.workspace.update`.
+- **Settings `get_workspace` au mount** — même problème, le fetch
+  workspace utilisait une Tauri command inexistante, résultat l'écran
+  Identity apparaissait vide à chaque ouverture. Switch vers
+  `api.workspace.get()` avec gestion `NOT_FOUND`/`NETWORK_ERROR`.
+- **Settings toggle télémétrie** — même problème, `update_settings` ne
+  persistait rien. Switch vers `api.settings.set(key, value)`.
+
+### Changed
+
+- `API_VERSION` `0.1.3` → `0.1.4`.
+- `Settings.tsx useEffect` : ajoute flag `cancelled` pour annuler le
+  setState si le composant est démonté pendant le fetch workspace.
+
+### Developer notes
+
+- Audit croisé invokes/handlers complété : toutes les Tauri commands
+  invoquées côté React ont maintenant un handler correspondant, OU ont
+  été migrées vers l'API sidecar. Plus de commands fantômes.
+- Tests settings : 9/9 OK après migration des mocks (`vi.hoisted` pour
+  compatibilité avec le hoisting de `vi.mock`).
+
+---
+
 ## [0.1.3] - 2026-04-24
 
 Release de durcissement pour grand public. Audit complet de nuit (3 agents en

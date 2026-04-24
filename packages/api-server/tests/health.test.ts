@@ -21,6 +21,6 @@ describe("GET /health", () => {
   it("expose header X-FAKT-Api-Version", async () => {
     const { app } = createTestApp();
     const res = await app.request("/health");
-    expect(res.headers.get("x-fakt-api-version")).toBe("0.1.3");
+    expect(res.headers.get("x-fakt-api-version")).toBe("0.1.4");
   });
 });

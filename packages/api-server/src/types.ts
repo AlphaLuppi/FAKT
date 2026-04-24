@@ -51,4 +51,4 @@ export interface ApiErrorBody {
   };
 }
 
-export const API_VERSION = "0.1.3";
+export const API_VERSION = "0.1.4";
