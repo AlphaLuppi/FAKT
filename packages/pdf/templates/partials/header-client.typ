@@ -4,6 +4,7 @@
 // Attendu dans `ctx.client` :
 //   - name (obligatoire)
 //   - legalForm, address, siret, contactName (tous optionnels → string ou none)
+//   - tvaIntracom (optionnel, n° TVA intra si client assujetti)
 
 #import "../base.typ": color-dark, color-gray, size-sm, size-md
 
@@ -27,6 +28,10 @@
   if client.siret != none and client.siret != "" [
     #v(2pt)
     #text(size: size-sm)[SIRET : #client.siret]
+  ]
+  if client.at("tvaIntracom", default: none) != none and client.tvaIntracom != "" [
+    #v(2pt)
+    #text(size: size-sm)[TVA intracom. : #client.tvaIntracom]
   ]
   if client.contactName != none and client.contactName != "" [
     #v(2pt)
