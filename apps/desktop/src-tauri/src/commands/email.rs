@@ -1,17 +1,42 @@
 use std::path::Path;
 use std::process::Command;
 
+/// Ouvre un fichier `.eml` avec l'application système.
+///
+/// Sécurité (P1-3 audit Rust 2026-04-23) :
+/// - vérifie l'extension `.eml` (case-insensitive)
+/// - canonicalise le chemin (résout les symlinks) AVANT de vérifier l'extension
+///   pour éviter qu'un symlink `evil.eml -> /etc/passwd` soit ouvert
+/// - le chemin canonicalisé doit lui-même se terminer par `.eml`
 #[tauri::command]
 pub async fn open_email_draft(eml_path: String) -> Result<(), String> {
     let path = Path::new(&eml_path);
     if !path.exists() {
         return Err(format!("Fichier .eml introuvable : {}", eml_path));
     }
-    if path.extension().and_then(|e| e.to_str()) != Some("eml") {
-        return Err("Le chemin doit pointer vers un fichier .eml".to_string());
+
+    // Canonicalise pour résoudre les symlinks. Si le chemin pointe vers
+    // /etc/passwd via symlink, canonical sera /etc/passwd et la vérif
+    // d'extension échouera.
+    let canonical = path
+        .canonicalize()
+        .map_err(|e| format!("Chemin .eml invalide : {}", e))?;
+
+    let ext_ok = canonical
+        .extension()
+        .and_then(|e| e.to_str())
+        .map(|e| e.eq_ignore_ascii_case("eml"))
+        == Some(true);
+    if !ext_ok {
+        return Err(
+            "Le chemin doit pointer vers un fichier .eml (symlinks résolus)".to_string(),
+        );
     }
 
-    dispatch_open(&eml_path)
+    let canonical_str = canonical
+        .to_str()
+        .ok_or_else(|| "Chemin .eml non-UTF8".to_string())?;
+    dispatch_open(canonical_str)
 }
 
 #[tauri::command]

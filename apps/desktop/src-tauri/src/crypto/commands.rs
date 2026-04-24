@@ -47,7 +47,11 @@ fn to_pem(x509_der: &[u8]) -> String {
     let b64 = B64.encode(x509_der);
     let mut pem = String::from("-----BEGIN CERTIFICATE-----\n");
     for chunk in b64.as_bytes().chunks(64) {
-        pem.push_str(std::str::from_utf8(chunk).unwrap());
+        // base64 sortie est ASCII pur — `from_utf8_lossy` est equivalent a
+        // `from_utf8().unwrap()` ici, mais ne peut PAS panic. Sous
+        // panic=abort un panic = crash silencieux 0xc0000409 (cf. P0-2 audit
+        // Rust 2026-04-23).
+        pem.push_str(&String::from_utf8_lossy(chunk));
         pem.push('\n');
     }
     pem.push_str("-----END CERTIFICATE-----\n");

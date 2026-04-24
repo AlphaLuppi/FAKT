@@ -3,6 +3,7 @@ pub mod commands;
 pub mod crypto;
 mod pdf;
 pub mod sidecar;
+pub mod trace;
 
 use std::sync::Arc;
 
@@ -12,116 +13,96 @@ use sidecar::{
 };
 use tauri::{Manager, WebviewUrl, WebviewWindowBuilder, WindowEvent};
 
+/// Entry point. Boucle complete : panic hook -> setup -> run loop. Aucun
+/// `expect`/`unwrap` ne doit etre atteint sous `panic = "abort"` (release),
+/// sinon crash silencieux 0xc0000409. On preferera toujours logger + exit code
+/// non-zero au panic.
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    // Panic hook + traceur d'execution dans %TEMP%/fakt-trace.log.
-    // Indispensable sous windows_subsystem="windows" ou stderr est avale.
-    fn trace(stage: &str) {
-        let path = std::env::temp_dir().join("fakt-trace.log");
-        let ts = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map(|d| d.as_millis())
-            .unwrap_or(0);
-        let msg = format!("[{}ms] {}\n", ts, stage);
-        let _ = std::fs::OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(&path)
-            .and_then(|mut f| std::io::Write::write_all(&mut f, msg.as_bytes()));
-    }
-    trace("run() start");
+    trace::log("run() start");
 
+    // Hook panic global -> ecrit dans le fichier de trace avant abort.
+    // Sous panic=abort, ce hook est notre seule visibilite sur les crashes.
     std::panic::set_hook(Box::new(|info| {
-        let path = std::env::temp_dir().join("fakt-trace.log");
-        let backtrace = std::backtrace::Backtrace::force_capture();
-        let msg = format!(
-            "PANIC: {}\nLocation: {:?}\nBacktrace:\n{}\n---\n",
-            info,
-            info.location(),
-            backtrace
-        );
-        let _ = std::fs::OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(&path)
-            .and_then(|mut f| std::io::Write::write_all(&mut f, msg.as_bytes()));
+        trace::log_panic(info);
     }));
-    trace("panic hook installed");
+    trace::log("panic hook installed");
 
-    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        run_inner();
-    }));
-    trace(&format!("run_inner returned: panic={}", result.is_err()));
+    // Le catch_unwind ne capture rien sous panic=abort, mais c'est utile en
+    // dev (panic=unwind) pour logger explicitement les retours de run_inner.
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(run_inner));
+    trace::log(&format!(
+        "run_inner returned: panic={}",
+        result.is_err()
+    ));
+
+    // Si run_inner retourne Err sans panic (cas Tauri Builder qui retourne
+    // proprement), on exit non-zero pour signaler l'echec a l'OS.
+    if matches!(result, Ok(Err(_)) | Err(_)) {
+        std::process::exit(1);
+    }
 }
 
-fn run_inner() {
-    let trace = |stage: &str| {
-        let path = std::env::temp_dir().join("fakt-trace.log");
-        let ts = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map(|d| d.as_millis())
-            .unwrap_or(0);
-        let msg = format!("[{}ms] inner: {}\n", ts, stage);
-        let _ = std::fs::OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(&path)
-            .and_then(|mut f| std::io::Write::write_all(&mut f, msg.as_bytes()));
-    };
-    trace("run_inner start");
+/// Wrapped pour pouvoir retourner Result et logger l'erreur sans `.expect()`.
+/// Sous panic=abort, tout `.expect()` produit un crash silencieux 0xc0000409
+/// non rattrapable — donc on convertit explicitement en `Result` + log.
+fn run_inner() -> Result<(), String> {
+    trace::log("run_inner start");
 
-    tauri::Builder::default()
+    let result = tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
-            let trace = |stage: &str| {
-                let path = std::env::temp_dir().join("fakt-trace.log");
-                let ts = std::time::SystemTime::now()
-                    .duration_since(std::time::UNIX_EPOCH)
-                    .map(|d| d.as_millis())
-                    .unwrap_or(0);
-                let msg = format!("[{}ms] setup: {}\n", ts, stage);
-                let _ = std::fs::OpenOptions::new()
-                    .create(true)
-                    .append(true)
-                    .open(&path)
-                    .and_then(|mut f| std::io::Write::write_all(&mut f, msg.as_bytes()));
-            };
-            trace("setup start");
+            trace::log("setup start");
 
             let app_data_dir = app
                 .path()
                 .app_data_dir()
                 .map_err(|e| format!("app_data_dir: {}", e))?;
-            trace(&format!("app_data_dir = {:?}", app_data_dir));
+            // Promote le log vers app_data_dir/logs/ (persistant, pas %TEMP%).
+            trace::promote_log_dir(&app_data_dir);
+            trace::log(&format!("app_data_dir = {:?}", app_data_dir));
 
             let state =
                 AppState::new(&app_data_dir).map_err(|e| format!("AppState: {}", e))?;
-            trace("AppState ok");
+            trace::log("AppState ok");
             app.manage(state);
 
             let handle = app.handle().clone();
-            trace("calling spawn_api_server");
+            trace::log("calling spawn_api_server");
             let api_ctx: Arc<ApiContext> =
                 tauri::async_runtime::block_on(async move { spawn_api_server(&handle).await })
                     .map_err(|e| format!("spawn api-server: {}", e))?;
-            trace(&format!("spawn_api_server ok port={}", api_ctx.port));
+            trace::log(&format!("spawn_api_server ok port={}", api_ctx.port));
 
             let init_js = initialization_script(api_ctx.port, &api_ctx.token);
+            // Garder une copie de l'Arc avant manage() pour pouvoir kill le
+            // sidecar si la fenetre echoue a s'ouvrir (sinon zombie process).
+            let api_ctx_for_cleanup = Arc::clone(&api_ctx);
             app.manage(api_ctx);
-            trace("calling WebviewWindowBuilder::build");
+            trace::log("calling WebviewWindowBuilder::build");
 
-            WebviewWindowBuilder::new(app, "main", WebviewUrl::default())
+            let window_result = WebviewWindowBuilder::new(app, "main", WebviewUrl::default())
                 .title("FAKT")
                 .inner_size(1280.0, 800.0)
                 .min_inner_size(900.0, 600.0)
                 .resizable(true)
                 .initialization_script(&init_js)
-                .build()
-                .map_err(|e| format!("window build: {}", e))?;
-            trace("setup complete");
+                .build();
 
+            if let Err(e) = window_result {
+                // Sidecar a deja ete spawne ; on doit le kill avant de
+                // remonter l'erreur sinon le child process Bun reste zombie
+                // avec son port pris (cf. P1-1 audit Rust).
+                trace::log(&format!(
+                    "window build FAILED, killing sidecar: {}",
+                    e
+                ));
+                sidecar_shutdown(&api_ctx_for_cleanup);
+                return Err(format!("window build: {}", e).into());
+            }
+            trace::log("setup complete");
             Ok(())
         })
         .on_window_event(|window, event| {
@@ -150,6 +131,12 @@ fn run_inner() {
             ai::cli::check_claude_cli,
             ai::cli::spawn_claude,
         ])
-        .run(tauri::generate_context!())
-        .expect("erreur lors du lancement de l'application FAKT");
+        .run(tauri::generate_context!());
+
+    if let Err(e) = result {
+        trace::log(&format!("tauri::Builder::run() FAILED: {}", e));
+        return Err(format!("tauri run: {}", e));
+    }
+    trace::log("run_inner finished cleanly");
+    Ok(())
 }

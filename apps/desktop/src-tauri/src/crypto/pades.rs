@@ -345,10 +345,20 @@ fn pad_to_width(s: &str, target: usize) -> String {
     if s.len() >= target {
         return s.to_string();
     }
+    // Garde defensive : si target < 2, pas la place pour `[` + `]` ; on
+    // retourne `s` tel quel pour eviter un underflow usize qui crash sous
+    // panic=abort (P1-4 audit Rust 2026-04-23). Cas pas reachable dans le
+    // flow actuel mais on durcit.
+    if target < 2 {
+        return s.to_string();
+    }
     // Padding : ajouter des espaces à l'intérieur des '[' et ']' pour conserver la largeur.
     let inner = s.trim_start_matches('[').trim_end_matches(']');
     let want_inner = target - 2;
-    let pad_count = want_inner - inner.len();
+    // Garde defensive : si inner deja plus grand que want_inner (cas
+    // theoriquement impossible vu la branche d'entree, mais defensif), on
+    // retourne s sans padding negatif.
+    let pad_count = want_inner.saturating_sub(inner.len());
     format!("[{}{}]", inner, " ".repeat(pad_count))
 }
 
