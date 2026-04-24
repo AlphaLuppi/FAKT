@@ -33,11 +33,39 @@ use crate::sidecar::ApiContext;
 /// Events emitted through the Tauri Channel<AiStreamEvent>.
 /// `#[serde(tag = "type", rename_all = "snake_case")]` ensures the JSON
 /// format matches what the TypeScript side expects.
+///
+/// Le contrat est maintenant étendu pour propager les étapes internes du
+/// modèle (extended thinking) et les appels d'outils MCP en temps réel à
+/// l'UI — comme Claude Desktop affiche ses "thinking blocks" + tool calls
+/// pendant que Claude travaille.
+///
+/// Les consommateurs frontend (cf. `packages/ai/src/providers/claude-cli.ts`)
+/// doivent gérer tous ces variants ; les variants `thinking_delta`,
+/// `tool_use_*` et `tool_result` sont optionnels côté rendu (peuvent être
+/// masqués par un toggle "Mode verbose IA" dans Settings).
 #[derive(Debug, Clone, Serialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum AiStreamEvent {
     /// A partial text token streamed by the model.
     Token { text: String },
+    /// Chunk incrémental du raisonnement interne (extended thinking).
+    /// L'UI accumule ces deltas dans un `ThinkingBlock` repliable.
+    ThinkingDelta { text: String },
+    /// Déclaration qu'un tool_use démarre — émet l'id + le nom sans input
+    /// (l'input arrive en `tool_use_delta` puis est clôturé par `tool_use_stop`).
+    ToolUseStart { id: String, name: String },
+    /// Chunk JSON partiel de l'argument d'un tool_use.
+    /// Claude CLI stream les inputs comme des `input_json_delta` — on forward
+    /// le JSON brut (string) et le front le reconstitue + parse à la fin.
+    ToolUseDelta { id: String, partial_json: String },
+    /// Fin d'un tool_use : l'input complet peut maintenant être parsé.
+    ToolUseStop { id: String },
+    /// Résultat d'un tool_use renvoyé par le MCP server (format Anthropic).
+    ToolResult {
+        tool_use_id: String,
+        content: String,
+        is_error: bool,
+    },
     /// Final complete result (JSON value, validated downstream in TS via Zod).
     Done { result: serde_json::Value },
     /// Unrecoverable error; stream terminates.
@@ -80,12 +108,49 @@ enum CliLine {
     Other,
 }
 
-/// Inner structure d'un `stream_event` — seul `content_block_delta` nous
-/// intéresse (pour afficher les tokens au fil de l'eau).
+/// Inner structure d'un `stream_event` — on écoute les types suivants pour
+/// reconstituer le déroulé complet de la génération :
+///   - `content_block_start` : un nouveau bloc démarre (text / thinking /
+///     tool_use). Pour un tool_use on capture id + name avant tout delta.
+///   - `content_block_delta` : chunk incrémental (text_delta, thinking_delta
+///     ou input_json_delta pour un tool_use).
+///   - `content_block_stop` : fin d'un bloc (utile pour déclencher le
+///     parse final des inputs JSON accumulés).
 #[derive(Debug, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 enum StreamEventInner {
-    ContentBlockDelta { delta: ContentDelta },
+    ContentBlockStart {
+        #[serde(default)]
+        index: u32,
+        content_block: ContentBlockStart,
+    },
+    ContentBlockDelta {
+        #[serde(default)]
+        index: u32,
+        delta: ContentDelta,
+    },
+    ContentBlockStop {
+        #[serde(default)]
+        index: u32,
+    },
+    #[serde(other)]
+    Other,
+}
+
+/// Identité du bloc en train de démarrer — `tool_use` a id + name, les
+/// autres sont taggés uniquement par leur type. Les champs non mappés sont
+/// ignorés : serde_json::Deserialize est tolérant sur les champs en plus.
+#[derive(Debug, Deserialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
+enum ContentBlockStart {
+    Text,
+    Thinking,
+    ToolUse {
+        #[serde(default)]
+        id: String,
+        #[serde(default)]
+        name: String,
+    },
     #[serde(other)]
     Other,
 }
@@ -95,6 +160,11 @@ enum StreamEventInner {
 enum ContentDelta {
     /// `{"type":"text_delta","text":"..."}` — chunk texte incrémental.
     TextDelta { text: String },
+    /// `{"type":"thinking_delta","thinking":"..."}` — extended thinking.
+    ThinkingDelta { thinking: String },
+    /// `{"type":"input_json_delta","partial_json":"..."}` — chunk d'argument
+    /// d'un tool_use en cours de formation. À accumuler et parser au stop.
+    InputJsonDelta { partial_json: String },
     #[serde(other)]
     Other,
 }
@@ -429,6 +499,11 @@ async fn stream_inner(
     // corréler les tool_result qui arrivent plus tard.
     let mut tool_use_index: std::collections::HashMap<String, usize> =
         std::collections::HashMap::new();
+    // Map `content_block.index` → (tool_use_id, accumulated_partial_json) pour
+    // suivre les tool_use en cours de formation via `input_json_delta`.
+    // On a besoin de l'index car les deltas ne transportent pas l'id.
+    let mut active_tool_uses: std::collections::HashMap<u32, String> =
+        std::collections::HashMap::new();
 
     loop {
         match lines.next_line().await {
@@ -446,26 +521,104 @@ async fn stream_inner(
                         let _ = channel.send(AiStreamEvent::Token { text });
                     }
                     Ok(CliLine::StreamEvent {
-                        event: StreamEventInner::ContentBlockDelta {
-                            delta: ContentDelta::TextDelta { text },
-                        },
+                        event:
+                            StreamEventInner::ContentBlockStart {
+                                index,
+                                content_block: ContentBlockStart::ToolUse { id, name },
+                            },
+                    }) => {
+                        // Tool_use qui démarre — on mémorise l'id par index
+                        // pour corréler les input_json_delta suivants, puis
+                        // on informe l'UI (elle peut déjà afficher un spinner
+                        // "L'IA appelle l'outil X…").
+                        if !id.is_empty() {
+                            active_tool_uses.insert(index, id.clone());
+                        }
+                        let _ = channel.send(AiStreamEvent::ToolUseStart {
+                            id: id.clone(),
+                            name: name.clone(),
+                        });
+                    }
+                    Ok(CliLine::StreamEvent {
+                        event: StreamEventInner::ContentBlockStart { .. },
+                    }) => {
+                        // content_block_start pour text ou thinking — pas
+                        // d'event explicite à émettre, les deltas suivants
+                        // suffisent à déclencher la création du bloc UI.
+                    }
+                    Ok(CliLine::StreamEvent {
+                        event:
+                            StreamEventInner::ContentBlockDelta {
+                                delta: ContentDelta::TextDelta { text },
+                                ..
+                            },
                     }) => {
                         sessions::bump_token(session_id);
                         sessions::append_response(session_id, &text);
                         let _ = channel.send(AiStreamEvent::Token { text });
                     }
+                    Ok(CliLine::StreamEvent {
+                        event:
+                            StreamEventInner::ContentBlockDelta {
+                                delta: ContentDelta::ThinkingDelta { thinking },
+                                ..
+                            },
+                    }) => {
+                        // Extended thinking — on n'incrémente PAS token_events
+                        // (réservé au texte visible). Pas d'ajout à
+                        // response_text non plus (c'est du raisonnement interne).
+                        let _ = channel.send(AiStreamEvent::ThinkingDelta {
+                            text: thinking,
+                        });
+                    }
+                    Ok(CliLine::StreamEvent {
+                        event:
+                            StreamEventInner::ContentBlockDelta {
+                                index,
+                                delta: ContentDelta::InputJsonDelta { partial_json },
+                            },
+                    }) => {
+                        // Retrouve l'id du tool_use par son index content_block.
+                        // Si absent (start raté), on forward quand même avec un
+                        // id vide — le front gèrera la concat sur le dernier
+                        // tool_use déclaré.
+                        let id = active_tool_uses
+                            .get(&index)
+                            .cloned()
+                            .unwrap_or_default();
+                        let _ = channel.send(AiStreamEvent::ToolUseDelta {
+                            id,
+                            partial_json,
+                        });
+                    }
+                    Ok(CliLine::StreamEvent {
+                        event: StreamEventInner::ContentBlockStop { index },
+                    }) => {
+                        // Fin de bloc — si c'était un tool_use, on notifie
+                        // l'UI qu'elle peut finaliser le parse JSON de l'input.
+                        if let Some(id) = active_tool_uses.remove(&index) {
+                            let _ = channel.send(AiStreamEvent::ToolUseStop { id });
+                        }
+                    }
                     Ok(CliLine::StreamEvent { .. }) => {
-                        // Autres stream_event (message_start, content_block_stop,
-                        // message_delta, message_stop) — ignorés, le texte
-                        // complet arrive via `type:"result"` à la fin.
+                        // Autres stream_event (message_start, message_delta,
+                        // message_stop) — ignorés, le texte complet arrive
+                        // via `type:"result"` à la fin.
                     }
                     Ok(CliLine::Assistant(msg)) => {
                         // Extrait les tool_use dans le message assistant complet.
                         extract_tool_uses(&msg.message.content, session_id, &mut tool_use_index);
                     }
                     Ok(CliLine::User(msg)) => {
-                        // Extrait les tool_result pour compléter les records.
-                        extract_tool_results(&msg.message.content, session_id, &tool_use_index);
+                        // Extrait les tool_result pour compléter les records
+                        // ET forward l'event à l'UI pour que le live composer
+                        // puisse afficher le résultat en temps réel.
+                        extract_tool_results(
+                            &msg.message.content,
+                            session_id,
+                            &tool_use_index,
+                            channel,
+                        );
                     }
                     Ok(CliLine::Result {
                         result: Some(content),
@@ -665,10 +818,13 @@ fn extract_tool_uses(
 
 /// Parcourt un `content: [ContentBlock]` d'un message user (tool_result) pour
 /// corréler avec un `tool_use` précédent et compléter le record avec l'output.
+/// Pousse aussi un event `ToolResult` dans la Channel pour que l'UI puisse
+/// afficher le résultat de l'outil en live (design Claude Desktop).
 fn extract_tool_results(
     content: &serde_json::Value,
     session_id: &str,
     tool_use_index: &std::collections::HashMap<String, usize>,
+    channel: &Channel<AiStreamEvent>,
 ) {
     let Some(arr) = content.as_array() else {
         return;
@@ -678,16 +834,58 @@ fn extract_tool_results(
         if obj.get("type").and_then(|v| v.as_str()) != Some("tool_result") {
             continue;
         }
-        let tool_use_id = obj.get("tool_use_id").and_then(|v| v.as_str()).unwrap_or("");
-        let Some(&idx) = tool_use_index.get(tool_use_id) else {
-            continue;
-        };
+        let tool_use_id = obj
+            .get("tool_use_id")
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .to_string();
         let is_error = obj
             .get("is_error")
             .and_then(|v| v.as_bool())
             .unwrap_or(false);
-        let output = obj.get("content").cloned();
-        sessions::record_tool_call_end(session_id, idx, output, is_error);
+        let output_value = obj.get("content").cloned();
+
+        // Normalise le content en texte exploitable par l'UI. Claude CLI peut
+        // renvoyer soit une string soit un array de content blocks (text).
+        let text_content = flatten_tool_result_content(&output_value);
+
+        // Record dans la session (si on avait mémorisé le tool_use).
+        if let Some(&idx) = tool_use_index.get(&tool_use_id) {
+            sessions::record_tool_call_end(session_id, idx, output_value.clone(), is_error);
+        }
+
+        // Forward à l'UI — même sans match côté session, l'event reste utile
+        // (ex : tool_use capté via stream_event mais assistant message jamais
+        // reçu avant EOF).
+        let _ = channel.send(AiStreamEvent::ToolResult {
+            tool_use_id,
+            content: text_content,
+            is_error,
+        });
+    }
+}
+
+/// Aplatit un `content` de tool_result en string. Claude peut renvoyer :
+///   - une string directe
+///   - `[{"type":"text","text":"..."}, ...]`
+///   - un array d'objets hétérogènes (on concatène les champs `text`).
+fn flatten_tool_result_content(value: &Option<serde_json::Value>) -> String {
+    match value {
+        None | Some(serde_json::Value::Null) => String::new(),
+        Some(serde_json::Value::String(s)) => s.clone(),
+        Some(serde_json::Value::Array(arr)) => arr
+            .iter()
+            .filter_map(|item| match item {
+                serde_json::Value::String(s) => Some(s.clone()),
+                serde_json::Value::Object(obj) => obj
+                    .get("text")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string()),
+                _ => None,
+            })
+            .collect::<Vec<_>>()
+            .join("\n"),
+        Some(other) => serde_json::to_string(other).unwrap_or_default(),
     }
 }
 
@@ -752,5 +950,175 @@ mod tests {
         let result = check_claude_cli().await;
         assert!(result.is_err());
         std::env::remove_var("FAKT_CLAUDE_PATH");
+    }
+
+    // ─── Parser stream-json ───────────────────────────────────────────────────
+    //
+    // Ces tests documentent le contrat exact du stream-json de Claude CLI
+    // observé en prod (2026). Chaque cas correspond à une ligne JSON reçue
+    // via stdout pendant un run MCP.
+    //
+    // Si un jour la CLI introduit un nouveau variant (ex : `redacted_thinking`
+    // pour la privacy), il devra être ajouté à `ContentDelta` + un test ici.
+
+    #[test]
+    fn parses_text_delta_stream_event() {
+        let raw = r#"{"type":"stream_event","event":{"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Bonjour"}}}"#;
+        let line: CliLine = serde_json::from_str(raw).expect("valid JSON");
+        match line {
+            CliLine::StreamEvent {
+                event:
+                    StreamEventInner::ContentBlockDelta {
+                        index,
+                        delta: ContentDelta::TextDelta { text },
+                    },
+            } => {
+                assert_eq!(index, 0);
+                assert_eq!(text, "Bonjour");
+            }
+            _ => panic!("expected ContentBlockDelta TextDelta, got {line:?}"),
+        }
+    }
+
+    #[test]
+    fn parses_thinking_delta_stream_event() {
+        let raw = r#"{"type":"stream_event","event":{"type":"content_block_delta","index":1,"delta":{"type":"thinking_delta","thinking":"Je réfléchis au devis"}}}"#;
+        let line: CliLine = serde_json::from_str(raw).expect("valid JSON");
+        match line {
+            CliLine::StreamEvent {
+                event:
+                    StreamEventInner::ContentBlockDelta {
+                        index: _,
+                        delta: ContentDelta::ThinkingDelta { thinking },
+                    },
+            } => assert_eq!(thinking, "Je réfléchis au devis"),
+            _ => panic!("expected ThinkingDelta, got {line:?}"),
+        }
+    }
+
+    #[test]
+    fn parses_content_block_start_tool_use() {
+        let raw = r#"{"type":"stream_event","event":{"type":"content_block_start","index":2,"content_block":{"type":"tool_use","id":"toolu_01ABC","name":"list_clients","input":{}}}}"#;
+        let line: CliLine = serde_json::from_str(raw).expect("valid JSON");
+        match line {
+            CliLine::StreamEvent {
+                event:
+                    StreamEventInner::ContentBlockStart {
+                        index,
+                        content_block: ContentBlockStart::ToolUse { id, name },
+                    },
+            } => {
+                assert_eq!(index, 2);
+                assert_eq!(id, "toolu_01ABC");
+                assert_eq!(name, "list_clients");
+            }
+            _ => panic!("expected ToolUse start, got {line:?}"),
+        }
+    }
+
+    #[test]
+    fn parses_input_json_delta() {
+        let raw = r#"{"type":"stream_event","event":{"type":"content_block_delta","index":2,"delta":{"type":"input_json_delta","partial_json":"{\"search\":\""}}}"#;
+        let line: CliLine = serde_json::from_str(raw).expect("valid JSON");
+        match line {
+            CliLine::StreamEvent {
+                event:
+                    StreamEventInner::ContentBlockDelta {
+                        index: 2,
+                        delta: ContentDelta::InputJsonDelta { partial_json },
+                    },
+            } => assert_eq!(partial_json, "{\"search\":\""),
+            _ => panic!("expected InputJsonDelta, got {line:?}"),
+        }
+    }
+
+    #[test]
+    fn parses_content_block_stop() {
+        let raw = r#"{"type":"stream_event","event":{"type":"content_block_stop","index":2}}"#;
+        let line: CliLine = serde_json::from_str(raw).expect("valid JSON");
+        match line {
+            CliLine::StreamEvent {
+                event: StreamEventInner::ContentBlockStop { index },
+            } => assert_eq!(index, 2),
+            _ => panic!("expected ContentBlockStop, got {line:?}"),
+        }
+    }
+
+    #[test]
+    fn parses_result_success_line() {
+        let raw = r#"{"type":"result","result":"tout va bien","is_error":false}"#;
+        let line: CliLine = serde_json::from_str(raw).expect("valid JSON");
+        match line {
+            CliLine::Result {
+                result: Some(r),
+                is_error: false,
+                ..
+            } => assert_eq!(r, "tout va bien"),
+            _ => panic!("expected success Result, got {line:?}"),
+        }
+    }
+
+    #[test]
+    fn parses_result_error_line() {
+        let raw = r#"{"type":"result","is_error":true,"error_code":"rate_limit"}"#;
+        let line: CliLine = serde_json::from_str(raw).expect("valid JSON");
+        match line {
+            CliLine::Result {
+                is_error: true,
+                error_code: Some(code),
+                ..
+            } => assert_eq!(code, "rate_limit"),
+            _ => panic!("expected error Result, got {line:?}"),
+        }
+    }
+
+    #[test]
+    fn unknown_variants_fallback_to_other_without_error() {
+        // message_start et rate_limit_event sont taggés `#[serde(other)]`.
+        let raw_list = [
+            r#"{"type":"system","subtype":"init","hooks":{}}"#,
+            r#"{"type":"rate_limit_event","remaining":90}"#,
+        ];
+        for raw in raw_list {
+            let line: CliLine = serde_json::from_str(raw).expect(raw);
+            assert!(matches!(line, CliLine::Other));
+        }
+    }
+
+    #[test]
+    fn flatten_tool_result_content_handles_all_shapes() {
+        // null
+        assert_eq!(flatten_tool_result_content(&None), "");
+        assert_eq!(
+            flatten_tool_result_content(&Some(serde_json::Value::Null)),
+            ""
+        );
+        // string directe
+        assert_eq!(
+            flatten_tool_result_content(&Some(serde_json::Value::String("ok".to_string()))),
+            "ok"
+        );
+        // array d'objets {type, text}
+        let arr = serde_json::json!([
+            {"type": "text", "text": "ligne 1"},
+            {"type": "text", "text": "ligne 2"}
+        ]);
+        assert_eq!(flatten_tool_result_content(&Some(arr)), "ligne 1\nligne 2");
+        // array de strings directes
+        let arr = serde_json::json!(["a", "b"]);
+        assert_eq!(flatten_tool_result_content(&Some(arr)), "a\nb");
+        // object complet → serializé
+        let obj = serde_json::json!({"x": 1});
+        let flat = flatten_tool_result_content(&Some(obj));
+        assert!(flat.contains("\"x\""));
+    }
+
+    #[test]
+    fn assistant_message_still_parses_as_before() {
+        // Sanity : on n'a pas cassé le parsing des messages assistant
+        // complets utilisés pour recorder les tool_calls côté sessions.
+        let raw = r#"{"type":"assistant","message":{"content":[{"type":"tool_use","id":"t1","name":"n","input":{}}]}}"#;
+        let line: CliLine = serde_json::from_str(raw).expect("assistant msg");
+        assert!(matches!(line, CliLine::Assistant(_)));
     }
 }
