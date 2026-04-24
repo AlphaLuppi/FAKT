@@ -104,6 +104,17 @@ jobs:
           # fait extract le AppImage avant de l'exécuter (slower mais fonctionnel).
           APPIMAGE_EXTRACT_AND_RUN: 1
 
+          # ── Tauri Updater — signature ed25519 ───────────────────────────────
+          # Quand ces deux secrets sont présents + `bundle.createUpdaterArtifacts`
+          # à true dans tauri.conf.json, tauri-action génère un `.sig` à côté
+          # de chaque artifact updater (NSIS, .app.tar.gz, .AppImage.tar.gz, .deb)
+          # et publie automatiquement `latest.json` (signature + url + version)
+          # sur la GitHub Release. Le plugin updater côté app vérifie la sig
+          # avec la pubkey embarquée dans le binaire (cf. tauri.conf.json).
+          # Génération keypair : voir `docs/release-process.md`.
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+
           # ── macOS signing + notarization — SKIP v0.1.0 ──────────────────────
           # Les APPLE_* secrets ne sont PAS configurés dans GitHub Secrets en v0.1.0
           # (Tom n'a pas encore souscrit Apple Developer Program). Passer des env
@@ -124,11 +135,19 @@ jobs:
             Voir [CHANGELOG.md](https://github.com/AlphaLuppi/FAKT/blob/main/CHANGELOG.md)
             pour la liste exhaustive des fonctionnalités v0.1.0.
 
-            **Note Windows :** l'installeur `.msi` n'est pas signé en v0.1.0
-            (SmartScreen affichera « Unknown Publisher »). Clic droit → Exécuter quand même.
-            La signature Authenticode sera ajoutée en v0.1.1.
+            **Note Windows :** l'installeur `.msi` / `.exe` (NSIS) n'est pas signé
+            Authenticode en v0.1.0 (SmartScreen affichera « Unknown Publisher »).
+            Clic droit → Exécuter quand même. La signature Authenticode arrive en v0.1.1.
 
             **Note macOS :** si Gatekeeper bloque, clic droit → Ouvrir.
+
+            **Mises à jour :** dès la prochaine release publiée, l'app détecte
+            automatiquement la nouvelle version au boot et propose une bannière
+            « Mise à jour disponible ». Un clic suffit pour DL + installer.
           releaseDraft: false
           prerelease: ${{ contains(github.ref_name, '-rc') || contains(github.ref_name, '-beta') || contains(github.ref_name, '-alpha') }}
+          # Génère et upload `latest.json` (signature + url + version) en asset
+          # du tag GitHub Release. Le plugin updater pointe sur `.../latest/download/latest.json`
+          # qui résout toujours sur la dernière release (cf. tauri.conf.json endpoints).
+          updaterJsonPreferNsis: true
           args: ${{ matrix.args }}
