@@ -45,12 +45,9 @@ let _cachedLib: PdfjsLib | null = null;
  */
 async function loadPdfjs(): Promise<PdfjsLib> {
   if (_cachedLib !== null) return _cachedLib;
-  // Import dynamique résolu par Vite au build (chunk séparé). Le specifier
-  // doit être en dur pour que l'analyseur statique le retrouve — si on
-  // passe par une variable avec /* @vite-ignore */, le browser reçoit un
-  // specifier nu non résolvable.
-  // @ts-expect-error — pdfjs-dist est installé côté apps/desktop, pas dans
-  // @fakt/ai (évite de forcer la dep pour les consommateurs headless).
+  // Import dynamique : Vite le résout au build en chunk séparé. Le specifier
+  // doit être littéral (pas de variable, pas de @vite-ignore), sinon Vite
+  // laisse le specifier nu et le browser échoue à le résoudre.
   const mod = (await import("pdfjs-dist/legacy/build/pdf.mjs")) as unknown as PdfjsLib;
   if (mod.GlobalWorkerOptions) {
     mod.GlobalWorkerOptions.workerSrc = "data:application/javascript,";
