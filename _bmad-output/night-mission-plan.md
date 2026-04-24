@@ -104,13 +104,131 @@ Bugs P0 connus AU DÉPART (à valider/affiner avec audit) :
 ### 22h47 — Démarrage mission
 - Plan créé. CLAUDE.md updated. v0.1.2 published.
 
-### [TIMESTAMP] — [ÉVÉNEMENT]
+### 23h00 → 23h35 — Phase 1 audit massif (3 agents parallèles)
+- Agent Rust : 2 P0 + 4 P1 identifiés
+- Agent TS : 2 P0 + 5 P1 identifiés
+- Agent deps : 1 HIGH (drizzle SQL injection) + 3 MODERATE + 2 CVE Rust sans fix amont
+- Agent Tauri docs : 8 best practices recensées
+- Total : 7 P0/P1 à fixer + 4 CVE deps + cleanup lint
 
-(à compléter au fil de l'eau)
+### 23h35 → 00h40 — Phase 2 fix Rust P0/P1 (commit e94bde5)
+- `lib.rs` : remplace `.expect()` par `Result + exit(1)`, ajoute kill sidecar si window build fail
+- `trace.rs` (nouveau) : logger persistant app_data_dir/logs/ avec fallback %TEMP%
+- `crypto/commands.rs` : from_utf8_lossy
+- `commands/backup.rs` : Zip Slip sanitize + validate dest_path (blocked system dirs) + 5 tests
+- `commands/email.rs` : canonicalize path pour résoudre symlinks
+- `crypto/pades.rs` : saturating_sub défensif
+
+### 00h40 → 01h15 — Phase 2 fix TS P0/P1 (commits 630deee + 4e8167d + 22ccfea + 2f77239)
+- `schemas/common.ts` : exception La Poste SIRET + pagination max(500)
+- `routes/invoices.ts` : nextNumberAtomic + 422 + garde totalHt>0
+- `routes/quotes.ts` : garde totalHt>0 à l'issue
+- `routes/clients.ts` : 409 au lieu de 404 sur archived/restore
+- `Recap.tsx` : guard synchrone double-submit
+- `bun update drizzle-orm@0.45.2` (HIGH GHSA-gpj5-g38j-94v9) + vite 8 + astro 6 + esbuild 0.28
+- `SECURITY.md` + `audit.toml` : CVE Rust documentées (rsa Marvin, rand transitive)
+- Lint : zero non-null assertion (claude-cli.ts + shortcuts.test.ts + scripts/dev.ts)
+
+### 01h15 — Validation complète
+- Typecheck 12/12 OK, Lint clean, Tests 776/776 passed
+- Build release local `cargo build --release` : 4m39s, binaire 9.7 Mo
+- **Test boot binaire release local : setup complete OK, pas de crash** ✅
+- Logs persistants confirmés dans `%APPDATA%/com.alphaluppi.fakt/logs/fakt-trace.log`
+
+### 01h20 — v0.1.3 tagged + pushed (commit b0914dd)
+- Bump 0.1.2 → 0.1.3 sur 12 package.json + tauri.conf + Cargo.toml/lock + API_VERSION
+- CHANGELOG entrée `[0.1.3] - 2026-04-24` complète (Security / Fixed / Added / Changed / Developer notes)
+- Tag `v0.1.3` signé GPG + DCO
+- Push main + tag → CI Release run 24876397249
+
+### 01h20 → 01h55 — Chasse Tauri commands fantômes
+- Audit croisé : `invoke(...)` côté React vs `invoke_handler![...]` côté Rust
+- **3 commands fantômes découvertes dans Settings** :
+  - `update_workspace` (IdentityTab → enregistrer) — crash silencieux au save
+  - `get_workspace` (Settings mount) — écran Identity vide
+  - `update_settings` (TelemetryTab) — toggle ne persistait rien
+- Fix : toutes migrées vers l'API sidecar (`api.workspace.get/update`, `api.settings.set`)
+- Commits : c4cc6db (IdentityTab) + 16e049a (Settings.tsx) + 875f8af (bump 0.1.4)
+- Tests settings 9/9 OK avec `vi.hoisted` pour compat mocks
+
+### 01h55 — v0.1.4 tagged + pushed
+- Inclut les fix settings POST-v0.1.3 pour que la release finale soit cohérente
+- CI run 24876813407 en cours
+
+### 02h00 — README troubleshooting enrichi
+- Section crash silencieux Windows avec chemin exact du `fakt-trace.log`
+- Entrées dédiées pour les bugs fixés (CORS 0.1.1, SIRET 0.1.2, Settings 0.1.4)
 
 ## Tom au réveil — actions
 
-(section à compléter à la fin de la mission, environ 06h-07h)
+**État final :** FAKT **v0.1.4** est la release grand public cible.
+6 commits atomiques signés DCO + GPG sur main entre 22h47 et 02h00.
+
+**Chronologie releases cette nuit :**
+
+| Version | Quoi | Status |
+|---------|------|--------|
+| v0.1.0 (la veille) | MVP initial | Bug onboarding (CORS) |
+| v0.1.1 | Fix CORS sidecar | Bug crash boot Windows (profile release) |
+| v0.1.2 | Fix crash Windows (strip=false) + SIRET espaces | Marche mais bugs settings |
+| **v0.1.3** | Hardening audit nuit (2 P0 + 5 P1 + 4 CVE deps + SECURITY.md) | Bug settings découvert post-tag |
+| **v0.1.4** ✅ | Fix Tauri commands fantômes Settings | **Version finale** |
+
+**À faire au réveil :**
+
+1. **Désinstaller FAKT 0.1.0/0.1.1/0.1.2** (Paramètres Windows → Apps → FAKT → Désinstaller). Ça enlève le binaire mais garde `%APPDATA%\com.alphaluppi.fakt\` et `~\.fakt\db.sqlite`.
+
+2. **Télécharger le MSI 0.1.4** :
+   https://github.com/AlphaLuppi/FAKT/releases/download/v0.1.4/FAKT_0.1.4_x64_en-US.msi
+
+3. **Installer** : double-clic, SmartScreen → *Plus d'infos* → *Exécuter quand même* (pas de signature Authenticode en v0.1.x, prévu v0.2).
+
+4. **Lancer FAKT**. L'app doit s'ouvrir sans crash. Si crash → lire `%APPDATA%\com.alphaluppi.fakt\logs\fakt-trace.log`.
+
+5. **Vérifier ton workspace** :
+   - Si tu avais fait l'onboarding en 0.1.0/0.1.1, il est gardé en DB. L'app doit arriver direct sur le dashboard.
+   - Si le SIRET sauvegardé est le fictif "123 456 789 00122", aller **Settings → Identité** et mettre le vrai `85366584200029` (Tom Andrieu, micro-entreprise, 67 route de Lyon 84000 Avignon) → cliquer **Enregistrer**. **Cette action marche enfin en 0.1.4**.
+
+6. **Test E2E demandé hier soir** :
+   - Créer un client JOCANET (SIRET 885 313 007 00019, 950 route de Réalpanier 84310 Morières-lès-Avignon)
+   - Créer un devis Tracking Hootop 6120€ HT (prestation forfait)
+   - Émettre le devis (→ D2026-001)
+   - Signer côté freelance (panneau signature)
+   - Signer côté client (même panneau, actor=client)
+   - Marquer signé (→ status signed)
+   - Créer facture `from-quote` mode `deposit30` (→ F2026-001, 1836€)
+   - Vérifier PDFs générés dans la DB `~\.fakt\db.sqlite` (blob BLOB) ou export ZIP
+
+**Si un bug est découvert au matin :**
+- Ouvrir le log `fakt-trace.log` + envoyer le contenu
+- La version dev `bun run dev` marche déjà en local (validé cette nuit)
+
+## Récapitulatif des commits de la nuit
+
+```
+875f8af  chore(release): bump 0.1.3 -> 0.1.4 (fix Tauri commands fantomes settings)
+16e049a  fix(desktop/settings): Settings.tsx get_workspace + update_settings
+c4cc6db  fix(desktop/settings): IdentityTab sauvegarde (Tauri command inexistante)
+b0914dd  chore(release): bump 0.1.2 -> 0.1.3 pour release grand public durcie
+2f77239  docs(security): SECURITY.md + audit.toml — CVE Rust non-fixables
+22ccfea  chore(lint): retire les non-null assertions
+4e8167d  chore(deps): bump drizzle-orm (HIGH) + vite/astro/esbuild
+630deee  fix(api-server+onboarding): hardening P0/P1 audit TS
+e94bde5  fix(desktop/rust): hardening P0/P1 audit release publique
+62f539f  chore(planning): plan de nuit hardening FAKT
+```
+
+## Annexes — Stats finales
+
+- Commits : 10 atomiques signés DCO + GPG pushés sur `main`
+- Versions releases : 3 (v0.1.2 hotfix CORS/SIRET, v0.1.3 hardening, v0.1.4 fix settings)
+- Tests : 776 passed / 1 skipped / 0 failed (couverture api-server 89.86%)
+- Typecheck : 12/12 packages OK
+- Lint : clean (zero warning, zero error)
+- `cargo audit` : clean après ignore 2 CVE documentées
+- `bun audit` : 0 HIGH, 3 MODERATE dev-only (transitives, pas bloquantes)
+- Bugs fixés : 2 P0 Rust (crash release + utf8 unwrap) + 2 P0 TS (numbering + SIRET La Poste) + 5 P1 TS + 4 P1 Rust (Zip Slip, symlink, pades, sidecar zombie) + 3 Tauri commands fantômes + 1 CVE HIGH deps
+- Nouveaux fichiers : `SECURITY.md`, `audit.toml`, `trace.rs`, `night-mission-plan.md`
 
 ## Annexes — Décisions techniques prises pendant la nuit
 

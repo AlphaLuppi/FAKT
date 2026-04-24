@@ -103,8 +103,19 @@ est généré automatiquement et stocké dans le keychain de l'OS.
 
 ## Troubleshooting
 
-**L'app ne démarre pas (fenêtre blanche)**
-Le sidecar api-server n'a pas pu se lancer. Logs dans :
+**L'app ne démarre pas / crash silencieux (Windows)**
+Depuis v0.1.3, l'app écrit un log d'exécution persistant qui permet de
+diagnostiquer les crashes au boot même quand stderr est avalé par le mode
+`windows_subsystem = "windows"`. Chemins :
+- Windows : `%APPDATA%\com.alphaluppi.fakt\logs\fakt-trace.log`
+- macOS : `~/Library/Application Support/com.alphaluppi.fakt/logs/fakt-trace.log`
+- Linux : `~/.local/share/com.alphaluppi.fakt/logs/fakt-trace.log`
+
+Pour les crashes TRÈS précoces (avant que Tauri n'ait résolu `app_data_dir`),
+fallback dans `%TEMP%/fakt-trace.log` (Windows) ou `/tmp/fakt-trace.log` (Unix).
+
+**Sidecar ne répond pas**
+Logs sidecar Bun :
 - Windows : `%APPDATA%\fakt\logs\sidecar.log`
 - macOS : `~/Library/Application Support/fakt/logs/sidecar.log`
 - Linux : `~/.local/share/fakt/logs/sidecar.log`
@@ -117,6 +128,16 @@ Le token `window.__FAKT_API_TOKEN__` n'a pas été injecté. Relancer via `bun r
 
 **Sidecar crash-loop (l'app se ferme 3× de suite en <60s)**
 Vérifier les logs sidecar ci-dessus. Causes courantes : DB corrompue (supprimer `~/.fakt/db.sqlite` et relancer pour regénérer), migration cassée, port 3117 pris.
+
+**Erreur "Network error: Failed to fetch" à l'onboarding**
+Bug fixé en v0.1.1 (CORS sidecar manquant). Installer ≥ v0.1.1.
+
+**Erreur "SIRET INVALIDE" alors que le SIRET est correct**
+Bug fixé en v0.1.2 (normalize espaces/tirets). Installer ≥ v0.1.2.
+
+**Écran Identity settings vide / Enregistrer ne fait rien**
+Bug fixé en v0.1.4 (Tauri commands fantômes remplacées par API sidecar).
+Installer ≥ v0.1.4.
 
 ---
 
