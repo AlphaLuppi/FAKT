@@ -5,14 +5,24 @@ import { fr } from "@fakt/shared";
 import type { KeyboardEvent, ReactElement } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router";
+import { ChatMessage as ChatMessageView } from "./ChatMessage.js";
 import { useComposerSidebar } from "./ComposerContext.js";
+import type { ChatBlock, ChatMessageRich } from "./useChatStream.js";
+import { extractDeltaText, extractFinalText } from "./useChatStream.js";
+import "highlight.js/styles/github-dark.css";
 
-interface DisplayMessage {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  streaming: boolean;
-  at: number;
+/**
+ * Helper : concatene tous les blocs texte d'un message en une string unique.
+ * Sert a l'historique envoye a Claude - les blocs thinking / tool_* sont
+ * meta-data locales, pas reinjectees dans l'API.
+ */
+function blocksToString(blocks: ChatBlock[]): string {
+  return blocks
+    .map((b) => {
+      if (b.type === "text") return b.text;
+      return "";
+    })
+    .join("");
 }
 
 function formatTimestamp(at: number): string {
@@ -41,7 +51,7 @@ const SUGGESTIONS = [
 export function ComposerSidebar(): ReactElement {
   const { isOpen, close, pendingContext, pendingMessage, clearPending } = useComposerSidebar();
   const routeContext = useDocContextFromRoute();
-  const [messages, setMessages] = useState<DisplayMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessageRich[]>([]);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [contextEnabled, setContextEnabled] = useState(true);
@@ -79,10 +89,11 @@ export function ComposerSidebar(): ReactElement {
   const sendMessage = useCallback(
     async (text: string): Promise<void> => {
       if (!text.trim() || streaming) return;
-      const userMsg: DisplayMessage = {
+      const trimmed = text.trim();
+      const userMsg: ChatMessageRich = {
         id: `u-${Date.now()}`,
         role: "user",
-        content: text.trim(),
+        blocks: [{ type: "text", text: trimmed }],
         streaming: false,
         at: Date.now(),
       };
@@ -92,14 +103,14 @@ export function ComposerSidebar(): ReactElement {
       const assistantMsgId = `a-${Date.now()}`;
       setMessages((prev) => [
         ...prev,
-        { id: assistantMsgId, role: "assistant", content: "", streaming: true, at: Date.now() },
+        { id: assistantMsgId, role: "assistant", blocks: [], streaming: true, at: Date.now() },
       ]);
       abortRef.current?.abort();
       const controller = new AbortController();
       abortRef.current = controller;
       const history: ChatMessage[] = [
-        ...messages.map((m) => ({ role: m.role, content: m.content })),
-        { role: "user", content: text.trim() },
+        ...messages.map((m) => ({ role: m.role, content: blocksToString(m.blocks) })),
+        { role: "user", content: trimmed },
       ];
       try {
         const ai = getAi();
@@ -107,29 +118,36 @@ export function ComposerSidebar(): ReactElement {
         const chatOpts = activeContext
           ? { context: activeContext, signal: controller.signal }
           : { signal: controller.signal };
+        // Helper qui ecrit le bloc texte courant dans le message assistant.
+        // Garantit qu'on a au plus UN bloc text dans blocks[] (les blocs
+        // thinking / tool_* sont inserted par d'autres types d'events quand
+        // l'API Claude les enverra - l'ordre d'arrivee sera respecte).
+        const setTextBlock = (content: string, isStreaming: boolean): void => {
+          setMessages((prev) =>
+            prev.map((m) => {
+              if (m.id !== assistantMsgId) return m;
+              const nonText = m.blocks.filter((b) => b.type !== "text");
+              const textBlock: ChatBlock = { type: "text", text: content };
+              return { ...m, blocks: [...nonText, textBlock], streaming: isStreaming };
+            })
+          );
+        };
         for await (const event of ai.chat(history, chatOpts)) {
           if (event.type === "delta") {
-            const delta = typeof event.data === "string" ? event.data : String(event.data);
+            // Historique - `String(event.data)` produisait "[object Object]" quand
+            // le provider CLI Rust envoie `data: { text: "..." }`. On route
+            // proprement via `extractDeltaText` qui gere mock (string) + CLI
+            // (object) + Anthropic SDK (delta.text / delta.thinking).
+            const delta = extractDeltaText(event.data);
+            if (!delta) continue;
             accumulated += delta;
-            setMessages((prev) =>
-              prev.map((m) => (m.id === assistantMsgId ? { ...m, content: accumulated } : m))
-            );
+            setTextBlock(accumulated, true);
           } else if (event.type === "done") {
-            const final = typeof event.data === "string" ? event.data : accumulated;
-            setMessages((prev) =>
-              prev.map((m) =>
-                m.id === assistantMsgId ? { ...m, content: final, streaming: false } : m
-              )
-            );
+            const final = extractFinalText(event.data, accumulated);
+            setTextBlock(final, false);
             break;
           } else if (event.type === "error") {
-            setMessages((prev) =>
-              prev.map((m) =>
-                m.id === assistantMsgId
-                  ? { ...m, content: `Erreur : ${event.message}`, streaming: false }
-                  : m
-              )
-            );
+            setTextBlock(`Erreur : ${event.message}`, false);
             break;
           }
         }
@@ -137,7 +155,13 @@ export function ComposerSidebar(): ReactElement {
         const msg = err instanceof Error ? err.message : String(err);
         setMessages((prev) =>
           prev.map((m) =>
-            m.id === assistantMsgId ? { ...m, content: `Erreur : ${msg}`, streaming: false } : m
+            m.id === assistantMsgId
+              ? {
+                  ...m,
+                  blocks: [{ type: "text", text: `Erreur : ${msg}` }],
+                  streaming: false,
+                }
+              : m
           )
         );
       } finally {
@@ -354,7 +378,7 @@ export function ComposerSidebar(): ReactElement {
           </div>
         )}
         {messages.map((msg) => (
-          <MessageBubble key={msg.id} message={msg} />
+          <ChatMessageView key={msg.id} message={msg} timestamp={formatTimestamp(msg.at)} />
         ))}
       </div>
 
@@ -471,59 +495,6 @@ export function ComposerSidebar(): ReactElement {
             {fr.composer.send}
           </button>
         </div>
-      </div>
-    </div>
-  );
-}
-
-function MessageBubble({ message }: { message: DisplayMessage }): ReactElement {
-  const isUser = message.role === "user";
-  return (
-    <div
-      data-testid={`composer-msg-${message.role}`}
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: isUser ? "flex-end" : "flex-start",
-        gap: tokens.spacing[1],
-      }}
-    >
-      <div
-        style={{
-          maxWidth: "85%",
-          border: `${tokens.stroke.hair} solid ${tokens.color.ink}`,
-          background: isUser ? tokens.color.accentSoft : tokens.color.paper,
-          padding: `${tokens.spacing[2]} ${tokens.spacing[3]}`,
-          fontFamily: tokens.font.ui,
-          fontSize: tokens.fontSize.sm,
-          color: tokens.color.ink,
-          whiteSpace: "pre-wrap",
-          wordBreak: "break-word",
-        }}
-      >
-        {message.content}
-        {message.streaming && (
-          <span
-            style={{
-              display: "inline-block",
-              width: 6,
-              height: 14,
-              background: tokens.color.ink,
-              marginLeft: 4,
-            }}
-          >
-            {" "}
-          </span>
-        )}
-      </div>
-      <div
-        style={{
-          fontFamily: tokens.font.mono,
-          fontSize: tokens.fontSize.xs,
-          color: tokens.color.muted,
-        }}
-      >
-        {formatTimestamp(message.at)}
       </div>
     </div>
   );
