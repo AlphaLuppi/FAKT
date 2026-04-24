@@ -252,10 +252,22 @@ export function QuoteDetailRoute(): ReactElement {
             variant="secondary"
             onClick={() => void navigate(`/quotes/${quote.id}/edit`)}
             disabled={!isDraft}
+            title={isDraft ? undefined : fr.quotes.detail.editDisabledTooltip}
+            aria-label={isDraft ? fr.quotes.actions.edit : fr.quotes.detail.editDisabledTooltip}
             data-testid="detail-edit"
           >
             {fr.quotes.actions.edit}
           </Button>
+          {!isDraft && (
+            <Button
+              variant="secondary"
+              onClick={() => void navigate(`/quotes/new?duplicateOf=${quote.id}`)}
+              title={fr.quotes.detail.duplicateHint}
+              data-testid="detail-duplicate"
+            >
+              {fr.quotes.actions.duplicate}
+            </Button>
+          )}
           <Button
             variant="primary"
             onClick={() => void handleDownload()}

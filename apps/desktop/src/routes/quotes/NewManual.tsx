@@ -3,8 +3,8 @@ import { fr } from "@fakt/shared";
 import type { DocumentUnit, UUID } from "@fakt/shared";
 import { Button } from "@fakt/ui";
 import type { ReactElement } from "react";
-import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router";
 import { quotesApi } from "../../features/doc-editor/quotes-api.js";
 import { QuoteForm, type QuoteFormValues } from "./QuoteForm.js";
 
@@ -20,8 +20,43 @@ function newId(): UUID {
 
 export function NewManual(): ReactElement {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const duplicateOf = searchParams.get("duplicateOf");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [initial, setInitial] = useState<Partial<QuoteFormValues> | undefined>(undefined);
+
+  useEffect(() => {
+    if (!duplicateOf) return;
+    let cancelled = false;
+    quotesApi
+      .get(duplicateOf)
+      .then((src) => {
+        if (!src || cancelled) return;
+        // Duplication : on copie tout sauf numéro/dates/statut — user repart en draft.
+        setInitial({
+          clientId: src.clientId,
+          title: src.title,
+          notes: src.notes ?? "",
+          items: src.items.map((it) => ({
+            id: `item-${it.id}-${Math.random().toString(36).slice(2, 6)}`,
+            position: it.position,
+            description: it.description,
+            quantity: it.quantity,
+            unitPriceCents: it.unitPriceCents,
+            unit: it.unit,
+            lineTotalCents: it.lineTotalCents,
+            serviceId: it.serviceId,
+          })),
+        });
+      })
+      .catch(() => {
+        /* silencieux : duplication best-effort */
+      });
+    return (): void => {
+      cancelled = true;
+    };
+  }, [duplicateOf]);
 
   async function handleSubmit(values: QuoteFormValues, issueNumber: boolean): Promise<void> {
     // Guard synchrone double-submit (cohérent avec Recap.tsx / IdentityTab).
@@ -112,6 +147,7 @@ export function NewManual(): ReactElement {
       </header>
 
       <QuoteForm
+        initial={initial}
         onSubmit={handleSubmit}
         onCancel={() => void navigate("/quotes")}
         submitting={submitting}
