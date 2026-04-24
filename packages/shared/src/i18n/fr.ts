@@ -507,7 +507,9 @@ export const fr = {
       titleInvoice: (numberAndClient: string) => `Signer la facture : ${numberAndClient}`,
       tabDraw: "Dessiner au trackpad",
       tabType: "Taper au clavier",
-      drawInstruction: "Signe dans la zone ci-dessous avec ton trackpad, ta souris ou ton stylet.",
+      drawInstruction:
+        "Signe dans la zone ci-dessous avec ton trackpad, ta souris ou ton stylet.",
+      drawUndoHint: "Ctrl+Z (ou ⌘+Z) pour annuler le dernier trait.",
       typeInstruction: "Saisis ton nom. Il sera converti en signature cursive pour le document.",
       typePlaceholder: "Tom Andrieu",
       ackLabel:

@@ -233,11 +233,27 @@ export function SignatureModal({
             fontFamily: tokens.font.ui,
             fontSize: tokens.fontSize.sm,
             color: tokens.color.ink,
+            display: "flex",
+            flexDirection: "column",
+            gap: tokens.spacing[1],
           }}
         >
-          {mode === "draw"
-            ? fr.signature.modal.drawInstruction
-            : fr.signature.modal.typeInstruction}
+          <span>
+            {mode === "draw"
+              ? fr.signature.modal.drawInstruction
+              : fr.signature.modal.typeInstruction}
+          </span>
+          {mode === "draw" && (
+            <span
+              style={{
+                fontSize: tokens.fontSize.xs,
+                color: tokens.color.muted,
+                fontFamily: tokens.font.mono,
+              }}
+            >
+              {fr.signature.modal.drawUndoHint}
+            </span>
+          )}
         </div>
 
         <div data-testid="signature-pane" style={{ display: "flex", justifyContent: "center" }}>
