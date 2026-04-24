@@ -40,7 +40,12 @@ function computeSummary(blocks: ExecBlock[], streaming: boolean): string {
 
   const parts: string[] = [];
   if (thinkings.length > 0) parts.push(`${thinkings.length} réflexion${thinkings.length > 1 ? "s" : ""}`);
-  if (toolUses.length > 0) parts.push(`${toolUses.length} outil${toolUses.length > 1 ? "s" : ""}`);
+  if (toolUses.length === 1 && toolUses[0]) {
+    // Un seul outil → afficher son nom pour donner du contexte dès le collapse.
+    parts.push(`outil ${toolUses[0].name}`);
+  } else if (toolUses.length > 1) {
+    parts.push(`${toolUses.length} outils`);
+  }
   if (parts.length === 0) return `${blocks.length} étape${blocks.length > 1 ? "s" : ""}`;
   return parts.join(" · ");
 }

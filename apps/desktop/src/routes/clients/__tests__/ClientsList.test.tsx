@@ -61,6 +61,7 @@ vi.mock("@fakt/design-tokens", () => ({
     fontWeight: { bold: "700", black: "800" },
     spacing: { 1: "4px", 2: "8px", 3: "12px", 4: "16px", 5: "20px" },
     stroke: { base: "2px" },
+    shadow: { sm: "3px 3px 0 #000", base: "5px 5px 0 #000", lg: "8px 8px 0 #000" },
   },
 }));
 
