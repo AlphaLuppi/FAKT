@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { DbInstance } from "@fakt/db/adapter";
 import {
   createQuote,
@@ -5,6 +6,7 @@ import {
   getClient,
   getQuote,
   getWorkspace,
+  insertActivity,
   listQuotes,
   nextNumberAtomic,
   peekNextNumber,
@@ -150,12 +152,23 @@ quotesRoutes.delete("/:id", (c) => {
   return c.body(null, 204);
 });
 
-/** POST /api/quotes/:id/issue — draft → sent + numérotation atomique. */
+/**
+ * POST /api/quotes/:id/issue — attribue un numero sequentiel atomique (CGI
+ * art. 289) sans changer le statut. Le devis reste en `draft` avec son numero
+ * D{year}-{seq}. Bascule vers `sent` se fait ensuite explicitement via
+ * /mark-sent (bouton "Marquer comme envoye" cote UI, aucun email n'est envoye
+ * en MVP).
+ *
+ * 422 si le devis a deja un numero (reissue interdit) ou si status != draft.
+ */
 quotesRoutes.post("/:id/issue", (c) => {
   const id = parseParam(c, "id", uuidSchema);
   const existing = requireQuote(c.var.db, id);
   if (existing.status !== "draft") {
     throw invalidTransition(`quote ${id} déjà émis (status=${existing.status})`);
+  }
+  if (existing.number) {
+    throw invalidTransition(`quote ${id} déjà numéroté (${existing.number})`);
   }
   // Garde : un devis à 0€ émis occupe un slot de numérotation sans
   // contrepartie économique — anti-pattern. Bloquer à l'émission.
@@ -172,8 +185,50 @@ quotesRoutes.post("/:id/issue", (c) => {
     year: numberResult.year,
     sequence: numberResult.sequence,
   });
-  const issued = transitionQuoteOr422(c.var.db, id, "sent");
-  return c.json(issued);
+  const updated = getQuote(c.var.db, id);
+  if (!updated) throw notFound(`quote ${id} introuvable apres issue`);
+  return c.json(updated);
+});
+
+/**
+ * POST /api/quotes/:id/mark-sent — bascule manuelle draft -> sent.
+ * Aucun email n'est envoye (FAKT MVP = draft email multi-OS, pas d'envoi
+ * automatique). L'action enregistre issuedAt si non deja set et cree un
+ * activity event `quote_marked_sent`.
+ */
+quotesRoutes.post("/:id/mark-sent", (c) => {
+  const id = parseParam(c, "id", uuidSchema);
+  const existing = requireQuote(c.var.db, id);
+  const updated = transitionQuoteOr422(c.var.db, id, "sent");
+  insertActivity(c.var.db, {
+    id: randomUUID(),
+    workspaceId: existing.workspaceId,
+    type: "quote_marked_sent",
+    entityType: "quote",
+    entityId: id,
+    payload: null,
+  });
+  return c.json(updated);
+});
+
+/**
+ * POST /api/quotes/:id/unmark-sent — rollback sent -> draft (aucun email
+ * reellement envoye, donc sans consequence legale). Conserve le numero
+ * deja attribue. Cree un activity event `quote_unmarked_sent`.
+ */
+quotesRoutes.post("/:id/unmark-sent", (c) => {
+  const id = parseParam(c, "id", uuidSchema);
+  const existing = requireQuote(c.var.db, id);
+  const updated = transitionQuoteOr422(c.var.db, id, "draft");
+  insertActivity(c.var.db, {
+    id: randomUUID(),
+    workspaceId: existing.workspaceId,
+    type: "quote_unmarked_sent",
+    entityType: "quote",
+    entityId: id,
+    payload: null,
+  });
+  return c.json(updated);
 });
 
 /** POST /api/quotes/:id/expire — sent/viewed → expired. */

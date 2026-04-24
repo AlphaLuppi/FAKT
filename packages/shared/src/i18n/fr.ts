@@ -163,6 +163,7 @@ export const fr = {
       issue: "Émettre et attribuer un numéro",
       send: "Envoyer",
       markSent: "Marquer envoyé",
+      unmarkSent: "Annuler envoi",
       duplicate: "Dupliquer",
       createInvoice: "Créer une facture",
       archive: "Archiver",
@@ -254,6 +255,13 @@ export const fr = {
         "Le devis passera au statut « Envoyé » et ne sera plus modifiable directement. Le client pourra ensuite signer, refuser ou laisser expirer le devis.",
       markSentSuccess: "Devis marqué comme envoyé.",
       markSentError: "Impossible de marquer le devis comme envoyé.",
+      unmarkSentTitle: "Annuler l'envoi du devis ?",
+      unmarkSentBody:
+        "Le devis reviendra au statut « Brouillon » et redeviendra modifiable. Le numéro d'émission attribué reste inchangé. Aucun email n'a été envoyé depuis l'app (pas d'intégration email en MVP).",
+      unmarkSentSuccess: "Envoi du devis annulé.",
+      unmarkSentError: "Impossible d'annuler l'envoi du devis.",
+      pdfSaved: "PDF enregistré.",
+      pdfSaveFailed: "Impossible d'enregistrer le PDF.",
     },
     empty: "Aucun devis pour le moment. Crée ton premier devis avec l'IA.",
     errors: {
@@ -389,6 +397,8 @@ export const fr = {
         "La facture passera au statut « Envoyée ». Elle sera en attente de paiement jusqu'à la date d'échéance.",
       markSentSuccess: "Facture marquée comme envoyée.",
       markSentError: "Impossible de marquer la facture comme envoyée.",
+      pdfSaved: "PDF enregistré.",
+      pdfSaveFailed: "Impossible d'enregistrer le PDF.",
     },
     empty: "Aucune facture pour le moment.",
     errors: {
@@ -648,7 +658,8 @@ export const fr = {
       title: "Sessions IA",
       description:
         "Historique des appels IA (génération de devis, chat, brouillon d'email). Utile pour diagnostiquer les erreurs silencieuses.",
-      empty: "Aucune session IA pour le moment. Lance une génération de devis ou ouvre le chat IA pour voir apparaître les runs ici.",
+      empty:
+        "Aucune session IA pour le moment. Lance une génération de devis ou ouvre le chat IA pour voir apparaître les runs ici.",
       refresh: "Rafraîchir",
       clearHistory: "Vider l'historique",
       autoRefresh: "Rafraîchissement auto",

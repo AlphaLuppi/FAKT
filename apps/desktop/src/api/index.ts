@@ -4,6 +4,7 @@ import { clientsApi } from "./clients.js";
 import { invoicesApi } from "./invoices.js";
 import { numberingApi } from "./numbering.js";
 import { quotesApi } from "./quotes.js";
+import { searchApi } from "./search.js";
 import { servicesApi } from "./services.js";
 import { settingsApi } from "./settings.js";
 import { signaturesApi } from "./signatures.js";
@@ -26,6 +27,7 @@ export { invoicesApi } from "./invoices.js";
 export { settingsApi } from "./settings.js";
 export { numberingApi } from "./numbering.js";
 export { activityApi } from "./activity.js";
+export { searchApi, type SearchHit, type SearchResponse } from "./search.js";
 export { signaturesApi } from "./signatures.js";
 export { backupsApi } from "./backups.js";
 
@@ -84,6 +86,7 @@ export const api = {
   settings: settingsApi,
   numbering: numberingApi,
   activity: activityApi,
+  search: searchApi,
   signatures: signaturesApi,
   backups: backupsApi,
 } as const;

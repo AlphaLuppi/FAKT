@@ -1,9 +1,16 @@
 import type { InvoiceStatus, QuoteStatus } from "@fakt/shared";
 
-/** Transitions valides pour les devis. */
+/**
+ * Transitions valides pour les devis.
+ *
+ * Note 2026-04-24 : `sent -> draft` est une transition reversible legitime.
+ * L'utilisateur peut "annuler envoi" s'il a coche par erreur "Marque comme
+ * envoye" (aucun email n'a ete envoye cote app MVP, donc le rollback est sans
+ * consequence legale). Le devis conserve son numero d'emission attribue.
+ */
 const QUOTE_TRANSITIONS: Record<QuoteStatus, QuoteStatus[]> = {
   draft: ["sent"],
-  sent: ["viewed", "signed", "refused", "expired", "invoiced"],
+  sent: ["viewed", "signed", "refused", "expired", "invoiced", "draft"],
   viewed: ["signed", "refused", "expired"],
   signed: ["invoiced"],
   invoiced: [],

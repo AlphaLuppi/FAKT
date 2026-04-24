@@ -142,11 +142,19 @@ export function InvoiceDetailRoute(): ReactElement {
       });
       const filename = `Facture-${invoice.number ?? "draft"}-${slugify(client.name)}.pdf`;
       const path = await pdfApi.saveDialog(filename);
-      if (path) {
+      if (!path) return; // user annule dialog, pas d'erreur
+      try {
         await pdfApi.writeFile(path, bytes);
+        toast.success(fr.invoices.detail.pdfSaved);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : fr.invoices.detail.pdfSaveFailed;
+        setPdfError(msg);
+        toast.error(`${fr.invoices.detail.pdfSaveFailed} — ${msg}`);
       }
     } catch (err) {
-      setPdfError(err instanceof Error ? err.message : fr.invoices.errors.pdfFailed);
+      const msg = err instanceof Error ? err.message : fr.invoices.errors.pdfFailed;
+      setPdfError(msg);
+      toast.error(msg);
     }
   }
 

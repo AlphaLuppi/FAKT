@@ -1,8 +1,7 @@
-import { IPC_COMMANDS } from "@fakt/shared";
 import type { Client, Invoice, Quote, Service } from "@fakt/shared";
 import type { CommandItem } from "@fakt/ui";
-import { invoke } from "@tauri-apps/api/core";
 import { useEffect, useRef, useState } from "react";
+import { api } from "../../api/index.js";
 
 export type EntityCategory = "clients" | "prestations" | "devis" | "factures";
 
@@ -29,19 +28,22 @@ const sharedIndex: IndexStore = {
   loadedAt: null,
 };
 
-/** Pré-charge l'index au démarrage de l'app (appelé depuis le Shell). */
+/**
+ * Pre-charge l'index au demarrage de l'app (appele depuis le Shell).
+ *
+ * Bug 2026-04-24 : l'ancienne version utilisait `invoke(IPC_COMMANDS.LIST_*)`
+ * qui n'existe PAS cote Rust -> chaque appel echouait silencieusement dans
+ * le `.catch(() => [])` et la palette restait vide. Desormais on utilise le
+ * sidecar HTTP qui expose les vraies donnees DB.
+ */
 export async function preloadSearchIndex(): Promise<void> {
   const start = performance.now();
 
   const [clients, prestations, quotes, invoices] = await Promise.all([
-    invoke<Client[]>(IPC_COMMANDS.LIST_CLIENTS, { includeSoftDeleted: false }).catch(
-      () => [] as Client[]
-    ),
-    invoke<Service[]>(IPC_COMMANDS.LIST_SERVICES, { includeSoftDeleted: false }).catch(
-      () => [] as Service[]
-    ),
-    invoke<Quote[]>(IPC_COMMANDS.LIST_QUOTES, {}).catch(() => [] as Quote[]),
-    invoke<Invoice[]>(IPC_COMMANDS.LIST_INVOICES, {}).catch(() => [] as Invoice[]),
+    api.clients.list({ includeSoftDeleted: false }).catch(() => [] as Client[]),
+    api.services.list({ includeSoftDeleted: false }).catch(() => [] as Service[]),
+    api.quotes.list({}).catch(() => [] as Quote[]),
+    api.invoices.list({}).catch(() => [] as Invoice[]),
   ]);
 
   sharedIndex.clients = clients;
@@ -145,8 +147,12 @@ interface UseCommandPaletteIndexResult {
   refresh: () => Promise<void>;
 }
 
+/** Delai de debounce applique a l'input query (ms). */
+const DEBOUNCE_MS = 200;
+
 export function useCommandPaletteIndex(): UseCommandPaletteIndexResult {
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [items, setItems] = useState<SearchResult[]>([]);
   const isLoadingRef = useRef(false);
 
@@ -158,18 +164,23 @@ export function useCommandPaletteIndex(): UseCommandPaletteIndexResult {
     } finally {
       isLoadingRef.current = false;
     }
-    setItems(buildItems(sharedIndex, query));
+    setItems(buildItems(sharedIndex, debouncedQuery));
   };
 
   useEffect(() => {
-    // Si l'index n'est pas chargé, le charger
+    const handle = setTimeout(() => setDebouncedQuery(query), DEBOUNCE_MS);
+    return (): void => clearTimeout(handle);
+  }, [query]);
+
+  useEffect(() => {
+    // Si l'index n'est pas charge, le charger (1ere ouverture Cmd+K).
     if (!sharedIndex.loadedAt) {
       void refresh();
     } else {
-      setItems(buildItems(sharedIndex, query));
+      setItems(buildItems(sharedIndex, debouncedQuery));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query]);
+  }, [debouncedQuery]);
 
   return { items, setQuery, refresh };
 }
