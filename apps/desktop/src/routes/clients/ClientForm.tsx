@@ -7,6 +7,7 @@ import type { ReactElement } from "react";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { SiretCheckerField } from "../../components/siret-checker/index.js";
 
 const LEGAL_FORM_OPTIONS = [
   { value: "", label: "— Forme juridique —" },
@@ -52,6 +53,7 @@ export function ClientForm({ open, onClose, onSubmit, initial }: ClientFormProps
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<ClientFormValues>({
     resolver: zodResolver(clientFormSchema),
@@ -130,10 +132,11 @@ export function ClientForm({ open, onClose, onSubmit, initial }: ClientFormProps
           label={fr.clients.labels.siret}
           invalid={!!errors.siret}
           hint={errors.siret?.message ?? "14 chiffres — optionnel"}
-          placeholder="XXX XXX XXX XXXXX"
+          placeholder="732 829 320 00074"
           style={{ fontFamily: "var(--font-mono)" }}
           {...register("siret")}
         />
+        <SiretCheckerField control={control} name="siret" />
 
         <Textarea
           label={fr.clients.labels.address}

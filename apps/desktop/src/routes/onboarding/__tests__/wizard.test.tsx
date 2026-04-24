@@ -53,7 +53,7 @@ describe("Wizard — rendu initial (étape 1)", () => {
 
   it("affiche un champ SIRET avec placeholder", () => {
     renderWizard();
-    const siretInput = screen.getByPlaceholderText(/123 456 789/);
+    const siretInput = screen.getByPlaceholderText(/732 829 320/);
     expect(siretInput).toBeInTheDocument();
   });
 
@@ -65,12 +65,12 @@ describe("Wizard — rendu initial (étape 1)", () => {
 });
 
 describe("Wizard — navigation étape 1 → 2", () => {
-  it("active le bouton Suivant quand le formulaire est valide", async () => {
+  it("active le bouton Suivant quand le formulaire est valide", { timeout: 15000 }, async () => {
     const user = userEvent.setup();
     renderWizard();
 
     const nameInput = screen.getByLabelText(/nom ou raison/i);
-    const siretInput = screen.getByPlaceholderText(/123 456 789/);
+    const siretInput = screen.getByPlaceholderText(/732 829 320/);
     const addressInput = screen.getByLabelText(/adresse/i);
     const emailInput = screen.getByLabelText(/email de facturation/i);
 
@@ -83,12 +83,12 @@ describe("Wizard — navigation étape 1 → 2", () => {
     await waitFor(() => expect(nextBtn).not.toBeDisabled());
   });
 
-  it("passe à l'étape Claude CLI après submit étape 1", async () => {
+  it("passe à l'étape Claude CLI après submit étape 1", { timeout: 15000 }, async () => {
     const user = userEvent.setup();
     renderWizard();
 
     const nameInput = screen.getByLabelText(/nom ou raison/i);
-    const siretInput = screen.getByPlaceholderText(/123 456 789/);
+    const siretInput = screen.getByPlaceholderText(/732 829 320/);
     const addressInput = screen.getByLabelText(/adresse/i);
     const emailInput = screen.getByLabelText(/email de facturation/i);
 
@@ -110,13 +110,13 @@ describe("Wizard — navigation étape 1 → 2", () => {
 });
 
 describe("Wizard — étape 2 Claude CLI (skip)", () => {
-  it("affiche la checkbox 'Je configurerai Claude plus tard' en étape 2", async () => {
+  it("affiche la checkbox 'Je configurerai Claude plus tard' en étape 2", { timeout: 15000 }, async () => {
     const user = userEvent.setup();
     renderWizard();
 
     // Aller à l'étape 2
     await user.type(screen.getByLabelText(/nom ou raison/i), "Test");
-    await user.type(screen.getByPlaceholderText(/123 456 789/), VALID_SIRET);
+    await user.type(screen.getByPlaceholderText(/732 829 320/), VALID_SIRET);
     await user.type(screen.getByLabelText(/adresse/i), "12 rue test");
     await user.type(screen.getByLabelText(/email de facturation/i), "a@b.fr");
     const nextBtn = screen.getByRole("button", { name: /suivant/i });

@@ -7,6 +7,7 @@ import type { ReactElement } from "react";
 import { useEffect, useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
 import { api } from "../../../api/index.js";
+import { SiretCheckerField } from "../../../components/siret-checker/index.js";
 import { LEGAL_FORM_OPTIONS, identitySchema } from "../../onboarding/validators.js";
 import type { IdentityFormValues } from "../../onboarding/validators.js";
 
@@ -44,6 +45,7 @@ export function IdentityTab({ workspace, onSaved }: Props): ReactElement {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors, isDirty },
   } = useForm<IdentityFormValues>({
     resolver: zodResolver(identitySchema),
@@ -110,9 +112,11 @@ export function IdentityTab({ workspace, onSaved }: Props): ReactElement {
         label={fr.settings.workspace.siret}
         invalid={!!errors.siret}
         hint={errors.siret?.message}
+        placeholder="732 829 320 00074"
         style={{ fontFamily: "var(--font-mono)" }}
         {...register("siret")}
       />
+      <SiretCheckerField control={control} name="siret" />
 
       <Textarea
         label={fr.settings.workspace.address}

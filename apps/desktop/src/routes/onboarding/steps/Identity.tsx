@@ -5,6 +5,7 @@ import type { ReactElement } from "react";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { ApiError, api } from "../../../api/index.js";
+import { SiretCheckerField } from "../../../components/siret-checker/index.js";
 import { useOnboarding } from "../context.js";
 import { LEGAL_FORM_OPTIONS, identitySchema } from "../validators.js";
 import type { IdentityFormValues } from "../validators.js";
@@ -20,6 +21,7 @@ export function IdentityStep({ onNext }: Props): ReactElement {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors, isValid },
   } = useForm<IdentityFormValues>({
     resolver: zodResolver(identitySchema),
@@ -107,13 +109,14 @@ export function IdentityStep({ onNext }: Props): ReactElement {
       <Input
         label={fr.onboarding.step1.fields.siret}
         invalid={!!errors.siret}
-        hint={errors.siret?.message ?? "14 chiffres — ex : 123 456 789 00012"}
-        placeholder="123 456 789 00012"
+        hint={errors.siret?.message ?? "14 chiffres — ex : 732 829 320 00074"}
+        placeholder="732 829 320 00074"
         maxLength={17}
         inputMode="numeric"
         style={{ fontFamily: "var(--font-mono)" }}
         {...register("siret")}
       />
+      <SiretCheckerField control={control} name="siret" />
 
       <Textarea
         label={fr.onboarding.step1.fields.address}
