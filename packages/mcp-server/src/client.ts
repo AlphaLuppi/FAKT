@@ -29,22 +29,38 @@ interface ErrorBody {
   error?: { code?: string; message?: string; details?: unknown };
 }
 
-function getBaseUrl(): string {
-  const url = process.env["FAKT_API_URL"];
+/**
+ * Récupère url/token depuis args positionnels ou env vars.
+ *
+ * Claude CLI (surtout sur Windows) droppe parfois les `env` déclarées dans
+ * `mcp-config.json` au moment du spawn child. Les args positionnels
+ * (`bun run index.ts <url> <token>`) sont 100% fiables — le fallback env
+ * reste utile pour les clients MCP qui ne supportent pas les args custom.
+ */
+function getCreds(): { url: string; token: string } {
+  const argUrl = process.argv[2];
+  const argToken = process.argv[3];
+  const url = argUrl ?? process.env["FAKT_API_URL"];
+  const token = argToken ?? process.env["FAKT_API_TOKEN"];
   if (!url || url.length === 0) {
     throw new Error(
-      "FAKT_API_URL absent — le MCP server doit être lancé par Claude CLI via spawn_claude (Tauri)."
+      "FAKT_API_URL manquant — passer via argv[2] ou env. Le MCP server doit être lancé par Tauri spawn_claude."
     );
   }
-  return url.replace(/\/$/, "");
+  if (!token || token.length === 0) {
+    throw new Error(
+      "FAKT_API_TOKEN manquant — passer via argv[3] ou env. Impossible de contacter le sidecar."
+    );
+  }
+  return { url: url.replace(/\/$/, ""), token };
+}
+
+function getBaseUrl(): string {
+  return getCreds().url;
 }
 
 function getToken(): string {
-  const token = process.env["FAKT_API_TOKEN"];
-  if (!token || token.length === 0) {
-    throw new Error("FAKT_API_TOKEN absent — impossible de contacter le sidecar.");
-  }
-  return token;
+  return getCreds().token;
 }
 
 type QueryValue = string | number | boolean | undefined | null;

@@ -225,12 +225,23 @@ fn write_mcp_config_file(api_url: &str, api_token: &str) -> std::io::Result<Opti
         env.insert("PATH".to_string(), path);
     }
 
+    // Args positionnels en plus des env : sur Windows, Claude CLI droppe
+    // parfois les env du child MCP. On passe donc url + token aussi en argv
+    // pour garantir la transmission (le client.ts du MCP a un fallback
+    // argv → env, avec priorité argv).
+    let args = vec![
+        "run".to_string(),
+        entry.to_string_lossy().into_owned(),
+        api_url.to_string(),
+        api_token.to_string(),
+    ];
+
     let mut servers = std::collections::HashMap::new();
     servers.insert(
         "fakt".to_string(),
         McpServerEntry {
             command: resolve_bun_binary(),
-            args: vec!["run".to_string(), entry.to_string_lossy().into_owned()],
+            args,
             env,
         },
     );
