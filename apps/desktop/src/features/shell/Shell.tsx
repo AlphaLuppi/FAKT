@@ -114,6 +114,9 @@ function Sidebar(): ReactElement {
     >
       <div style={{ padding: "18px 10px 8px" }}>
         <button
+          type="button"
+          onClick={() => void navigate("/quotes/new?mode=ai")}
+          data-testid="sidebar-new-with-ai"
           style={{
             width: "100%",
             display: "flex",
