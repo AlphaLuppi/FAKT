@@ -7,6 +7,48 @@ et [Semantic Versioning 2.0.0](https://semver.org/lang/fr/).
 
 ---
 
+## [0.1.5] - 2026-04-24
+
+Release finale de la nuit de hardening. Ajoute les guards double-submit sur
+l'ensemble des formulaires sensibles identifiés après l'audit — risque rare
+en pratique (React mono-thread + Tauri single webview) mais qui pouvait
+allouer deux numéros CGI consécutifs pour un seul devis/facture en cas de
+double-clic très rapide, brisant la garantie « pas de trou dans la séquence ».
+
+### Fixed
+
+- **Guard synchrone `if (submitting) return`** sur les 7 formulaires
+  create/edit :
+  - `quotes/NewManual.tsx` (POST /api/quotes manuel)
+  - `quotes/NewAi.tsx` (POST /api/quotes depuis IA)
+  - `quotes/Edit.tsx` (PATCH /api/quotes/:id draft)
+  - `invoices/NewScratch.tsx` (POST /api/invoices direct)
+  - `invoices/NewFromQuote.tsx` (POST /api/invoices/from-quote)
+  - `invoices/Edit.tsx` (PATCH /api/invoices/:id draft)
+  - `settings/tabs/IdentityTab.tsx` (déjà fixé en 0.1.4)
+  - `onboarding/steps/Recap.tsx` (déjà fixé en 0.1.3)
+- **Guard sur 3 handlers Detail** sensibles à la numérotation séquentielle :
+  - `quotes/Detail.tsx#handleMarkSent` (émission devis → numéro D)
+  - `invoices/Detail.tsx#handleMarkSent` (émission facture → numéro F)
+  - `invoices/Detail.tsx#handleMarkPaid` (enregistrement paiement)
+
+Protection complémentaire à la numérotation atomique côté API (`BEGIN
+IMMEDIATE` SQLite) déjà en place depuis v0.1.3 : **double protection UI + DB**
+pour CGI art. 289.
+
+### Changed
+
+- `API_VERSION` `0.1.4` → `0.1.5`.
+
+### Developer notes
+
+- Mission de nuit hardening terminée. Bilan : 10 commits atomiques DCO+GPG,
+  5 releases (0.1.1 → 0.1.5), 776 tests passed, 0 failed, lint clean,
+  `cargo audit` clean avec 2 CVE documentées, bundle MSI Windows validé en
+  build release local + CI.
+
+---
+
 ## [0.1.4] - 2026-04-24
 
 Patch : chasse aux Tauri commands fantômes dans l'écran Settings. v0.1.3
