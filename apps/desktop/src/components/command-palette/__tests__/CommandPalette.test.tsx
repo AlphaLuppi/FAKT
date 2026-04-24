@@ -3,8 +3,9 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { MemoryRouter } from "react-router";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CommandPaletteProvider, useCommandPalette } from "../CommandPaletteProvider.js";
+import { invalidateSearchIndex } from "../useCommandPaletteIndex.js";
 
 const mockClients: Client[] = [
   {
@@ -38,14 +39,17 @@ const mockServices: Service[] = [
   },
 ];
 
-vi.mock("@tauri-apps/api/core", () => ({
-  invoke: vi.fn().mockImplementation((command: string) => {
-    if (command === "list_clients") return Promise.resolve(mockClients);
-    if (command === "list_services") return Promise.resolve(mockServices);
-    if (command === "list_quotes") return Promise.resolve([]);
-    if (command === "list_invoices") return Promise.resolve([]);
-    return Promise.resolve([]);
-  }),
+// Depuis 2026-04-24 : useCommandPaletteIndex utilise le sidecar HTTP (api.*)
+// et non plus `invoke(list_clients)` (commande Tauri inexistante -> rien
+// ne remontait dans la palette). On mocke donc l'objet `api` exporte depuis
+// ../../../api/index.js.
+vi.mock("../../../api/index.js", () => ({
+  api: {
+    clients: { list: vi.fn(async () => mockClients) },
+    services: { list: vi.fn(async () => mockServices) },
+    quotes: { list: vi.fn(async () => [] as never[]) },
+    invoices: { list: vi.fn(async () => [] as never[]) },
+  },
 }));
 
 vi.mock("@fakt/design-tokens", () => ({
@@ -84,6 +88,11 @@ const renderProvider = (): ReturnType<typeof render> =>
   );
 
 describe("CommandPaletteProvider", () => {
+  beforeEach(() => {
+    // Reset l'index shared entre chaque test pour forcer le reload.
+    invalidateSearchIndex();
+  });
+
   it("s'ouvre via le bouton", async () => {
     renderProvider();
     await userEvent.click(screen.getByText("Ouvrir"));

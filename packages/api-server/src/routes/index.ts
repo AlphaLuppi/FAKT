@@ -7,5 +7,6 @@ export { numberingRoutes } from "./numbering.js";
 export { quotesRoutes } from "./quotes.js";
 export { invoicesRoutes } from "./invoices.js";
 export { activityRoutes } from "./activity.js";
+export { searchRoutes } from "./search.js";
 export { signaturesRoutes } from "./signatures.js";
 export { backupsRoutes } from "./backups.js";

@@ -9,6 +9,7 @@ import {
   invoicesRoutes,
   numberingRoutes,
   quotesRoutes,
+  searchRoutes,
   servicesRoutes,
   settingsRoutes,
   signaturesRoutes,
@@ -88,6 +89,7 @@ export function createApp(config: AppConfig): Hono<AppEnv> {
   app.route("/api/quotes", quotesRoutes);
   app.route("/api/invoices", invoicesRoutes);
   app.route("/api/activity", activityRoutes);
+  app.route("/api/search", searchRoutes);
   app.route("/api", signaturesRoutes);
   app.route("/api/backups", backupsRoutes);
 
