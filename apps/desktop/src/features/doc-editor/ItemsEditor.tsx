@@ -219,11 +219,11 @@ function filterPrestations(
   prestations: ReadonlyArray<Service>
 ): AutocompleteOption<Service>[] {
   const q = query.trim().toLowerCase();
-  if (q.length < 2) return [];
   const matches: AutocompleteOption<Service>[] = [];
   for (const p of prestations) {
     const haystack = `${p.name} ${p.description ?? ""}`.toLowerCase();
-    if (haystack.includes(q)) {
+    // Query vide → retourne les N premières prestations (focus sans saisie).
+    if (q.length === 0 || haystack.includes(q)) {
       matches.push({
         value: p.id,
         label: `${p.name} · ${formatEur(p.unitPriceCents)} / ${p.unit}`,
@@ -276,7 +276,7 @@ function ItemRow(props: ItemRowProps): ReactElement {
           onChange={(v) => onUpdate({ description: v })}
           onSelect={(opt) => onApplyPrestation(opt.value)}
           suggestions={prestations && prestations.length > 0 ? suggestions : []}
-          minChars={2}
+          minChars={0}
           ariaLabel={fr.quotes.form.description}
           disabled={readOnly}
           data-testid={`item-description-${idx}`}

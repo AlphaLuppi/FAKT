@@ -210,11 +210,11 @@ export function Autocomplete<T = unknown>(props: AutocompleteProps<T>): ReactEle
                 onMouseEnter={(): void => setHighlighted(idx)}
                 data-testid={`${testId ?? "autocomplete"}-option-${idx}`}
                 style={{
-                  padding: `${tokens.spacing[2]} ${tokens.spacing[3]}`,
+                  padding: `${tokens.spacing[3]} ${tokens.spacing[4]}`,
                   fontFamily: tokens.font.ui,
                   fontSize: tokens.fontSize.sm,
-                  color: isHighlighted ? tokens.color.accentSoft : tokens.color.ink,
-                  background: isHighlighted ? tokens.color.ink : tokens.color.surface,
+                  color: tokens.color.ink,
+                  background: isHighlighted ? tokens.color.paper2 : tokens.color.surface,
                   cursor: "pointer",
                   borderBottom:
                     idx < suggestions.length - 1 ? `1.5px solid ${tokens.color.line}` : "none",

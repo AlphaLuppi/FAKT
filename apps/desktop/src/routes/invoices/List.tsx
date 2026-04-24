@@ -276,7 +276,7 @@ export function InvoicesListRoute(): ReactElement {
                 }}
                 data-testid="new-invoice-from-quote"
                 className="fakt-btn fakt-btn--ghost"
-                style={{ justifyContent: "flex-start", height: 40 }}
+                style={{ justifyContent: "flex-start", height: 40, paddingInline: 16 }}
               >
                 {fr.invoices.newMenu.fromQuote}
               </button>
@@ -289,7 +289,7 @@ export function InvoicesListRoute(): ReactElement {
                 }}
                 data-testid="new-invoice-from-scratch"
                 className="fakt-btn fakt-btn--ghost"
-                style={{ justifyContent: "flex-start", height: 40 }}
+                style={{ justifyContent: "flex-start", height: 40, paddingInline: 16 }}
               >
                 {fr.invoices.newMenu.fromScratch}
               </button>

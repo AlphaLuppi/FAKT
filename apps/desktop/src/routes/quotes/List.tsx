@@ -307,7 +307,7 @@ export function QuotesListRoute(): ReactElement {
                 }}
                 data-testid="new-quote-manual"
                 className="fakt-btn fakt-btn--ghost"
-                style={{ justifyContent: "flex-start", height: 40 }}
+                style={{ justifyContent: "flex-start", height: 40, paddingInline: 16 }}
               >
                 {fr.quotes.newMenu.manual}
               </button>
@@ -320,7 +320,7 @@ export function QuotesListRoute(): ReactElement {
                 }}
                 data-testid="new-quote-ai"
                 className="fakt-btn fakt-btn--ghost"
-                style={{ justifyContent: "flex-start", height: 40 }}
+                style={{ justifyContent: "flex-start", height: 40, paddingInline: 16 }}
               >
                 {fr.quotes.newMenu.ai}
               </button>
