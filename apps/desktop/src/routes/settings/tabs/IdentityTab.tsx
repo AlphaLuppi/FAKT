@@ -1,3 +1,4 @@
+import { normalizeSiret } from "@fakt/legal";
 import { fr } from "@fakt/shared";
 import type { Workspace } from "@fakt/shared";
 import { Button, Input, Select, Textarea, toast } from "@fakt/ui";
@@ -5,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import type { ReactElement } from "react";
 import { useEffect, useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
+import { api } from "../../../api/index.js";
 import { LEGAL_FORM_OPTIONS, identitySchema } from "../../onboarding/validators.js";
 import type { IdentityFormValues } from "../../onboarding/validators.js";
 
@@ -13,9 +15,26 @@ interface Props {
   onSaved?: (updated: Workspace) => void;
 }
 
+/**
+ * Persiste les settings identity via le sidecar Bun+Hono.
+ * Note historique : utilisait auparavant un command Tauri `update_workspace`
+ * qui n'était PAS implémenté côté Rust — toute sauvegarde plantait
+ * silencieusement. Switch vers l'API sidecar (cohérent avec le flow
+ * onboarding `api.workspace.update`).
+ */
 async function invokeSave(data: IdentityFormValues): Promise<Workspace> {
-  const { invoke } = await import("@tauri-apps/api/core");
-  return invoke<Workspace>("update_workspace", { input: data });
+  const payload = {
+    name: data.name,
+    legalForm: data.legalForm,
+    // Normalise : l'UI accepte "853 665 842 00029" avec espaces, mais l'API
+    // attend le SIRET nu. Le schema API fait aussi un transform défensif mais
+    // on envoie propre ici (cohérent avec Recap.tsx).
+    siret: normalizeSiret(data.siret),
+    address: data.address,
+    email: data.email,
+    iban: data.iban && data.iban.length > 0 ? data.iban : null,
+  };
+  return api.workspace.update(payload);
 }
 
 export function IdentityTab({ workspace, onSaved }: Props): ReactElement {
@@ -47,6 +66,9 @@ export function IdentityTab({ workspace, onSaved }: Props): ReactElement {
   }, [workspace, reset]);
 
   const onSubmit: SubmitHandler<IdentityFormValues> = async (values): Promise<void> => {
+    // Guard synchrone avant le setState pour empêcher double-submit si React
+    // batche les renders (même pattern que Recap.tsx).
+    if (saving) return;
     setSaving(true);
     try {
       const updated = await invokeSave(values);
