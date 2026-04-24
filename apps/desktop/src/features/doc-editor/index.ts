@@ -12,6 +12,9 @@ export type { ItemsEditorProps, EditableItem } from "./ItemsEditor.js";
 export { ClientPicker } from "./ClientPicker.js";
 export type { ClientPickerProps } from "./ClientPicker.js";
 
+export { QuickClientModal } from "./QuickClientModal.js";
+export type { QuickClientModalProps } from "./QuickClientModal.js";
+
 export { InvoiceForm, invoiceToFormValues } from "./InvoiceForm.js";
 export type {
   InvoiceFormProps,

@@ -5,7 +5,12 @@ import type { Quote, UUID } from "@fakt/shared";
 import { Button, Input, Textarea } from "@fakt/ui";
 import type { ReactElement } from "react";
 import { useEffect, useMemo, useState } from "react";
-import { ClientPicker, type EditableItem, ItemsEditor } from "../../features/doc-editor/index.js";
+import {
+  ClientPicker,
+  type EditableItem,
+  ItemsEditor,
+  QuickClientModal,
+} from "../../features/doc-editor/index.js";
 import { useClientsList, usePrestationsList } from "./hooks.js";
 
 export interface QuoteFormValues {
@@ -55,21 +60,7 @@ export function QuoteForm(props: QuoteFormProps): ReactElement {
   const [errors, setErrors] = useState<string[]>([]);
   const [quickClientModal, setQuickClientModal] = useState(false);
 
-  useEffect(() => {
-    if (!quickClientModal) return;
-    function handleKeyDown(e: KeyboardEvent): void {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        setQuickClientModal(false);
-      }
-    }
-    document.addEventListener("keydown", handleKeyDown);
-    return (): void => {
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [quickClientModal]);
-
-  const { clients } = useClientsList();
+  const { clients, addClient } = useClientsList();
   const { prestations } = usePrestationsList();
 
   useEffect(() => {
@@ -341,61 +332,14 @@ export function QuoteForm(props: QuoteFormProps): ReactElement {
         </div>
       )}
 
-      {quickClientModal && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          data-testid="quick-client-modal"
-          style={{
-            position: "fixed",
-            inset: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background: "rgba(0,0,0,0.4)",
-            zIndex: 50,
-          }}
-          onClick={() => setQuickClientModal(false)}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              background: tokens.color.surface,
-              border: `${tokens.stroke.bold} solid ${tokens.color.ink}`,
-              boxShadow: tokens.shadow.lg,
-              padding: tokens.spacing[6],
-              maxWidth: 400,
-              width: "100%",
-              display: "flex",
-              flexDirection: "column",
-              gap: tokens.spacing[4],
-            }}
-          >
-            <SectionTitle>{fr.quotes.form.clientQuickNew}</SectionTitle>
-            <p
-              style={{
-                fontFamily: tokens.font.ui,
-                fontSize: tokens.fontSize.sm,
-                color: tokens.color.muted,
-                margin: 0,
-              }}
-            >
-              {fr.quotes.form.quickClientStub}
-            </p>
-            <div
-              style={{
-                display: "flex",
-                gap: tokens.spacing[2],
-                justifyContent: "flex-end",
-              }}
-            >
-              <Button variant="secondary" onClick={() => setQuickClientModal(false)}>
-                {fr.quotes.actions.cancel}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <QuickClientModal
+        open={quickClientModal}
+        onClose={() => setQuickClientModal(false)}
+        onCreated={(client) => {
+          addClient(client);
+          setValues((v) => ({ ...v, clientId: client.id }));
+        }}
+      />
     </div>
   );
 }

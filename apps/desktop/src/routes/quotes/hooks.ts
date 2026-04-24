@@ -104,9 +104,26 @@ export function useQuote(id: UUID | undefined): UseQuoteState {
   return { quote, loading, error, refresh };
 }
 
-export function useClientsList(): { clients: Client[]; loading: boolean } {
+interface UseClientsListResult {
+  clients: Client[];
+  loading: boolean;
+  addClient: (client: Client) => void;
+  refresh: () => void;
+}
+
+export function useClientsList(): UseClientsListResult {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tick, setTick] = useState(0);
+
+  const refresh = useCallback((): void => setTick((t) => t + 1), []);
+
+  const addClient = useCallback((client: Client): void => {
+    setClients((prev) => {
+      if (prev.some((c) => c.id === client.id)) return prev;
+      return [...prev, client];
+    });
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -127,9 +144,9 @@ export function useClientsList(): { clients: Client[]; loading: boolean } {
     return (): void => {
       cancelled = true;
     };
-  }, []);
+  }, [tick]);
 
-  return { clients, loading };
+  return { clients, loading, addClient, refresh };
 }
 
 export function usePrestationsList(): { prestations: Service[] } {
