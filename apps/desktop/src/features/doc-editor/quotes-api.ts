@@ -132,7 +132,15 @@ const httpQuotesApi: QuotesApi = {
   async updateStatus(id, status): Promise<Quote> {
     switch (status) {
       case "sent":
-        return httpApi.quotes.issue(id);
+        // Bascule explicite utilisateur : ne declenche plus `issue` (qui
+        // attribuait un numero ET passait en sent en une fois). Desormais :
+        // le numero est deja attribue a la creation (cf. `create` ci-dessus),
+        // et `mark-sent` fait uniquement la transition draft -> sent.
+        return httpApi.quotes.markSent(id);
+      case "draft":
+        // Rollback "annuler envoi" : sent -> draft. Aucun email n'a ete
+        // envoye en MVP, donc sans consequence legale. Numero conserve.
+        return httpApi.quotes.unmarkSent(id);
       case "expired":
         return httpApi.quotes.expire(id);
       case "refused":

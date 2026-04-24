@@ -38,6 +38,13 @@ describe("canTransitionQuote", () => {
     expect(canTransitionQuote("sent", "invoiced")).toBe(true);
   });
 
+  it("autorise sent → draft (annulation d'envoi manuel, aucun email envoye)", () => {
+    // Depuis 2026-04-24 : le bouton "Marque comme envoye" est manuel (pas
+    // d'integration email reelle en MVP), donc l'utilisateur peut defaire
+    // l'action sans consequence legale. Le numero d'emission reste attribue.
+    expect(canTransitionQuote("sent", "draft")).toBe(true);
+  });
+
   it("interdit invoiced → tout autre statut (terminal)", () => {
     expect(canTransitionQuote("invoiced", "signed")).toBe(false);
     expect(canTransitionQuote("invoiced", "draft")).toBe(false);

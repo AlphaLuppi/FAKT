@@ -95,6 +95,12 @@ export const quotesApi = {
   async issue(id: string): Promise<Quote> {
     return getApiClient().post<Quote>(`/api/quotes/${id}/issue`);
   },
+  async markSent(id: string): Promise<Quote> {
+    return getApiClient().post<Quote>(`/api/quotes/${id}/mark-sent`);
+  },
+  async unmarkSent(id: string): Promise<Quote> {
+    return getApiClient().post<Quote>(`/api/quotes/${id}/unmark-sent`);
+  },
   async expire(id: string): Promise<Quote> {
     return getApiClient().post<Quote>(`/api/quotes/${id}/expire`);
   },

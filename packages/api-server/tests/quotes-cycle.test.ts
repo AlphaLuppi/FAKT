@@ -42,8 +42,28 @@ async function setup() {
   return { app, authHeaders };
 }
 
+/**
+ * Depuis 2026-04-24 : /issue attribue le numero mais laisse le devis en draft.
+ * Pour atteindre l'etat "sent" (ancien comportement), il faut aussi poster
+ * /mark-sent. Helper pour preserver la lisibilite des tests de cycle.
+ */
+async function issueAndMarkSent(
+  app: Awaited<ReturnType<typeof setup>>["app"],
+  headers: Record<string, string>,
+  id: string
+): Promise<Response> {
+  await app.request(`/api/quotes/${id}/issue`, {
+    method: "POST",
+    headers,
+  });
+  return app.request(`/api/quotes/${id}/mark-sent`, {
+    method: "POST",
+    headers,
+  });
+}
+
 describe("Quote lifecycle", () => {
-  it("draft → sent (issue attribue numéro)", async () => {
+  it("issue attribue numero + reste en draft (plus d'auto-sent)", async () => {
     const { app, authHeaders } = await setup();
     const res = await app.request(`/api/quotes/${QUOTE_ID}/issue`, {
       method: "POST",
@@ -55,20 +75,28 @@ describe("Quote lifecycle", () => {
       number: string | null;
       year: number | null;
       sequence: number | null;
+    };
+    // Depuis 2026-04-24 : issue ne bascule PLUS vers sent (retrait auto-sent).
+    expect(body.status).toBe("draft");
+    expect(body.number).toMatch(/^D\d{4}-001$/);
+    expect(body.sequence).toBe(1);
+  });
+
+  it("draft -> sent (mark-sent, bouton manuel)", async () => {
+    const { app, authHeaders } = await setup();
+    const res = await issueAndMarkSent(app, authHeaders(), QUOTE_ID);
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      status: string;
       issuedAt: number | null;
     };
     expect(body.status).toBe("sent");
-    expect(body.number).toMatch(/^D\d{4}-001$/);
-    expect(body.sequence).toBe(1);
     expect(body.issuedAt).not.toBe(null);
   });
 
   it("sent → signed (mark-signed set signedAt)", async () => {
     const { app, authHeaders } = await setup();
-    await app.request(`/api/quotes/${QUOTE_ID}/issue`, {
-      method: "POST",
-      headers: authHeaders(),
-    });
+    await issueAndMarkSent(app, authHeaders(), QUOTE_ID);
     const res = await app.request(`/api/quotes/${QUOTE_ID}/mark-signed`, {
       method: "POST",
       headers: authHeaders(),
@@ -81,10 +109,7 @@ describe("Quote lifecycle", () => {
 
   it("signed → invoiced", async () => {
     const { app, authHeaders } = await setup();
-    await app.request(`/api/quotes/${QUOTE_ID}/issue`, {
-      method: "POST",
-      headers: authHeaders(),
-    });
+    await issueAndMarkSent(app, authHeaders(), QUOTE_ID);
     await app.request(`/api/quotes/${QUOTE_ID}/mark-signed`, {
       method: "POST",
       headers: authHeaders(),
@@ -100,10 +125,7 @@ describe("Quote lifecycle", () => {
 
   it("sent → expired", async () => {
     const { app, authHeaders } = await setup();
-    await app.request(`/api/quotes/${QUOTE_ID}/issue`, {
-      method: "POST",
-      headers: authHeaders(),
-    });
+    await issueAndMarkSent(app, authHeaders(), QUOTE_ID);
     const res = await app.request(`/api/quotes/${QUOTE_ID}/expire`, {
       method: "POST",
       headers: authHeaders(),
@@ -115,10 +137,7 @@ describe("Quote lifecycle", () => {
 
   it("sent → refused (cancel)", async () => {
     const { app, authHeaders } = await setup();
-    await app.request(`/api/quotes/${QUOTE_ID}/issue`, {
-      method: "POST",
-      headers: authHeaders(),
-    });
+    await issueAndMarkSent(app, authHeaders(), QUOTE_ID);
     const res = await app.request(`/api/quotes/${QUOTE_ID}/cancel`, {
       method: "POST",
       headers: authHeaders(),
@@ -127,15 +146,31 @@ describe("Quote lifecycle", () => {
     const body = (await res.json()) as { status: string };
     expect(body.status).toBe("refused");
   });
+
+  it("sent -> draft (unmark-sent, rollback)", async () => {
+    const { app, authHeaders } = await setup();
+    await issueAndMarkSent(app, authHeaders(), QUOTE_ID);
+    const res = await app.request(`/api/quotes/${QUOTE_ID}/unmark-sent`, {
+      method: "POST",
+      headers: authHeaders(),
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { status: string; number: string | null };
+    expect(body.status).toBe("draft");
+    // Le numero attribue reste (pas de trou dans la sequence CGI 289).
+    expect(body.number).toMatch(/^D\d{4}-001$/);
+  });
 });
 
 describe("Quote lifecycle — transitions invalides (422)", () => {
-  it("issue sur quote déjà sent → 422", async () => {
+  it("issue sur quote deja numerote → 422", async () => {
     const { app, authHeaders } = await setup();
     await app.request(`/api/quotes/${QUOTE_ID}/issue`, {
       method: "POST",
       headers: authHeaders(),
     });
+    // Depuis 2026-04-24 : issue reste draft mais un 2e appel leve 422 car
+    // number deja attribue (pas de re-numerotation silencieuse).
     const res = await app.request(`/api/quotes/${QUOTE_ID}/issue`, {
       method: "POST",
       headers: authHeaders(),
@@ -174,10 +209,7 @@ describe("Quote lifecycle — transitions invalides (422)", () => {
 
   it("cancel signed → 422 (pas de transition signed→refused)", async () => {
     const { app, authHeaders } = await setup();
-    await app.request(`/api/quotes/${QUOTE_ID}/issue`, {
-      method: "POST",
-      headers: authHeaders(),
-    });
+    await issueAndMarkSent(app, authHeaders(), QUOTE_ID);
     await app.request(`/api/quotes/${QUOTE_ID}/mark-signed`, {
       method: "POST",
       headers: authHeaders(),

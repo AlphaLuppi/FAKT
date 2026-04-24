@@ -60,6 +60,9 @@ export function QuoteDetailRoute(): ReactElement {
   const [markSentOpen, setMarkSentOpen] = useState(false);
   const [markSentSubmitting, setMarkSentSubmitting] = useState(false);
   const [markSentError, setMarkSentError] = useState<string | null>(null);
+  const [unmarkSentOpen, setUnmarkSentOpen] = useState(false);
+  const [unmarkSentSubmitting, setUnmarkSentSubmitting] = useState(false);
+  const [unmarkSentError, setUnmarkSentError] = useState<string | null>(null);
   const [signOpen, setSignOpen] = useState(false);
   const [pdfBytes, setPdfBytes] = useState<Uint8Array | null>(null);
   const [emailOpen, setEmailOpen] = useState(false);
@@ -138,6 +141,25 @@ export function QuoteDetailRoute(): ReactElement {
       setMarkSentError(err instanceof Error ? err.message : fr.quotes.detail.markSentError);
     } finally {
       setMarkSentSubmitting(false);
+    }
+  }
+
+  async function handleUnmarkSent(): Promise<void> {
+    if (!quote) return;
+    if (unmarkSentSubmitting) return;
+    setUnmarkSentSubmitting(true);
+    setUnmarkSentError(null);
+    try {
+      await quotesApi.updateStatus(quote.id, "draft");
+      setUnmarkSentOpen(false);
+      toast.success(fr.quotes.detail.unmarkSentSuccess);
+      refresh();
+    } catch (err) {
+      setUnmarkSentError(
+        err instanceof Error ? err.message : fr.quotes.detail.unmarkSentError
+      );
+    } finally {
+      setUnmarkSentSubmitting(false);
     }
   }
 
@@ -507,6 +529,15 @@ export function QuoteDetailRoute(): ReactElement {
                 {fr.email.actions.openInMail}
               </Button>
             )}
+            {quote.status === "sent" && (
+              <Button
+                variant="ghost"
+                onClick={() => setUnmarkSentOpen(true)}
+                data-testid="detail-unmark-sent"
+              >
+                {fr.quotes.actions.unmarkSent}
+              </Button>
+            )}
             {(quote.status === "draft" || quote.status === "sent") && (
               <Button
                 variant="secondary"
@@ -581,6 +612,70 @@ export function QuoteDetailRoute(): ReactElement {
             }}
           >
             {markSentError}
+          </div>
+        )}
+      </Modal>
+
+      <Modal
+        open={unmarkSentOpen}
+        title={fr.quotes.detail.unmarkSentTitle}
+        onClose={() => {
+          if (!unmarkSentSubmitting) {
+            setUnmarkSentOpen(false);
+            setUnmarkSentError(null);
+          }
+        }}
+        size="sm"
+        footer={
+          <>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setUnmarkSentOpen(false);
+                setUnmarkSentError(null);
+              }}
+              disabled={unmarkSentSubmitting}
+              data-testid="detail-unmark-sent-cancel"
+            >
+              {fr.quotes.actions.cancel}
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => void handleUnmarkSent()}
+              disabled={unmarkSentSubmitting}
+              data-testid="detail-unmark-sent-confirm"
+            >
+              {fr.quotes.actions.confirm}
+            </Button>
+          </>
+        }
+      >
+        <p
+          style={{
+            margin: 0,
+            fontFamily: tokens.font.ui,
+            fontSize: tokens.fontSize.sm,
+            color: tokens.color.ink,
+            lineHeight: 1.5,
+          }}
+        >
+          {fr.quotes.detail.unmarkSentBody}
+        </p>
+        {unmarkSentError && (
+          <div
+            role="alert"
+            data-testid="detail-unmark-sent-error"
+            style={{
+              marginTop: tokens.spacing[3],
+              border: `${tokens.stroke.bold} solid ${tokens.color.ink}`,
+              background: tokens.color.dangerBg,
+              padding: tokens.spacing[3],
+              fontFamily: tokens.font.ui,
+              fontSize: tokens.fontSize.sm,
+              fontWeight: Number(tokens.fontWeight.bold),
+            }}
+          >
+            {unmarkSentError}
           </div>
         )}
       </Modal>

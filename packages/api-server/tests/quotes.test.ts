@@ -318,7 +318,12 @@ describe("PATCH /api/quotes/:id", () => {
       headers: authHeaders(),
       body: JSON.stringify(quotePayload()),
     });
+    // Issue (attribue numero, reste draft) puis mark-sent (draft -> sent).
     await app.request(`/api/quotes/${QUOTE_ID}/issue`, {
+      method: "POST",
+      headers: authHeaders(),
+    });
+    await app.request(`/api/quotes/${QUOTE_ID}/mark-sent`, {
       method: "POST",
       headers: authHeaders(),
     });
@@ -388,7 +393,12 @@ describe("DELETE /api/quotes/:id", () => {
       headers: authHeaders(),
       body: JSON.stringify(quotePayload()),
     });
+    // Issue + mark-sent pour passer en "sent" (anciennement issue suffisait).
     await app.request(`/api/quotes/${QUOTE_ID}/issue`, {
+      method: "POST",
+      headers: authHeaders(),
+    });
+    await app.request(`/api/quotes/${QUOTE_ID}/mark-sent`, {
       method: "POST",
       headers: authHeaders(),
     });
@@ -430,6 +440,92 @@ describe("GET /api/quotes/search", () => {
     const { app, authHeaders } = createTestApp();
     const res = await app.request("/api/quotes/search", { headers: authHeaders() });
     expect(res.status).toBe(400);
+  });
+});
+
+describe("POST /api/quotes/:id/issue", () => {
+  it("reste en draft apres issue, seul le numero est attribue", async () => {
+    const { app, authHeaders } = createTestApp();
+    await createClient(app, authHeaders());
+    await app.request("/api/quotes", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify(quotePayload()),
+    });
+    const res = await app.request(`/api/quotes/${QUOTE_ID}/issue`, {
+      method: "POST",
+      headers: authHeaders(),
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { status: string; number: string | null };
+    // Bug 2026-04-24 : issue ne bascule PLUS vers sent (plus d'auto-sent).
+    expect(body.status).toBe("draft");
+    expect(body.number).toMatch(/^D\d{4}-001$/);
+  });
+});
+
+describe("POST /api/quotes/:id/mark-sent", () => {
+  it("200 fait transitionner draft -> sent et cree activity event", async () => {
+    const { app, authHeaders } = createTestApp();
+    await createClient(app, authHeaders());
+    await app.request("/api/quotes", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify(quotePayload()),
+    });
+    await app.request(`/api/quotes/${QUOTE_ID}/issue`, {
+      method: "POST",
+      headers: authHeaders(),
+    });
+    const res = await app.request(`/api/quotes/${QUOTE_ID}/mark-sent`, {
+      method: "POST",
+      headers: authHeaders(),
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { status: string };
+    expect(body.status).toBe("sent");
+
+    const actRes = await app.request(
+      `/api/activity?entityType=quote&entityId=${QUOTE_ID}`,
+      { headers: authHeaders() }
+    );
+    const actBody = (await actRes.json()) as { items: { type: string }[] };
+    expect(actBody.items.some((e) => e.type === "quote_marked_sent")).toBe(true);
+  });
+});
+
+describe("POST /api/quotes/:id/unmark-sent", () => {
+  it("200 fait transitionner sent -> draft et conserve le numero", async () => {
+    const { app, authHeaders } = createTestApp();
+    await createClient(app, authHeaders());
+    await app.request("/api/quotes", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify(quotePayload()),
+    });
+    await app.request(`/api/quotes/${QUOTE_ID}/issue`, {
+      method: "POST",
+      headers: authHeaders(),
+    });
+    await app.request(`/api/quotes/${QUOTE_ID}/mark-sent`, {
+      method: "POST",
+      headers: authHeaders(),
+    });
+    const res = await app.request(`/api/quotes/${QUOTE_ID}/unmark-sent`, {
+      method: "POST",
+      headers: authHeaders(),
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { status: string; number: string | null };
+    expect(body.status).toBe("draft");
+    expect(body.number).toMatch(/^D\d{4}-001$/);
+
+    const actRes = await app.request(
+      `/api/activity?entityType=quote&entityId=${QUOTE_ID}`,
+      { headers: authHeaders() }
+    );
+    const actBody = (await actRes.json()) as { items: { type: string }[] };
+    expect(actBody.items.some((e) => e.type === "quote_unmarked_sent")).toBe(true);
   });
 });
 
