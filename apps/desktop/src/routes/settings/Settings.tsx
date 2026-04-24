@@ -4,12 +4,13 @@ import { Toaster } from "@fakt/ui";
 import type { ReactElement } from "react";
 import { useEffect, useState } from "react";
 import { ApiError, api } from "../../api/index.js";
+import { AiSessionsTab } from "./tabs/AiSessionsTab.js";
 import { CertificateTab } from "./tabs/CertificateTab.js";
 import { ClaudeCliTab } from "./tabs/ClaudeCliTab.js";
 import { IdentityTab } from "./tabs/IdentityTab.js";
 import { TelemetryTab } from "./tabs/TelemetryTab.js";
 
-type TabId = "identity" | "cli" | "certificate" | "telemetry";
+type TabId = "identity" | "cli" | "aiSessions" | "certificate" | "telemetry";
 
 interface TabDef {
   id: TabId;
@@ -19,6 +20,7 @@ interface TabDef {
 const TABS: TabDef[] = [
   { id: "identity", label: fr.settings.tabs.identity },
   { id: "cli", label: fr.settings.tabs.cli },
+  { id: "aiSessions", label: fr.settings.tabs.aiSessions },
   { id: "certificate", label: fr.settings.tabs.certificate },
   { id: "telemetry", label: fr.settings.tabs.telemetry },
 ];
@@ -106,6 +108,7 @@ export function SettingsRoute(): ReactElement {
           <IdentityTab workspace={workspace} onSaved={(updated) => setWorkspace(updated)} />
         )}
         {activeTab === "cli" && <ClaudeCliTab />}
+        {activeTab === "aiSessions" && <AiSessionsTab />}
         {activeTab === "certificate" && <CertificateTab workspace={workspace} />}
         {activeTab === "telemetry" && (
           <TelemetryTab

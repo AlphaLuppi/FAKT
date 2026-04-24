@@ -130,6 +130,8 @@ fn run_inner() -> Result<(), String> {
             commands::build_workspace_zip,
             ai::cli::check_claude_cli,
             ai::cli::spawn_claude,
+            ai::sessions::list_ai_sessions,
+            ai::sessions::clear_ai_sessions_history,
         ])
         .run(tauri::generate_context!());
 
