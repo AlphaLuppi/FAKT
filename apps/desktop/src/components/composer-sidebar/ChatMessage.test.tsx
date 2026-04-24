@@ -2,7 +2,7 @@
  * Tests ChatMessage - orchestre le rendu d'un message avec ses blocs.
  */
 
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { ChatMessage } from "./ChatMessage.js";
 import type { ChatMessageRich } from "./useChatStream.js";
@@ -34,32 +34,42 @@ describe("ChatMessage", () => {
     expect(screen.getByRole("heading", { level: 1, name: "Titre" })).toBeInTheDocument();
   });
 
-  it("rend un thinking block replie", () => {
+  it("groupe les blocs non-text en trace accordéon (collapsed par défaut)", () => {
     const m = make({
       role: "assistant",
       blocks: [{ type: "thinking", thinking: "secret" }],
     });
     render(<ChatMessage message={m} timestamp="" />);
-    expect(screen.getByTestId("thinking-block")).toBeInTheDocument();
+    const toggle = screen.getByTestId("m1-trace0-trace-toggle");
+    expect(toggle).toBeInTheDocument();
+    // Collapsed : détails masqués.
+    expect(screen.queryByTestId("m1-trace0-trace-details")).toBeNull();
+    // Le contenu "secret" n'apparaît que déplié.
+    expect(screen.queryByText("secret")).toBeNull();
   });
 
-  it("rend un tool_use block", () => {
+  it("déplie la trace au clic et affiche les détails d'un tool_use", () => {
     const m = make({
       role: "assistant",
-      blocks: [{ type: "tool_use", id: "t1", name: "list_clients", input: {} }],
+      blocks: [{ type: "tool_use", id: "t1", name: "list_clients", input: { q: "abc" } }],
     });
     render(<ChatMessage message={m} timestamp="" />);
-    expect(screen.getByTestId("tool-use-block")).toBeInTheDocument();
-    expect(screen.getByText("list_clients")).toBeInTheDocument();
+    // Résumé collapsed mentionne le tool name.
+    expect(screen.getByText(/list_clients/)).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("m1-trace0-trace-toggle"));
+    expect(screen.getByTestId("m1-trace0-trace-details")).toBeInTheDocument();
+    expect(screen.getByTestId("m1-trace0-tool-0")).toBeInTheDocument();
   });
 
-  it("rend un tool_result block avec badge OK", () => {
+  it("déplie et affiche le badge OK d'un tool_result", () => {
     const m = make({
       role: "assistant",
       blocks: [{ type: "tool_result", toolUseId: "t1", content: "ok", isError: false }],
     });
     render(<ChatMessage message={m} timestamp="" />);
-    expect(screen.getByTestId("tool-result-badge")).toHaveTextContent("OK");
+    fireEvent.click(screen.getByTestId("m1-trace0-trace-toggle"));
+    const result = screen.getByTestId("m1-trace0-result-0");
+    expect(result).toHaveTextContent(/OK/);
   });
 
   it("affiche le status streaming quand streaming=true (même sans blocs)", () => {
@@ -78,7 +88,7 @@ describe("ChatMessage", () => {
     expect(screen.getByTestId("streaming-cursor")).toBeInTheDocument();
   });
 
-  it("rend les blocs dans l'ordre (text puis thinking puis text)", () => {
+  it("rend les blocs dans l'ordre (text puis trace puis text)", () => {
     const m = make({
       role: "assistant",
       blocks: [
@@ -90,9 +100,9 @@ describe("ChatMessage", () => {
     const { container } = render(<ChatMessage message={m} timestamp="" />);
     const html = container.innerHTML;
     const avantIdx = html.indexOf("avant");
-    const thinkingIdx = html.indexOf("Thinking");
+    const traceIdx = html.indexOf("trace-toggle");
     const apresIdx = html.indexOf("apres");
-    expect(avantIdx).toBeLessThan(thinkingIdx);
-    expect(thinkingIdx).toBeLessThan(apresIdx);
+    expect(avantIdx).toBeLessThan(traceIdx);
+    expect(traceIdx).toBeLessThan(apresIdx);
   });
 });

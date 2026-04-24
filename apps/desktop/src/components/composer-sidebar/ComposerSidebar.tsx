@@ -266,16 +266,20 @@ export function ComposerSidebar(): ReactElement {
         height: "100vh",
         background: surface,
         borderLeft: `${bold} solid ${ink}`,
-        boxShadow: tokens.shadow.base,
+        // Shadow vers la gauche — side panel qui "flotte" au-dessus du main.
+        // Double couche : 1ère dure proche du border, 2e diffuse au loin.
+        boxShadow: "-4px 0 0 rgba(0, 0, 0, 0.04), -16px 0 40px rgba(0, 0, 0, 0.12)",
         display: "flex",
         flexDirection: "column",
         zIndex: 200,
       }}
     >
-      {/* Header */}
+      {/* Header — aligné verticalement avec le top bar app shell (56px). */}
       <div
         style={{
-          padding: `${s3} ${s4}`,
+          height: 56,
+          boxSizing: "border-box",
+          padding: `0 ${s4}`,
           borderBottom: `${base} solid ${ink}`,
           display: "flex",
           alignItems: "center",
