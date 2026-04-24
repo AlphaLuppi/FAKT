@@ -155,9 +155,7 @@ export function QuoteDetailRoute(): ReactElement {
       toast.success(fr.quotes.detail.unmarkSentSuccess);
       refresh();
     } catch (err) {
-      setUnmarkSentError(
-        err instanceof Error ? err.message : fr.quotes.detail.unmarkSentError
-      );
+      setUnmarkSentError(err instanceof Error ? err.message : fr.quotes.detail.unmarkSentError);
     } finally {
       setUnmarkSentSubmitting(false);
     }

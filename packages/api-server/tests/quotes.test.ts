@@ -485,10 +485,9 @@ describe("POST /api/quotes/:id/mark-sent", () => {
     const body = (await res.json()) as { status: string };
     expect(body.status).toBe("sent");
 
-    const actRes = await app.request(
-      `/api/activity?entityType=quote&entityId=${QUOTE_ID}`,
-      { headers: authHeaders() }
-    );
+    const actRes = await app.request(`/api/activity?entityType=quote&entityId=${QUOTE_ID}`, {
+      headers: authHeaders(),
+    });
     const actBody = (await actRes.json()) as { items: { type: string }[] };
     expect(actBody.items.some((e) => e.type === "quote_marked_sent")).toBe(true);
   });
@@ -520,10 +519,9 @@ describe("POST /api/quotes/:id/unmark-sent", () => {
     expect(body.status).toBe("draft");
     expect(body.number).toMatch(/^D\d{4}-001$/);
 
-    const actRes = await app.request(
-      `/api/activity?entityType=quote&entityId=${QUOTE_ID}`,
-      { headers: authHeaders() }
-    );
+    const actRes = await app.request(`/api/activity?entityType=quote&entityId=${QUOTE_ID}`, {
+      headers: authHeaders(),
+    });
     const actBody = (await actRes.json()) as { items: { type: string }[] };
     expect(actBody.items.some((e) => e.type === "quote_unmarked_sent")).toBe(true);
   });

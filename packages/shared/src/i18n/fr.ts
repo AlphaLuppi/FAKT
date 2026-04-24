@@ -658,7 +658,8 @@ export const fr = {
       title: "Sessions IA",
       description:
         "Historique des appels IA (génération de devis, chat, brouillon d'email). Utile pour diagnostiquer les erreurs silencieuses.",
-      empty: "Aucune session IA pour le moment. Lance une génération de devis ou ouvre le chat IA pour voir apparaître les runs ici.",
+      empty:
+        "Aucune session IA pour le moment. Lance une génération de devis ou ouvre le chat IA pour voir apparaître les runs ici.",
       refresh: "Rafraîchir",
       clearHistory: "Vider l'historique",
       autoRefresh: "Rafraîchissement auto",

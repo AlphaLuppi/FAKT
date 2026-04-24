@@ -7,7 +7,7 @@ const ITEM_ID = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
 
 async function seed(
   app: ReturnType<typeof createTestApp>["app"],
-  headers: Record<string, string>,
+  headers: Record<string, string>
 ): Promise<void> {
   await app.request("/api/clients", {
     method: "POST",
@@ -59,9 +59,7 @@ describe("GET /api/search", () => {
     };
     expect(body.q).toBe("Mercier");
     expect(body.clients).toBeGreaterThanOrEqual(1);
-    expect(body.items.some((h) => h.kind === "client" && h.label.includes("Mercier"))).toBe(
-      true,
-    );
+    expect(body.items.some((h) => h.kind === "client" && h.label.includes("Mercier"))).toBe(true);
   });
 
   it("200 + hits devis par titre", async () => {

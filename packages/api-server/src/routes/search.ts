@@ -1,9 +1,4 @@
-import {
-  getWorkspace,
-  searchClients,
-  searchInvoices,
-  searchQuotes,
-} from "@fakt/db/queries";
+import { getWorkspace, searchClients, searchInvoices, searchQuotes } from "@fakt/db/queries";
 import type { Client, Invoice, Quote } from "@fakt/shared";
 import { Hono } from "hono";
 import { z } from "zod";
