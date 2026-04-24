@@ -37,8 +37,12 @@ pub struct BuildZipPayload {
 /// ne garde qu'un nom de fichier sûr. Empêche le pattern Zip Slip à
 /// l'extraction.
 fn sanitize_zip_entry(name: &str) -> String {
+    // Normalise d'abord les séparateurs Windows : `std::path::Path` sur Unix
+    // ne reconnaît pas `\` comme séparateur, donc "C:\\evil.bin" resterait
+    // intact et le `:` serait juste remplacé plus bas, laissant "C--evil.bin".
+    let normalized = name.replace('\\', "/");
     // Garde le basename uniquement (jamais de chemin parent).
-    let basename = std::path::Path::new(name)
+    let basename = std::path::Path::new(&normalized)
         .file_name()
         .and_then(|n| n.to_str())
         .unwrap_or("untitled");

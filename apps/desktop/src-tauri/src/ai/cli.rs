@@ -312,8 +312,14 @@ async fn resolve_binary_path(binary: &str) -> Option<String> {
 mod tests {
     use super::*;
 
+    // Les tests qui touchent à `FAKT_CLAUDE_PATH` partagent l'environnement
+    // process — en parallèle ils se marchent dessus. Ce mutex sérialise
+    // l'accès et évite les faux positifs type "left: claude / right: /mock".
+    static ENV_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
     #[test]
     fn claude_binary_uses_env_override() {
+        let _guard = ENV_LOCK.lock().unwrap();
         // FAKT_CLAUDE_PATH allows CI to inject a mock binary.
         std::env::set_var("FAKT_CLAUDE_PATH", "/mock/claude-stub");
         assert_eq!(claude_binary(), "/mock/claude-stub");
@@ -322,12 +328,14 @@ mod tests {
 
     #[test]
     fn claude_binary_defaults_to_claude() {
+        let _guard = ENV_LOCK.lock().unwrap();
         std::env::remove_var("FAKT_CLAUDE_PATH");
         assert_eq!(claude_binary(), "claude");
     }
 
     #[tokio::test]
     async fn check_claude_cli_returns_err_when_not_found() {
+        let _guard = ENV_LOCK.lock().unwrap();
         // Point to a non-existent binary.
         std::env::set_var("FAKT_CLAUDE_PATH", "/nonexistent/claude-xyz-abc");
         let result = check_claude_cli().await;
