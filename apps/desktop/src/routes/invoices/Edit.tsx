@@ -37,6 +37,8 @@ export function InvoiceEditRoute(): ReactElement {
   }, [invoice, navigate]);
 
   async function handleSubmit(values: InvoiceFormValues): Promise<void> {
+    // Guard synchrone double-submit.
+    if (submitting) return;
     if (!id) return;
     if (!values.clientId) {
       setSubmitError(fr.invoices.errors.missingClient);

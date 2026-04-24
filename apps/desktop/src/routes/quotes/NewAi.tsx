@@ -120,6 +120,8 @@ export function NewAi(): ReactElement {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   async function handleSubmitApplied(values: QuoteFormValues, issueNumber: boolean): Promise<void> {
+    // Guard synchrone double-submit.
+    if (submitting) return;
     if (!values.clientId) {
       setSubmitError(fr.quotes.errors.missingClient);
       return;

@@ -30,6 +30,8 @@ export function NewScratch(): ReactElement {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   async function handleSubmit(values: InvoiceFormValues, issueNumber: boolean): Promise<void> {
+    // Guard synchrone double-submit.
+    if (submitting) return;
     if (!values.clientId) {
       setSubmitError(fr.invoices.errors.missingClient);
       return;

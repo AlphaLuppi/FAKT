@@ -24,6 +24,8 @@ export function NewManual(): ReactElement {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   async function handleSubmit(values: QuoteFormValues, issueNumber: boolean): Promise<void> {
+    // Guard synchrone double-submit (cohérent avec Recap.tsx / IdentityTab).
+    if (submitting) return;
     setSubmitting(true);
     setSubmitError(null);
     try {

@@ -29,6 +29,8 @@ export function QuoteEditRoute(): ReactElement {
   }, [quote, navigate]);
 
   async function handleSubmit(values: QuoteFormValues, _issueNumber: boolean): Promise<void> {
+    // Guard synchrone double-submit.
+    if (submitting) return;
     if (!id) return;
     if (!values.clientId) {
       setSubmitError(fr.quotes.errors.missingClient);

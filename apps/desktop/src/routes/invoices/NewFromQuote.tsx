@@ -158,6 +158,8 @@ export function NewFromQuote(): ReactElement {
   }, [selectedQuote, mode]);
 
   async function handleSubmit(values: InvoiceFormValues, issueNumber: boolean): Promise<void> {
+    // Guard synchrone double-submit.
+    if (submitting) return;
     if (!selectedQuote) {
       setSubmitError(fr.invoices.errors.missingQuote);
       return;
