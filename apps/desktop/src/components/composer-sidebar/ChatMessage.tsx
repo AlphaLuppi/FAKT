@@ -15,6 +15,7 @@
 import { tokens } from "@fakt/design-tokens";
 import type { ReactElement } from "react";
 import { ChatMessageContent } from "./ChatMessageContent.js";
+import { StreamingText } from "./StreamingText.js";
 import { ThinkingBlock } from "./ThinkingBlock.js";
 import { ToolResultBlock } from "./ToolResultBlock.js";
 import { ToolUseBlock } from "./ToolUseBlock.js";
@@ -28,7 +29,13 @@ interface ChatMessageProps {
 function renderBlock(block: ChatBlock, key: string, streaming: boolean): ReactElement {
   switch (block.type) {
     case "text":
-      return <ChatMessageContent key={key} content={block.text} />;
+      // Pendant le streaming : typewriter (texte brut, pre-wrap).
+      // A la fin : markdown complet avec coloration + SVG + tables.
+      return streaming ? (
+        <StreamingText key={key} text={block.text} streaming={streaming} />
+      ) : (
+        <ChatMessageContent key={key} content={block.text} />
+      );
     case "thinking":
       return <ThinkingBlock key={key} thinking={block.thinking} streaming={streaming} />;
     case "tool_use":
