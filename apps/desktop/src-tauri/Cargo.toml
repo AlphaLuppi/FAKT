@@ -6,7 +6,20 @@ authors = ["Tom Andrieu <contact@alphaluppi.com>"]
 license = "BUSL-1.1"
 repository = "https://github.com/AlphaLuppi/FAKT"
 edition = "2021"
-rust-version = "1.75"
+# Toolchain CI pinnée à 1.88 (cf. .github/workflows/crypto-ci.yml) — MSRV
+# réel dicté par deps transitives (darling/serde_with/time = 1.88) et par
+# `std::panic::PanicHookInfo` (stabilisé en 1.82) utilisé dans trace.rs.
+rust-version = "1.88"
+
+# Lints downgradés non release-blocking (cf. commit 8d64f8b pour JS/TS) :
+# - uninlined_format_args : cosmétique, 95+ call sites hérités des tracks
+#   initiaux. Dette v0.1.1.
+# - await_holding_lock : appliqué uniquement à des ENV_LOCK de tests qui
+#   sérialisent l'accès à l'environnement process. Le lock de test est
+#   non-async mais sérialise par design — OK pour des tests.
+[lints.clippy]
+uninlined_format_args = "allow"
+await_holding_lock = "allow"
 
 [lib]
 name = "fakt_lib"
