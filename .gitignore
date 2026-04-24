@@ -59,7 +59,11 @@ test-results/
 .design-ref/
 
 # Claude Code local config (user-specific)
-.claude/
+# On utilise `.claude/*` + exception pour que git scanne le dir et applique
+# le `!launch.json` ; avec `.claude/` tout court git skip le dir entièrement
+# et ignore les exceptions à l'intérieur.
+.claude/*
+!.claude/launch.json
 
 # BMAD local artifacts (keep dir, ignore private outputs)
 _bmad-output/local/

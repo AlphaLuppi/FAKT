@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "FAKT Tauri dev (desktop full)",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": ["run", "dev"],
+      "port": 1420
+    },
+    {
+      "name": "FAKT Vite standalone (frontend only)",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": ["--cwd=apps/desktop", "run", "dev"],
+      "port": 1420
+    }
+  ]
+}
