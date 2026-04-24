@@ -2,9 +2,9 @@ import { computeLineTotal } from "@fakt/core";
 import { tokens } from "@fakt/design-tokens";
 import { formatEur, fr, quantityFromMilli } from "@fakt/shared";
 import type { DocumentUnit, Service, UUID } from "@fakt/shared";
-import { Button, Input, Select, Textarea } from "@fakt/ui";
+import { Autocomplete, type AutocompleteOption, Button, Input, Select } from "@fakt/ui";
 import type { ReactElement } from "react";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
 export interface EditableItem {
   id: UUID;
@@ -52,7 +52,6 @@ function defaultMakeId(): UUID {
 export function ItemsEditor(props: ItemsEditorProps): ReactElement {
   const { value, onChange, prestations, readOnly, makeId } = props;
   const newId = makeId ?? defaultMakeId;
-  const [pickerOpenIdx, setPickerOpenIdx] = useState<number | null>(null);
 
   const unitOptions = useMemo(() => UNITS.map((u) => ({ value: u.value, label: u.label })), []);
 
@@ -106,7 +105,6 @@ export function ItemsEditor(props: ItemsEditorProps): ReactElement {
       unitPriceCents: p.unitPriceCents,
       serviceId: p.id,
     });
-    setPickerOpenIdx(null);
   }
 
   return (
@@ -169,10 +167,8 @@ export function ItemsEditor(props: ItemsEditorProps): ReactElement {
             idx={idx}
             unitOptions={unitOptions}
             prestations={prestations}
-            pickerOpen={pickerOpenIdx === idx}
             readOnly={readOnly === true}
             lastIdx={value.length - 1}
-            onTogglePicker={() => setPickerOpenIdx((v) => (v === idx ? null : idx))}
             onApplyPrestation={(pid) => applyPrestation(idx, pid)}
             onUpdate={(patch) => updateItem(idx, patch)}
             onRemove={() => removeItem(idx)}
@@ -208,13 +204,35 @@ interface ItemRowProps {
   lastIdx: number;
   unitOptions: ReadonlyArray<{ value: string; label: string }>;
   prestations?: ReadonlyArray<Service> | undefined;
-  pickerOpen: boolean;
   readOnly: boolean;
-  onTogglePicker: () => void;
   onApplyPrestation: (id: string) => void;
   onUpdate: (patch: Partial<EditableItem>) => void;
   onRemove: () => void;
   onMove: (direction: -1 | 1) => void;
+}
+
+/** Max suggestions affichées dans l'autocomplete description. */
+const DESC_SUGGESTIONS_MAX = 5;
+
+function filterPrestations(
+  query: string,
+  prestations: ReadonlyArray<Service>
+): AutocompleteOption<Service>[] {
+  const q = query.trim().toLowerCase();
+  if (q.length < 2) return [];
+  const matches: AutocompleteOption<Service>[] = [];
+  for (const p of prestations) {
+    const haystack = `${p.name} ${p.description ?? ""}`.toLowerCase();
+    if (haystack.includes(q)) {
+      matches.push({
+        value: p.id,
+        label: `${p.name} · ${formatEur(p.unitPriceCents)} / ${p.unit}`,
+        data: p,
+      });
+      if (matches.length >= DESC_SUGGESTIONS_MAX) break;
+    }
+  }
+  return matches;
 }
 
 function ItemRow(props: ItemRowProps): ReactElement {
@@ -224,9 +242,7 @@ function ItemRow(props: ItemRowProps): ReactElement {
     lastIdx,
     unitOptions,
     prestations,
-    pickerOpen,
     readOnly,
-    onTogglePicker,
     onApplyPrestation,
     onUpdate,
     onRemove,
@@ -235,6 +251,14 @@ function ItemRow(props: ItemRowProps): ReactElement {
 
   const qtyDisplay = quantityFromMilli(item.quantity).toString();
   const unitPriceDisplay = (item.unitPriceCents / 100).toString();
+
+  const suggestions = useMemo(
+    () =>
+      prestations && prestations.length > 0
+        ? filterPrestations(item.description, prestations)
+        : [],
+    [item.description, prestations]
+  );
 
   return (
     <div
@@ -249,46 +273,28 @@ function ItemRow(props: ItemRowProps): ReactElement {
       }}
     >
       <div>
-        <Textarea
-          aria-label={fr.quotes.form.description}
+        <Autocomplete<Service>
           value={item.description}
-          onChange={(e) => onUpdate({ description: e.target.value })}
-          rows={2}
+          onChange={(v) => onUpdate({ description: v })}
+          onSelect={(opt) => onApplyPrestation(opt.value)}
+          suggestions={prestations && prestations.length > 0 ? suggestions : []}
+          minChars={2}
+          ariaLabel={fr.quotes.form.description}
           disabled={readOnly}
+          data-testid={`item-description-${idx}`}
+          inputProps={{
+            rows: 1,
+            className: "fakt-input",
+            style: {
+              padding: `${tokens.spacing[2]} ${tokens.spacing[3]}`,
+              border: `${tokens.stroke.base} solid ${tokens.color.ink}`,
+              background: tokens.color.surface,
+              color: tokens.color.ink,
+              lineHeight: 1.3,
+              minHeight: 36,
+            },
+          }}
         />
-        {prestations && prestations.length > 0 && !readOnly && (
-          <div style={{ marginTop: tokens.spacing[2] }}>
-            <button
-              type="button"
-              className="fakt-btn fakt-btn--ghost fakt-btn--sm"
-              onClick={onTogglePicker}
-              data-testid={`prestation-toggle-${idx}`}
-            >
-              {fr.quotes.form.prestationPicker}
-            </button>
-            {pickerOpen && (
-              <div
-                style={{
-                  marginTop: tokens.spacing[2],
-                  border: `${tokens.stroke.base} solid ${tokens.color.ink}`,
-                  background: tokens.color.paper2,
-                  padding: tokens.spacing[3],
-                }}
-              >
-                <Select
-                  aria-label={fr.quotes.form.prestationPicker}
-                  options={prestations.map((p) => ({
-                    value: p.id,
-                    label: `${p.name} · ${formatEur(p.unitPriceCents)}`,
-                  }))}
-                  placeholder={fr.quotes.form.prestationPickerHint}
-                  defaultValue=""
-                  onChange={(e) => e.target.value && onApplyPrestation(e.target.value)}
-                />
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       <Input

@@ -18,6 +18,8 @@ export type {
   SegmentedControlOption,
   SegmentedControlProps,
 } from "./primitives/SegmentedControl.js";
+export { Autocomplete } from "./primitives/Autocomplete.js";
+export type { AutocompleteOption, AutocompleteProps } from "./primitives/Autocomplete.js";
 
 // Layout
 export { Card } from "./layout/Card.js";
