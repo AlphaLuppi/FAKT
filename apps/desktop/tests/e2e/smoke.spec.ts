@@ -38,11 +38,19 @@ test.describe("FAKT — smoke tests", () => {
     // Laisser 3s pour que les erreurs potentielles de montage React remontent
     await page.waitForTimeout(3_000);
 
-    // Aucune erreur console critique — les warnings sont tolérés en v0.1
+    // Aucune erreur console critique — les warnings sont tolérés en v0.1.
+    // En CI le smoke tourne en `vite dev` seul (pas de sidecar API Bun ni
+    // de runtime Tauri) : les appels HTTP au backend remontent en console
+    // comme ERR_CONNECTION_REFUSED et le bridge Tauri via __TAURI_INTERNALS__
+    // est absent — on filtre ces cas attendus.
     const criticalErrors = errors.filter(
       (e) =>
         !e.includes("ResizeObserver") && // Non-critique, fréquent en dev
-        !e.includes("favicon") // Favicon manquant toléré
+        !e.includes("favicon") && // Favicon manquant toléré
+        !e.includes("Failed to load resource") && // Backend API non démarré
+        !e.includes("ERR_CONNECTION_REFUSED") && // idem
+        !e.includes("__TAURI_INTERNALS__") && // Bridge Tauri absent en vite dev
+        !e.includes("window.__TAURI") // idem variantes
     );
     expect(criticalErrors).toHaveLength(0);
   });

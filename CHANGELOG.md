@@ -7,6 +7,43 @@ et [Semantic Versioning 2.0.0](https://semver.org/lang/fr/).
 
 ---
 
+## [0.1.7] - 2026-04-24
+
+Fix UX onboarding découverts par Tom au réveil après test de v0.1.6 en dev.
+
+### Fixed
+
+- **Onboarding en boucle après "C'est parti !"** : le hook
+  `useOnboardingGuard` fetchait `is_setup_completed` une seule fois au
+  mount d'App via `useEffect([])`. Après `complete_setup` + `navigate("/")`,
+  le guard gardait son état `needs-onboarding` cached et re-redirigeait
+  immédiatement vers `/onboarding`, remountant `Wizard` avec
+  `currentStep=0`. L'utilisateur revenait indéfiniment à l'étape 1.
+  Fix : `window.location.href = "/"` force un full reload du webview →
+  App re-mount → guard re-fetch → `ready` → dashboard.
+- **Champs identité à retaper à chaque reprise d'onboarding** :
+  `IdentityStep` utilisait des defaults vides. Ajout d'un `useEffect` au
+  mount qui appelle `api.workspace.get()` et `reset()` le formulaire avec
+  les valeurs du workspace existant (nom, forme juridique, SIRET, adresse,
+  email, IBAN). Silencieux en cas de `NOT_FOUND` / `NETWORK_ERROR`
+  (onboarding initial légitime).
+- **Génération d'un nouveau certificat X.509 à chaque onboarding** :
+  `CertificateStep` montrait le bouton "Générer" même si un cert existe
+  déjà dans le keychain OS. Ajout d'un `useEffect` au mount qui appelle
+  `get_cert_info` Tauri → pré-fill le state `certInfo` si un cert existe,
+  affichant la carte "cert actif" avec bouton "Régénérer" optionnel au
+  lieu d'en créer un nouveau. Évite la pollution du Windows Credential
+  Manager avec des certs obsolètes.
+
+### Changed
+
+- `CertInfo.certPem` passe à `string | null` : `get_cert_info` ne retourne
+  pas le PEM (clé privée reste dans le keychain). Le PEM public reste
+  récupérable via l'API `/api/settings`.
+- `API_VERSION` `0.1.6` → `0.1.7`.
+
+---
+
 ## [0.1.6] - 2026-04-24
 
 🚨 **Hotfix critique** : le sidecar `fakt-api.exe` crashait au boot en prod
