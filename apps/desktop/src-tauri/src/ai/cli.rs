@@ -24,6 +24,7 @@ use tokio::{
     time::timeout,
 };
 
+use super::json_extract;
 use super::sessions::{self, SessionStatus};
 use crate::sidecar::ApiContext;
 
@@ -471,8 +472,22 @@ async fn stream_inner(
                         is_error: false,
                         ..
                     }) => {
-                        let value = serde_json::from_str::<serde_json::Value>(&content)
-                            .unwrap_or_else(|_| serde_json::Value::String(content));
+                        // Parsing robuste : le modèle retourne souvent du texte
+                        // autour du JSON attendu (fences markdown, préfixe
+                        // explicatif, etc.). On tente plusieurs stratégies avant
+                        // de retomber sur la string brute. Si aucune ne marche,
+                        // on émet un warning dans le stderr de session pour que
+                        // la page /settings/ai-sessions remonte l'info en prod.
+                        let value = match json_extract::extract_json(&content) {
+                            Some(v) => v,
+                            None => {
+                                crate::trace::log(&format!(
+                                    "spawn_claude: JSON extraction failed, falling back to raw string (len={})",
+                                    content.len()
+                                ));
+                                serde_json::Value::String(content)
+                            }
+                        };
                         sessions::set_final_result(session_id, value.clone());
                         final_result = Some(value);
                     }

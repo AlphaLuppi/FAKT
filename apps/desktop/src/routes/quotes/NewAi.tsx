@@ -22,6 +22,39 @@ function mapExtractedUnit(u: ExtractedQuoteItem["unit"]): DocumentUnit {
   }
 }
 
+/**
+ * Type guard — s'assure que la donnée reçue du stream `done` ressemble à un
+ * ExtractedQuote structuré. On accepte tout objet qui a au moins un des champs
+ * connus du schéma (client, items, validUntil, notes, depositPercent) pour
+ * rester tolérant aux réponses partielles.
+ *
+ * On rejette :
+ *   - les strings brutes (fallback du Rust quand JSON parsing a échoué)
+ *   - les arrays (le LLM a pu renvoyer juste la liste d'items au mauvais niveau)
+ *   - les objets `{ text: "..." }` venant des chunks de streaming
+ */
+function isStructuredQuote(value: unknown): value is Partial<ExtractedQuote> {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
+  const obj = value as Record<string, unknown>;
+  // Les tokens streamés arrivent sous forme { text: "..." } — on les exclut.
+  if ("text" in obj && Object.keys(obj).length === 1) return false;
+  const knownKeys = ["client", "items", "validUntil", "notes", "depositPercent"];
+  return knownKeys.some((k) => k in obj);
+}
+
+/**
+ * Linéarise l'output d'un stream en JSON-string pour le bloc debug. Les
+ * strings sont retournées telles quelles, les objets sont beautifiés.
+ */
+function stringifyRawOutput(value: unknown): string {
+  if (typeof value === "string") return value;
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return String(value);
+  }
+}
+
 export function NewAi(): ReactElement {
   const navigate = useNavigate();
   const [brief, setBrief] = useState<string>("");
@@ -29,6 +62,8 @@ export function NewAi(): ReactElement {
   const [extracted, setExtracted] = useState<Partial<ExtractedQuote> | null>(null);
   const [streamError, setStreamError] = useState<string | null>(null);
   const [cliMissing, setCliMissing] = useState(false);
+  const [rawOutput, setRawOutput] = useState<string | null>(null);
+  const [showRawOutput, setShowRawOutput] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -52,6 +87,8 @@ export function NewAi(): ReactElement {
     setExtracting(true);
     setExtracted(null);
     setStreamError(null);
+    setRawOutput(null);
+    setShowRawOutput(false);
 
     const controller = new AbortController();
     abortRef.current = controller;
@@ -64,9 +101,26 @@ export function NewAi(): ReactElement {
 
       for await (const event of stream) {
         if (event.type === "delta") {
-          setExtracted((prev) => ({ ...(prev ?? {}), ...event.data }));
+          // Les delta du CLI sont des chunks de texte (non structurés). On les
+          // garde pour le bloc debug mais on n'essaie pas de merger dans
+          // `extracted` qui doit rester un ExtractedQuote cohérent.
+          if (isStructuredQuote(event.data)) {
+            setExtracted((prev) => ({ ...(prev ?? {}), ...event.data }));
+          } else {
+            setRawOutput((prev) =>
+              prev === null ? stringifyRawOutput(event.data) : prev + stringifyRawOutput(event.data)
+            );
+          }
         } else if (event.type === "done") {
-          setExtracted(event.data);
+          // Le Rust a tenté un parsing JSON robuste. Si ça a échoué il renvoie
+          // une string brute — on la stocke dans `rawOutput` et on affiche une
+          // erreur explicite plutôt qu'une card vide "0€".
+          setRawOutput(stringifyRawOutput(event.data));
+          if (isStructuredQuote(event.data)) {
+            setExtracted(event.data);
+          } else {
+            setStreamError(fr.quotes.ai.extractFailedDetail);
+          }
         } else if (event.type === "error") {
           setStreamError(event.message);
           if (event.message.includes("CLI") || event.message.toLowerCase().includes("claude")) {
@@ -329,7 +383,94 @@ export function NewAi(): ReactElement {
       )}
 
       {extracted && <ExtractedPreview extracted={extracted} onApply={() => void handleApply()} />}
+
+      {rawOutput !== null && (
+        <RawOutputToggle
+          rawOutput={rawOutput}
+          expanded={showRawOutput}
+          onToggle={() => setShowRawOutput((v) => !v)}
+        />
+      )}
     </div>
+  );
+}
+
+function RawOutputToggle({
+  rawOutput,
+  expanded,
+  onToggle,
+}: {
+  rawOutput: string;
+  expanded: boolean;
+  onToggle: () => void;
+}): ReactElement {
+  return (
+    <section
+      data-testid="ai-raw-output"
+      style={{
+        border: `${tokens.stroke.base} solid ${tokens.color.ink}`,
+        background: tokens.color.surface,
+        padding: tokens.spacing[4],
+        display: "flex",
+        flexDirection: "column",
+        gap: tokens.spacing[3],
+      }}
+    >
+      <button
+        type="button"
+        onClick={onToggle}
+        data-testid="ai-raw-output-toggle"
+        style={{
+          background: "transparent",
+          border: "none",
+          cursor: "pointer",
+          padding: 0,
+          fontFamily: tokens.font.ui,
+          fontSize: tokens.fontSize.xs,
+          fontWeight: Number(tokens.fontWeight.bold),
+          textTransform: "uppercase",
+          letterSpacing: "0.08em",
+          color: tokens.color.muted,
+          textAlign: "left",
+        }}
+      >
+        {expanded ? fr.quotes.ai.hideRawOutput : fr.quotes.ai.showRawOutput}
+      </button>
+      {expanded && (
+        <div>
+          <div
+            style={{
+              fontFamily: tokens.font.ui,
+              fontSize: tokens.fontSize.xs,
+              fontWeight: Number(tokens.fontWeight.bold),
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+              color: tokens.color.muted,
+              marginBottom: tokens.spacing[2],
+            }}
+          >
+            {fr.quotes.ai.rawOutputTitle}
+          </div>
+          <pre
+            data-testid="ai-raw-output-content"
+            style={{
+              fontFamily: tokens.font.mono,
+              fontSize: tokens.fontSize.xs,
+              background: tokens.color.paper,
+              border: `${tokens.stroke.hair} solid ${tokens.color.line}`,
+              padding: tokens.spacing[3],
+              margin: 0,
+              overflow: "auto",
+              maxHeight: 400,
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-word",
+            }}
+          >
+            {rawOutput}
+          </pre>
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -499,6 +640,23 @@ function ExtractedPreview({
             {formatEur(Math.round(total * 100))}
           </span>
         </div>
+
+        {(!extracted.items || extracted.items.length === 0) && (
+          <div
+            data-testid="ai-no-items-hint"
+            role="status"
+            style={{
+              border: `${tokens.stroke.base} solid ${tokens.color.ink}`,
+              background: tokens.color.warnBg,
+              padding: tokens.spacing[3],
+              fontFamily: tokens.font.ui,
+              fontSize: tokens.fontSize.sm,
+              color: tokens.color.ink,
+            }}
+          >
+            {fr.quotes.ai.noItemsHint}
+          </div>
+        )}
 
         <div style={{ display: "flex", justifyContent: "flex-end" }}>
           <Button
