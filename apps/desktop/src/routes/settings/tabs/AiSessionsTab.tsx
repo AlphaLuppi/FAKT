@@ -1,7 +1,8 @@
 import { fr } from "@fakt/shared";
-import { Button } from "@fakt/ui";
+import { Button, Checkbox } from "@fakt/ui";
 import type { ReactElement } from "react";
 import { useCallback, useEffect, useState } from "react";
+import { useVerboseAiMode } from "../../../hooks/useVerboseAiMode.js";
 
 type SessionStatus = "pending" | "streaming" | "done" | "error" | "timeout" | "cancelled";
 type SessionKind = "extract_quote" | "chat" | "draft_email" | "unknown";
@@ -52,6 +53,7 @@ async function clearHistory(): Promise<void> {
 const REFRESH_MS = 1500;
 
 export function AiSessionsTab(): ReactElement {
+  const { verbose, setVerbose } = useVerboseAiMode();
   const [snapshot, setSnapshot] = useState<SessionsSnapshot>({ active: [], history: [] });
   const [loading, setLoading] = useState(true);
   const [autoRefresh, setAutoRefresh] = useState(true);
@@ -125,6 +127,19 @@ export function AiSessionsTab(): ReactElement {
       <div>
         <h3 style={sectionTitleStyle}>{fr.settings.aiSessions.title}</h3>
         <p style={descStyle}>{fr.settings.aiSessions.description}</p>
+      </div>
+
+      <div style={verboseSectionStyle} data-testid="ai-verbose-section">
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          <span style={verboseTitleStyle}>{fr.settings.aiSessions.verboseModeTitle}</span>
+          <p style={verboseHintStyle}>{fr.settings.aiSessions.verboseModeHint}</p>
+        </div>
+        <Checkbox
+          label={fr.settings.aiSessions.verboseModeLabel}
+          checked={verbose}
+          onChange={(e) => setVerbose(e.target.checked)}
+          data-testid="ai-verbose-toggle"
+        />
       </div>
 
       <div
@@ -476,6 +491,33 @@ const descStyle: React.CSSProperties = {
   fontFamily: "var(--font-ui)",
   fontSize: "var(--t-sm)",
   color: "var(--muted)",
+};
+
+const verboseSectionStyle: React.CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: 10,
+  padding: 14,
+  border: "2px solid var(--ink)",
+  background: "var(--paper)",
+  boxShadow: "3px 3px 0 var(--ink)",
+};
+
+const verboseTitleStyle: React.CSSProperties = {
+  fontFamily: "var(--font-ui)",
+  fontWeight: 800,
+  fontSize: "var(--t-sm)",
+  textTransform: "uppercase",
+  letterSpacing: "0.04em",
+  color: "var(--ink)",
+};
+
+const verboseHintStyle: React.CSSProperties = {
+  margin: 0,
+  fontFamily: "var(--font-ui)",
+  fontSize: "var(--t-xs)",
+  color: "var(--muted)",
+  lineHeight: 1.5,
 };
 
 const autoRefreshStyle: React.CSSProperties = {
