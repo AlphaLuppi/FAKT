@@ -261,4 +261,40 @@ describe("NewAi", () => {
       "glisse un fichier"
     );
   });
+
+  it("le bouton Annuler débloque l'extraction en cours quand un fichier pend", async () => {
+    setAi(createProvider({ installed: true, extractResult: FIXTURE_EXTRACTED }));
+    renderRoute();
+    await waitFor(() => {
+      expect(screen.getByTestId("ai-dropzone")).toBeInTheDocument();
+    });
+
+    const zone = screen.getByTestId("ai-dropzone");
+    // On construit un File avec un nom .pdf pour déclencher parsePdfFile,
+    // mais jsdom n'a pas de vrai worker pdfjs — en pratique l'appel throw
+    // ou pend. On teste l'UX : le bouton Annuler force la sortie du mode
+    // parsing même si l'extraction ne s'est pas terminée naturellement.
+    // Pour garantir un parsing "en cours", on override File.arrayBuffer pour
+    // renvoyer une promise qui ne résout jamais — simule un hang.
+    const hangingFile = new File(["fake pdf"], "stuck.pdf", { type: "application/pdf" });
+    Object.defineProperty(hangingFile, "arrayBuffer", {
+      value: () => new Promise<ArrayBuffer>(() => {}),
+    });
+    fireEvent.drop(zone, { dataTransfer: { files: [hangingFile] } });
+
+    // L'indicateur d'extraction apparaît.
+    await waitFor(() => {
+      expect(screen.getByTestId("ai-parsing")).toBeInTheDocument();
+    });
+
+    // Et le bouton Annuler est visible.
+    expect(screen.getByTestId("ai-parsing-cancel")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId("ai-parsing-cancel"));
+
+    // L'indicateur disparaît immédiatement.
+    await waitFor(() => {
+      expect(screen.queryByTestId("ai-parsing")).toBeNull();
+    });
+  });
 });

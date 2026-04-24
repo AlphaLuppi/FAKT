@@ -73,6 +73,7 @@ export function NewAi(): ReactElement {
   const [parsingFiles, setParsingFiles] = useState(false);
   const [fileErrors, setFileErrors] = useState<string[]>([]);
   const abortRef = useRef<AbortController | null>(null);
+  const parseCancelledRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -154,32 +155,58 @@ export function NewAi(): ReactElement {
 
   async function handleDroppedFiles(files: File[]): Promise<void> {
     if (files.length === 0) return;
+    parseCancelledRef.current = false;
     setParsingFiles(true);
     setFileErrors([]);
     const errors: string[] = [];
     const chunks: string[] = [];
-    for (const file of files) {
-      try {
-        const parsed = await parseFile(file);
-        if (parsed.text.trim().length > 0) {
-          chunks.push(`--- Contenu de ${parsed.filename} ---\n\n${parsed.text}`);
-        } else {
-          errors.push(`${file.name} : fichier vide ou non-lisible.`);
+    try {
+      for (const file of files) {
+        if (parseCancelledRef.current) {
+          errors.push(`${file.name} : extraction annulée.`);
+          continue;
         }
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        errors.push(`${file.name} : ${msg}`);
+        try {
+          const parsed = await parseFile(file);
+          if (parseCancelledRef.current) {
+            errors.push(`${file.name} : extraction annulée.`);
+            continue;
+          }
+          if (parsed.text.trim().length > 0) {
+            chunks.push(`--- Contenu de ${parsed.filename} ---\n\n${parsed.text}`);
+          } else {
+            errors.push(`${file.name} : fichier vide ou non-lisible.`);
+          }
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          errors.push(`${file.name} : ${msg}`);
+        }
       }
+      if (chunks.length > 0) {
+        setBrief((prev) => {
+          const joined = chunks.join("\n\n");
+          if (prev.trim().length === 0) return joined;
+          return `${prev}\n\n${joined}`;
+        });
+      }
+      setFileErrors(errors);
+    } finally {
+      // Toujours repasser à false, quoi qu'il arrive — c'est ce qui bloquait
+      // l'UI quand un parse hang-forever se produisait.
+      setParsingFiles(false);
+      parseCancelledRef.current = false;
     }
-    if (chunks.length > 0) {
-      setBrief((prev) => {
-        const joined = chunks.join("\n\n");
-        if (prev.trim().length === 0) return joined;
-        return `${prev}\n\n${joined}`;
-      });
-    }
-    setFileErrors(errors);
+  }
+
+  function handleCancelParsing(): void {
+    parseCancelledRef.current = true;
+    // On ne peut pas interrompre un parseFile() en cours (pas d'AbortSignal
+    // côté pdfjs), mais on coupe l'UI immédiatement pour débloquer Tom.
+    // Le parse en cours remplira `errors` via le flag cancelled.
     setParsingFiles(false);
+    setFileErrors((prev) =>
+      prev.length > 0 ? prev : ["Extraction annulée par l'utilisateur."]
+    );
   }
 
   async function handleApply(): Promise<void> {
@@ -407,7 +434,10 @@ export function NewAi(): ReactElement {
             style={{
               border: `${tokens.stroke.base} dashed ${tokens.color.ink}`,
               padding: tokens.spacing[3],
-              textAlign: "center",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: tokens.spacing[3],
               fontFamily: tokens.font.ui,
               fontSize: tokens.fontSize.sm,
               color: tokens.color.muted,
@@ -415,7 +445,14 @@ export function NewAi(): ReactElement {
               letterSpacing: "0.06em",
             }}
           >
-            Extraction du contenu…
+            <span>Extraction du contenu…</span>
+            <Button
+              variant="ghost"
+              onClick={handleCancelParsing}
+              data-testid="ai-parsing-cancel"
+            >
+              Annuler
+            </Button>
           </div>
         )}
 
