@@ -5,11 +5,11 @@ import { fr } from "@fakt/shared";
 import type { KeyboardEvent, ReactElement } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router";
+import { useVerboseAiMode } from "../../hooks/useVerboseAiMode.js";
 import { ChatMessage as ChatMessageView } from "./ChatMessage.js";
 import { useComposerSidebar } from "./ComposerContext.js";
 import type { ChatBlock, ChatMessageRich } from "./useChatStream.js";
 import { applyStreamEventToBlocks, extractFinalText } from "./useChatStream.js";
-import { useVerboseAiMode } from "../../hooks/useVerboseAiMode.js";
 import "highlight.js/styles/github-dark.css";
 
 /**

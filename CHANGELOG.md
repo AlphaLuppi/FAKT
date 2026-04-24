@@ -7,6 +7,63 @@ et [Semantic Versioning 2.0.0](https://semver.org/lang/fr/).
 
 ---
 
+## [0.1.8] - 2026-04-24
+
+Session test + fix UI massive (16 retours utilisateur + plusieurs améliorations
+post-merge). Refonte Composer IA avec blocs thinking/tool_use en accordéon style
+claude.ai, drag-drop de fichiers (TXT/MD/EML/PDF/DOCX) dans le brief IA, fix
+extraction IA JSON, et nombreux polish UX.
+
+### Added
+- Dropzone UIKit (`packages/ui/src/primitives/Dropzone.tsx`) — drag + clic.
+- Parseurs fichiers `@fakt/ai/file-parsers` : text, markdown, eml, pdf, docx.
+- PDF worker Vite via `?url` + timeouts 15 s (load) / 30 s (total) + bouton Annuler.
+- Composer IA : events structurés Anthropic natifs forwardés de Rust
+  (`thinking_delta`, `tool_use_*`, `tool_result`) — CLI en `stream-json`.
+- Composer IA : `ExecutionTrace` — accordéon collapsed-par-défaut qui regroupe
+  thinking + tool_use + tool_result en une ligne résumée (style claude.ai).
+- Composer IA : `StreamingStatus` — bandeau spinner braille animé.
+- Composer IA : markdown + HTML + SVG via `react-markdown` (GFM + highlight + sanitize).
+- Composer IA : animation typewriter avec curseur clignotant.
+- Settings : toggle "Mode verbose IA" (persisté localStorage).
+- Recherche globale Cmd+K : route `GET /api/search` agrégée.
+- Bouton "Marquer comme envoyé" / "Annuler envoi" sur les devis + audit trail.
+- Commande Rust `write_pdf_file` (remplace `plugin:fs|write_file` défaillant).
+- UIKit : `SegmentedControl`, `Autocomplete`, `AutoGrowTextarea`.
+- Signature trackpad : Ctrl+Z undo du dernier trait.
+- Détail client : navigation vers devis/factures liés + pagination.
+- Templates Typst : mentions légales FR complètes (CGV L441-10, D441-5, 293 B,
+  PI, résiliation, validité 90 j) alignées avec `/devis-freelance`.
+- 95+ workflows E2E documentés dans `_bmad-output/e2e-workflows-coverage.md`.
+
+### Fixed
+- Composer IA : streaming n'affiche plus `[object Object]` (extraction correcte
+  des delta `text` / `thinking` / `partial_json`).
+- Extraction IA devis : parser JSON robuste côté Rust (`json_extract.rs`) —
+  gère fences markdown, préfixes explicatifs, nested braces, arrays.
+- Drag-drop PDF qui pendait indéfiniment : worker réel + timeouts + Annuler.
+- Signature : ids en UUID v4 canonique (fin du "id doit être UUID v4").
+- Bouton "Télécharger PDF" : écrit effectivement le fichier après dialog.
+- Bouton "Nouveau avec l'IA" câblé (navigate vers `/quotes/new-ai`).
+- Bouton "Éditer un devis" : tooltip explicatif quand disabled.
+- Dropdowns menu "Nouvelle facture/devis" : padding gauche 16 px.
+- Biblio prestations sur description ligne devis : autocomplete inline discret.
+- Mock `tokens.shadow` dans les tests ClientsList (6 failures préexistants fixés).
+- Composer sidebar : header 56 px aligné top bar + shadow gauche.
+- Lint : remplacement des 17 non-null assertions `!` dans `useChatStream.test.ts`
+  par un helper `apply()` qui throw au lieu de TypeError silencieux.
+
+### Changed
+- `@fakt/ai` accepte `pdfjs-dist` + `mammoth` en deps directes.
+- `AiStreamEvent<T>` étendu avec 5 variants (rétrocompat totale).
+
+### Developer notes
+- 338/338 tests verts côté `@fakt/desktop` (vs 305/311 avant).
+- Lint Biome clean (0 erreur).
+- Typecheck 13/13 packages OK.
+
+---
+
 ## [0.1.7] - 2026-04-24
 
 Fix UX onboarding découverts par Tom au réveil après test de v0.1.6 en dev.

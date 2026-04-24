@@ -714,7 +714,8 @@ if (typeof document !== "undefined") {
   if (document.getElementById(KEY) === null) {
     const styleEl = document.createElement("style");
     styleEl.id = KEY;
-    styleEl.textContent = `@keyframes ai-session-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }`;
+    styleEl.textContent =
+      "@keyframes ai-session-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }";
     document.head.appendChild(styleEl);
   }
 }

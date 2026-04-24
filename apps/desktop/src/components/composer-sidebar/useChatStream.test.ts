@@ -15,11 +15,26 @@
 import type { AiStreamEvent } from "@fakt/ai";
 import { describe, expect, it } from "vitest";
 import {
+  type ChatBlock,
   applyStreamEventToBlocks,
   extractDeltaText,
   extractFinalText,
-  type ChatBlock,
 } from "./useChatStream.js";
+
+/**
+ * Helper test — wrap applyStreamEventToBlocks pour éviter les non-null
+ * assertions (biome lint/style/noNonNullAssertion). Throw si le hook
+ * retourne null, ce qui fait échouer le test avec un message clair plutôt
+ * qu'une TypeError déréférencée.
+ */
+function apply(
+  blocks: ChatBlock[],
+  event: AiStreamEvent<string>
+): { blocks: ChatBlock[]; textAccumulator?: string } {
+  const out = applyStreamEventToBlocks(blocks, event);
+  if (!out) throw new Error(`applyStreamEventToBlocks returned null for ${event.type}`);
+  return out;
+}
 
 describe("extractDeltaText", () => {
   it("retourne la string directe (format mock)", () => {
@@ -93,18 +108,18 @@ describe("applyStreamEventToBlocks", () => {
   type E = AiStreamEvent<string>;
 
   it("delta text crée un premier TextBlock puis concatène", () => {
-    const first = applyStreamEventToBlocks([], { type: "delta", data: "Hel" } as E);
+    const first = apply([], { type: "delta", data: "Hel" } as E);
     expect(first).not.toBeNull();
     expect(first?.blocks).toEqual([{ type: "text", text: "Hel" }]);
     expect(first?.textAccumulator).toBe("Hel");
 
-    const second = applyStreamEventToBlocks(first!.blocks, { type: "delta", data: "lo" } as E);
+    const second = applyStreamEventToBlocks(first?.blocks, { type: "delta", data: "lo" } as E);
     expect(second?.blocks).toEqual([{ type: "text", text: "Hello" }]);
     expect(second?.textAccumulator).toBe("Hello");
   });
 
   it("delta text avec payload object { text }", () => {
-    const out = applyStreamEventToBlocks([], {
+    const out = apply([], {
       type: "delta",
       data: { text: "bonjour" },
     } as unknown as E);
@@ -112,17 +127,18 @@ describe("applyStreamEventToBlocks", () => {
   });
 
   it("delta text vide = no-op (retourne null)", () => {
+    // Appels directs (pas apply()) : on teste spécifiquement le retour null.
     expect(applyStreamEventToBlocks([], { type: "delta", data: "" } as E)).toBeNull();
     expect(applyStreamEventToBlocks([], { type: "delta", data: null } as unknown as E)).toBeNull();
   });
 
   it("thinking_delta crée un ThinkingBlock puis concatène", () => {
-    const first = applyStreamEventToBlocks([], {
+    const first = apply([], {
       type: "thinking_delta",
       text: "Je ",
     });
     expect(first?.blocks).toEqual([{ type: "thinking", thinking: "Je " }]);
-    const second = applyStreamEventToBlocks(first!.blocks, {
+    const second = applyStreamEventToBlocks(first?.blocks, {
       type: "thinking_delta",
       text: "réfléchis",
     });
@@ -130,8 +146,8 @@ describe("applyStreamEventToBlocks", () => {
   });
 
   it("thinking_delta après un delta text crée un nouveau ThinkingBlock distinct", () => {
-    const afterText = applyStreamEventToBlocks([], { type: "delta", data: "a" } as E)!;
-    const afterThink = applyStreamEventToBlocks(afterText.blocks, {
+    const afterText = apply([], { type: "delta", data: "a" } as E);
+    const afterThink = apply(afterText.blocks, {
       type: "thinking_delta",
       text: "réflexion",
     });
@@ -142,7 +158,7 @@ describe("applyStreamEventToBlocks", () => {
   });
 
   it("tool_use_start ajoute un ToolUseBlock avec input vide (string)", () => {
-    const out = applyStreamEventToBlocks([], {
+    const out = apply([], {
       type: "tool_use_start",
       id: "toolu_A",
       name: "list_clients",
@@ -153,37 +169,37 @@ describe("applyStreamEventToBlocks", () => {
   });
 
   it("tool_use_delta concatène partialJson sur le tool_use matching id", () => {
-    const start = applyStreamEventToBlocks([], {
+    const start = apply([], {
       type: "tool_use_start",
       id: "toolu_A",
       name: "list_clients",
-    })!;
-    const d1 = applyStreamEventToBlocks(start.blocks, {
+    });
+    const d1 = apply(start.blocks, {
       type: "tool_use_delta",
       id: "toolu_A",
       partialJson: '{"search":"',
-    })!;
-    const d2 = applyStreamEventToBlocks(d1.blocks, {
+    });
+    const d2 = apply(d1.blocks, {
       type: "tool_use_delta",
       id: "toolu_A",
       partialJson: 'Tom"}',
-    })!;
+    });
     expect(d2.blocks).toEqual([
       { type: "tool_use", id: "toolu_A", name: "list_clients", input: '{"search":"Tom"}' },
     ]);
   });
 
   it("tool_use_delta avec id vide cible le dernier tool_use (fallback parser)", () => {
-    const start = applyStreamEventToBlocks([], {
+    const start = apply([], {
       type: "tool_use_start",
       id: "toolu_X",
       name: "foo",
-    })!;
-    const out = applyStreamEventToBlocks(start.blocks, {
+    });
+    const out = apply(start.blocks, {
       type: "tool_use_delta",
       id: "",
       partialJson: '{"a":1}',
-    })!;
+    });
     expect(out.blocks[0]).toMatchObject({
       type: "tool_use",
       id: "toolu_X",
@@ -192,20 +208,20 @@ describe("applyStreamEventToBlocks", () => {
   });
 
   it("tool_use_stop parse le JSON accumulé et remplace input par l'objet", () => {
-    const start = applyStreamEventToBlocks([], {
+    const start = apply([], {
       type: "tool_use_start",
       id: "toolu_A",
       name: "list_clients",
-    })!;
-    const d = applyStreamEventToBlocks(start.blocks, {
+    });
+    const d = apply(start.blocks, {
       type: "tool_use_delta",
       id: "toolu_A",
       partialJson: '{"search":"Tom","limit":5}',
-    })!;
-    const stop = applyStreamEventToBlocks(d.blocks, {
+    });
+    const stop = apply(d.blocks, {
       type: "tool_use_stop",
       id: "toolu_A",
-    })!;
+    });
     const block = stop.blocks[0];
     expect(block?.type).toBe("tool_use");
     if (block?.type === "tool_use") {
@@ -214,17 +230,17 @@ describe("applyStreamEventToBlocks", () => {
   });
 
   it("tool_use_stop avec JSON invalide garde la string pour debug", () => {
-    const start = applyStreamEventToBlocks([], {
+    const start = apply([], {
       type: "tool_use_start",
       id: "t1",
       name: "bogus",
-    })!;
-    const d = applyStreamEventToBlocks(start.blocks, {
+    });
+    const d = apply(start.blocks, {
       type: "tool_use_delta",
       id: "t1",
       partialJson: '{"incomplete":',
-    })!;
-    const stop = applyStreamEventToBlocks(d.blocks, { type: "tool_use_stop", id: "t1" })!;
+    });
+    const stop = apply(d.blocks, { type: "tool_use_stop", id: "t1" });
     const block = stop.blocks[0];
     if (block?.type === "tool_use") {
       expect(block.input).toBe('{"incomplete":');
@@ -234,21 +250,21 @@ describe("applyStreamEventToBlocks", () => {
   });
 
   it("tool_result ajoute un ToolResultBlock OK ou erreur", () => {
-    const ok = applyStreamEventToBlocks([], {
+    const ok = apply([], {
       type: "tool_result",
       toolUseId: "t1",
       content: "3 clients trouvés",
       isError: false,
-    })!;
+    });
     expect(ok.blocks).toEqual([
       { type: "tool_result", toolUseId: "t1", content: "3 clients trouvés", isError: false },
     ]);
-    const ko = applyStreamEventToBlocks(ok.blocks, {
+    const ko = apply(ok.blocks, {
       type: "tool_result",
       toolUseId: "t2",
       content: "timeout",
       isError: true,
-    })!;
+    });
     expect(ko.blocks[1]).toEqual({
       type: "tool_result",
       toolUseId: "t2",
@@ -263,7 +279,7 @@ describe("applyStreamEventToBlocks", () => {
       { type: "thinking_delta", text: "Je cherche les clients…" },
       { type: "tool_use_start", id: "t1", name: "list_clients" },
       { type: "tool_use_delta", id: "t1", partialJson: '{"limit"' },
-      { type: "tool_use_delta", id: "t1", partialJson: ':10}' },
+      { type: "tool_use_delta", id: "t1", partialJson: ":10}" },
       { type: "tool_use_stop", id: "t1" },
       { type: "tool_result", toolUseId: "t1", content: "OK 3 clients", isError: false },
       { type: "delta", data: "Voici tes " },
@@ -284,11 +300,8 @@ describe("applyStreamEventToBlocks", () => {
   });
 
   it("retourne null pour les events non routables (done, error)", () => {
-    expect(
-      applyStreamEventToBlocks([], { type: "done", data: "final" } as E)
-    ).toBeNull();
-    expect(
-      applyStreamEventToBlocks([], { type: "error", message: "oops" } as E)
-    ).toBeNull();
+    // Appels directs : on teste spécifiquement que le hook ignore done/error.
+    expect(applyStreamEventToBlocks([], { type: "done", data: "final" } as E)).toBeNull();
+    expect(applyStreamEventToBlocks([], { type: "error", message: "oops" } as E)).toBeNull();
   });
 });

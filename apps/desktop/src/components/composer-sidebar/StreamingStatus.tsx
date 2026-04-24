@@ -19,9 +19,7 @@ interface StreamingStatusProps {
   label?: string;
 }
 
-export function StreamingStatus({
-  label = "L'IA RÉFLÉCHIT",
-}: StreamingStatusProps): ReactElement {
+export function StreamingStatus({ label = "L'IA RÉFLÉCHIT" }: StreamingStatusProps): ReactElement {
   const [frame, setFrame] = useState(0);
 
   useEffect(() => {

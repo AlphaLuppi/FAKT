@@ -38,7 +38,9 @@ function writeStored(enabled: boolean): void {
     window.localStorage.setItem(STORAGE_KEY, enabled ? "true" : "false");
     // Notifie les autres composants de la page (settings + sidebar) du
     // changement sans avoir à reload — useVerboseAiMode y écoute et refresh.
-    window.dispatchEvent(new CustomEvent<{ enabled: boolean }>(STORAGE_EVENT, { detail: { enabled } }));
+    window.dispatchEvent(
+      new CustomEvent<{ enabled: boolean }>(STORAGE_EVENT, { detail: { enabled } })
+    );
   } catch {
     // Silencieux — mode privé strict ou quota dépassé : on perd la persistance
     // mais l'UI fonctionne (la mémoire in-state reste valide).

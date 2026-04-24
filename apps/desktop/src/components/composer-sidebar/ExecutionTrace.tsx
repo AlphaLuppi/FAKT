@@ -39,7 +39,8 @@ function computeSummary(blocks: ExecBlock[], streaming: boolean): string {
   }
 
   const parts: string[] = [];
-  if (thinkings.length > 0) parts.push(`${thinkings.length} réflexion${thinkings.length > 1 ? "s" : ""}`);
+  if (thinkings.length > 0)
+    parts.push(`${thinkings.length} réflexion${thinkings.length > 1 ? "s" : ""}`);
   if (toolUses.length === 1 && toolUses[0]) {
     // Un seul outil → afficher son nom pour donner du contexte dès le collapse.
     parts.push(`outil ${toolUses[0].name}`);
@@ -102,11 +103,7 @@ function renderDetailBlock(block: ExecBlock, idx: number, keyPrefix: string): Re
   }
   if (block.type === "tool_use") {
     return (
-      <div
-        key={`${keyPrefix}-d${idx}`}
-        data-testid={`${keyPrefix}-tool-${idx}`}
-        style={baseStyle}
-      >
+      <div key={`${keyPrefix}-d${idx}`} data-testid={`${keyPrefix}-tool-${idx}`} style={baseStyle}>
         <span style={labelStyle}>
           Outil : <span style={{ color: color.ink, fontFamily: font.mono }}>{block.name}</span>
         </span>
@@ -117,11 +114,7 @@ function renderDetailBlock(block: ExecBlock, idx: number, keyPrefix: string): Re
   // tool_result
   const badgeBg = block.isError ? "#D97777" : tokens.color.accentSoft;
   return (
-    <div
-      key={`${keyPrefix}-d${idx}`}
-      data-testid={`${keyPrefix}-result-${idx}`}
-      style={baseStyle}
-    >
+    <div key={`${keyPrefix}-d${idx}`} data-testid={`${keyPrefix}-result-${idx}`} style={baseStyle}>
       <span style={labelStyle}>
         Résultat{" "}
         <span
@@ -194,10 +187,7 @@ export function ExecutionTrace({ blocks, streaming, idKey }: ExecutionTraceProps
         </span>
         <span style={{ flex: 1 }}>{summary}</span>
         {streaming && (
-          <span
-            aria-hidden="true"
-            style={{ fontFamily: font.mono, color: color.muted }}
-          >
+          <span aria-hidden="true" style={{ fontFamily: font.mono, color: color.muted }}>
             …
           </span>
         )}

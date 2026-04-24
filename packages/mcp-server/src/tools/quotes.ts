@@ -5,8 +5,8 @@
  * guider l'user vers /quotes/new?mode=ai.
  */
 import { z } from "zod";
+import { ApiClientError, apiClient } from "../client.ts";
 import type { ToolRegistration } from "./types.ts";
-import { apiClient, ApiClientError } from "../client.ts";
 
 async function safeCall<T>(fn: () => Promise<T>): Promise<T | { error: string }> {
   try {

@@ -135,11 +135,7 @@ export function ChatMessage({ message, timestamp }: ChatMessageProps): ReactElem
       >
         {groupBlocks(message.blocks).map((item) => {
           if (item.kind === "text") {
-            return renderTextBlock(
-              item.block,
-              `${message.id}-b${item.idx}`,
-              message.streaming
-            );
+            return renderTextBlock(item.block, `${message.id}-b${item.idx}`, message.streaming);
           }
           return (
             <ExecutionTrace

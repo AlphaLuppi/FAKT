@@ -204,9 +204,7 @@ export function NewAi(): ReactElement {
     // côté pdfjs), mais on coupe l'UI immédiatement pour débloquer Tom.
     // Le parse en cours remplira `errors` via le flag cancelled.
     setParsingFiles(false);
-    setFileErrors((prev) =>
-      prev.length > 0 ? prev : ["Extraction annulée par l'utilisateur."]
-    );
+    setFileErrors((prev) => (prev.length > 0 ? prev : ["Extraction annulée par l'utilisateur."]));
   }
 
   async function handleApply(): Promise<void> {
@@ -446,11 +444,7 @@ export function NewAi(): ReactElement {
             }}
           >
             <span>Extraction du contenu…</span>
-            <Button
-              variant="ghost"
-              onClick={handleCancelParsing}
-              data-testid="ai-parsing-cancel"
-            >
+            <Button variant="ghost" onClick={handleCancelParsing} data-testid="ai-parsing-cancel">
               Annuler
             </Button>
           </div>

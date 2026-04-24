@@ -72,9 +72,9 @@ async function configureWorker(pdfjs: PdfjsLib): Promise<boolean> {
   // retourne l'URL publique. En environnement de test (jsdom) cet import
   // peut throw car Vite ne tourne pas. Dans ce cas on fallback.
   try {
-    const workerMod = (await import(
-      "pdfjs-dist/legacy/build/pdf.worker.min.mjs?url"
-    )) as { default?: string };
+    const workerMod = (await import("pdfjs-dist/legacy/build/pdf.worker.min.mjs?url")) as {
+      default?: string;
+    };
     if (typeof workerMod.default === "string" && workerMod.default.length > 0) {
       pdfjs.GlobalWorkerOptions.workerSrc = workerMod.default;
       console.info("[pdf] worker configured via Vite ?url:", workerMod.default);
@@ -187,16 +187,9 @@ export async function parsePdfFile(file: File): Promise<string> {
   try {
     const pages: string[] = [];
     for (let pageNum = 1; pageNum <= doc.numPages; pageNum += 1) {
-      const remainingBudget = Math.max(
-        5_000,
-        PDF_PARSE_TIMEOUT_MS - PDF_LOAD_TIMEOUT_MS
-      );
+      const remainingBudget = Math.max(5_000, PDF_PARSE_TIMEOUT_MS - PDF_LOAD_TIMEOUT_MS);
       const perPageBudget = Math.max(2_000, Math.floor(remainingBudget / doc.numPages));
-      const page = await withTimeout(
-        doc.getPage(pageNum),
-        perPageBudget,
-        `page ${pageNum}`
-      );
+      const page = await withTimeout(doc.getPage(pageNum), perPageBudget, `page ${pageNum}`);
       const content = await withTimeout(
         page.getTextContent(),
         perPageBudget,

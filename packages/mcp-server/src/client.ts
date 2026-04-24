@@ -40,8 +40,8 @@ interface ErrorBody {
 function getCreds(): { url: string; token: string } {
   const argUrl = process.argv[2];
   const argToken = process.argv[3];
-  const url = argUrl ?? process.env["FAKT_API_URL"];
-  const token = argToken ?? process.env["FAKT_API_TOKEN"];
+  const url = argUrl ?? process.env.FAKT_API_URL;
+  const token = argToken ?? process.env.FAKT_API_TOKEN;
   if (!url || url.length === 0) {
     throw new Error(
       "FAKT_API_URL manquant — passer via argv[2] ou env. Le MCP server doit être lancé par Tauri spawn_claude."
