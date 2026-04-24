@@ -6,6 +6,15 @@ import { useCallback, useEffect, useState } from "react";
 type SessionStatus = "pending" | "streaming" | "done" | "error" | "timeout" | "cancelled";
 type SessionKind = "extract_quote" | "chat" | "draft_email" | "unknown";
 
+interface ToolCallRecord {
+  name: string;
+  input: unknown;
+  output: unknown;
+  is_error: boolean;
+  started_at: number;
+  ended_at: number | null;
+}
+
 interface AiSession {
   id: string;
   kind: SessionKind | string;
@@ -19,6 +28,10 @@ interface AiSession {
   cli_lines: number;
   error: string | null;
   stderr: string | null;
+  response_text: string;
+  final_result: unknown;
+  tool_calls: ToolCallRecord[];
+  raw_events: string[];
 }
 
 interface SessionsSnapshot {
@@ -42,8 +55,39 @@ export function AiSessionsTab(): ReactElement {
   const [snapshot, setSnapshot] = useState<SessionsSnapshot>({ active: [], history: [] });
   const [loading, setLoading] = useState(true);
   const [autoRefresh, setAutoRefresh] = useState(true);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  // Sessions dont le détail est ouvert. On permet plusieurs à la fois pour que
+  // l'utilisateur puisse comparer, et on auto-expand les runs actifs.
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
+
+  // Auto-expand les sessions actives (streaming/pending) pour voir la sortie
+  // en live sans avoir à cliquer. Quand elles terminent, l'auto-expand devient
+  // auto-collapse (sauf si l'user l'a explicitement ré-ouvert).
+  useEffect(() => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      let changed = false;
+      for (const s of snapshot.active) {
+        if (!next.has(s.id)) {
+          next.add(s.id);
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [snapshot.active]);
+
+  function toggleExpanded(id: string): void {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }
 
   const refresh = useCallback(async (): Promise<void> => {
     try {
@@ -126,8 +170,8 @@ export function AiSessionsTab(): ReactElement {
           title={fr.settings.aiSessions.activeTitle}
           sessions={snapshot.active}
           accent
-          expandedId={expandedId}
-          onToggle={setExpandedId}
+          expandedIds={expandedIds}
+          onToggle={toggleExpanded}
         />
       )}
 
@@ -136,8 +180,8 @@ export function AiSessionsTab(): ReactElement {
           title={fr.settings.aiSessions.historyTitle}
           sessions={snapshot.history}
           accent={false}
-          expandedId={expandedId}
-          onToggle={setExpandedId}
+          expandedIds={expandedIds}
+          onToggle={toggleExpanded}
         />
       )}
     </div>
@@ -148,14 +192,14 @@ function SessionSection({
   title,
   sessions,
   accent,
-  expandedId,
+  expandedIds,
   onToggle,
 }: {
   title: string;
   sessions: AiSession[];
   accent: boolean;
-  expandedId: string | null;
-  onToggle: (id: string | null) => void;
+  expandedIds: Set<string>;
+  onToggle: (id: string) => void;
 }): ReactElement {
   return (
     <section style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -170,8 +214,8 @@ function SessionSection({
           <SessionRow
             key={session.id}
             session={session}
-            expanded={expandedId === session.id}
-            onToggle={() => onToggle(expandedId === session.id ? null : session.id)}
+            expanded={expandedIds.has(session.id)}
+            onToggle={() => onToggle(session.id)}
           />
         ))}
       </div>
@@ -218,30 +262,92 @@ function SessionRow({
 
       {expanded && (
         <div style={detailsStyle}>
-          <DetailRow label="ID" value={<code style={codeStyle}>{session.id}</code>} />
-          <DetailRow label={fr.settings.aiSessions.colStarted} value={formatDate(session.started_at)} />
-          <DetailRow
-            label={fr.settings.aiSessions.promptChars}
-            value={session.prompt_chars.toString()}
-          />
-          <DetailRow
-            label={fr.settings.aiSessions.tokenEvents}
-            value={session.token_events.toString()}
-          />
-          <DetailRow
-            label={fr.settings.aiSessions.cliLines}
-            value={session.cli_lines.toString()}
-          />
+          <div style={metaGridStyle}>
+            <DetailRow label="ID" value={<code style={codeStyle}>{session.id}</code>} />
+            <DetailRow
+              label={fr.settings.aiSessions.colStarted}
+              value={formatDate(session.started_at)}
+            />
+            <DetailRow
+              label={fr.settings.aiSessions.promptChars}
+              value={session.prompt_chars.toString()}
+            />
+            <DetailRow
+              label={fr.settings.aiSessions.tokenEvents}
+              value={session.token_events.toString()}
+            />
+            <DetailRow
+              label={fr.settings.aiSessions.cliLines}
+              value={session.cli_lines.toString()}
+            />
+            {session.tool_calls.length > 0 && (
+              <DetailRow
+                label={fr.settings.aiSessions.toolCallsCount}
+                value={session.tool_calls.length.toString()}
+              />
+            )}
+          </div>
+
+          {session.response_text.length > 0 && (
+            <div>
+              <div style={detailHeadingStyle}>
+                {fr.settings.aiSessions.responseTitle}
+                {session.status === "streaming" && (
+                  <span style={liveBadgeStyle}>{fr.settings.aiSessions.live}</span>
+                )}
+              </div>
+              <pre style={{ ...preStyle, background: "var(--paper)", color: "var(--ink)" }}>
+                {session.response_text}
+              </pre>
+            </div>
+          )}
+
+          {session.tool_calls.length > 0 && (
+            <div>
+              <div style={detailHeadingStyle}>{fr.settings.aiSessions.toolCallsTitle}</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {session.tool_calls.map((tc, idx) => (
+                  <ToolCallCard key={idx} call={tc} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {session.final_result !== null && session.final_result !== undefined && (
+            <div>
+              <div style={detailHeadingStyle}>{fr.settings.aiSessions.finalResultTitle}</div>
+              <pre style={preStyle}>{formatJson(session.final_result)}</pre>
+            </div>
+          )}
+
           <div>
             <div style={detailHeadingStyle}>{fr.settings.aiSessions.promptPreview}</div>
             <pre style={preStyle}>{session.prompt_preview}</pre>
           </div>
+
           <div>
             <div style={detailHeadingStyle}>{fr.settings.aiSessions.stderrTitle}</div>
-            <pre style={{ ...preStyle, background: session.stderr !== null ? "#2a1a1a" : undefined, color: session.stderr !== null ? "#ffcccc" : undefined }}>
+            <pre
+              style={{
+                ...preStyle,
+                background: session.stderr !== null ? "#2a1a1a" : undefined,
+                color: session.stderr !== null ? "#ffcccc" : undefined,
+              }}
+            >
               {session.stderr ?? fr.settings.aiSessions.noStderr}
             </pre>
           </div>
+
+          {session.raw_events.length > 0 && (
+            <details style={{ marginTop: 4 }}>
+              <summary style={detailHeadingStyle}>
+                {fr.settings.aiSessions.rawEventsTitle} ({session.raw_events.length})
+              </summary>
+              <pre style={{ ...preStyle, maxHeight: 400 }}>
+                {session.raw_events.join("\n")}
+              </pre>
+            </details>
+          )}
         </div>
       )}
     </div>
@@ -261,6 +367,48 @@ function DetailRow({
       <span style={{ fontFamily: "var(--font-mono)", fontSize: "var(--t-sm)" }}>{value}</span>
     </div>
   );
+}
+
+function ToolCallCard({ call }: { call: ToolCallRecord }): ReactElement {
+  const duration =
+    call.ended_at !== null ? `${((call.ended_at - call.started_at) / 1000).toFixed(2)} s` : "…";
+  return (
+    <div
+      style={{
+        border: `2px solid ${call.is_error ? "#c00" : "var(--ink)"}`,
+        background: call.ended_at === null ? "var(--accent)" : "var(--surface)",
+        padding: 10,
+        display: "flex",
+        flexDirection: "column",
+        gap: 6,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700 }}>
+          {call.is_error ? "⚠" : call.ended_at === null ? "◌" : "✓"} {call.name}
+        </span>
+        <span style={monoSmallStyle}>{duration}</span>
+      </div>
+      <div>
+        <div style={{ ...detailHeadingStyle, marginBottom: 4 }}>input</div>
+        <pre style={{ ...preStyle, maxHeight: 160 }}>{formatJson(call.input)}</pre>
+      </div>
+      {call.output !== null && call.output !== undefined && (
+        <div>
+          <div style={{ ...detailHeadingStyle, marginBottom: 4 }}>output</div>
+          <pre style={{ ...preStyle, maxHeight: 160 }}>{formatJson(call.output)}</pre>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function formatJson(value: unknown): string {
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return String(value);
+  }
 }
 
 function StatusBadge({ status }: { status: SessionStatus }): ReactElement {
@@ -454,7 +602,29 @@ const detailsStyle: React.CSSProperties = {
   background: "var(--paper)",
   display: "flex",
   flexDirection: "column",
-  gap: 10,
+  gap: 14,
+};
+
+const metaGridStyle: React.CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+  gap: 8,
+  padding: 10,
+  background: "var(--surface)",
+  border: "2px solid var(--ink)",
+};
+
+const liveBadgeStyle: React.CSSProperties = {
+  display: "inline-block",
+  marginLeft: 10,
+  padding: "2px 6px",
+  background: "#c00",
+  color: "#fff",
+  fontFamily: "var(--font-mono)",
+  fontSize: 10,
+  fontWeight: 800,
+  letterSpacing: "0.08em",
+  verticalAlign: "middle",
 };
 
 const detailLabelStyle: React.CSSProperties = {

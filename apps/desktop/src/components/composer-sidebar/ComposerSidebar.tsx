@@ -58,9 +58,15 @@ export function ComposerSidebar(): ReactElement {
     }
   }, [pendingMessage, clearPending]);
 
+  // Auto-scroll intelligent : ne bondit en bas que si l'user était déjà
+  // "near bottom" avant le dernier render. Évite de ré-écraser le scroll
+  // quand l'user remonte pour lire les anciens messages pendant un streaming.
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    const el = scrollRef.current;
+    if (!el) return;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    if (distanceFromBottom < 120) {
+      el.scrollTop = el.scrollHeight;
     }
   }, [messages]);
 

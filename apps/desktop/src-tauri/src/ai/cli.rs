@@ -12,6 +12,8 @@
 //!   4. Events are sent through the Channel to the frontend.
 //!   5. A 60-second timeout is enforced per stream session.
 
+use std::path::PathBuf;
+use std::sync::Arc;
 use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
@@ -23,6 +25,7 @@ use tokio::{
 };
 
 use super::sessions::{self, SessionStatus};
+use crate::sidecar::ApiContext;
 
 // ─── Stream event types (mirrored in packages/ai/src/providers/claude-cli.ts) ──
 
@@ -67,7 +70,11 @@ enum CliLine {
         is_error: bool,
         error_code: Option<String>,
     },
-    /// Tout le reste (system, assistant, rate_limit_event, …) — ignoré.
+    /// Message assistant complet (texte + tool_use) — on extrait les tool_use.
+    Assistant(AssistantMessage),
+    /// Message user synthétique contenant les tool_result retournés par les MCP.
+    User(UserMessage),
+    /// Tout le reste (system, rate_limit_event, …) — ignoré.
     #[serde(other)]
     Other,
 }
@@ -89,6 +96,29 @@ enum ContentDelta {
     TextDelta { text: String },
     #[serde(other)]
     Other,
+}
+
+/// Message complet assistant — arrive en plus des deltas à la fin de chaque
+/// tour de conversation. On l'utilise pour extraire les `tool_use` (et pas le
+/// texte : déjà accumulé via les deltas).
+#[derive(Debug, Deserialize)]
+struct AssistantMessage {
+    message: MessagePayload,
+}
+
+/// Message user — Claude CLI émet un event `{"type":"user"}` avec les
+/// `tool_result` quand Claude a reçu la réponse d'un MCP tool.
+#[derive(Debug, Deserialize)]
+struct UserMessage {
+    message: MessagePayload,
+}
+
+#[derive(Debug, Deserialize)]
+struct MessagePayload {
+    /// Content est soit une string simple, soit un array de ContentBlock.
+    /// On reçoit du JSON flexible donc on garde Value + navigation manuelle.
+    #[serde(default)]
+    content: serde_json::Value,
 }
 
 // ─── CLI invocation ───────────────────────────────────────────────────────────
@@ -138,17 +168,114 @@ fn build_command(binary: &str) -> Command {
     cmd
 }
 
+// ─── MCP config ───────────────────────────────────────────────────────────────
+
+/// Structure stockée en mémoire temporaire pour écriture en JSON sur disque.
+/// Format attendu par Claude CLI via `--mcp-config <path>` :
+/// ```json
+/// { "mcpServers": { "<name>": { "command": "...", "args": [...], "env": {...} } } }
+/// ```
+#[derive(Debug, Serialize)]
+struct McpConfig {
+    #[serde(rename = "mcpServers")]
+    mcp_servers: std::collections::HashMap<String, McpServerEntry>,
+}
+
+#[derive(Debug, Serialize)]
+struct McpServerEntry {
+    command: String,
+    args: Vec<String>,
+    env: std::collections::HashMap<String, String>,
+}
+
+/// Résout le path absolu vers `packages/mcp-server/src/index.ts`.
+///
+/// - **Dev** : via env var `FAKT_MCP_SERVER_ENTRY` injectée par `scripts/dev.ts`.
+/// - **Release** : résolu relatif au binaire via `resource_dir` Tauri (à venir).
+/// - **Fallback** : `None` → on skip MCP, Claude CLI tourne sans outils.
+fn resolve_mcp_entry() -> Option<PathBuf> {
+    if let Ok(p) = std::env::var("FAKT_MCP_SERVER_ENTRY") {
+        let path = PathBuf::from(p);
+        if path.exists() {
+            return Some(path);
+        }
+    }
+    None
+}
+
+/// Résout le path vers le binaire `bun`. Sans ça, les PATHs utilisateur ne
+/// suivent pas toujours (webview) et le spawn échoue.
+fn resolve_bun_binary() -> String {
+    std::env::var("FAKT_BUN_PATH").unwrap_or_else(|_| "bun".to_string())
+}
+
+/// Crée un fichier mcp-config.json temporaire pour cette session spawn.
+/// Retourne le path absolu du fichier. L'appelant est responsable de le
+/// supprimer après la fin du run (ou le laisser au GC de l'OS via temp_dir).
+fn write_mcp_config_file(api_url: &str, api_token: &str) -> std::io::Result<Option<PathBuf>> {
+    let Some(entry) = resolve_mcp_entry() else {
+        return Ok(None);
+    };
+
+    let mut env = std::collections::HashMap::new();
+    env.insert("FAKT_API_URL".to_string(), api_url.to_string());
+    env.insert("FAKT_API_TOKEN".to_string(), api_token.to_string());
+    // PATH est nécessaire sur Windows pour que bun trouve ses deps (npm, etc.)
+    if let Ok(path) = std::env::var("PATH") {
+        env.insert("PATH".to_string(), path);
+    }
+
+    let mut servers = std::collections::HashMap::new();
+    servers.insert(
+        "fakt".to_string(),
+        McpServerEntry {
+            command: resolve_bun_binary(),
+            args: vec!["run".to_string(), entry.to_string_lossy().into_owned()],
+            env,
+        },
+    );
+
+    let config = McpConfig {
+        mcp_servers: servers,
+    };
+    let json = serde_json::to_string_pretty(&config)
+        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis())
+        .unwrap_or(0);
+    let path = std::env::temp_dir().join(format!("fakt-mcp-{now}.json"));
+    std::fs::write(&path, json)?;
+    Ok(Some(path))
+}
+
 /// Spawns the Claude CLI subprocess and returns its handle + stderr reader.
 ///
 /// Security note: we use `Command::new` (not a shell invocation for args) and
 /// pass the prompt via stdin, not as a command-line argument — preventing any
 /// shell injection risk. The prompt NEVER appears in argv.
+///
+/// Si `mcp_config_path` est `Some`, on ajoute `--mcp-config <path>` et
+/// `--allowedTools` pour que Claude puisse invoquer nos tools FAKT (clients,
+/// devis, factures, etc.) en cours de conversation.
 async fn spawn_subprocess(
     prompt_text: &str,
+    mcp_config_path: Option<&std::path::Path>,
 ) -> Result<tokio::process::Child, String> {
     let binary = claude_binary();
 
     let mut cmd = build_command(&binary);
+
+    if let Some(path) = mcp_config_path {
+        cmd.arg("--mcp-config").arg(path);
+        // Autorise tous les tools exposés par notre MCP server sans prompt
+        // de confirmation user (on a déjà le controle côté app via les
+        // transitions d'état CGI 289 et les dialogs Tauri pour les actions
+        // sensibles).
+        cmd.arg("--dangerously-skip-permissions");
+    }
+
     cmd.stdin(std::process::Stdio::piped())
         .stdout(std::process::Stdio::piped())
         // Ancien bug : stderr était Stdio::null() — toutes les erreurs du CLI
@@ -195,16 +322,40 @@ async fn spawn_subprocess(
 pub async fn spawn_claude(
     prompt_text: String,
     channel: Channel<AiStreamEvent>,
+    api_ctx: tauri::State<'_, Arc<ApiContext>>,
 ) -> Result<(), String> {
-    const STREAM_TIMEOUT: Duration = Duration::from_secs(60);
+    // Timeout plus long quand le MCP est activé : les appels d'outils peuvent
+    // s'enchaîner et coûter plusieurs secondes chacun. 180s est un bon compromis.
+    const STREAM_TIMEOUT: Duration = Duration::from_secs(180);
 
     let session_id = sessions::start_session(&prompt_text);
 
+    // Génère le mcp-config.json temporaire avec l'URL + token du sidecar.
+    // Si aucun MCP entry n'est configuré (env FAKT_MCP_SERVER_ENTRY), on
+    // retombe sur un spawn Claude classique sans tools (graceful).
+    let api_url = api_ctx.url();
+    let api_token = api_ctx.token.clone();
+    let mcp_config = match write_mcp_config_file(&api_url, &api_token) {
+        Ok(path) => path,
+        Err(e) => {
+            // Erreur d'écriture du config : pas fatal, on log et on continue sans MCP.
+            crate::trace::log(&format!(
+                "mcp-config write failed, falling back to no-tools mode: {e}"
+            ));
+            None
+        }
+    };
+
     let result = timeout(
         STREAM_TIMEOUT,
-        stream_inner(&prompt_text, &channel, &session_id),
+        stream_inner(&prompt_text, &channel, &session_id, mcp_config.as_deref()),
     )
     .await;
+
+    // Cleanup du fichier temp (best-effort).
+    if let Some(path) = &mcp_config {
+        let _ = std::fs::remove_file(path);
+    }
 
     match result {
         Ok(Ok(())) => {
@@ -217,7 +368,7 @@ pub async fn spawn_claude(
             Err(msg)
         }
         Err(_elapsed) => {
-            let msg = "Délai dépassé (60s) — la réponse Claude CLI n'est pas arrivée à temps."
+            let msg = "Délai dépassé (180s) — la réponse Claude CLI n'est pas arrivée à temps."
                 .to_string();
             let _ = channel.send(AiStreamEvent::Error { message: msg.clone() });
             sessions::end_session(&session_id, SessionStatus::Timeout, Some(msg.clone()), None);
@@ -235,8 +386,9 @@ async fn stream_inner(
     prompt_text: &str,
     channel: &Channel<AiStreamEvent>,
     session_id: &str,
+    mcp_config_path: Option<&std::path::Path>,
 ) -> Result<(), StreamErr> {
-    let mut child = spawn_subprocess(prompt_text)
+    let mut child = spawn_subprocess(prompt_text, mcp_config_path)
         .await
         .map_err(|e| (e, None))?;
 
@@ -261,11 +413,16 @@ async fn stream_inner(
     let mut lines = reader.lines();
     let mut final_result: Option<serde_json::Value> = None;
     let mut streaming_started = false;
+    // Map `tool_use.id` → index du ToolCallRecord dans la session, pour
+    // corréler les tool_result qui arrivent plus tard.
+    let mut tool_use_index: std::collections::HashMap<String, usize> =
+        std::collections::HashMap::new();
 
     loop {
         match lines.next_line().await {
             Ok(Some(line)) if !line.trim().is_empty() => {
                 sessions::bump_cli_line(session_id);
+                sessions::record_raw_event(session_id, &line);
                 if !streaming_started {
                     sessions::mark_streaming(session_id);
                     streaming_started = true;
@@ -273,6 +430,7 @@ async fn stream_inner(
                 match serde_json::from_str::<CliLine>(&line) {
                     Ok(CliLine::Text { text }) => {
                         sessions::bump_token(session_id);
+                        sessions::append_response(session_id, &text);
                         let _ = channel.send(AiStreamEvent::Token { text });
                     }
                     Ok(CliLine::StreamEvent {
@@ -281,12 +439,21 @@ async fn stream_inner(
                         },
                     }) => {
                         sessions::bump_token(session_id);
+                        sessions::append_response(session_id, &text);
                         let _ = channel.send(AiStreamEvent::Token { text });
                     }
                     Ok(CliLine::StreamEvent { .. }) => {
                         // Autres stream_event (message_start, content_block_stop,
                         // message_delta, message_stop) — ignorés, le texte
                         // complet arrive via `type:"result"` à la fin.
+                    }
+                    Ok(CliLine::Assistant(msg)) => {
+                        // Extrait les tool_use dans le message assistant complet.
+                        extract_tool_uses(&msg.message.content, session_id, &mut tool_use_index);
+                    }
+                    Ok(CliLine::User(msg)) => {
+                        // Extrait les tool_result pour compléter les records.
+                        extract_tool_results(&msg.message.content, session_id, &tool_use_index);
                     }
                     Ok(CliLine::Result {
                         result: Some(content),
@@ -295,6 +462,7 @@ async fn stream_inner(
                     }) => {
                         let value = serde_json::from_str::<serde_json::Value>(&content)
                             .unwrap_or_else(|_| serde_json::Value::String(content));
+                        sessions::set_final_result(session_id, value.clone());
                         final_result = Some(value);
                     }
                     Ok(CliLine::Result {
@@ -429,6 +597,72 @@ pub async fn check_claude_cli() -> Result<CliCheckResult, String> {
 pub struct CliCheckResult {
     pub stdout: String,
     pub path: String,
+}
+
+/// Parcourt un `content: [ContentBlock]` renvoyé par l'assistant et enregistre
+/// chaque `tool_use` dans le tracker de session. La correspondance id → index
+/// est maintenue pour que `extract_tool_results` puisse compléter le record.
+fn extract_tool_uses(
+    content: &serde_json::Value,
+    session_id: &str,
+    tool_use_index: &mut std::collections::HashMap<String, usize>,
+) {
+    let Some(arr) = content.as_array() else {
+        return;
+    };
+    for block in arr {
+        let Some(obj) = block.as_object() else { continue };
+        if obj.get("type").and_then(|v| v.as_str()) != Some("tool_use") {
+            continue;
+        }
+        let id = obj
+            .get("id")
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .to_string();
+        let name = obj
+            .get("name")
+            .and_then(|v| v.as_str())
+            .unwrap_or("unknown")
+            .to_string();
+        let input = obj
+            .get("input")
+            .cloned()
+            .unwrap_or(serde_json::Value::Null);
+        if let Some(idx) = sessions::record_tool_call_start(session_id, &name, input) {
+            if !id.is_empty() {
+                tool_use_index.insert(id, idx);
+            }
+        }
+    }
+}
+
+/// Parcourt un `content: [ContentBlock]` d'un message user (tool_result) pour
+/// corréler avec un `tool_use` précédent et compléter le record avec l'output.
+fn extract_tool_results(
+    content: &serde_json::Value,
+    session_id: &str,
+    tool_use_index: &std::collections::HashMap<String, usize>,
+) {
+    let Some(arr) = content.as_array() else {
+        return;
+    };
+    for block in arr {
+        let Some(obj) = block.as_object() else { continue };
+        if obj.get("type").and_then(|v| v.as_str()) != Some("tool_result") {
+            continue;
+        }
+        let tool_use_id = obj.get("tool_use_id").and_then(|v| v.as_str()).unwrap_or("");
+        let Some(&idx) = tool_use_index.get(tool_use_id) else {
+            continue;
+        };
+        let is_error = obj
+            .get("is_error")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false);
+        let output = obj.get("content").cloned();
+        sessions::record_tool_call_end(session_id, idx, output, is_error);
+    }
 }
 
 /// Cross-OS binary path resolution.

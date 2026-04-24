@@ -20,6 +20,12 @@ const MAX_HISTORY: usize = 50;
 /// Aperçu du prompt pour UI (jamais exposer le full prompt en logs).
 const PROMPT_PREVIEW_LEN: usize = 200;
 
+/// Taille max de la réponse accumulée gardée en mémoire (bytes).
+const RESPONSE_MAX_BYTES: usize = 32 * 1024;
+
+/// Nombre max de lignes JSON brutes du CLI conservées (ring-buffer par session).
+const RAW_EVENTS_MAX: usize = 50;
+
 /// État d'une session IA tracé en mémoire.
 /// Sérialisé tel quel pour le frontend — tous les champs sont côté UI.
 #[derive(Debug, Clone, Serialize)]
@@ -43,6 +49,30 @@ pub struct AiSession {
     pub error: Option<String>,
     /// Stderr complet du subprocess (tronqué à 4 KB pour éviter gonflement mémoire).
     pub stderr: Option<String>,
+    /// Réponse accumulée token par token (ce que l'IA a dit) — tronquée.
+    /// Mise à jour à chaque token, permet de voir la sortie en live dans l'UI.
+    #[serde(default)]
+    pub response_text: String,
+    /// Résultat final parsé (JSON ou texte) une fois la session terminée.
+    #[serde(default)]
+    pub final_result: Option<serde_json::Value>,
+    /// Tool calls déclenchés par l'IA via MCP (name + args serializés en JSON).
+    #[serde(default)]
+    pub tool_calls: Vec<ToolCallRecord>,
+    /// Ring-buffer des dernières lignes JSON brutes reçues du CLI — pour debug.
+    /// Capture ce que `bump_cli_line` voit passer avant le parsing.
+    #[serde(default)]
+    pub raw_events: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct ToolCallRecord {
+    pub name: String,
+    pub input: serde_json::Value,
+    pub output: Option<serde_json::Value>,
+    pub is_error: bool,
+    pub started_at: i64,
+    pub ended_at: Option<i64>,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, PartialEq, Eq)]
@@ -113,6 +143,10 @@ pub fn start_session(prompt: &str) -> String {
         cli_lines: 0,
         error: None,
         stderr: None,
+        response_text: String::new(),
+        final_result: None,
+        tool_calls: Vec::new(),
+        raw_events: Vec::new(),
     };
     store().write().active.push(session);
     id
@@ -141,6 +175,95 @@ pub fn bump_cli_line(id: &str) {
     let mut guard = store().write();
     if let Some(s) = guard.active.iter_mut().find(|s| s.id == id) {
         s.cli_lines = s.cli_lines.saturating_add(1);
+    }
+}
+
+/// Append un chunk de texte à la réponse accumulée. Tronque au-delà de
+/// RESPONSE_MAX_BYTES pour éviter qu'une réponse de 200 KB ne reste en mémoire.
+pub fn append_response(id: &str, chunk: &str) {
+    let mut guard = store().write();
+    if let Some(s) = guard.active.iter_mut().find(|s| s.id == id) {
+        if s.response_text.len() >= RESPONSE_MAX_BYTES {
+            return;
+        }
+        let remaining = RESPONSE_MAX_BYTES - s.response_text.len();
+        if chunk.len() <= remaining {
+            s.response_text.push_str(chunk);
+        } else {
+            // Tronque proprement sur une frontière UTF-8.
+            let safe_end = chunk
+                .char_indices()
+                .take_while(|(i, _)| *i <= remaining)
+                .last()
+                .map(|(i, _)| i)
+                .unwrap_or(0);
+            s.response_text.push_str(&chunk[..safe_end]);
+            s.response_text.push_str("…[tronqué]");
+        }
+    }
+}
+
+/// Stocke le résultat final parsé (après événement `result` du CLI).
+pub fn set_final_result(id: &str, value: serde_json::Value) {
+    let mut guard = store().write();
+    if let Some(s) = guard.active.iter_mut().find(|s| s.id == id) {
+        s.final_result = Some(value);
+    }
+}
+
+/// Archive la ligne JSON brute dans le ring-buffer de la session — utile pour
+/// debug quand le parser se trompe ou que des events sont ignorés.
+pub fn record_raw_event(id: &str, line: &str) {
+    let mut guard = store().write();
+    if let Some(s) = guard.active.iter_mut().find(|s| s.id == id) {
+        // Tronque les lignes trop longues (garde les 2 KB premiers).
+        let trimmed = if line.len() > 2048 {
+            format!("{}…", &line[..2048])
+        } else {
+            line.to_string()
+        };
+        s.raw_events.push(trimmed);
+        if s.raw_events.len() > RAW_EVENTS_MAX {
+            let drain_to = s.raw_events.len() - RAW_EVENTS_MAX;
+            s.raw_events.drain(..drain_to);
+        }
+    }
+}
+
+/// Enregistre le début d'un tool call MCP. Retourne l'index pour update
+/// ultérieur via `record_tool_call_end`.
+pub fn record_tool_call_start(
+    id: &str,
+    name: &str,
+    input: serde_json::Value,
+) -> Option<usize> {
+    let mut guard = store().write();
+    let session = guard.active.iter_mut().find(|s| s.id == id)?;
+    session.tool_calls.push(ToolCallRecord {
+        name: name.to_string(),
+        input,
+        output: None,
+        is_error: false,
+        started_at: now_ms(),
+        ended_at: None,
+    });
+    Some(session.tool_calls.len() - 1)
+}
+
+/// Complète un tool call avec son output (ou erreur).
+pub fn record_tool_call_end(
+    id: &str,
+    index: usize,
+    output: Option<serde_json::Value>,
+    is_error: bool,
+) {
+    let mut guard = store().write();
+    if let Some(s) = guard.active.iter_mut().find(|s| s.id == id) {
+        if let Some(tc) = s.tool_calls.get_mut(index) {
+            tc.output = output;
+            tc.is_error = is_error;
+            tc.ended_at = Some(now_ms());
+        }
     }
 }
 

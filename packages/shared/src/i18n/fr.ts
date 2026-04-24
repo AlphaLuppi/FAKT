@@ -668,6 +668,12 @@ export const fr = {
       cliLines: "Lignes CLI reçues",
       tokenEvents: "Événements token",
       promptChars: "Caractères du prompt",
+      responseTitle: "Réponse de l'IA",
+      finalResultTitle: "Résultat final (JSON)",
+      toolCallsTitle: "Appels d'outils MCP",
+      toolCallsCount: "Outils appelés",
+      rawEventsTitle: "Événements CLI bruts (debug)",
+      live: "LIVE",
       kinds: {
         extract_quote: "Génération devis",
         chat: "Chat IA",

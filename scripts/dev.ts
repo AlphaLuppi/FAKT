@@ -99,6 +99,9 @@ const tauriEnv: NodeJS.ProcessEnv = {
   FAKT_API_EXTERNAL: "1",
   FAKT_API_PORT: port,
   FAKT_API_TOKEN: token,
+  // Path absolu vers le MCP server — lu par Rust ai/cli.rs::resolve_mcp_entry
+  // pour générer le mcp-config.json passé à Claude CLI à chaque spawn.
+  FAKT_MCP_SERVER_ENTRY: resolve(repoRoot, "packages/mcp-server/src/index.ts"),
 };
 
 tauri = spawn("bun", ["run", "tauri", "dev"], {
