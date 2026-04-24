@@ -149,7 +149,8 @@ describe("NewFromQuote", () => {
     await waitFor(() => {
       const invoices = Array.from(mocks.store.invoices.values());
       expect(invoices).toHaveLength(1);
-      const inv = invoices[0]!;
+      const inv = invoices[0];
+      if (inv === undefined) throw new Error("invoice manquante apres create-and-issue");
       expect(inv.number).toMatch(/^F\d{4}-\d{3}$/);
       expect(inv.kind).toBe("deposit");
       expect(inv.quoteId).toBe(FIXTURE_SIGNED_QUOTE.id);

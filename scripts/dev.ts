@@ -13,7 +13,7 @@
 //
 // Usage : bun run dev (depuis la racine monorepo)
 
-import { spawn, type ChildProcess } from "node:child_process";
+import { type ChildProcess, spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import { homedir, platform } from "node:os";
 import { dirname, resolve } from "node:path";

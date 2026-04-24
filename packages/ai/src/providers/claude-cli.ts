@@ -117,7 +117,8 @@ async function* invokeStream<T>(
       continue;
     }
 
-    const event = events.shift()!;
+    const event = events.shift();
+    if (event === undefined) continue;
     yield event;
 
     if (event.type === "done" || event.type === "error") {

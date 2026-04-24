@@ -33,7 +33,8 @@ describe("matchesShortcut", () => {
       onToggleComposer: vi.fn(),
       onShowHelp: vi.fn(),
     });
-    const newQuote = shortcuts.find((s) => s.description === "Nouveau devis")!;
+    const newQuote = shortcuts.find((s) => s.description === "Nouveau devis");
+    if (newQuote === undefined) throw new Error("shortcut 'Nouveau devis' introuvable");
     expect(matchesShortcut(makeKeyEvent("n", { metaKey: true }), newQuote)).toBe(true);
     expect(matchesShortcut(makeKeyEvent("n"), newQuote)).toBe(false);
   });
@@ -45,7 +46,8 @@ describe("matchesShortcut", () => {
       onToggleComposer: vi.fn(),
       onShowHelp: vi.fn(),
     });
-    const newInvoice = shortcuts.find((s) => s.description === "Nouvelle facture")!;
+    const newInvoice = shortcuts.find((s) => s.description === "Nouvelle facture");
+    if (newInvoice === undefined) throw new Error("shortcut 'Nouvelle facture' introuvable");
     expect(matchesShortcut(makeKeyEvent("N", { metaKey: true, shiftKey: true }), newInvoice)).toBe(
       true
     );
@@ -59,7 +61,8 @@ describe("matchesShortcut", () => {
       onToggleComposer: vi.fn(),
       onShowHelp: vi.fn(),
     });
-    const composer = shortcuts.find((s) => s.description === "Composer IA")!;
+    const composer = shortcuts.find((s) => s.description === "Composer IA");
+    if (composer === undefined) throw new Error("shortcut 'Composer IA' introuvable");
     expect(matchesShortcut(makeKeyEvent("/", { metaKey: true }), composer)).toBe(true);
     expect(matchesShortcut(makeKeyEvent("/"), composer)).toBe(false);
   });
@@ -71,7 +74,8 @@ describe("matchesShortcut", () => {
       onToggleComposer: vi.fn(),
       onShowHelp: vi.fn(),
     });
-    const help = shortcuts.find((s) => s.description === "Aide raccourcis")!;
+    const help = shortcuts.find((s) => s.description === "Aide raccourcis");
+    if (help === undefined) throw new Error("shortcut 'Aide raccourcis' introuvable");
     expect(matchesShortcut(makeKeyEvent("?"), help)).toBe(true);
     expect(matchesShortcut(makeKeyEvent("?", { metaKey: true }), help)).toBe(false);
   });
