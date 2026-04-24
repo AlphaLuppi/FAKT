@@ -159,10 +159,20 @@ Bugs P0 connus AU DÉPART (à valider/affiner avec audit) :
 - Section crash silencieux Windows avec chemin exact du `fakt-trace.log`
 - Entrées dédiées pour les bugs fixés (CORS 0.1.1, SIRET 0.1.2, Settings 0.1.4)
 
+### 02h10 → 02h30 — Guard double-submit sur tous les formulaires sensibles
+- 7 formulaires create/edit (quotes: NewManual, NewAi, Edit — invoices: NewScratch, NewFromQuote, Edit) + 2 handlers Detail (markSent quote + markSent invoice + markPaid invoice)
+- Pattern synchrone `if (submitting) return` avant tout `await` pour bloquer les double-clics rapides (React batche les renders).
+- Complète la numérotation atomique côté API : double protection UI + DB.
+- Commits 1054085 + 67391d4
+
+### 02h30 — CI v0.1.3 ✅ PUBLIÉE (16 min total)
+- 4 binaires attachés : MSI / DMG / DEB / .app.tar.gz
+- URL : https://github.com/AlphaLuppi/FAKT/releases/tag/v0.1.3
+
 ## Tom au réveil — actions
 
-**État final :** FAKT **v0.1.4** est la release grand public cible.
-6 commits atomiques signés DCO + GPG sur main entre 22h47 et 02h00.
+**État final :** FAKT **v0.1.5** est la release grand public finale.
+10+ commits atomiques signés DCO + GPG sur main entre 22h47 et 02h40.
 
 **Chronologie releases cette nuit :**
 
@@ -171,15 +181,16 @@ Bugs P0 connus AU DÉPART (à valider/affiner avec audit) :
 | v0.1.0 (la veille) | MVP initial | Bug onboarding (CORS) |
 | v0.1.1 | Fix CORS sidecar | Bug crash boot Windows (profile release) |
 | v0.1.2 | Fix crash Windows (strip=false) + SIRET espaces | Marche mais bugs settings |
-| **v0.1.3** | Hardening audit nuit (2 P0 + 5 P1 + 4 CVE deps + SECURITY.md) | Bug settings découvert post-tag |
-| **v0.1.4** ✅ | Fix Tauri commands fantômes Settings | **Version finale** |
+| v0.1.3 | Hardening audit nuit (2 P0 + 5 P1 + 4 CVE deps + SECURITY.md) | Bug settings découvert post-tag |
+| v0.1.4 | Fix Tauri commands fantômes Settings | Guards double-submit manquants |
+| **v0.1.5** ✅ | Guards synchrones double-submit (9 handlers sensibles) | **Version finale** |
 
 **À faire au réveil :**
 
 1. **Désinstaller FAKT 0.1.0/0.1.1/0.1.2** (Paramètres Windows → Apps → FAKT → Désinstaller). Ça enlève le binaire mais garde `%APPDATA%\com.alphaluppi.fakt\` et `~\.fakt\db.sqlite`.
 
-2. **Télécharger le MSI 0.1.4** :
-   https://github.com/AlphaLuppi/FAKT/releases/download/v0.1.4/FAKT_0.1.4_x64_en-US.msi
+2. **Télécharger le MSI 0.1.5** (release FINALE) :
+   https://github.com/AlphaLuppi/FAKT/releases/download/v0.1.5/FAKT_0.1.5_x64_en-US.msi
 
 3. **Installer** : double-clic, SmartScreen → *Plus d'infos* → *Exécuter quand même* (pas de signature Authenticode en v0.1.x, prévu v0.2).
 
@@ -187,7 +198,7 @@ Bugs P0 connus AU DÉPART (à valider/affiner avec audit) :
 
 5. **Vérifier ton workspace** :
    - Si tu avais fait l'onboarding en 0.1.0/0.1.1, il est gardé en DB. L'app doit arriver direct sur le dashboard.
-   - Si le SIRET sauvegardé est le fictif "123 456 789 00122", aller **Settings → Identité** et mettre le vrai `85366584200029` (Tom Andrieu, micro-entreprise, 67 route de Lyon 84000 Avignon) → cliquer **Enregistrer**. **Cette action marche enfin en 0.1.4**.
+   - Si le SIRET sauvegardé est le fictif "123 456 789 00122", aller **Settings → Identité** et mettre le vrai `85366584200029` (Tom Andrieu, micro-entreprise, 67 route de Lyon 84000 Avignon) → cliquer **Enregistrer**. **Cette action marche enfin en 0.1.5** (était cassée en 0.1.0 → 0.1.3).
 
 6. **Test E2E demandé hier soir** :
    - Créer un client JOCANET (SIRET 885 313 007 00019, 950 route de Réalpanier 84310 Morières-lès-Avignon)
@@ -206,6 +217,10 @@ Bugs P0 connus AU DÉPART (à valider/affiner avec audit) :
 ## Récapitulatif des commits de la nuit
 
 ```
+f18dbaa  chore(release): bump 0.1.4 -> 0.1.5 (final hardening nuit)
+67391d4  fix(desktop/detail): guard double-submit sur emission + paiement
+1054085  fix(desktop/forms): guard synchrone double-submit quotes + invoices
+9492cc5  docs: README troubleshooting fakt-trace.log + plan de nuit handover Tom
 875f8af  chore(release): bump 0.1.3 -> 0.1.4 (fix Tauri commands fantomes settings)
 16e049a  fix(desktop/settings): Settings.tsx get_workspace + update_settings
 c4cc6db  fix(desktop/settings): IdentityTab sauvegarde (Tauri command inexistante)
@@ -218,10 +233,12 @@ e94bde5  fix(desktop/rust): hardening P0/P1 audit release publique
 62f539f  chore(planning): plan de nuit hardening FAKT
 ```
 
+14 commits atomiques signés DCO + GPG pushés sur main entre 22h47 et 02h40.
+
 ## Annexes — Stats finales
 
-- Commits : 10 atomiques signés DCO + GPG pushés sur `main`
-- Versions releases : 3 (v0.1.2 hotfix CORS/SIRET, v0.1.3 hardening, v0.1.4 fix settings)
+- Commits : 14 atomiques signés DCO + GPG pushés sur `main`
+- Versions releases : 5 (v0.1.1 CORS, v0.1.2 crash/SIRET, v0.1.3 hardening, v0.1.4 settings, v0.1.5 double-submit guards)
 - Tests : 776 passed / 1 skipped / 0 failed (couverture api-server 89.86%)
 - Typecheck : 12/12 packages OK
 - Lint : clean (zero warning, zero error)
