@@ -48,12 +48,7 @@ export function siretToSiren(siret: string): string {
   return normalizeSiret(siret).slice(0, 9);
 }
 
-export type SiretIssue =
-  | "empty"
-  | "too-short"
-  | "too-long"
-  | "non-digit"
-  | "luhn-mismatch";
+export type SiretIssue = "empty" | "too-short" | "too-long" | "non-digit" | "luhn-mismatch";
 
 export interface SiretExplanation {
   raw: string;
@@ -107,8 +102,7 @@ export function explainSiret(raw: string): SiretExplanation {
     expectedLastDigit = (10 - (sumOfFirst13 % 10)) % 10;
   }
 
-  const isValid =
-    hasCorrectLength && hasOnlyDigits && (isLuhnValid || isLaPosteException);
+  const isValid = hasCorrectLength && hasOnlyDigits && (isLuhnValid || isLaPosteException);
 
   let issue: SiretIssue | null = null;
   if (!isValid) {

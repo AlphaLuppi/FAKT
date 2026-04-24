@@ -250,12 +250,8 @@ function SessionRow({
             <span style={kindLabelStyle}>{kindLabel}</span>
             <span style={monoSmallStyle}>{formatDuration(session)}</span>
           </div>
-          <div style={previewLineStyle}>
-            {session.prompt_preview.replaceAll("\n", " ") || "—"}
-          </div>
-          {session.error !== null && (
-            <div style={errorLineStyle}>⚠ {session.error}</div>
-          )}
+          <div style={previewLineStyle}>{session.prompt_preview.replaceAll("\n", " ") || "—"}</div>
+          {session.error !== null && <div style={errorLineStyle}>⚠ {session.error}</div>}
         </div>
         <span style={caretStyle}>{expanded ? "▲" : "▼"}</span>
       </button>
@@ -343,9 +339,7 @@ function SessionRow({
               <summary style={detailHeadingStyle}>
                 {fr.settings.aiSessions.rawEventsTitle} ({session.raw_events.length})
               </summary>
-              <pre style={{ ...preStyle, maxHeight: 400 }}>
-                {session.raw_events.join("\n")}
-              </pre>
+              <pre style={{ ...preStyle, maxHeight: 400 }}>{session.raw_events.join("\n")}</pre>
             </details>
           )}
         </div>
@@ -431,18 +425,13 @@ function StatusBadge({ status }: { status: SessionStatus }): ReactElement {
         letterSpacing: "0.06em",
       }}
     >
-      {(status === "streaming" || status === "pending") && (
-        <span style={pulseStyle} />
-      )}
+      {(status === "streaming" || status === "pending") && <span style={pulseStyle} />}
       {label}
     </span>
   );
 }
 
-const STATUS_COLORS: Record<
-  SessionStatus,
-  { bg: string; fg: string; border: string }
-> = {
+const STATUS_COLORS: Record<SessionStatus, { bg: string; fg: string; border: string }> = {
   pending: { bg: "var(--paper)", fg: "var(--ink)", border: "var(--ink)" },
   streaming: { bg: "var(--accent)", fg: "var(--ink)", border: "var(--ink)" },
   done: { bg: "var(--ink)", fg: "var(--accent)", border: "var(--ink)" },

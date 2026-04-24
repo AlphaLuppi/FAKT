@@ -56,14 +56,12 @@ export interface EmbeddedMigration {
 export const EMBEDDED_MIGRATIONS: readonly EmbeddedMigration[] = ${JSON.stringify(
     migrations,
     null,
-    2,
+    2
   )};
 `;
 
   writeFileSync(outFile, content, "utf8");
-  console.log(
-    `[generate-migrations] ${files.length} migrations embarquées → ${outFile}`,
-  );
+  console.log(`[generate-migrations] ${files.length} migrations embarquées → ${outFile}`);
   for (const m of migrations) {
     const kb = (m.sql.length / 1024).toFixed(1);
     console.log(`  - ${m.name} (${kb} kB)`);

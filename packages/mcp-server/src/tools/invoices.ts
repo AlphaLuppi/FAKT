@@ -57,7 +57,8 @@ export const invoicesTools: ToolRegistration[] = [
   },
   {
     name: "mark_invoice_sent",
-    description: "Transition draft → sent : envoie officiellement une facture (numérotation CGI 289).",
+    description:
+      "Transition draft → sent : envoie officiellement une facture (numérotation CGI 289).",
     schema: {
       id: z.string(),
     },

@@ -27,9 +27,7 @@ describe("SiretChecker", () => {
 
   it("signale les caractères non-numériques", () => {
     render(<SiretChecker value="7328293200007A" show={true} />);
-    expect(
-      screen.getByText(/un siret ne contient que des chiffres/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/un siret ne contient que des chiffres/i)).toBeInTheDocument();
   });
 
   it("affiche le chiffre attendu quand la clé Luhn est mauvaise", () => {

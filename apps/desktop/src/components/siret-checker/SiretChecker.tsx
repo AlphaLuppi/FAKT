@@ -110,16 +110,16 @@ function LuhnExplanation({ diag }: { diag: SiretExplanation }): ReactElement {
         <strong style={actualStyle}>{diag.actualLastDigit}</strong>.
       </p>
       <p style={luhnSecondaryStyle}>
-        Vérifiez votre saisie chiffre par chiffre. Le plus souvent, c'est une seule
-        touche qui a dérapé.
+        Vérifiez votre saisie chiffre par chiffre. Le plus souvent, c'est une seule touche qui a
+        dérapé.
       </p>
       <details style={detailsStyle}>
         <summary style={summaryStyle}>Pourquoi ce contrôle&nbsp;?</summary>
         <p style={detailsBodyStyle}>
-          Le dernier chiffre d'un SIRET est une «&nbsp;clé de sécurité&nbsp;» calculée à
-          partir des 13 autres (algorithme de Luhn). Son seul rôle est de détecter les
-          fautes de frappe : si un chiffre change, la clé ne tombe plus juste et on
-          sait qu'il y a une erreur quelque part dans la saisie.
+          Le dernier chiffre d'un SIRET est une «&nbsp;clé de sécurité&nbsp;» calculée à partir des
+          13 autres (algorithme de Luhn). Son seul rôle est de détecter les fautes de frappe : si un
+          chiffre change, la clé ne tombe plus juste et on sait qu'il y a une erreur quelque part
+          dans la saisie.
         </p>
       </details>
     </div>

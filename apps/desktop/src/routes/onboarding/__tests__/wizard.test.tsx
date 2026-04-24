@@ -110,23 +110,27 @@ describe("Wizard — navigation étape 1 → 2", () => {
 });
 
 describe("Wizard — étape 2 Claude CLI (skip)", () => {
-  it("affiche la checkbox 'Je configurerai Claude plus tard' en étape 2", { timeout: 15000 }, async () => {
-    const user = userEvent.setup();
-    renderWizard();
+  it(
+    "affiche la checkbox 'Je configurerai Claude plus tard' en étape 2",
+    { timeout: 15000 },
+    async () => {
+      const user = userEvent.setup();
+      renderWizard();
 
-    // Aller à l'étape 2
-    await user.type(screen.getByLabelText(/nom ou raison/i), "Test");
-    await user.type(screen.getByPlaceholderText(/732 829 320/), VALID_SIRET);
-    await user.type(screen.getByLabelText(/adresse/i), "12 rue test");
-    await user.type(screen.getByLabelText(/email de facturation/i), "a@b.fr");
-    const nextBtn = screen.getByRole("button", { name: /suivant/i });
-    await waitFor(() => expect(nextBtn).not.toBeDisabled());
-    await user.click(nextBtn);
+      // Aller à l'étape 2
+      await user.type(screen.getByLabelText(/nom ou raison/i), "Test");
+      await user.type(screen.getByPlaceholderText(/732 829 320/), VALID_SIRET);
+      await user.type(screen.getByLabelText(/adresse/i), "12 rue test");
+      await user.type(screen.getByLabelText(/email de facturation/i), "a@b.fr");
+      const nextBtn = screen.getByRole("button", { name: /suivant/i });
+      await waitFor(() => expect(nextBtn).not.toBeDisabled());
+      await user.click(nextBtn);
 
-    await waitFor(() => {
-      expect(screen.getByLabelText(/configurerai claude plus tard/i)).toBeInTheDocument();
-    });
-  });
+      await waitFor(() => {
+        expect(screen.getByLabelText(/configurerai claude plus tard/i)).toBeInTheDocument();
+      });
+    }
+  );
 });
 
 describe("Wizard — barre de progression", () => {

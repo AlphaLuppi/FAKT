@@ -20,8 +20,7 @@ async function safeCall<T>(fn: () => Promise<T>): Promise<T | { error: string }>
 export const clientsTools: ToolRegistration[] = [
   {
     name: "list_clients",
-    description:
-      "Liste les clients du workspace. Peut filtrer par recherche texte (nom, email).",
+    description: "Liste les clients du workspace. Peut filtrer par recherche texte (nom, email).",
     schema: {
       search: z.string().optional().describe("Recherche libre dans nom/email"),
       limit: z.number().int().min(1).max(100).default(20),

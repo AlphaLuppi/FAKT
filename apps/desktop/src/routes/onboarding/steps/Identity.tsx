@@ -52,8 +52,7 @@ export function IdentityStep({ onNext }: Props): ReactElement {
         if (cancelled || !ws) return;
         reset({
           name: ws.name,
-          legalForm:
-            (ws.legalForm as IdentityFormValues["legalForm"]) ?? "Micro-entreprise",
+          legalForm: (ws.legalForm as IdentityFormValues["legalForm"]) ?? "Micro-entreprise",
           siret: ws.siret,
           address: ws.address,
           email: ws.email,

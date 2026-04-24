@@ -29,7 +29,10 @@ export const workspaceTools: ToolRegistration[] = [
     description:
       "Liste les événements récents d'activité (émission devis, paiement facture, etc.). Utile pour comprendre l'état récent du business.",
     schema: {
-      entityType: z.string().optional().describe("Filtre par type : 'quote' | 'invoice' | 'client'"),
+      entityType: z
+        .string()
+        .optional()
+        .describe("Filtre par type : 'quote' | 'invoice' | 'client'"),
       limit: z.number().int().min(1).max(100).default(20).describe("Nombre max d'entrées"),
       offset: z.number().int().min(0).default(0),
     },
