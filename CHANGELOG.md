@@ -7,6 +7,25 @@ et [Semantic Versioning 2.0.0](https://semver.org/lang/fr/).
 
 ---
 
+## [0.1.11] - 2026-04-25
+
+### Added
+- **Canvas signature au look macOS natif** : sur Mac, l'onglet « Dessiner
+  au trackpad » affiche désormais un canvas charcoal `#1C1C1E` avec trait
+  blanc épais et placeholder centré « Clique ici pour commencer », fidèle
+  au panneau de signature de Preview.app. Sur Windows et Linux le canvas
+  reste en variante Brutal Invoice (papier blanc, trait noir).
+  Détection auto via `navigator.userAgent`, prop `variant` exposée pour
+  override manuel.
+
+### Fixed
+- **Test Vitest `NewAi cancel` flaky sur Windows CI** : timeout porté
+  à 20 s (vs 5 s par défaut) car la 1re invocation de `parsePdfFile`
+  charge dynamiquement pdfjs-dist (~3 MB) qui prend plus de temps qu'en
+  local sur les runners GitHub Actions Windows.
+
+---
+
 ## [0.1.10] - 2026-04-25
 
 ### Added

@@ -1,6 +1,6 @@
 {
   "name": "@fakt/mcp-server",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "private": true,
   "type": "module",
   "description": "Serveur MCP (stdio) qui expose les API de FAKT comme outils à Claude Code CLI.",

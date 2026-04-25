@@ -1,6 +1,6 @@
 import { tokens } from "@fakt/design-tokens";
-import type { ReactElement, PointerEvent as ReactPointerEvent } from "react";
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from "react";
+import type { CSSProperties, ReactElement, PointerEvent as ReactPointerEvent } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { type Point, drawSmoothPath } from "./smoothing.js";
 
 export interface SignatureCanvasHandle {
@@ -20,6 +20,16 @@ export interface SignatureCanvasProps {
   onStrokeEnd?: () => void;
   /** Capture Ctrl+Z / Cmd+Z globalement pour undo (défaut true). */
   undoWithKeyboard?: boolean;
+  /**
+   * Variante visuelle.
+   * - "default" : look Brutal Invoice (fond papier, trait noir).
+   * - "trackpad-mac" : reproduit le panneau de signature du trackpad
+   *   MacBook (fond charcoal, trait blanc épais, placeholder centré).
+   *   Activé automatiquement par SignatureModal sur macOS.
+   */
+  variant?: "default" | "trackpad-mac";
+  /** Texte affiché en placeholder centré quand le canvas est vide. */
+  placeholder?: string;
 }
 
 function decodeDataURL(dataUrl: string): Uint8Array {
@@ -41,6 +51,8 @@ export const SignatureCanvas = forwardRef<SignatureCanvasHandle, SignatureCanvas
       strokeWidth = 2.5,
       onStrokeEnd,
       undoWithKeyboard = true,
+      variant = "default",
+      placeholder,
     },
     ref
   ): ReactElement {
@@ -49,6 +61,14 @@ export const SignatureCanvas = forwardRef<SignatureCanvasHandle, SignatureCanvas
     const allStrokesRef = useRef<Point[][]>([]);
     const drawingRef = useRef(false);
     const hasInkRef = useRef(false);
+    const [isEmpty, setIsEmpty] = useState(true);
+
+    const isMacTrackpad = variant === "trackpad-mac";
+    // Couleurs par défaut selon la variante.
+    const effectiveStroke = strokeColor ?? (isMacTrackpad ? "#FFFFFF" : tokens.color.ink);
+    const effectiveStrokeWidth = strokeWidth ?? (isMacTrackpad ? 4 : 2.5);
+    const effectiveBackground = isMacTrackpad ? "#1C1C1E" : tokens.color.surface;
+    const effectivePlaceholder = placeholder ?? (isMacTrackpad ? "Clique ici pour commencer" : "");
 
     const configureCtx = useCallback((): CanvasRenderingContext2D | null => {
       const c = canvasRef.current;
@@ -57,10 +77,10 @@ export const SignatureCanvas = forwardRef<SignatureCanvasHandle, SignatureCanvas
       if (!ctx) return null;
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
-      ctx.strokeStyle = strokeColor ?? tokens.color.ink;
-      ctx.lineWidth = strokeWidth;
+      ctx.strokeStyle = effectiveStroke;
+      ctx.lineWidth = effectiveStrokeWidth;
       return ctx;
-    }, [strokeColor, strokeWidth]);
+    }, [effectiveStroke, effectiveStrokeWidth]);
 
     useEffect(() => {
       configureCtx();
@@ -84,6 +104,7 @@ export const SignatureCanvas = forwardRef<SignatureCanvasHandle, SignatureCanvas
       allStrokesRef.current = allStrokesRef.current.slice(0, -1);
       if (allStrokesRef.current.length === 0 && pointsRef.current.length === 0) {
         hasInkRef.current = false;
+        setIsEmpty(true);
       }
       repaint();
       return true;
@@ -118,6 +139,7 @@ export const SignatureCanvas = forwardRef<SignatureCanvasHandle, SignatureCanvas
           pointsRef.current = [];
           hasInkRef.current = false;
           drawingRef.current = false;
+          setIsEmpty(true);
           const c = canvasRef.current;
           const ctx = configureCtx();
           if (c && ctx) ctx.clearRect(0, 0, c.width, c.height);
@@ -173,7 +195,10 @@ export const SignatureCanvas = forwardRef<SignatureCanvasHandle, SignatureCanvas
     function handlePointerMove(e: ReactPointerEvent<HTMLCanvasElement>): void {
       if (!drawingRef.current) return;
       pointsRef.current.push(pointFromEvent(e));
-      hasInkRef.current = true;
+      if (!hasInkRef.current) {
+        hasInkRef.current = true;
+        setIsEmpty(false);
+      }
       repaint();
     }
 
@@ -193,28 +218,60 @@ export const SignatureCanvas = forwardRef<SignatureCanvasHandle, SignatureCanvas
       if (onStrokeEnd) onStrokeEnd();
     }
 
+    const wrapperStyle: CSSProperties = {
+      position: "relative",
+      width,
+      height,
+      // En variante mac on enlève la bordure noire pour un look plus proche
+      // du panneau natif (charcoal full-bleed). Variante default garde Brutal.
+      border: isMacTrackpad
+        ? `${tokens.stroke.base} solid #000000`
+        : `${tokens.stroke.base} solid ${tokens.color.ink}`,
+      background: effectiveBackground,
+    };
+
+    const placeholderStyle: CSSProperties = {
+      position: "absolute",
+      inset: 0,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      pointerEvents: "none",
+      fontFamily: tokens.font.ui,
+      fontSize: tokens.fontSize.base,
+      color: isMacTrackpad ? "rgba(255, 255, 255, 0.55)" : tokens.color.muted,
+      letterSpacing: "0.02em",
+      userSelect: "none",
+    };
+
     return (
-      <canvas
-        ref={canvasRef}
-        width={width}
-        height={height}
-        data-testid="signature-canvas"
-        aria-label="Zone de signature manuscrite"
-        role="img"
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={endStroke}
-        onPointerCancel={endStroke}
-        style={{
-          background: tokens.color.surface,
-          border: `${tokens.stroke.base} solid ${tokens.color.ink}`,
-          cursor: "crosshair",
-          touchAction: "none",
-          display: "block",
-          width,
-          height,
-        }}
-      />
+      <div style={wrapperStyle} data-testid="signature-canvas-wrapper">
+        <canvas
+          ref={canvasRef}
+          width={width}
+          height={height}
+          data-testid="signature-canvas"
+          aria-label="Zone de signature manuscrite"
+          role="img"
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={endStroke}
+          onPointerCancel={endStroke}
+          style={{
+            background: "transparent",
+            cursor: "crosshair",
+            touchAction: "none",
+            display: "block",
+            width,
+            height,
+          }}
+        />
+        {isEmpty && effectivePlaceholder && (
+          <div style={placeholderStyle} data-testid="signature-canvas-placeholder">
+            {effectivePlaceholder}
+          </div>
+        )}
+      </div>
     );
   }
 );

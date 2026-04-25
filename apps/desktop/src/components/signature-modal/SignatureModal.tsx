@@ -10,6 +10,15 @@ import { SignatureCanvas, type SignatureCanvasHandle } from "./SignatureCanvas.j
 import { TypeSignature, type TypeSignatureHandle } from "./TypeSignature.js";
 import { validateSignatureSubmit } from "./schema.js";
 
+/**
+ * Détecte si l'OS est macOS — on utilise userAgent (compatible Tauri webview)
+ * plutôt que `navigator.platform` qui est déprécié. SSR-safe via guard typeof.
+ */
+function isMacOs(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return /Mac|iPhone|iPad/i.test(navigator.userAgent);
+}
+
 export type SignableDocType = "quote" | "invoice";
 
 export interface SignatureModalProps {
@@ -41,6 +50,10 @@ export function SignatureModal({
 }: SignatureModalProps): ReactElement {
   const [mode, setMode] = useState<"draw" | "type">("draw");
   const [ack, setAck] = useState(false);
+  // Détection macOS au mount : si l'utilisateur est sur Mac et qu'il dessine
+  // au trackpad, on remplace le canvas Brutal par un look fidèle au panneau
+  // de signature natif macOS (charcoal + trait blanc + placeholder centré).
+  const macTrackpadVariant = useMemo(() => isMacOs(), []);
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [fieldError, setFieldError] = useState<string | null>(null);
@@ -257,7 +270,14 @@ export function SignatureModal({
         </div>
 
         <div data-testid="signature-pane" style={{ display: "flex", justifyContent: "center" }}>
-          {mode === "draw" ? <SignatureCanvas ref={drawRef} /> : <TypeSignature ref={typeRef} />}
+          {mode === "draw" ? (
+            <SignatureCanvas
+              ref={drawRef}
+              variant={macTrackpadVariant ? "trackpad-mac" : "default"}
+            />
+          ) : (
+            <TypeSignature ref={typeRef} />
+          )}
         </div>
 
         <Checkbox
