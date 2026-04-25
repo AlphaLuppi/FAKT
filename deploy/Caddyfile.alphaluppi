@@ -1,0 +1,55 @@
+# ============================================================================
+# Caddyfile FAKT self-host
+# ============================================================================
+#
+# Reverse proxy + TLS auto Let's Encrypt sur ${FAKT_DOMAIN}.
+# Routes :
+#   /api/*    → api-server:3001 (Hono + Postgres)
+#   /health   → api-server:3001 (healthcheck Caddy/Dokploy)
+#   /         → web-frontend:80 (bundle Vite static)
+# ============================================================================
+
+{$FAKT_DOMAIN} {
+  # TLS automatique via Let's Encrypt (besoin d'un DNS A pointant vers cette IP)
+  encode gzip zstd
+
+  # Headers sécurité
+  header {
+    Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    X-Content-Type-Options "nosniff"
+    X-Frame-Options "DENY"
+    Referrer-Policy "strict-origin-when-cross-origin"
+    Permissions-Policy "camera=(), microphone=(), geolocation=()"
+    -Server
+  }
+
+  # Healthcheck route — pas d'auth, accès direct
+  handle /health {
+    reverse_proxy api-server:3001
+  }
+
+  # API : tous les /api/* → backend
+  handle /api/* {
+    reverse_proxy api-server:3001 {
+      header_up X-Real-IP {remote_host}
+      header_up X-Forwarded-Proto https
+    }
+  }
+
+  # Frontend statique (bundle Vite)
+  handle {
+    reverse_proxy web-frontend:80
+  }
+
+  # Logs JSON structurés vers stdout (Docker collecte)
+  log {
+    output stdout
+    format json
+    level INFO
+  }
+}
+
+# Redirige www → apex
+www.{$FAKT_DOMAIN} {
+  redir https://{$FAKT_DOMAIN}{uri} permanent
+}

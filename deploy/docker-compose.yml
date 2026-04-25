@@ -1,0 +1,132 @@
+# ============================================================================
+# FAKT — Self-host docker-compose
+# ============================================================================
+#
+# Cible Dokploy (recommandé) ou VPS direct.
+# Dokploy clone le repo et build les images depuis les Dockerfile via `build:`.
+# Pas besoin de push d'images vers GHCR.
+#
+# Usage Dokploy :
+#   1. Créer un projet dans Dokploy pointant sur le repo GitHub FAKT
+#   2. Choisir "Compose" type, indiquer ce fichier
+#   3. Set les env vars (FAKT_DOMAIN, FAKT_JWT_SECRET, POSTGRES_PASSWORD, etc.)
+#   4. Deploy — Dokploy build les images localement et les fait tourner
+#
+# Usage VPS direct :
+#   1. cp deploy/.env.example deploy/.env
+#   2. Éditer .env
+#   3. docker compose -f deploy/docker-compose.yml --env-file deploy/.env up -d --build
+#
+# Services :
+#   - postgres     : Postgres 16, données persistées sur volume `pg_data`
+#   - api-server   : Bun api-server (build depuis packages/api-server/Dockerfile)
+#   - web-frontend : nginx alpine servant le bundle Vite (build depuis apps/desktop/Dockerfile.web)
+#   - caddy        : reverse proxy + TLS auto Let's Encrypt
+#   - backup       : cron pg_dump quotidien (rétention 30j)
+# ============================================================================
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-fakt}
+      POSTGRES_USER: ${POSTGRES_USER:-fakt}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD requis}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - fakt-internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-fakt} -d ${POSTGRES_DB:-fakt}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api-server:
+    build:
+      context: ..
+      dockerfile: packages/api-server/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      AUTH_MODE: jwt
+      DATABASE_URL: postgres://${POSTGRES_USER:-fakt}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-fakt}
+      FAKT_JWT_SECRET: ${FAKT_JWT_SECRET:?FAKT_JWT_SECRET requis (min 32 chars)}
+      BIND: "0.0.0.0"
+      FAKT_API_PORT: "3001"
+      FAKT_API_EXTRA_ORIGINS: "https://${FAKT_DOMAIN}"
+      FAKT_SIGNED_PDFS_DIR: /var/lib/fakt/signed
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      FAKT_ADMIN_TOKEN: ${FAKT_ADMIN_TOKEN:-}
+    volumes:
+      - signed_pdfs:/var/lib/fakt/signed
+    networks:
+      - fakt-internal
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  web-frontend:
+    build:
+      context: ..
+      dockerfile: apps/desktop/Dockerfile.web
+    restart: unless-stopped
+    networks:
+      - fakt-internal
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - api-server
+      - web-frontend
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      FAKT_DOMAIN: ${FAKT_DOMAIN:?FAKT_DOMAIN requis (ex: fakt.alphaluppi.fr)}
+    volumes:
+      - ./Caddyfile.alphaluppi:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - fakt-internal
+
+  backup:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: ${POSTGRES_USER:-fakt}
+      POSTGRES_DB: ${POSTGRES_DB:-fakt}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./backup.sh:/backup.sh:ro
+      - backups:/backups
+    networks:
+      - fakt-internal
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      "while true; do
+        sh /backup.sh
+        sleep 86400
+      done"
+
+volumes:
+  pg_data:
+  signed_pdfs:
+  caddy_data:
+  caddy_config:
+  backups:
+
+networks:
+  fakt-internal:
+    driver: bridge
