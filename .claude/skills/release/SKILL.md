@@ -151,3 +151,48 @@ gh release create "v$ARGUMENTS" \
 - **Si une release existe déjà** pour `v$ARGUMENTS` : ne jamais l'écraser. Stopper et demander.
 - **Ne jamais utiliser `--no-verify`** sur le commit de release.
 - **Ne jamais skip la signature GPG** sur le tag.
+- **Si on crée une release pour un tag ANCIEN** (rattrapage rétroactif, par ex. release manquante d'une version antérieure à la dernière) : **impérativement** ajouter `--latest=false` à `gh release create`. Sans ce flag, GitHub déplace le badge `Latest` sur la release qu'on vient de créer, ce qui casse `releases/latest/download/latest.json` (pointé par l'updater in-app) et peut provoquer un downgrade en masse des utilisateurs déjà à jour. Si oubli : restaurer immédiatement avec `gh release edit v<dernière> --latest`.
+
+## Édition rétroactive d'une release passée
+
+Si on doit réécrire les notes d'une release **déjà publiée et déjà installée** chez des utilisateurs (par ex. parce que le contenu original était un template par défaut illisible) :
+
+### 1. Réécrire la page de release GitHub
+
+```bash
+gh release edit v$ARGUMENTS --notes-file /tmp/release-notes.md
+```
+
+Ça suffit pour la page web, mais **PAS** pour la modale d'update in-app.
+
+### 2. Patcher le champ `notes` du `latest.json` (CRITIQUE pour l'updater in-app)
+
+L'updater Tauri (`apps/desktop/src/features/updater/UpdaterContext.tsx`) lit `update.body` qui vient du champ `notes` du `latest.json` uploadé par `tauri-action` au moment du build — **figé au tag**. C'est volontaire (fix v0.1.14 « Notes de version cohérentes avec la version installée ») mais ça verrouille l'ancien texte tant qu'on ne patche pas le JSON.
+
+Workflow :
+
+```bash
+TMP=$(mktemp -d)
+gh release view v$ARGUMENTS --json body --jq '.body' > "$TMP/body.md"
+gh release download v$ARGUMENTS --pattern latest.json --dir "$TMP"
+
+# Patch UNIQUEMENT le champ notes ; signatures ed25519 et URLs préservées.
+jq --rawfile notes "$TMP/body.md" '.notes = $notes' "$TMP/latest.json" > "$TMP/latest.new.json"
+
+# Sécurité : confirmer que SEUL le champ notes a changé.
+diff <(jq -S 'del(.notes)' "$TMP/latest.json") <(jq -S 'del(.notes)' "$TMP/latest.new.json") && echo OK
+
+mv "$TMP/latest.new.json" "$TMP/latest.json"
+gh release upload v$ARGUMENTS "$TMP/latest.json" --clobber
+rm -rf "$TMP"
+```
+
+Vérification :
+
+```bash
+curl -sL "https://github.com/AlphaLuppi/FAKT/releases/download/v$ARGUMENTS/latest.json" | jq '.version, .notes'
+```
+
+### Quand patcher le `latest.json` des autres versions
+
+L'endpoint configuré dans `tauri.conf.json` pointe sur `releases/latest/download/latest.json`, qui résout vers la release marquée `Latest`. **En pratique, seul le `latest.json` de la dernière release est lu par l'updater Tauri** — les autres ne sont consultés que par quelqu'un qui inspecte manuellement les anciennes releases. Patcher uniquement la dernière suffit fonctionnellement ; patcher toutes les versions de l'updater (depuis v0.1.10 inclus, première release avec `latest.json`) est purement cosmétique.
