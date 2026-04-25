@@ -18,15 +18,18 @@
     "@fakt/core": "workspace:*",
     "@fakt/db": "workspace:*",
     "@fakt/shared": "workspace:*",
+    "bcryptjs": "^2.4.3",
     "better-sqlite3": "^11.5",
     "drizzle-orm": "^0.36",
     "hono": "^4.6.0",
+    "postgres": "^3.4",
     "zod": "^3.23.8"
   },
   "devDependencies": {
     "typescript": "^5.6",
     "vitest": "^4.1.5",
     "@vitest/coverage-v8": "^4.1.5",
+    "@types/bcryptjs": "^2.4.6",
     "@types/better-sqlite3": "^7.6",
     "@types/node": "^22.9.0",
     "@types/bun": "^1.1.0"
