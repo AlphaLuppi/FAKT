@@ -25,6 +25,21 @@ et [Semantic Versioning 2.0.0](https://semver.org/lang/fr/).
 
 ---
 
+## [0.1.18] - 2026-04-25
+
+### Améliorations
+
+- **Fiabilité de l'application** — une nouvelle suite de tests
+  automatisés vérifie l'application avant chaque mise à jour
+  (couverture des principaux écrans, conformité de la numérotation
+  séquentielle des factures, validation du binaire packagé sur
+  Windows et Linux). Cette infrastructure interne ne change rien à
+  l'utilisation au quotidien, mais garantit que les prochaines
+  releases passent par un contrôle qualité plus strict avant d'être
+  publiées.
+
+---
+
 ## [0.1.17] - 2026-04-25
 
 ### Nouveautés
