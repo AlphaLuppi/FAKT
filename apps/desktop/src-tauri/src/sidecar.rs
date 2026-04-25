@@ -301,7 +301,7 @@ pub fn shutdown(ctx: &ApiContext) {
     let _ = SHUTDOWN_GRACE;
 }
 
-/// Inject script à pousser via `WebviewWindowBuilder::initialization_script`.
+/// Inject script (mode 1 sidecar local) — webview voit `__FAKT_MODE__ = 1`.
 pub fn initialization_script(port: u16, token: &str) -> String {
     // Échappement JSON du token et sérialisation numérique du port pour
     // éviter toute tentative d'injection via un token piégé (même si
@@ -311,6 +311,17 @@ pub fn initialization_script(port: u16, token: &str) -> String {
         "window.__FAKT_API_URL__ = \"http://127.0.0.1:{port}\";\n\
          window.__FAKT_API_TOKEN__ = {token_json};\n\
          window.__FAKT_MODE__ = 1;\n"
+    )
+}
+
+/// Inject script (mode 2 backend distant) — webview voit `__FAKT_MODE__ = 2`,
+/// pas de token X-FAKT-Token (l'auth passe par JWT cookie httpOnly + bearer).
+pub fn initialization_script_remote(url: &str) -> String {
+    let url_json = serde_json::to_string(url).unwrap_or_else(|_| "\"\"".to_string());
+    format!(
+        "window.__FAKT_API_URL__ = {url_json};\n\
+         window.__FAKT_API_TOKEN__ = \"\";\n\
+         window.__FAKT_MODE__ = 2;\n"
     )
 }
 
@@ -374,5 +385,19 @@ mod tests {
         // Si un token exotique contenait un ", il doit rester échappé.
         let js = initialization_script(1, "bad\"token");
         assert!(js.contains("\"bad\\\"token\""));
+    }
+
+    #[test]
+    fn initialization_script_remote_contains_url_and_mode() {
+        let js = initialization_script_remote("https://fakt.alphaluppi.fr");
+        assert!(js.contains("window.__FAKT_API_URL__ = \"https://fakt.alphaluppi.fr\""));
+        assert!(js.contains("window.__FAKT_API_TOKEN__ = \"\""));
+        assert!(js.contains("window.__FAKT_MODE__ = 2"));
+    }
+
+    #[test]
+    fn initialization_script_remote_escapes_url_quotes() {
+        let js = initialization_script_remote("https://evil\"injection.com");
+        assert!(js.contains("\"https://evil\\\"injection.com\""));
     }
 }

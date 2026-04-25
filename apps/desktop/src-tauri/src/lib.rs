@@ -1,4 +1,5 @@
 pub mod ai;
+pub mod backend_config;
 pub mod commands;
 pub mod crypto;
 mod pdf;
@@ -8,9 +9,12 @@ pub mod win_console;
 
 use std::sync::Arc;
 
+use backend_config::BackendConfig;
 use commands::AppState;
+use parking_lot::Mutex;
 use sidecar::{
-    initialization_script, shutdown as sidecar_shutdown, spawn_api_server, ApiContext,
+    initialization_script, initialization_script_remote, shutdown as sidecar_shutdown,
+    spawn_api_server, ApiContext,
 };
 use tauri::{Manager, WebviewUrl, WebviewWindowBuilder, WindowEvent};
 
@@ -78,18 +82,40 @@ fn run_inner() -> Result<(), String> {
             trace::log("AppState ok");
             app.manage(state);
 
-            let handle = app.handle().clone();
-            trace::log("calling spawn_api_server");
-            let api_ctx: Arc<ApiContext> =
-                tauri::async_runtime::block_on(async move { spawn_api_server(&handle).await })
-                    .map_err(|e| format!("spawn api-server: {}", e))?;
-            trace::log(&format!("spawn_api_server ok port={}", api_ctx.port));
+            // Lit le mode backend persisté (default = local sauf override compile-time).
+            let backend_cfg = BackendConfig::load(&app_data_dir);
+            trace::log(&format!("backend mode = {:?}", backend_cfg.mode));
 
-            let init_js = initialization_script(api_ctx.port, &api_ctx.token);
-            // Garder une copie de l'Arc avant manage() pour pouvoir kill le
-            // sidecar si la fenetre echoue a s'ouvrir (sinon zombie process).
-            let api_ctx_for_cleanup = Arc::clone(&api_ctx);
-            app.manage(api_ctx);
+            // Mode 2 (remote) : skip spawn sidecar, injecte URL distante + mode=2.
+            let (init_js, api_ctx_for_cleanup): (String, Option<Arc<ApiContext>>) =
+                if backend_cfg.is_remote() {
+                    let url = backend_cfg
+                        .remote_url()
+                        .ok_or_else(|| "mode remote sans URL".to_string())?;
+                    trace::log(&format!("remote backend → skip sidecar, url={}", url));
+                    let placeholder_ctx = Arc::new(ApiContext {
+                        port: 0,
+                        token: String::new(),
+                        child: Mutex::new(None),
+                        crash_timestamps: Mutex::new(Vec::new()),
+                    });
+                    app.manage(Arc::clone(&placeholder_ctx));
+                    (initialization_script_remote(url), None)
+                } else {
+                    let handle = app.handle().clone();
+                    trace::log("calling spawn_api_server");
+                    let api_ctx: Arc<ApiContext> = tauri::async_runtime::block_on(async move {
+                        spawn_api_server(&handle).await
+                    })
+                    .map_err(|e| format!("spawn api-server: {}", e))?;
+                    trace::log(&format!("spawn_api_server ok port={}", api_ctx.port));
+                    let js = initialization_script(api_ctx.port, &api_ctx.token);
+                    // Garder une copie de l'Arc avant manage() pour pouvoir kill le
+                    // sidecar si la fenetre echoue a s'ouvrir (sinon zombie process).
+                    let cleanup = Arc::clone(&api_ctx);
+                    app.manage(api_ctx);
+                    (js, Some(cleanup))
+                };
             trace::log("calling WebviewWindowBuilder::build");
 
             let window_result = WebviewWindowBuilder::new(app, "main", WebviewUrl::default())
@@ -108,7 +134,9 @@ fn run_inner() -> Result<(), String> {
                     "window build FAILED, killing sidecar: {}",
                     e
                 ));
-                sidecar_shutdown(&api_ctx_for_cleanup);
+                if let Some(ctx) = api_ctx_for_cleanup.as_ref() {
+                    sidecar_shutdown(ctx);
+                }
                 return Err(format!("window build: {}", e).into());
             }
             trace::log("setup complete");
@@ -124,6 +152,8 @@ fn run_inner() -> Result<(), String> {
         .invoke_handler(tauri::generate_handler![
             commands::ping,
             commands::get_version,
+            commands::backend::get_backend_mode,
+            commands::backend::set_backend_mode,
             pdf::render::render_pdf,
             crypto::generate_cert,
             crypto::get_cert_info,
