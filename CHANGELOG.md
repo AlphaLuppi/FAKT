@@ -25,6 +25,18 @@ et [Semantic Versioning 2.0.0](https://semver.org/lang/fr/).
 
 ---
 
+## [0.1.16] - 2026-04-25
+
+### Améliorations
+
+- **Survol des lignes d'activité plus joli** — passer la souris sur une
+  ligne d'« Activité récente » fait désormais ressortir l'item avec une
+  barre verticale noire à gauche, un léger décalage à droite et un
+  séparateur plus marqué. L'effet « bouton actif » brutalist remplace
+  l'ancien aplat jaune sans relief.
+
+---
+
 ## [0.1.15] - 2026-04-25
 
 ### Corrections
