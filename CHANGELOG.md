@@ -25,6 +25,37 @@ et [Semantic Versioning 2.0.0](https://semver.org/lang/fr/).
 
 ---
 
+## [0.1.14] - 2026-04-25
+
+### Améliorations
+
+- **Mises à jour silencieuses sur Windows** — l'installation d'une nouvelle
+  version ne demande plus de privilèges administrateur à chaque fois.
+  FAKT s'installe désormais dans votre dossier utilisateur (`%LOCALAPPDATA%`)
+  et se met à jour de manière transparente, sans interruption Windows.
+
+### Corrections
+
+- **Notes de version cohérentes avec la version installée** — dans certains
+  cas, les notes affichées dans la fenêtre de mise à jour pouvaient
+  correspondre à une version différente de celle réellement téléchargée
+  (si la release sur GitHub évoluait entre la détection et le clic sur
+  « Installer »). Le contenu affiché correspond désormais toujours à
+  l'artefact qui sera installé.
+- **Message de fin d'installation plus clair** — à 100 % de progression,
+  le message « Relancement de l'application… » est remplacé par
+  « Installation terminée — FAKT redémarre… », pour signaler clairement
+  que la mise à jour est appliquée et que l'app va redémarrer.
+
+> ⚠️ **Si vous avez actuellement FAKT installé dans `Program Files`** (ce
+> qui était le cas par défaut jusqu'à la v0.1.13) : désinstallez d'abord
+> la version actuelle via les paramètres Windows, puis installez la
+> v0.1.14. Sans ça, le système continuera à demander des droits admin
+> car les anciennes versions sont en mode « machine entière ». Une fois
+> en v0.1.14, plus jamais d'UAC.
+
+---
+
 ## [0.1.13] - 2026-04-25
 
 ### Nouveautés
