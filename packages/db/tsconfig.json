@@ -8,5 +8,5 @@
       "@fakt/core": ["../core/src/index.ts"]
     }
   },
-  "include": ["src/**/*", "../shared/src/**/*", "../core/src/**/*"]
+  "include": ["src/**/*", "drizzle.config.ts", "drizzle.config.pg.ts", "../shared/src/**/*", "../core/src/**/*"]
 }

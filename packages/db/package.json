@@ -13,11 +13,14 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run --coverage",
     "db:generate": "drizzle-kit generate",
+    "db:generate:pg": "drizzle-kit generate --config drizzle.config.pg.ts",
+    "db:push:pg": "drizzle-kit push --config drizzle.config.pg.ts",
     "db:seed": "bun run src/seed/seed.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.36",
-    "better-sqlite3": "^11.5"
+    "better-sqlite3": "^11.5",
+    "postgres": "^3.4"
   },
   "devDependencies": {
     "typescript": "^5.6",
