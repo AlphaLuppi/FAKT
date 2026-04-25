@@ -265,39 +265,43 @@ describe("NewAi", () => {
   // Timeout généreux : la 1re invocation charge le module pdfjs-dist (~3 MB)
   // qui peut prendre 5-10 s sur Windows CI, ce qui faisait timeout sur la
   // valeur par défaut Vitest (5 s).
-  it("le bouton Annuler débloque l'extraction en cours quand un fichier pend", { timeout: 20000 }, async () => {
-    setAi(createProvider({ installed: true, extractResult: FIXTURE_EXTRACTED }));
-    renderRoute();
-    await waitFor(() => {
-      expect(screen.getByTestId("ai-dropzone")).toBeInTheDocument();
-    });
+  it(
+    "le bouton Annuler débloque l'extraction en cours quand un fichier pend",
+    { timeout: 20000 },
+    async () => {
+      setAi(createProvider({ installed: true, extractResult: FIXTURE_EXTRACTED }));
+      renderRoute();
+      await waitFor(() => {
+        expect(screen.getByTestId("ai-dropzone")).toBeInTheDocument();
+      });
 
-    const zone = screen.getByTestId("ai-dropzone");
-    // On construit un File avec un nom .pdf pour déclencher parsePdfFile,
-    // mais jsdom n'a pas de vrai worker pdfjs — en pratique l'appel throw
-    // ou pend. On teste l'UX : le bouton Annuler force la sortie du mode
-    // parsing même si l'extraction ne s'est pas terminée naturellement.
-    // Pour garantir un parsing "en cours", on override File.arrayBuffer pour
-    // renvoyer une promise qui ne résout jamais — simule un hang.
-    const hangingFile = new File(["fake pdf"], "stuck.pdf", { type: "application/pdf" });
-    Object.defineProperty(hangingFile, "arrayBuffer", {
-      value: () => new Promise<ArrayBuffer>(() => {}),
-    });
-    fireEvent.drop(zone, { dataTransfer: { files: [hangingFile] } });
+      const zone = screen.getByTestId("ai-dropzone");
+      // On construit un File avec un nom .pdf pour déclencher parsePdfFile,
+      // mais jsdom n'a pas de vrai worker pdfjs — en pratique l'appel throw
+      // ou pend. On teste l'UX : le bouton Annuler force la sortie du mode
+      // parsing même si l'extraction ne s'est pas terminée naturellement.
+      // Pour garantir un parsing "en cours", on override File.arrayBuffer pour
+      // renvoyer une promise qui ne résout jamais — simule un hang.
+      const hangingFile = new File(["fake pdf"], "stuck.pdf", { type: "application/pdf" });
+      Object.defineProperty(hangingFile, "arrayBuffer", {
+        value: () => new Promise<ArrayBuffer>(() => {}),
+      });
+      fireEvent.drop(zone, { dataTransfer: { files: [hangingFile] } });
 
-    // L'indicateur d'extraction apparaît.
-    await waitFor(() => {
-      expect(screen.getByTestId("ai-parsing")).toBeInTheDocument();
-    });
+      // L'indicateur d'extraction apparaît.
+      await waitFor(() => {
+        expect(screen.getByTestId("ai-parsing")).toBeInTheDocument();
+      });
 
-    // Et le bouton Annuler est visible.
-    expect(screen.getByTestId("ai-parsing-cancel")).toBeInTheDocument();
+      // Et le bouton Annuler est visible.
+      expect(screen.getByTestId("ai-parsing-cancel")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByTestId("ai-parsing-cancel"));
+      fireEvent.click(screen.getByTestId("ai-parsing-cancel"));
 
-    // L'indicateur disparaît immédiatement.
-    await waitFor(() => {
-      expect(screen.queryByTestId("ai-parsing")).toBeNull();
-    });
-  });
+      // L'indicateur disparaît immédiatement.
+      await waitFor(() => {
+        expect(screen.queryByTestId("ai-parsing")).toBeNull();
+      });
+    }
+  );
 });
