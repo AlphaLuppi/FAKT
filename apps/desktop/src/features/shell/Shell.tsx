@@ -25,6 +25,10 @@ const NAV_ITEMS = [
   { id: "archive", label: fr.nav.archive, path: "/archive" },
 ] as const;
 
+// BottomNav mobile : on garde 5 items max (les 5 premiers de NAV_ITEMS).
+// Le 6e (archive) reste accessible via la palette de commandes ⌘K.
+const BOTTOM_NAV_ITEMS = NAV_ITEMS.slice(0, 5);
+
 interface ShellProps {
   children: ReactNode;
 }
@@ -86,6 +90,7 @@ function ShellInner({ children }: ShellProps): ReactElement {
         <UpdateBanner />
         <Topbar />
         <main
+          className="fakt-shell-main"
           style={{
             flex: 1,
             overflow: "auto",
@@ -96,6 +101,7 @@ function ShellInner({ children }: ShellProps): ReactElement {
         </main>
       </div>
       <ComposerSidebar />
+      <BottomNav />
       {showHelp && <ShortcutsOverlay onClose={() => setShowHelp(false)} />}
     </div>
   );
@@ -108,6 +114,7 @@ function Sidebar(): ReactElement {
 
   return (
     <aside
+      className="fakt-shell-sidebar"
       style={{
         width: 232,
         background: "var(--surface)",
@@ -200,6 +207,56 @@ function Sidebar(): ReactElement {
   );
 }
 
+/**
+ * Bottom navigation pour mobile (mode 2 web AlphaLuppi).
+ * Affichée seulement à @media (max-width: 768px) via responsive.css.
+ * Reprend les 5 premiers items de NAV_ITEMS (archive accessible via ⌘K).
+ */
+function BottomNav(): ReactElement {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const currentPath = location.pathname;
+
+  return (
+    <nav
+      className="fakt-bottom-nav"
+      role="navigation"
+      aria-label="Navigation mobile"
+      data-testid="bottom-nav"
+    >
+      {BOTTOM_NAV_ITEMS.map((item) => {
+        const isActive =
+          item.path === "/" ? currentPath === "/" : currentPath.startsWith(item.path);
+
+        return (
+          <button
+            key={item.id}
+            onClick={() => void navigate(item.path)}
+            style={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "8px 4px",
+              color: isActive ? "var(--surface)" : "var(--ink-3)",
+              background: isActive ? "var(--ink)" : "transparent",
+              border: "none",
+              fontWeight: isActive ? 800 : 600,
+              fontSize: 11,
+              fontFamily: "var(--font-ui)",
+              cursor: "pointer",
+              textTransform: "uppercase",
+              letterSpacing: "0.04em",
+            }}
+          >
+            {item.label}
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
+
 function Topbar(): ReactElement {
   const location = useLocation();
   const { open } = useCommandPalette();
@@ -213,6 +270,7 @@ function Topbar(): ReactElement {
 
   return (
     <div
+      className="fakt-shell-topbar"
       style={{
         height: 56,
         borderBottom: "2px solid var(--line)",
@@ -226,6 +284,7 @@ function Topbar(): ReactElement {
     >
       <div style={{ flex: 1 }}>
         <div
+          className="fakt-shell-title"
           style={{
             fontSize: 15,
             fontWeight: 700,
@@ -264,7 +323,7 @@ function Topbar(): ReactElement {
           letterSpacing: "0.05em",
         }}
       >
-        <span>{fr.composer.title}</span>
+        <span className="fakt-topbar-button-text">{fr.composer.title}</span>
         <kbd
           style={{
             fontFamily: "var(--font-mono)",
@@ -300,7 +359,7 @@ function Topbar(): ReactElement {
           letterSpacing: "0.05em",
         }}
       >
-        <span>{fr.search.placeholder}</span>
+        <span className="fakt-topbar-button-text">{fr.search.placeholder}</span>
         <kbd
           style={{
             fontFamily: "var(--font-mono)",

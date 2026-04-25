@@ -1,0 +1,86 @@
+/* ============================================================================
+   FAKT — Responsive (mobile / tablet) — mode 2 web AlphaLuppi
+   ============================================================================
+   L'app desktop reste optimisée pour grandes résolutions. Sur mobile (<768px),
+   on dégrade gracieusement :
+
+     - sidebar 232px latérale → cachée, remplacée par une BottomNav fixe en bas
+     - topbar : padding réduit, libellés des boutons cachés
+     - main : padding-bottom pour ne pas chevaucher la BottomNav
+     - tables : scroll horizontal (les data-tables restent denses)
+
+   Brutal Invoice : on garde bordures 2.5px, ombres plates, zéro radius,
+   typo Space Grotesk UPPERCASE — juste on adapte la largeur.
+   ============================================================================ */
+
+/* Default : on cache la BottomNav en desktop */
+.fakt-bottom-nav {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  /* Sidebar latérale → cachée */
+  .fakt-shell-sidebar {
+    display: none !important;
+  }
+
+  /* BottomNav fixée en bas */
+  .fakt-bottom-nav {
+    display: flex !important;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    z-index: 50;
+    background: var(--surface);
+    border-top: 2.5px solid var(--ink);
+  }
+
+  /* Main : padding-bottom pour libérer l'espace de la BottomNav */
+  .fakt-shell-main {
+    padding-bottom: 60px !important;
+  }
+
+  /* Topbar : compact */
+  .fakt-shell-topbar {
+    padding: 0 12px !important;
+    gap: 8px !important;
+  }
+
+  .fakt-topbar-button-text {
+    display: none !important;
+  }
+
+  .fakt-shell-title {
+    font-size: 13px !important;
+  }
+
+  /* Tables : scroll horizontal sans casser la largeur */
+  table {
+    min-width: 600px;
+  }
+
+  /* Si le parent direct d'un table est un <main>, on rend l'overflow horizontal */
+  main > table,
+  main > * > table {
+    display: block;
+    overflow-x: auto;
+  }
+
+  /* Réduire les paddings sections détail */
+  main > div,
+  main > section {
+    padding: 12px !important;
+  }
+
+  /* Cacher l'updater banner peu utile sur mobile (l'app desktop seule a l'updater) */
+  .fakt-update-banner {
+    display: none !important;
+  }
+
+  /* Cacher composer sidebar (overlay) sur mobile — pas adapté */
+  .fakt-composer-sidebar {
+    display: none !important;
+  }
+}

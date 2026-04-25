@@ -3,6 +3,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router";
 import "./styles/globals.css";
+import "./styles/responsive.css";
 import "@fakt/ui/styles.css";
 import { App } from "./App.js";
 import { bootstrapRenderStrategy } from "./utils/render-bootstrap.js";

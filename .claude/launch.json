@@ -12,6 +12,12 @@
       "runtimeExecutable": "bun",
       "runtimeArgs": ["--cwd=apps/desktop", "run", "dev"],
       "port": 1420
+    },
+    {
+      "name": "FAKT Web (mode 2 self-host bundle)",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": ["--cwd=apps/desktop", "run", "dev:web"],
+      "port": 1420
     }
   ]
 }
