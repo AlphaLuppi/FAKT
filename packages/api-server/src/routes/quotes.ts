@@ -107,6 +107,14 @@ quotesRoutes.post("/", async (c) => {
       serviceId: item.serviceId ?? null,
     })),
   });
+  insertActivity(c.var.db, {
+    id: randomUUID(),
+    workspaceId,
+    type: "quote_created",
+    entityType: "quote",
+    entityId: created.id,
+    payload: null,
+  });
   return c.json(created, 201);
 });
 
@@ -234,32 +242,64 @@ quotesRoutes.post("/:id/unmark-sent", (c) => {
 /** POST /api/quotes/:id/expire — sent/viewed → expired. */
 quotesRoutes.post("/:id/expire", (c) => {
   const id = parseParam(c, "id", uuidSchema);
-  requireQuote(c.var.db, id);
+  const existing = requireQuote(c.var.db, id);
   const updated = transitionQuoteOr422(c.var.db, id, "expired");
+  insertActivity(c.var.db, {
+    id: randomUUID(),
+    workspaceId: existing.workspaceId,
+    type: "quote_expired",
+    entityType: "quote",
+    entityId: id,
+    payload: null,
+  });
   return c.json(updated);
 });
 
 /** POST /api/quotes/:id/cancel — → refused. */
 quotesRoutes.post("/:id/cancel", (c) => {
   const id = parseParam(c, "id", uuidSchema);
-  requireQuote(c.var.db, id);
+  const existing = requireQuote(c.var.db, id);
   const updated = transitionQuoteOr422(c.var.db, id, "refused");
+  insertActivity(c.var.db, {
+    id: randomUUID(),
+    workspaceId: existing.workspaceId,
+    type: "quote_refused",
+    entityType: "quote",
+    entityId: id,
+    payload: null,
+  });
   return c.json(updated);
 });
 
 /** POST /api/quotes/:id/mark-signed — sent/viewed → signed. */
 quotesRoutes.post("/:id/mark-signed", (c) => {
   const id = parseParam(c, "id", uuidSchema);
-  requireQuote(c.var.db, id);
+  const existing = requireQuote(c.var.db, id);
   const updated = transitionQuoteOr422(c.var.db, id, "signed");
+  insertActivity(c.var.db, {
+    id: randomUUID(),
+    workspaceId: existing.workspaceId,
+    type: "quote_signed",
+    entityType: "quote",
+    entityId: id,
+    payload: null,
+  });
   return c.json(updated);
 });
 
 /** POST /api/quotes/:id/mark-invoiced — signed/sent → invoiced. */
 quotesRoutes.post("/:id/mark-invoiced", (c) => {
   const id = parseParam(c, "id", uuidSchema);
-  requireQuote(c.var.db, id);
+  const existing = requireQuote(c.var.db, id);
   const updated = transitionQuoteOr422(c.var.db, id, "invoiced");
+  insertActivity(c.var.db, {
+    id: randomUUID(),
+    workspaceId: existing.workspaceId,
+    type: "quote_invoiced",
+    entityType: "quote",
+    entityId: id,
+    payload: null,
+  });
   return c.json(updated);
 });
 

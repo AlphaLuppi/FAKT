@@ -30,7 +30,15 @@ const FIXTURE_EVENTS: SignatureEvent[] = [
 describe("AuditTimeline", () => {
   it("rend l'état vide si aucune entrée", () => {
     render(
-      wrap(<AuditTimeline docType="quote" docId="doc-1" initialEvents={[]} extraEntries={[]} />)
+      wrap(
+        <AuditTimeline
+          docType="quote"
+          docId="doc-1"
+          initialEvents={[]}
+          initialActivities={[]}
+          extraEntries={[]}
+        />
+      )
     );
     expect(screen.getByTestId("audit-timeline-empty")).toBeInTheDocument();
   });
@@ -42,6 +50,7 @@ describe("AuditTimeline", () => {
           docType="quote"
           docId="doc-1"
           initialEvents={FIXTURE_EVENTS}
+          initialActivities={[]}
           extraEntries={[]}
         />
       )
@@ -59,6 +68,7 @@ describe("AuditTimeline", () => {
           docType="quote"
           docId="doc-1"
           initialEvents={FIXTURE_EVENTS}
+          initialActivities={[]}
           extraEntries={[
             { kind: "created", timestamp: 1_713_999_999_000 },
             { kind: "sent", timestamp: 1_713_999_999_500 },
@@ -69,5 +79,72 @@ describe("AuditTimeline", () => {
     expect(screen.getByTestId("audit-entry-created")).toBeInTheDocument();
     expect(screen.getByTestId("audit-entry-sent")).toBeInTheDocument();
     expect(screen.getByTestId("audit-entry-signed")).toBeInTheDocument();
+  });
+
+  it("affiche les activity events (mark sent / unmark sent) en plus des signatures", () => {
+    render(
+      wrap(
+        <AuditTimeline
+          docType="quote"
+          docId="doc-1"
+          initialEvents={[]}
+          initialActivities={[
+            {
+              id: "act-1",
+              workspaceId: "ws-1",
+              type: "quote_marked_sent",
+              entityType: "quote",
+              entityId: "doc-1",
+              payload: null,
+              createdAt: 1_713_999_999_000,
+            },
+            {
+              id: "act-2",
+              workspaceId: "ws-1",
+              type: "quote_unmarked_sent",
+              entityType: "quote",
+              entityId: "doc-1",
+              payload: null,
+              createdAt: 1_713_999_999_500,
+            },
+          ]}
+          extraEntries={[]}
+        />
+      )
+    );
+    expect(screen.getByTestId("audit-entry-sent")).toBeInTheDocument();
+    expect(screen.getByTestId("audit-entry-unsent")).toBeInTheDocument();
+  });
+
+  it("dédoublonne extraEntries.sent quand un activity event sent existe", () => {
+    render(
+      wrap(
+        <AuditTimeline
+          docType="quote"
+          docId="doc-1"
+          initialEvents={[]}
+          initialActivities={[
+            {
+              id: "act-1",
+              workspaceId: "ws-1",
+              type: "quote_marked_sent",
+              entityType: "quote",
+              entityId: "doc-1",
+              payload: null,
+              createdAt: 1_713_999_999_000,
+            },
+          ]}
+          extraEntries={[
+            { kind: "created", timestamp: 1_713_999_998_000 },
+            // Doublon avec l'activity ci-dessus — doit être filtré.
+            { kind: "sent", timestamp: 1_713_999_999_999 },
+          ]}
+        />
+      )
+    );
+    // Une seule entrée "sent" malgré la double source.
+    const sentEntries = screen.getAllByTestId("audit-entry-sent");
+    expect(sentEntries).toHaveLength(1);
+    expect(screen.getByTestId("audit-entry-created")).toBeInTheDocument();
   });
 });

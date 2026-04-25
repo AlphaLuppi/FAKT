@@ -5,17 +5,61 @@ import { Button, Chip } from "@fakt/ui";
 import type { ReactElement, ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
+import { type ActivityEvent, activityApi } from "../../api/activity.js";
 import { signatureApi } from "../../features/doc-editor/signature-api.js";
 import { formatRelative } from "./relative.js";
 
 export type AuditEventKind =
   | "created"
   | "sent"
+  | "unsent"
   | "signed"
   | "paid"
+  | "cancelled"
+  | "refused"
+  | "expired"
+  | "invoiced"
+  | "archived"
+  | "from_quote"
   | "rotated"
   | "verified"
   | "viewed";
+
+/**
+ * Mappe un type d'event activity (DB) vers un kind affichable.
+ * Les types non listés sont silencieusement ignorés — l'audit n'est pas un
+ * dump brut de la table activity, c'est une vue filtrée des actions visibles.
+ */
+function activityTypeToKind(type: string): AuditEventKind | null {
+  switch (type) {
+    case "quote_created":
+    case "invoice.created":
+      return "created";
+    case "quote_marked_sent":
+    case "invoice.issued":
+      return "sent";
+    case "quote_unmarked_sent":
+      return "unsent";
+    case "quote_signed":
+      return "signed";
+    case "quote_refused":
+      return "refused";
+    case "quote_expired":
+      return "expired";
+    case "quote_invoiced":
+      return "invoiced";
+    case "invoice.paid":
+      return "paid";
+    case "invoice.cancelled":
+      return "cancelled";
+    case "invoice.archived":
+      return "archived";
+    case "invoice.from_quote":
+      return "from_quote";
+    default:
+      return null;
+  }
+}
 
 export interface BaseAuditEntry {
   kind: AuditEventKind;
@@ -34,10 +78,17 @@ export interface BaseAuditEntry {
 export interface AuditTimelineProps {
   docType: "quote" | "invoice";
   docId: string;
-  /** Entrées additionnelles (created/sent/paid) non issues de signature_events. */
+  /**
+   * Entrées dérivées de l'état actuel du document (created/sent/paid via
+   * createdAt/issuedAt/paidAt). Servent de fallback pour les vieux documents
+   * qui n'ont pas d'event activity correspondant — sont dédupliqués si la
+   * table activity contient déjà l'event de même kind.
+   */
   extraEntries?: BaseAuditEntry[];
   /** Inject initial events (testing). Par défaut, fetch signatureApi.listEvents. */
   initialEvents?: SignatureEvent[] | null;
+  /** Inject initial activity events (testing). Par défaut, fetch activityApi.list. */
+  initialActivities?: ActivityEvent[] | null;
 }
 
 function truncateHash(hex: string | null | undefined): string {
@@ -92,10 +143,24 @@ function kindLabel(kind: AuditEventKind): string {
       return m.created;
     case "sent":
       return m.sent;
+    case "unsent":
+      return m.unsent;
     case "signed":
       return m.signed;
     case "paid":
       return m.paid;
+    case "cancelled":
+      return m.cancelled;
+    case "refused":
+      return m.refused;
+    case "expired":
+      return m.expired;
+    case "invoiced":
+      return m.invoiced;
+    case "archived":
+      return m.archived;
+    case "from_quote":
+      return m.from_quote;
     case "rotated":
       return m.rotated;
     case "verified":
@@ -112,29 +177,40 @@ export function AuditTimeline({
   docId,
   extraEntries = [],
   initialEvents = null,
+  initialActivities = null,
 }: AuditTimelineProps): ReactElement {
   const [events, setEvents] = useState<SignatureEvent[] | null>(initialEvents);
+  const [activities, setActivities] = useState<ActivityEvent[] | null>(initialActivities);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (initialEvents !== null) return;
+    if (initialEvents !== null && initialActivities !== null) return;
     let cancelled = false;
-    signatureApi
-      .listEvents(docType, docId)
-      .then((rows) => {
-        if (!cancelled) setEvents(rows);
+    Promise.all([
+      initialEvents !== null
+        ? Promise.resolve(initialEvents)
+        : signatureApi.listEvents(docType, docId),
+      initialActivities !== null
+        ? Promise.resolve(initialActivities)
+        : activityApi.list({ entityType: docType, entityId: docId, limit: 200 }),
+    ])
+      .then(([sigs, acts]) => {
+        if (cancelled) return;
+        setEvents(sigs);
+        setActivities(acts);
       })
       .catch((err: unknown) => {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : String(err));
           setEvents([]);
+          setActivities([]);
         }
       });
     return (): void => {
       cancelled = true;
     };
-  }, [docType, docId, initialEvents]);
+  }, [docType, docId, initialEvents, initialActivities]);
 
   const signatureEntries: BaseAuditEntry[] = (events ?? []).map((ev, idx, arr) => {
     const prev = idx > 0 ? arr[idx - 1] : null;
@@ -158,11 +234,28 @@ export function AuditTimeline({
     };
   });
 
-  const allEntries: BaseAuditEntry[] = [...extraEntries, ...signatureEntries].sort(
-    (a, b) => a.timestamp - b.timestamp
-  );
+  const activityEntries: BaseAuditEntry[] = (activities ?? [])
+    .map((a) => {
+      const kind = activityTypeToKind(a.type);
+      if (!kind) return null;
+      return { kind, timestamp: a.createdAt };
+    })
+    .filter((e): e is BaseAuditEntry => e !== null);
 
-  if (events === null && error === null) {
+  // Dédup : si la table activity contient déjà un event d'un kind donné,
+  // on ignore l'extraEntry du même kind (qui n'était qu'un fallback dérivé
+  // de createdAt/issuedAt/paidAt). Évite les doublons sur les nouveaux
+  // documents tout en restant résilient pour les anciens.
+  const activityKinds = new Set(activityEntries.map((e) => e.kind));
+  const filteredExtras = extraEntries.filter((e) => !activityKinds.has(e.kind));
+
+  const allEntries: BaseAuditEntry[] = [
+    ...filteredExtras,
+    ...activityEntries,
+    ...signatureEntries,
+  ].sort((a, b) => a.timestamp - b.timestamp);
+
+  if ((events === null || activities === null) && error === null) {
     return (
       <div
         data-testid="audit-timeline-loading"

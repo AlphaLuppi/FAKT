@@ -6,7 +6,7 @@
 
 import { canTransitionQuote } from "@fakt/core";
 import type { DocumentUnit, Quote, QuoteStatus } from "@fakt/shared";
-import { and, asc, desc, eq, inArray, isNull, like, or } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, like, or } from "drizzle-orm";
 import type { DbInstance } from "../adapter.js";
 import { quoteItems, quotes } from "../schema/index.js";
 
@@ -277,6 +277,11 @@ export function updateQuoteStatus(db: DbInstance, id: string, newStatus: QuoteSt
 
   if (newStatus === "sent") updates.issuedAt = new Date(Date.now());
   if (newStatus === "signed") updates.signedAt = new Date(Date.now());
+  // Rollback "annuler envoi" : si on repasse en draft depuis sent, l'audit
+  // trail historique reste tracé via la table `activity` (quote_unmarked_sent).
+  // On reset issuedAt pour que l'état actuel reflète bien le statut draft —
+  // sinon le PDF/UI continueraient de croire le devis émis.
+  if (current === "sent" && newStatus === "draft") updates.issuedAt = null;
 
   db.update(quotes).set(updates).where(eq(quotes.id, id)).run();
 
