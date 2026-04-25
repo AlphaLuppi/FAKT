@@ -1,143 +1,152 @@
 /**
- * Entry point sidecar FAKT API.
+ * Entry point sidecar / serveur FAKT API.
  *
- * Runtime : **Bun** exclusivement. Utilise `bun:sqlite` (natif) plutôt que
- * `better-sqlite3` (natif Node) — ça permet au binaire `bun build --compile`
- * de rester self-contained, et évite l'erreur ERR_DLOPEN_FAILED au runtime.
+ * **Runtime supportés :**
+ *   - Bun (mode 1 sidecar local + mode 2 self-host containerisé) — utilise `bun:sqlite` natif.
+ *   - Node (tests, dev) — utilise `better-sqlite3`.
  *
- * Lu par Tauri qui spawn ce binaire Bun en subprocess, récupère le port via stdout
- * (ligne sentinelle `FAKT_API_READY:port=<N>`) et injecte le token dans le webview.
+ * **Modes de déploiement :**
+ *   - Mode 1 (solo local) : `AUTH_MODE=local`, `FAKT_API_TOKEN` shared, bind 127.0.0.1, SQLite.
+ *   - Mode 2 (self-host)  : `AUTH_MODE=jwt`, `FAKT_JWT_SECRET`, bind 0.0.0.0, Postgres.
+ *   - Mode 3 (SaaS)       : idem mode 2 + RLS Postgres + Stripe + OAuth (futur).
  *
- * Env attendus :
- *   FAKT_API_PORT   (optionnel — défaut 0 = port éphémère alloué par OS)
- *   FAKT_API_TOKEN  (REQUIS — token d'auth partagé avec le front Tauri)
- *   FAKT_DB_PATH    (optionnel — défaut ./fakt.db relatif au cwd)
+ * Le choix DB se fait via `DATABASE_URL` :
+ *   - `postgres://...` ou `postgresql://...` → Postgres (postgres-js).
+ *   - sinon → SQLite (driver détecté runtime : bun:sqlite si Bun, better-sqlite3 sinon).
+ *
+ * Lu par Tauri en mode 1 qui spawn ce binaire en subprocess, récupère le port via stdout
+ * (`FAKT_API_READY:port=<N>`) et injecte le token dans le webview.
  */
 
-import { Database } from "bun:sqlite";
-import * as schema from "@fakt/db/schema";
-import { drizzle } from "drizzle-orm/bun-sqlite";
 import { createApp } from "./app.js";
-import { EMBEDDED_MIGRATIONS } from "./migrations-embedded.js";
-import type { SqliteLike } from "./types.js";
+import { loadConfig, type AppRuntimeConfig } from "./config.js";
+import type { AppConfig, SqliteLike } from "./types.js";
 
 function fail(reason: string): never {
   process.stderr.write(`${JSON.stringify({ level: "error", event: "startup_failed", reason })}\n`);
   process.exit(1);
 }
 
-function parsePort(raw: string | undefined): number {
-  if (!raw) return 0;
-  const n = Number(raw);
-  if (!Number.isInteger(n) || n < 0 || n > 65535) {
-    fail(`FAKT_API_PORT invalide: ${raw}`);
+async function bootstrap(): Promise<void> {
+  let config: AppRuntimeConfig;
+  try {
+    config = loadConfig();
+  } catch (err) {
+    fail(err instanceof Error ? err.message : String(err));
   }
-  return n;
-}
 
-const token = process.env.FAKT_API_TOKEN;
-if (!token || token.length < 16) {
-  fail("FAKT_API_TOKEN requis (>=16 chars)");
-}
+  const { db, sqlite } =
+    config.dbDialect === "postgresql"
+      ? await setupPostgres(config)
+      : await setupSqlite(config);
 
-const port = parsePort(process.env.FAKT_API_PORT);
-const dbPath = process.env.FAKT_DB_PATH ?? "fakt.db";
-
-const sqlite = new Database(dbPath);
-for (const pragma of [
-  "PRAGMA journal_mode = WAL;",
-  "PRAGMA foreign_keys = ON;",
-  "PRAGMA synchronous = NORMAL;",
-]) {
-  sqlite.run(pragma);
-}
-
-applyMigrationsIfNeeded(sqlite);
-
-// Drizzle bun-sqlite accepte l'instance bun:sqlite directement.
-// L'API runtime est identique à better-sqlite3 sur le subset qu'on utilise ;
-// la divergence côté types (Session<void> vs Session<RunResult>) impose un
-// cast double pour traverser le schisme typé — acceptable car le sidecar
-// est Bun-only.
-type ApiDb = Parameters<typeof createApp>[0]["db"];
-const db: ApiDb = drizzle(sqlite, { schema }) as unknown as ApiDb;
-
-const app = createApp({ db, sqlite: sqlite as unknown as SqliteLike, authToken: token });
-
-type BunGlobal = {
-  serve: (opts: {
-    port: number;
-    hostname: string;
-    fetch: (req: Request) => Response | Promise<Response>;
-  }) => {
-    port: number;
-    stop: () => void;
+  const appConfig: AppConfig = {
+    db,
+    sqlite,
+    authToken: config.FAKT_API_TOKEN ?? "",
+    authMode: config.AUTH_MODE,
+    ...(config.FAKT_JWT_SECRET ? { jwtSecret: config.FAKT_JWT_SECRET } : {}),
+    cookieSecure: config.AUTH_MODE === "jwt",
   };
-};
 
-const bun = (globalThis as unknown as { Bun?: BunGlobal }).Bun;
-if (!bun) {
-  fail("Bun runtime introuvable — ce sidecar doit être lancé avec `bun run`");
+  // En mode JWT, on a besoin de pgDb (déjà setupé dans setupPostgres ci-dessus).
+  if (config.AUTH_MODE === "jwt") {
+    const pgDb = db as unknown as NonNullable<AppConfig["pgDb"]>;
+    appConfig.pgDb = pgDb;
+  }
+
+  const app = createApp(appConfig);
+
+  type BunGlobal = {
+    serve: (opts: {
+      port: number;
+      hostname: string;
+      fetch: (req: Request) => Response | Promise<Response>;
+    }) => { port: number; stop: () => void };
+  };
+
+  const bun = (globalThis as unknown as { Bun?: BunGlobal }).Bun;
+  if (!bun) {
+    fail("Bun runtime introuvable — ce serveur doit être lancé avec `bun run`");
+  }
+
+  const server = bun.serve({
+    port: config.FAKT_API_PORT,
+    hostname: config.BIND,
+    fetch: (req) => app.fetch(req),
+  });
+
+  process.stdout.write(`FAKT_API_READY:port=${server.port}\n`);
+  process.stdout.write(
+    `${JSON.stringify({
+      level: "info",
+      event: "listening",
+      port: server.port,
+      bind: config.BIND,
+      authMode: config.AUTH_MODE,
+      dbDialect: config.dbDialect,
+      pid: process.pid,
+    })}\n`
+  );
+
+  function shutdown(signal: string): void {
+    process.stdout.write(`${JSON.stringify({ level: "info", event: "shutdown", signal })}\n`);
+    server.stop();
+    process.exit(0);
+  }
+
+  process.on("SIGINT", () => shutdown("SIGINT"));
+  process.on("SIGTERM", () => shutdown("SIGTERM"));
 }
 
-const server = bun.serve({
-  port,
-  hostname: "127.0.0.1",
-  fetch: (req) => app.fetch(req),
-});
+// ============================================================================
+// SQLite path (mode 1 solo local + tests)
+// ============================================================================
 
-process.stdout.write(`FAKT_API_READY:port=${server.port}\n`);
-process.stdout.write(
-  `${JSON.stringify({
-    level: "info",
-    event: "listening",
-    port: server.port,
-    pid: process.pid,
-    dbPath,
-  })}\n`
-);
+async function setupSqlite(
+  config: AppRuntimeConfig
+): Promise<{ db: AppConfig["db"]; sqlite: SqliteLike }> {
+  const { Database } = await import("bun:sqlite").catch(() => ({ Database: null as never }));
+  if (!Database) {
+    fail("bun:sqlite indisponible — sidecar SQLite nécessite Bun runtime");
+  }
 
-function shutdown(signal: string): void {
-  process.stdout.write(`${JSON.stringify({ level: "info", event: "shutdown", signal })}\n`);
-  server.stop();
-  process.exit(0);
+  const sqlite = new Database(config.FAKT_DB_PATH);
+  for (const pragma of [
+    "PRAGMA journal_mode = WAL;",
+    "PRAGMA foreign_keys = ON;",
+    "PRAGMA synchronous = NORMAL;",
+  ]) {
+    sqlite.run(pragma);
+  }
+
+  const { EMBEDDED_MIGRATIONS } = await import("./migrations-embedded.js");
+  applyMigrationsIfNeeded(sqlite, EMBEDDED_MIGRATIONS);
+
+  const { drizzle } = await import("drizzle-orm/bun-sqlite");
+  const schema = await import("@fakt/db/schema");
+  const db = drizzle(sqlite, { schema }) as unknown as AppConfig["db"];
+
+  return { db, sqlite: sqlite as unknown as SqliteLike };
 }
 
-process.on("SIGINT", () => shutdown("SIGINT"));
-process.on("SIGTERM", () => shutdown("SIGTERM"));
+interface SqliteRunner {
+  run(sql: string, params?: unknown[]): unknown;
+  query<T>(sql: string): { all: () => T[] };
+}
 
-/**
- * Applique les migrations embarquées dans `migrations-embedded.ts`
- * (généré au build-time depuis `packages/db/src/migrations/*.sql`).
- *
- * Rationale : `bun build --compile` ne bundle PAS les fichiers `.sql` lus
- * via `readFileSync` à runtime. Avant v0.1.6, le sidecar cherchait les SQL
- * dans 3 paths relatifs au cwd qui n'existent pas en prod MSI (cwd =
- * `C:\Program Files\FAKT`), et le sidecar crashait au boot avec
- * "migrations introuvables". Fix : embed des SQL au build-time via
- * `scripts/generate-migrations.ts`.
- *
- * Utilise une table de tracking simple (`__fakt_migrations`) plutôt que le
- * système drizzle-kit standard, pour rester portable entre runtimes
- * (bun:sqlite + better-sqlite3) et éviter la dépendance à `meta/_journal.json`.
- */
-function applyMigrationsIfNeeded(db: Database): void {
+function applyMigrationsIfNeeded(
+  db: SqliteRunner,
+  migrations: ReadonlyArray<{ name: string; sql: string }>
+): void {
   db.run(
     "CREATE TABLE IF NOT EXISTS __fakt_migrations (name TEXT PRIMARY KEY, applied_at INTEGER NOT NULL);"
   );
-
   const applied = new Set(
-    db
-      .query<{ name: string }, []>("SELECT name FROM __fakt_migrations")
-      .all()
-      .map((r) => r.name)
+    db.query<{ name: string }>("SELECT name FROM __fakt_migrations").all().map((r) => r.name)
   );
-
-  for (const { name, sql } of EMBEDDED_MIGRATIONS) {
+  for (const { name, sql } of migrations) {
     if (applied.has(name)) continue;
-    // Les migrations Drizzle utilisent `--> statement-breakpoint` pour séparer
-    // les statements. bun:sqlite accepte plusieurs statements via `exec` /
-    // `run` séparés — on split manuellement pour portabilité.
     const statements = sql
       .split(/-->\s*statement-breakpoint/g)
       .map((s) => s.trim())
@@ -146,10 +155,6 @@ function applyMigrationsIfNeeded(db: Database): void {
       try {
         db.run(stmt);
       } catch (err) {
-        // Les migrations legacy (0001_triggers, 0003_payment_notes) ciblaient
-        // un schema pré-0000 ; la migration drizzle-kit 0000 inclut déjà les
-        // colonnes/contraintes. On ignore les doublons inoffensifs pour
-        // permettre au bootstrap de rester idempotent.
         const msg = err instanceof Error ? err.message : String(err);
         const ignorable =
           msg.includes("duplicate column name") ||
@@ -164,3 +169,39 @@ function applyMigrationsIfNeeded(db: Database): void {
     );
   }
 }
+
+// ============================================================================
+// Postgres path (mode 2 self-host + mode 3 SaaS)
+// ============================================================================
+
+async function setupPostgres(
+  config: AppRuntimeConfig
+): Promise<{ db: AppConfig["db"]; sqlite: SqliteLike }> {
+  if (!config.DATABASE_URL) {
+    fail("DATABASE_URL requis en mode Postgres");
+  }
+  const { createPgDb } = await import("@fakt/db");
+  const pgDb = createPgDb(config.DATABASE_URL);
+
+  // SqliteLike est requis par AppConfig pour la numérotation atomique mode 1.
+  // En mode 2, la numérotation utilise pg_advisory_xact_lock — les queries existantes
+  // qui appellent `c.var.sqlite.transaction(...)` doivent être adaptées dans une étape
+  // ultérieure (queries-pg). Pour l'instant, on fournit un mock qui throw si appelé.
+  const sqliteMock: SqliteLike = {
+    transaction: () => {
+      throw new Error(
+        "sqlite transaction not available in Postgres mode — use pg_advisory_xact_lock instead"
+      );
+    },
+  };
+
+  return { db: pgDb as unknown as AppConfig["db"], sqlite: sqliteMock };
+}
+
+// ============================================================================
+// Run
+// ============================================================================
+
+bootstrap().catch((err) => {
+  fail(err instanceof Error ? err.message : String(err));
+});

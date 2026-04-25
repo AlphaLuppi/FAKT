@@ -1,6 +1,8 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { authMiddleware, errorHandler, requestIdMiddleware } from "./middleware/index.js";
+import { authMiddleware } from "./middleware/auth.js";
+import { jwtAuthMiddleware } from "./auth/middleware-jwt.js";
+import { errorHandler, requestIdMiddleware } from "./middleware/index.js";
 import {
   activityRoutes,
   backupsRoutes,
@@ -15,19 +17,24 @@ import {
   signaturesRoutes,
   workspaceRoutes,
 } from "./routes/index.js";
+import { createAuthRoutes } from "./routes/auth.js";
 import type { AppConfig, AppEnv } from "./types.js";
 import { API_VERSION } from "./types.js";
 
 /**
- * Origins autorisés à appeler le sidecar depuis le navigateur (CORS).
- * Le sidecar n'écoute que sur 127.0.0.1, donc l'attaque réseau distante est
- * impossible — la whitelist sert uniquement à bloquer les pages web tierces
- * que l'utilisateur visiterait en parallèle (DNS rebinding / fetch cross-origin).
- *  - http://localhost:1420   : Vite dev server (`bun run dev`)
- *  - tauri://localhost       : webview Tauri 2 macOS/Linux
- *  - http(s)://tauri.localhost : webview WebView2 sous Windows
- * Variable d'env `FAKT_API_EXTRA_ORIGINS` (CSV) pour les déploiements
- * self-host éventuels.
+ * Origins autorisés à appeler le serveur depuis le navigateur (CORS).
+ *
+ * Mode 1 (sidecar local 127.0.0.1) — bloquer les pages web tierces (DNS rebinding) :
+ *   - http://localhost:1420   : Vite dev server (`bun run dev`)
+ *   - tauri://localhost       : webview Tauri 2 macOS/Linux
+ *   - http(s)://tauri.localhost : webview WebView2 sous Windows
+ *
+ * Mode 2 (self-host fakt.alphaluppi.fr) — accepter le frontend web AlphaLuppi :
+ *   - https://fakt.alphaluppi.fr (servi par même Caddy, mais cookies cross-origin si IP différente)
+ *   - tauri://localhost (l'app desktop pré-bakée AlphaLuppi qui tape sur le backend distant)
+ *   - https://localhost:1420 (dev local desktop pointant sur backend remote)
+ *
+ * Variable d'env `FAKT_API_EXTRA_ORIGINS` (CSV) override.
  */
 const DEFAULT_ALLOWED_ORIGINS: readonly string[] = [
   "http://localhost:1420",
@@ -48,8 +55,11 @@ function buildAllowedOrigins(): readonly string[] {
 
 /**
  * Construit l'application Hono.
- * Chaîne de middlewares : cors → requestId → injecteurs db/token → auth (sauf /health) → routes.
- * Error handler branché via app.onError.
+ *
+ * Mode 1 (local) : auth via header X-FAKT-Token (token shared, mono-user implicite).
+ * Mode 2 (jwt+pg) : auth via JWT cookie/bearer, multi-user, /api/auth/* exposé.
+ *
+ * Chaîne middleware : cors → requestId → injecteurs db → auth (sauf /health, /api/auth) → routes.
  */
 export function createApp(config: AppConfig): Hono<AppEnv> {
   const app = new Hono<AppEnv>();
@@ -59,10 +69,11 @@ export function createApp(config: AppConfig): Hono<AppEnv> {
     "*",
     cors({
       origin: (origin) => (allowedOrigins.includes(origin) ? origin : null),
-      allowHeaders: ["X-FAKT-Token", "Content-Type"],
+      allowHeaders: ["X-FAKT-Token", "Content-Type", "Authorization", "X-FAKT-Workspace-Id"],
       allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
       exposeHeaders: ["X-Request-Id", "X-FAKT-Api-Version"],
       maxAge: 600,
+      credentials: true,
     })
   );
 
@@ -78,8 +89,23 @@ export function createApp(config: AppConfig): Hono<AppEnv> {
 
   app.route("/health", healthRoutes);
 
-  const auth = authMiddleware(config.authToken);
-  app.use("/api/*", auth);
+  // Mode 2 : routes auth publiques (login/refresh/logout) — pas de middleware auth en amont.
+  if (config.authMode === "jwt" && config.pgDb && config.jwtSecret) {
+    const authRoutes = createAuthRoutes({
+      pgDb: config.pgDb,
+      jwtSecret: config.jwtSecret,
+      ...(config.cookieDomain !== undefined ? { cookieDomain: config.cookieDomain } : {}),
+      ...(config.cookieSecure !== undefined ? { cookieSecure: config.cookieSecure } : {}),
+    });
+    app.route("/api/auth", authRoutes);
+  }
+
+  // Toutes les autres routes /api/* → derrière middleware auth (mode 1 ou 2).
+  if (config.authMode === "jwt" && config.jwtSecret) {
+    app.use("/api/*", jwtAuthMiddleware(config.jwtSecret));
+  } else {
+    app.use("/api/*", authMiddleware(config.authToken));
+  }
 
   app.route("/api/workspace", workspaceRoutes);
   app.route("/api/settings", settingsRoutes);
