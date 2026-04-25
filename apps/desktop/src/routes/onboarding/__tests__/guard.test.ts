@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock @tauri-apps/api/core avant l'import du module
 vi.mock("@tauri-apps/api/core", () => ({
@@ -9,6 +9,17 @@ import { useOnboardingGuard } from "../guard.js";
 
 // Test unitaire du comportement de checkSetupCompleted (via mock)
 describe("useOnboardingGuard — comportement du guard", () => {
+  // Le guard branche desktop/web sur isDesktop() = présence de
+  // window.__TAURI_INTERNALS__. On simule l'env Tauri pour tester le path
+  // desktop (qui invoque is_setup_completed). Le path web (api.workspace.get())
+  // est testé séparément si besoin.
+  beforeAll(() => {
+    (window as unknown as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__ = {};
+  });
+  afterAll(() => {
+    delete (window as unknown as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__;
+  });
+
   beforeEach(() => {
     vi.resetAllMocks();
   });

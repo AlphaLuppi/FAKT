@@ -1,7 +1,7 @@
 import type { SignatureEvent } from "@fakt/shared";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import {
   type SignDocumentOutput,
   type SignatureApi,
@@ -62,6 +62,10 @@ function buildApi(override?: Partial<SignatureApi>): SignatureApi {
 }
 
 beforeAll(() => {
+  // SignatureModal early-return en mode web (modal "indisponible"). Pour les
+  // tests unitaires du flow desktop, on simule l'env Tauri.
+  (window as unknown as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__ = {};
+
   // jsdom : toBlob + toDataURL
   HTMLCanvasElement.prototype.toBlob = (cb: BlobCallback): void => {
     const blob = new Blob([new Uint8Array(PNG_BYTES)], { type: "image/png" });
@@ -80,6 +84,10 @@ beforeAll(() => {
     // base64 valide (PNG magic bytes)
     return "data:image/png;base64,iVBORw0KGgo=";
   };
+});
+
+afterAll(() => {
+  delete (window as unknown as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__;
 });
 
 afterEach(() => {
