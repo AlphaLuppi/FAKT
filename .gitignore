@@ -64,6 +64,7 @@ test-results/
 # et ignore les exceptions à l'intérieur.
 .claude/*
 !.claude/launch.json
+!.claude/skills/
 
 # BMAD local artifacts (keep dir, ignore private outputs)
 _bmad-output/local/

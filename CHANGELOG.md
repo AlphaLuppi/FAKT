@@ -5,6 +5,24 @@ Toutes les modifications notables de FAKT sont documentées dans ce fichier.
 Ce projet suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/)
 et [Semantic Versioning 2.0.0](https://semver.org/lang/fr/).
 
+> **Pour faire une release :** lancer `/release X.Y.Z` (skill défini dans `.claude/skills/release/SKILL.md`).
+>
+> **À partir de v0.1.12, le format évolue vers un changelog rédigé pour humain non-technique :**
+> sections `### Nouveautés`, `### Améliorations`, `### Corrections` (en français), une phrase par point,
+> orienté utilisateur final, **sans** notes CI / signatures / bumps de deps / formatage. Voir le skill
+> `/release` pour les règles complètes. Les sections antérieures à v0.1.12 conservent leur format
+> historique (Added/Changed/Fixed en anglais avec détails techniques).
+
+---
+
+## [Unreleased]
+
+### Nouveautés
+
+### Améliorations
+
+### Corrections
+
 ---
 
 ## [0.1.11] - 2026-04-25

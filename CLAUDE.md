@@ -68,6 +68,21 @@ Règles absolues (source : `packages/design-tokens/` à venir, originellement da
 5. Pour les changements UI, vérifier le rendu dans Tauri dev (`bun run dev`) et valider visuellement avant merge.
 6. PR titles en format conventional commits.
 
+## Releases & changelog (NON-NÉGOCIABLE)
+
+À chaque tag `vX.Y.Z` poussé, **la release GitHub doit contenir un changelog rédigé pour un humain non-technique**, pas une compil de notes techniques internes.
+
+**Workflow opérationnel :** lancer le skill `/release X.Y.Z` (défini dans `.claude/skills/release/SKILL.md`). Le skill orchestre tout : tri des commits user-facing, reformulation française, mise à jour de `CHANGELOG.md`, bumps de version, commit signé DCO+GPG, tag, push, et création de la release GitHub avec les notes correctes.
+
+### Principes (résumé du skill)
+
+- **Source de vérité : `CHANGELOG.md` à la racine.** La release GitHub recopie l'extrait correspondant. Si le fichier dépasse ~500 lignes, basculer vers un dossier `changelogs/` (un fichier par version).
+- **3 catégories** : `### Nouveautés` (`feat`), `### Améliorations` (UX/refactor visible), `### Corrections` (`fix` user-facing).
+- **Bannir** des release notes : `chore(release)`, `chore(format)`, `chore(deps)`, `ci(...)`, `test(...)`, `fix(test)`, `refactor` invisible, `docs` interne. Ces commits restent dans `git log`, c'est suffisant.
+- **Reformuler en français orienté utilisateur final.** Pas de scope code, pas de jargon. Une phrase par point. Lien commit autorisé quand utile.
+- **Jamais `gh release create --generate-notes`** (notes auto = jargon CI). Toujours `--notes-file` depuis `CHANGELOG.md`.
+- **Section `## [Unreleased]` en haut du fichier** accumule au fil des merges, bascule en `## [X.Y.Z] - YYYY-MM-DD` au tag.
+
 ## Références
 
 - Brief produit : `docs/product-brief.md`
