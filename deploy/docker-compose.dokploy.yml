@@ -1,0 +1,99 @@
+# ============================================================================
+# FAKT — Dokploy docker-compose (Traefik handles TLS + routing)
+# ============================================================================
+#
+# Adapté depuis docker-compose.yml pour Dokploy :
+#   - Pas de Caddy (Traefik gère le reverse proxy + Let's Encrypt)
+#   - Réseau dokploy-network (externe)
+#   - Domaines configurés dans Dokploy UI/API
+# ============================================================================
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-fakt}
+      POSTGRES_USER: ${POSTGRES_USER:-fakt}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD requis}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - dokploy-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-fakt} -d ${POSTGRES_DB:-fakt}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api-server:
+    build:
+      context: ..
+      dockerfile: packages/api-server/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      AUTH_MODE: jwt
+      DATABASE_URL: postgres://${POSTGRES_USER:-fakt}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-fakt}
+      FAKT_JWT_SECRET: ${FAKT_JWT_SECRET:?FAKT_JWT_SECRET requis (min 32 chars)}
+      BIND: "0.0.0.0"
+      FAKT_API_PORT: "3001"
+      FAKT_API_EXTRA_ORIGINS: "https://${FAKT_DOMAIN}"
+      FAKT_SIGNED_PDFS_DIR: /var/lib/fakt/signed
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      FAKT_ADMIN_TOKEN: ${FAKT_ADMIN_TOKEN:-}
+    volumes:
+      - signed_pdfs:/var/lib/fakt/signed
+    networks:
+      - dokploy-network
+    expose:
+      - "3001"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  web-frontend:
+    build:
+      context: ..
+      dockerfile: apps/desktop/Dockerfile.web
+    restart: unless-stopped
+    networks:
+      - dokploy-network
+    expose:
+      - "80"
+
+  backup:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: ${POSTGRES_USER:-fakt}
+      POSTGRES_DB: ${POSTGRES_DB:-fakt}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./backup.sh:/backup.sh:ro
+      - backups:/backups
+    networks:
+      - dokploy-network
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      "while true; do
+        sh /backup.sh
+        sleep 86400
+      done"
+
+volumes:
+  pg_data:
+  signed_pdfs:
+  backups:
+
+networks:
+  dokploy-network:
+    external: true
