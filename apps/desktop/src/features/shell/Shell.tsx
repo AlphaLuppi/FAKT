@@ -14,6 +14,7 @@ import { ComposerSidebar } from "../../components/composer-sidebar/ComposerSideb
 import { ShortcutsOverlay } from "../../components/shortcuts-overlay/ShortcutsOverlay.js";
 import { buildShortcuts, matchesShortcut } from "../../shortcuts.js";
 import { UpdateBanner, UpdaterProvider } from "../updater/index.js";
+import { WorkspaceSwitcher } from "./WorkspaceSwitcher.js";
 
 const NAV_ITEMS = [
   { id: "dashboard", label: fr.nav.dashboard, path: "/" },
@@ -237,6 +238,9 @@ function Topbar(): ReactElement {
           {title}
         </div>
       </div>
+
+      {/* Workspace switcher (caché en MVP avec 1 workspace, futur multi-workspace) */}
+      <WorkspaceSwitcher />
 
       {/* Bouton Composer IA */}
       <button

@@ -2,6 +2,7 @@ import { useCallback, useEffect } from "react";
 import { authApi } from "../api/auth.js";
 import { ApiError, getApiClient } from "../api/client.js";
 import { useAuthStore } from "../stores/useAuthStore.js";
+import { useWorkspaceStore } from "../stores/useWorkspaceStore.js";
 
 /**
  * Hook React pour l'authentification mode 2 self-host (JWT).
@@ -43,10 +44,13 @@ export function useAuth() {
         accessToken: response.accessToken,
         refreshToken: response.refreshToken,
       });
-      // Récupère les rôles précis via /me
+      // Récupère les rôles précis via /me et hydrate useWorkspaceStore
       try {
         const me = await authApi.me();
         useAuthStore.setState({ workspaces: me.workspaces });
+        useWorkspaceStore.getState().setWorkspaces(
+          me.workspaces.map((w) => ({ id: w.workspaceId, role: w.role }))
+        );
       } catch {
         // pas critique
       }
@@ -106,6 +110,9 @@ export function useAuth() {
           workspaces: me.workspaces,
           currentWorkspaceId: me.workspaces[0]?.workspaceId ?? null,
         });
+        useWorkspaceStore.getState().setWorkspaces(
+          me.workspaces.map((w) => ({ id: w.workspaceId, role: w.role }))
+        );
         if (me.workspaces[0]) {
           client.setWorkspaceId(me.workspaces[0].workspaceId);
         }

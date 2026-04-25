@@ -1,0 +1,119 @@
+name: Release AlphaLuppi (privé)
+
+# Workflow privé : build une version desktop FAKT pré-bakée pour AlphaLuppi
+# (FAKT_DEFAULT_BACKEND_URL bakée → app pointe directement sur fakt.alphaluppi.fr).
+# Distribué aux 5 collègues via canal interne (S3 privé / GitHub Release privée).
+#
+# Différences vs release.yml (public) :
+#   - Trigger manuel uniquement (workflow_dispatch)
+#   - Env compile-time FAKT_DEFAULT_BACKEND_URL + FAKT_DEFAULT_AUTH_MODE=remote
+#   - Pas d'updater public (les builds AlphaLuppi pointent sur leur propre canal)
+#   - Upload artefacts dans le run GH Actions (download manuel) ou bucket privé
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version (ex: 0.2.0-alphaluppi.1)"
+        required: true
+      backend_url:
+        description: "URL backend par défaut bakée dans le binaire"
+        required: true
+        default: "https://fakt.alphaluppi.fr"
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.os }} (AlphaLuppi)
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            args: "--target universal-apple-darwin"
+          - os: ubuntu-latest
+            args: "--bundles deb"
+          - os: windows-latest
+            args: ""
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: "aarch64-apple-darwin,x86_64-apple-darwin"
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri
+
+      - name: Install Linux system deps
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgtk-3-dev \
+            libwebkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            pkg-config \
+            libssl-dev
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build sidecar (Windows x64)
+        if: matrix.os == 'windows-latest'
+        run: bun run packages/api-server/scripts/build-sidecar.ts --target=bun-windows-x64
+
+      - name: Build sidecar (Linux x64)
+        if: matrix.os == 'ubuntu-latest'
+        run: bun run packages/api-server/scripts/build-sidecar.ts --target=bun-linux-x64
+
+      - name: Build sidecar + merge universal (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          bun run packages/api-server/scripts/build-sidecar.ts --target=bun-darwin-arm64
+          bun run packages/api-server/scripts/build-sidecar.ts --target=bun-darwin-x64
+          lipo -create \
+            apps/desktop/src-tauri/binaries/fakt-api-aarch64-apple-darwin \
+            apps/desktop/src-tauri/binaries/fakt-api-x86_64-apple-darwin \
+            -output apps/desktop/src-tauri/binaries/fakt-api-universal-apple-darwin
+          chmod +x apps/desktop/src-tauri/binaries/fakt-api-universal-apple-darwin
+
+      - name: Build Tauri (AlphaLuppi pré-bakée)
+        uses: tauri-apps/tauri-action@v0
+        env:
+          # Compile-time env : injectés via build.rs option_env!() côté Rust
+          # et via Vite define côté frontend (à wirer dans vite.config.ts).
+          FAKT_DEFAULT_BACKEND_URL: ${{ inputs.backend_url }}
+          FAKT_DEFAULT_AUTH_MODE: remote
+
+          # Tauri updater désactivé pour la distribution AlphaLuppi (ils ont
+          # leur propre canal d'update interne, à wirer plus tard).
+          # TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          # TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          # Pas de release GitHub publique — les artefacts restent dans le run.
+          tagName: ""
+          releaseName: ""
+          args: ${{ matrix.args }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: fakt-alphaluppi-${{ matrix.os }}-${{ inputs.version }}
+          path: |
+            apps/desktop/src-tauri/target/**/release/bundle/**/*.msi
+            apps/desktop/src-tauri/target/**/release/bundle/**/*.dmg
+            apps/desktop/src-tauri/target/**/release/bundle/**/*.deb
+            apps/desktop/src-tauri/target/**/release/bundle/**/*.AppImage
+          retention-days: 30
+          if-no-files-found: warn
