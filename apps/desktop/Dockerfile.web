@@ -25,6 +25,7 @@ WORKDIR /app
 COPY package.json bun.lock turbo.json tsconfig.base.json ./
 COPY packages ./packages
 COPY apps/desktop/package.json apps/desktop/tsconfig.json apps/desktop/vite.config.ts apps/desktop/index.html ./apps/desktop/
+COPY landing/package.json ./landing/
 
 RUN bun install --frozen-lockfile
 

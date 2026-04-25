@@ -24,6 +24,7 @@ WORKDIR /app
 COPY package.json bun.lock turbo.json tsconfig.base.json ./
 COPY packages ./packages
 COPY apps/desktop/package.json ./apps/desktop/
+COPY landing/package.json ./landing/
 
 # Install workspace deps (cached if package.json unchanged)
 RUN bun install --frozen-lockfile
