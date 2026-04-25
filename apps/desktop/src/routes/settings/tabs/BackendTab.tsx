@@ -165,13 +165,15 @@ function ModeRadioButton({
         flex: 1,
         padding: "12px 16px",
         border: "2px solid var(--ink)",
-        background: checked ? "var(--accent)" : "var(--surface)",
+        background: checked ? "var(--accent-soft)" : "var(--surface)",
         color: "var(--ink)",
         cursor: disabled ? "not-allowed" : "pointer",
         opacity: disabled ? 0.4 : 1,
         textAlign: "left",
         marginRight: -2,
         boxShadow: checked ? "3px 3px 0 var(--ink)" : "none",
+        position: "relative",
+        zIndex: checked ? 1 : 0,
       }}
     >
       <div

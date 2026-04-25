@@ -62,27 +62,27 @@ export function LoginRoute(): ReactElement {
         style={{
           width: "100%",
           maxWidth: 420,
-          background: "#FFF",
+          background: "var(--surface)",
           border: "2.5px solid var(--ink)",
-          boxShadow: "5px 5px 0 var(--ink)",
+          boxShadow: "8px 8px 0 var(--ink)",
           padding: "var(--s-7)",
         }}
       >
         <h1
           style={{
-            font: "var(--w-black) var(--t-3xl)/1 var(--font-ui)",
+            font: "var(--w-black) var(--t-2xl)/1 var(--font-ui)",
             letterSpacing: "-0.02em",
             textTransform: "uppercase",
             color: "var(--ink)",
             margin: 0,
-            marginBottom: "var(--s-2)",
+            marginBottom: "var(--s-3)",
           }}
         >
           FAKT
         </h1>
         <p
           style={{
-            font: "var(--w-medium) var(--t-base)/1.4 var(--font-ui)",
+            font: "var(--w-med) var(--t-base)/1.4 var(--font-ui)",
             color: "var(--ink)",
             margin: 0,
             marginBottom: "var(--s-6)",
@@ -91,15 +91,18 @@ export function LoginRoute(): ReactElement {
           Connexion à votre espace équipe.
         </p>
 
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "var(--s-4)" }}>
+        <form
+          onSubmit={handleSubmit}
+          style={{ display: "flex", flexDirection: "column", gap: "var(--s-4)" }}
+        >
           <div>
             <label
               htmlFor="email"
               style={{
                 display: "block",
-                font: "var(--w-bold) var(--t-sm)/1 var(--font-ui)",
+                font: "var(--w-bold) var(--t-xs)/1 var(--font-ui)",
                 textTransform: "uppercase",
-                letterSpacing: "0.02em",
+                letterSpacing: "0.08em",
                 color: "var(--ink)",
                 marginBottom: "var(--s-2)",
               }}
@@ -118,10 +121,11 @@ export function LoginRoute(): ReactElement {
                 width: "100%",
                 padding: "var(--s-3) var(--s-4)",
                 border: "2px solid var(--ink)",
-                background: "#FFF",
-                font: "var(--w-medium) var(--t-base) var(--font-ui)",
+                background: "var(--surface)",
+                font: "var(--w-med) var(--t-base) var(--font-ui)",
                 color: "var(--ink)",
                 outline: "none",
+                boxSizing: "border-box",
               }}
             />
           </div>
@@ -131,9 +135,9 @@ export function LoginRoute(): ReactElement {
               htmlFor="password"
               style={{
                 display: "block",
-                font: "var(--w-bold) var(--t-sm)/1 var(--font-ui)",
+                font: "var(--w-bold) var(--t-xs)/1 var(--font-ui)",
                 textTransform: "uppercase",
-                letterSpacing: "0.02em",
+                letterSpacing: "0.08em",
                 color: "var(--ink)",
                 marginBottom: "var(--s-2)",
               }}
@@ -152,10 +156,11 @@ export function LoginRoute(): ReactElement {
                 width: "100%",
                 padding: "var(--s-3) var(--s-4)",
                 border: "2px solid var(--ink)",
-                background: "#FFF",
-                font: "var(--w-medium) var(--t-base) var(--font-ui)",
+                background: "var(--surface)",
+                font: "var(--w-med) var(--t-base) var(--font-ui)",
                 color: "var(--ink)",
                 outline: "none",
+                boxSizing: "border-box",
               }}
             />
           </div>
@@ -165,9 +170,9 @@ export function LoginRoute(): ReactElement {
               role="alert"
               style={{
                 padding: "var(--s-3) var(--s-4)",
-                background: "var(--accent)",
+                background: "var(--danger-bg)",
                 border: "2px solid var(--ink)",
-                font: "var(--w-medium) var(--t-sm)/1.4 var(--font-ui)",
+                font: "var(--w-bold) var(--t-sm)/1.4 var(--font-ui)",
                 color: "var(--ink)",
               }}
             >
@@ -175,31 +180,13 @@ export function LoginRoute(): ReactElement {
             </div>
           )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              padding: "var(--s-4)",
-              border: "2px solid var(--ink)",
-              background: loading ? "var(--paper)" : "var(--accent)",
-              color: "var(--ink)",
-              font: "var(--w-black) var(--t-base)/1 var(--font-ui)",
-              textTransform: "uppercase",
-              letterSpacing: "0.02em",
-              cursor: loading ? "not-allowed" : "pointer",
-              boxShadow: "3px 3px 0 var(--ink)",
-              marginTop: "var(--s-2)",
-            }}
-          >
-            {loading ? "Connexion…" : "Se connecter"}
-          </button>
+          <SubmitButton loading={loading} />
         </form>
 
         <p
           style={{
-            font: "var(--w-medium) var(--t-xs)/1.4 var(--font-ui)",
-            color: "var(--ink)",
-            opacity: 0.6,
+            font: "var(--w-med) var(--t-xs)/1.4 var(--font-ui)",
+            color: "var(--muted)",
             margin: 0,
             marginTop: "var(--s-5)",
             textAlign: "center",
@@ -209,5 +196,40 @@ export function LoginRoute(): ReactElement {
         </p>
       </div>
     </div>
+  );
+}
+
+function SubmitButton({ loading }: { loading: boolean }): ReactElement {
+  const [hover, setHover] = useState(false);
+  const [pressed, setPressed] = useState(false);
+  const inverted = hover && !loading;
+  return (
+    <button
+      type="submit"
+      disabled={loading}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => {
+        setHover(false);
+        setPressed(false);
+      }}
+      onMouseDown={() => setPressed(true)}
+      onMouseUp={() => setPressed(false)}
+      style={{
+        padding: "var(--s-4)",
+        border: "2px solid var(--ink)",
+        background: loading ? "var(--paper-2)" : inverted ? "var(--ink)" : "var(--accent-soft)",
+        color: inverted ? "var(--accent-soft)" : "var(--ink)",
+        font: "var(--w-black) var(--t-base)/1 var(--font-ui)",
+        textTransform: "uppercase",
+        letterSpacing: "0.06em",
+        cursor: loading ? "not-allowed" : "pointer",
+        boxShadow: pressed ? "none" : "3px 3px 0 var(--ink)",
+        transform: pressed ? "translate(3px, 3px)" : "none",
+        marginTop: "var(--s-2)",
+        transition: "background 80ms, color 80ms",
+      }}
+    >
+      {loading ? "Connexion…" : "Se connecter"}
+    </button>
   );
 }

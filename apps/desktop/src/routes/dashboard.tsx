@@ -4,7 +4,7 @@ import type { Invoice, Quote } from "@fakt/shared";
 import { Sparkline, StatusPill } from "@fakt/ui";
 import type { StatusKind } from "@fakt/ui";
 import type { ReactElement } from "react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { useComposerSidebar } from "../components/composer-sidebar/ComposerContext.js";
 import { useInvoices } from "./invoices/hooks.js";
@@ -736,31 +736,30 @@ function ActivityRow({
   entry,
   onClick,
 }: { entry: ActivityEntry; onClick: () => void }): ReactElement {
+  const [hovered, setHovered] = useState(false);
   return (
     <li
       data-testid={`activity-row-${entry.id}`}
       onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       style={{
         display: "grid",
         gridTemplateColumns: "auto 1fr auto auto",
         alignItems: "center",
         gap: tokens.spacing[3],
-        padding: `${tokens.spacing[2]} 0`,
+        padding: `${tokens.spacing[2]} ${tokens.spacing[2]}`,
         borderBottom: `${tokens.stroke.hair} solid ${tokens.color.ink}`,
         cursor: "pointer",
-      }}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLLIElement).style.background = tokens.color.accentSoft;
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLLIElement).style.background = "transparent";
+        background: hovered ? tokens.color.accentSoft : "transparent",
+        transition: "background 80ms",
       }}
     >
       <span
         style={{
           fontFamily: tokens.font.mono,
           fontSize: tokens.fontSize.xs,
-          color: tokens.color.muted,
+          color: hovered ? tokens.color.ink : tokens.color.muted,
           fontVariantNumeric: "tabular-nums",
         }}
       >
