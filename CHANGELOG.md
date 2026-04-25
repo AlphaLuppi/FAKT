@@ -25,6 +25,33 @@ et [Semantic Versioning 2.0.0](https://semver.org/lang/fr/).
 
 ---
 
+## [0.1.17] - 2026-04-25
+
+### Nouveautés
+
+- **Configuration du backend depuis la page de connexion** — un nouveau
+  panneau « Configurer le backend ▾ » est désormais disponible en bas de
+  l'écran de connexion (uniquement dans l'app desktop). Il permet de
+  basculer entre le mode « Local » (vos données restent sur votre poste)
+  et le mode « Distant » (serveur d'équipe), et de personnaliser l'URL
+  du backend distant. Une pastille de statut vérifie automatiquement la
+  disponibilité du serveur. Pratique pour passer rapidement d'un serveur
+  de test à la production sans devoir entrer dans les Paramètres.
+
+### Corrections
+
+- **Connexion app web ⇄ API mode équipe** — le bundle web (servi sur
+  `fakt.alphaluppi.fr`) tape désormais correctement sur l'API distante
+  hébergée sur le sous-domaine `api.fakt.alphaluppi.fr`. Auparavant
+  l'URL de l'API n'était pas correctement intégrée au build, ce qui
+  empêchait toute connexion depuis le navigateur.
+- **Installateur Windows simplifié** — la version Windows est désormais
+  livrée uniquement au format NSIS (`.exe`). Le format MSI redondant a
+  été retiré, ce qui réduit le risque de confusion lors du téléchargement
+  et accélère le processus d'auto-update.
+
+---
+
 ## [0.1.16] - 2026-04-25
 
 ### Améliorations
