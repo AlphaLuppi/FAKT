@@ -18,6 +18,8 @@
 # ---- Stage 1 : Builder ----
 FROM oven/bun:1.3.2-alpine AS builder
 
+RUN apk add --no-cache python3 make g++
+
 WORKDIR /app
 
 # Copy workspace manifests pour caching
