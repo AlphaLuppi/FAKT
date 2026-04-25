@@ -27,7 +27,7 @@
   "bundle": {
     "active": true,
     "createUpdaterArtifacts": true,
-    "targets": ["app", "dmg", "msi", "nsis", "appimage", "deb"],
+    "targets": ["app", "dmg", "nsis", "appimage", "deb"],
     "externalBin": ["binaries/fakt-api"],
     "icon": [
       "icons/32x32.png",

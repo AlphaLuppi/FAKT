@@ -111,7 +111,7 @@ jobs:
         with:
           name: fakt-alphaluppi-${{ matrix.os }}-${{ inputs.version }}
           path: |
-            apps/desktop/src-tauri/target/**/release/bundle/**/*.msi
+            apps/desktop/src-tauri/target/**/release/bundle/nsis/*-setup.exe
             apps/desktop/src-tauri/target/**/release/bundle/**/*.dmg
             apps/desktop/src-tauri/target/**/release/bundle/**/*.deb
             apps/desktop/src-tauri/target/**/release/bundle/**/*.AppImage

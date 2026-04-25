@@ -131,19 +131,14 @@ jobs:
         with:
           tagName: ${{ github.ref_name }}
           releaseName: "FAKT ${{ github.ref_name }}"
+          # ⚠️ Body provisoire : le mainteneur DOIT remplacer ces notes après le
+          # tag via `gh release edit vX.Y.Z --notes-file <extrait CHANGELOG>`.
+          # Procédure complète dans `.claude/skills/release/SKILL.md` étape 6.
+          # Ne jamais laisser ce placeholder en prod.
           releaseBody: |
-            Voir [CHANGELOG.md](https://github.com/AlphaLuppi/FAKT/blob/main/CHANGELOG.md)
-            pour la liste exhaustive des fonctionnalités v0.1.0.
+            🛠️ Notes de version en cours d'édition…
 
-            **Note Windows :** l'installeur `.msi` / `.exe` (NSIS) n'est pas signé
-            Authenticode en v0.1.0 (SmartScreen affichera « Unknown Publisher »).
-            Clic droit → Exécuter quand même. La signature Authenticode arrive en v0.1.1.
-
-            **Note macOS :** si Gatekeeper bloque, clic droit → Ouvrir.
-
-            **Mises à jour :** dès la prochaine release publiée, l'app détecte
-            automatiquement la nouvelle version au boot et propose une bannière
-            « Mise à jour disponible ». Un clic suffit pour DL + installer.
+            En attendant : voir le [CHANGELOG complet](https://github.com/AlphaLuppi/FAKT/blob/main/CHANGELOG.md).
           releaseDraft: false
           prerelease: ${{ contains(github.ref_name, '-rc') || contains(github.ref_name, '-beta') || contains(github.ref_name, '-alpha') }}
           # Génère et upload `latest.json` (signature + url + version) en asset
