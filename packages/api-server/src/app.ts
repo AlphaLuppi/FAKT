@@ -1,8 +1,9 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { authMiddleware } from "./middleware/auth.js";
 import { jwtAuthMiddleware } from "./auth/middleware-jwt.js";
+import { authMiddleware } from "./middleware/auth.js";
 import { errorHandler, requestIdMiddleware } from "./middleware/index.js";
+import { createAuthRoutes } from "./routes/auth.js";
 import {
   activityRoutes,
   backupsRoutes,
@@ -18,7 +19,6 @@ import {
   signaturesRoutes,
   workspaceRoutes,
 } from "./routes/index.js";
-import { createAuthRoutes } from "./routes/auth.js";
 import type { AppConfig, AppEnv } from "./types.js";
 import { API_VERSION } from "./types.js";
 

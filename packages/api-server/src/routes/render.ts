@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
-import { copyFile, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
+import { copyFile, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -89,15 +89,7 @@ async function runTypst(root: string, mainTemplate: string, outPath: string): Pr
   return new Promise((resolve, reject) => {
     const proc = spawn(
       TYPST_BIN,
-      [
-        "compile",
-        "--root",
-        root,
-        "--input",
-        "ctx-path=ctx.json",
-        mainTemplate,
-        outPath,
-      ],
+      ["compile", "--root", root, "--input", "ctx-path=ctx.json", mainTemplate, outPath],
       { cwd: root }
     );
 
@@ -140,10 +132,7 @@ renderRoutes.post("/pdf", async (c) => {
   try {
     body = await c.req.json();
   } catch {
-    return c.json(
-      { error: { code: "VALIDATION_ERROR", message: "JSON body invalide" } },
-      400
-    );
+    return c.json({ error: { code: "VALIDATION_ERROR", message: "JSON body invalide" } }, 400);
   }
 
   const parsed = renderSchema.safeParse(body);
@@ -183,10 +172,7 @@ renderRoutes.post("/pdf", async (c) => {
     const pdfBytes = await readFile(outPath);
 
     // Sanity check — un PDF doit commencer par "%PDF-".
-    if (
-      pdfBytes.length < 5 ||
-      pdfBytes.subarray(0, 5).toString("ascii") !== "%PDF-"
-    ) {
+    if (pdfBytes.length < 5 || pdfBytes.subarray(0, 5).toString("ascii") !== "%PDF-") {
       return c.json(
         {
           error: {
@@ -205,10 +191,7 @@ renderRoutes.post("/pdf", async (c) => {
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    return c.json(
-      { error: { code: "INTERNAL_ERROR", message: `Échec rendu PDF: ${msg}` } },
-      500
-    );
+    return c.json({ error: { code: "INTERNAL_ERROR", message: `Échec rendu PDF: ${msg}` } }, 500);
   } finally {
     await rm(tmp, { recursive: true, force: true }).catch(() => {
       // pas critique : tempdir

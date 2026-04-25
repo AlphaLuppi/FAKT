@@ -1,15 +1,15 @@
 import { randomUUID } from "node:crypto";
-import { pgSchema, type PgDbInstance } from "@fakt/db";
-import { eq, and, isNull } from "drizzle-orm";
+import { type PgDbInstance, pgSchema } from "@fakt/db";
+import { and, eq, isNull } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
 import {
-  hashToken,
   REFRESH_TOKEN_TTL_SEC,
+  hashToken,
   signAccessToken,
   signRefreshToken,
-  verifyRefreshToken,
   verifyPassword,
+  verifyRefreshToken,
 } from "../auth/index.js";
 import { unauthorized } from "../errors.js";
 import { parseBody } from "../middleware/zod.js";
@@ -199,7 +199,10 @@ export function createAuthRoutes(config: AuthRoutesConfig): Hono<AppEnv> {
       throw unauthorized("user not found");
     }
     const userWs = await pgDb
-      .select({ workspaceId: pgSchema.userWorkspaces.workspaceId, role: pgSchema.userWorkspaces.role })
+      .select({
+        workspaceId: pgSchema.userWorkspaces.workspaceId,
+        role: pgSchema.userWorkspaces.role,
+      })
       .from(pgSchema.userWorkspaces)
       .where(eq(pgSchema.userWorkspaces.userId, user.id));
     return c.json({
@@ -241,13 +244,7 @@ function clearSessionCookie(
   c: CookieContext,
   opts: { cookieDomain?: string; cookieSecure?: boolean }
 ): void {
-  const parts = [
-    `${COOKIE_NAME}=`,
-    "HttpOnly",
-    "SameSite=Strict",
-    "Path=/",
-    "Max-Age=0",
-  ];
+  const parts = [`${COOKIE_NAME}=`, "HttpOnly", "SameSite=Strict", "Path=/", "Max-Age=0"];
   if (opts.cookieSecure !== false) parts.push("Secure");
   if (opts.cookieDomain) parts.push(`Domain=${opts.cookieDomain}`);
   c.header("Set-Cookie", parts.join("; "));

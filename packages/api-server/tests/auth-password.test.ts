@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  generateRandomPassword,
-  hashPassword,
-  verifyPassword,
-} from "../src/auth/password.js";
+import { generateRandomPassword, hashPassword, verifyPassword } from "../src/auth/password.js";
 
 /**
  * Tests unitaires du layer password (bcrypt cost=12).

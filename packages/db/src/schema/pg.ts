@@ -368,10 +368,7 @@ export const activity = pgTable(
       .notNull()
       .default(sql`now()`),
   },
-  (t) => [
-    index("activity_created_idx").on(t.createdAt),
-    index("activity_ws_idx").on(t.workspaceId),
-  ]
+  (t) => [index("activity_created_idx").on(t.createdAt), index("activity_ws_idx").on(t.workspaceId)]
 );
 
 export const backups = pgTable("backups", {

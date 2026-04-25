@@ -48,11 +48,11 @@ export function jwtAuthMiddleware(jwtSecret: string): MiddlewareHandler<AppEnv> 
       }
       workspaceId = requestedWs;
     } else if (payload.ws.length === 1) {
-      workspaceId = payload.ws[0]!;
+      const [single] = payload.ws;
+      if (!single) throw unauthorized("user has no workspace access");
+      workspaceId = single;
     } else {
-      throw unauthorized(
-        "multi-workspace user must specify X-FAKT-Workspace-Id header"
-      );
+      throw unauthorized("multi-workspace user must specify X-FAKT-Workspace-Id header");
     }
 
     c.set("userId", payload.sub);
@@ -68,7 +68,7 @@ interface CookieReader {
 
 function extractToken(c: CookieReader): string | null {
   const auth = c.req.header(HEADER_AUTHORIZATION);
-  if (auth && auth.toLowerCase().startsWith("bearer ")) {
+  if (auth?.toLowerCase().startsWith("bearer ")) {
     const token = auth.slice(7).trim();
     if (token.length > 0) return token;
   }

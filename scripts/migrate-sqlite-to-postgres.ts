@@ -29,6 +29,10 @@ import Database from "better-sqlite3";
 import { eq } from "drizzle-orm";
 import { createPgDb, pgSchema } from "../packages/db/src/index.js";
 
+// Rows SQLite dynamiques (script one-shot) — Drizzle valide les types au INSERT.
+// biome-ignore lint/suspicious/noExplicitAny: dynamic SQLite row shape
+type SqliteRow = Record<string, any>;
+
 interface Args {
   sqlite: string;
   pg: string;
@@ -125,7 +129,7 @@ async function main(): Promise<void> {
   }
 
   // ── 4. Clients ──
-  const clients = sqlite.prepare("SELECT * FROM clients").all() as Array<Record<string, any>>;
+  const clients = sqlite.prepare("SELECT * FROM clients").all() as Array<SqliteRow>;
   console.log(`[migrate] ${clients.length} clients`);
   if (!args.dryRun && clients.length > 0) {
     await pgDb.insert(pgSchema.clients).values(
@@ -149,7 +153,7 @@ async function main(): Promise<void> {
   }
 
   // ── 5. Services ──
-  const services = sqlite.prepare("SELECT * FROM services").all() as Array<Record<string, any>>;
+  const services = sqlite.prepare("SELECT * FROM services").all() as Array<SqliteRow>;
   console.log(`[migrate] ${services.length} services`);
   if (!args.dryRun && services.length > 0) {
     await pgDb.insert(pgSchema.services).values(
@@ -169,9 +173,7 @@ async function main(): Promise<void> {
   }
 
   // ── 6. Numbering state ──
-  const numbering = sqlite
-    .prepare("SELECT * FROM numbering_state")
-    .all() as Array<Record<string, any>>;
+  const numbering = sqlite.prepare("SELECT * FROM numbering_state").all() as Array<SqliteRow>;
   console.log(`[migrate] ${numbering.length} numbering_state rows`);
   if (!args.dryRun && numbering.length > 0) {
     await pgDb.insert(pgSchema.numberingState).values(
@@ -185,7 +187,7 @@ async function main(): Promise<void> {
   }
 
   // ── 7. Quotes + items ──
-  const quotes = sqlite.prepare("SELECT * FROM quotes").all() as Array<Record<string, any>>;
+  const quotes = sqlite.prepare("SELECT * FROM quotes").all() as Array<SqliteRow>;
   console.log(`[migrate] ${quotes.length} quotes`);
   if (!args.dryRun && quotes.length > 0) {
     await pgDb.insert(pgSchema.quotes).values(
@@ -212,7 +214,7 @@ async function main(): Promise<void> {
     );
   }
 
-  const quoteItems = sqlite.prepare("SELECT * FROM quote_items").all() as Array<Record<string, any>>;
+  const quoteItems = sqlite.prepare("SELECT * FROM quote_items").all() as Array<SqliteRow>;
   console.log(`[migrate] ${quoteItems.length} quote_items`);
   if (!args.dryRun && quoteItems.length > 0) {
     await pgDb.insert(pgSchema.quoteItems).values(
@@ -231,7 +233,7 @@ async function main(): Promise<void> {
   }
 
   // ── 8. Invoices + items ──
-  const invoices = sqlite.prepare("SELECT * FROM invoices").all() as Array<Record<string, any>>;
+  const invoices = sqlite.prepare("SELECT * FROM invoices").all() as Array<SqliteRow>;
   console.log(`[migrate] ${invoices.length} invoices`);
   if (!args.dryRun && invoices.length > 0) {
     await pgDb.insert(pgSchema.invoices).values(
@@ -262,9 +264,7 @@ async function main(): Promise<void> {
     );
   }
 
-  const invoiceItems = sqlite
-    .prepare("SELECT * FROM invoice_items")
-    .all() as Array<Record<string, any>>;
+  const invoiceItems = sqlite.prepare("SELECT * FROM invoice_items").all() as Array<SqliteRow>;
   console.log(`[migrate] ${invoiceItems.length} invoice_items`);
   if (!args.dryRun && invoiceItems.length > 0) {
     await pgDb.insert(pgSchema.invoiceItems).values(
@@ -283,9 +283,7 @@ async function main(): Promise<void> {
   }
 
   // ── 9. Signature events ──
-  const sigEvents = sqlite
-    .prepare("SELECT * FROM signature_events")
-    .all() as Array<Record<string, any>>;
+  const sigEvents = sqlite.prepare("SELECT * FROM signature_events").all() as Array<SqliteRow>;
   console.log(`[migrate] ${sigEvents.length} signature_events`);
   if (!args.dryRun && sigEvents.length > 0) {
     await pgDb.insert(pgSchema.signatureEvents).values(
@@ -310,9 +308,7 @@ async function main(): Promise<void> {
   }
 
   // ── 10. Signed documents ──
-  const signedDocs = sqlite
-    .prepare("SELECT * FROM signed_documents")
-    .all() as Array<Record<string, any>>;
+  const signedDocs = sqlite.prepare("SELECT * FROM signed_documents").all() as Array<SqliteRow>;
   console.log(`[migrate] ${signedDocs.length} signed_documents`);
   if (!args.dryRun && signedDocs.length > 0) {
     await pgDb.insert(pgSchema.signedDocuments).values(
@@ -329,7 +325,7 @@ async function main(): Promise<void> {
   }
 
   // ── 11. Activity ──
-  const activity = sqlite.prepare("SELECT * FROM activity").all() as Array<Record<string, any>>;
+  const activity = sqlite.prepare("SELECT * FROM activity").all() as Array<SqliteRow>;
   console.log(`[migrate] ${activity.length} activity rows`);
   if (!args.dryRun && activity.length > 0) {
     await pgDb.insert(pgSchema.activity).values(
@@ -347,7 +343,7 @@ async function main(): Promise<void> {
   }
 
   // ── 12. Settings ──
-  const settings = sqlite.prepare("SELECT * FROM settings").all() as Array<Record<string, any>>;
+  const settings = sqlite.prepare("SELECT * FROM settings").all() as Array<SqliteRow>;
   console.log(`[migrate] ${settings.length} settings`);
   if (!args.dryRun && settings.length > 0) {
     await pgDb.insert(pgSchema.settings).values(
@@ -361,7 +357,7 @@ async function main(): Promise<void> {
   }
 
   // ── 13. Backups ──
-  const backups = sqlite.prepare("SELECT * FROM backups").all() as Array<Record<string, any>>;
+  const backups = sqlite.prepare("SELECT * FROM backups").all() as Array<SqliteRow>;
   console.log(`[migrate] ${backups.length} backups`);
   if (!args.dryRun && backups.length > 0) {
     await pgDb.insert(pgSchema.backups).values(

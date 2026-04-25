@@ -16,11 +16,11 @@ import { getRuntimeLabel, isDesktop, isWeb } from "./runtime.js";
 
 describe("utils/runtime", () => {
   beforeEach(() => {
-    delete (window as unknown as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__;
+    (window as unknown as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__ = undefined;
   });
 
   afterEach(() => {
-    delete (window as unknown as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__;
+    (window as unknown as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__ = undefined;
   });
 
   describe("isDesktop / isWeb", () => {

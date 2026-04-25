@@ -90,7 +90,7 @@ async function main(): Promise<void> {
       .limit(1);
     if (existing.length > 0) {
       console.warn(`[skip] ${email} existe déjà, lien workspace garanti idempotent`);
-      const userId = existing[0]!.id;
+      const userId = existing[0]?.id;
       await db
         .insert(pgSchema.userWorkspaces)
         .values({ userId, workspaceId, role: u.role })
@@ -108,7 +108,7 @@ async function main(): Promise<void> {
         fullName: u.fullName,
       })
       .returning();
-    const userId = inserted[0]!.id;
+    const userId = inserted[0]?.id;
     await db.insert(pgSchema.userWorkspaces).values({
       userId,
       workspaceId,

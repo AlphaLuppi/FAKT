@@ -76,7 +76,7 @@ describe("POST /api/render/pdf — validation", () => {
       const res = await app.request("/api/render/pdf", {
         method: "POST",
         headers: authHeaders(),
-        body: JSON.stringify({ docType, dataJson: '{"kind":"' + docType + '"}' }),
+        body: JSON.stringify({ docType, dataJson: `{"kind":"${docType}"}` }),
       });
       // 200 si Typst dispo, 500 sinon (BinaryNotFound) — pas 400.
       expect([200, 500]).toContain(res.status);

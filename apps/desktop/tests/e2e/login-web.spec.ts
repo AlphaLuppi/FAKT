@@ -32,7 +32,9 @@ test.describe("FAKT Login (mode web)", () => {
     await expect(page.getByLabel(/mot de passe/i)).toBeVisible();
 
     // Bouton submit
-    await expect(page.getByRole("button", { name: /(connexion|se connecter|login)/i })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /(connexion|se connecter|login)/i })
+    ).toBeVisible();
   });
 
   test("le form login est responsive sur mobile (375x812)", async ({ page }) => {

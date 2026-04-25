@@ -55,8 +55,9 @@ export type AppRuntimeConfig = z.infer<typeof ConfigSchema> & {
 };
 
 export function loadConfig(): AppRuntimeConfig {
-  const env = (globalThis as unknown as { process?: { env: Record<string, string | undefined> } })
-    .process?.env ?? {};
+  const env =
+    (globalThis as unknown as { process?: { env: Record<string, string | undefined> } }).process
+      ?.env ?? {};
   const raw = ConfigSchema.parse(env);
 
   const dbDialect: "sqlite" | "postgresql" = raw.DATABASE_URL?.startsWith("postgres")

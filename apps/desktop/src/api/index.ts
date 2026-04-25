@@ -4,10 +4,10 @@ import { clientsApi } from "./clients.js";
 import { invoicesApi } from "./invoices.js";
 import { numberingApi } from "./numbering.js";
 import { quotesApi } from "./quotes.js";
+import { renderApi } from "./render.js";
 import { searchApi } from "./search.js";
 import { servicesApi } from "./services.js";
 import { settingsApi } from "./settings.js";
-import { renderApi } from "./render.js";
 import { signaturesApi } from "./signatures.js";
 import { workspaceApi } from "./workspace.js";
 

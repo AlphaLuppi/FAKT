@@ -48,9 +48,9 @@ export function useAuth() {
       try {
         const me = await authApi.me();
         useAuthStore.setState({ workspaces: me.workspaces });
-        useWorkspaceStore.getState().setWorkspaces(
-          me.workspaces.map((w) => ({ id: w.workspaceId, role: w.role }))
-        );
+        useWorkspaceStore
+          .getState()
+          .setWorkspaces(me.workspaces.map((w) => ({ id: w.workspaceId, role: w.role })));
       } catch {
         // pas critique
       }
@@ -110,9 +110,9 @@ export function useAuth() {
           workspaces: me.workspaces,
           currentWorkspaceId: me.workspaces[0]?.workspaceId ?? null,
         });
-        useWorkspaceStore.getState().setWorkspaces(
-          me.workspaces.map((w) => ({ id: w.workspaceId, role: w.role }))
-        );
+        useWorkspaceStore
+          .getState()
+          .setWorkspaces(me.workspaces.map((w) => ({ id: w.workspaceId, role: w.role })));
         if (me.workspaces[0]) {
           client.setWorkspaceId(me.workspaces[0].workspaceId);
         }

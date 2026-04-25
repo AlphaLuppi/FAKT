@@ -1,6 +1,6 @@
 import { Button, Input, toast } from "@fakt/ui";
-import { useEffect, useState, type ReactElement } from "react";
-import { getApiClient, resetApiClient, type ApiMode } from "../../../api/client.js";
+import { type ReactElement, useEffect, useState } from "react";
+import { type ApiMode, getApiClient, resetApiClient } from "../../../api/client.js";
 import { useAuth } from "../../../hooks/useAuth.js";
 import { isDesktop, tauriInvoke } from "../../../utils/runtime.js";
 
@@ -82,8 +82,8 @@ export function BackendTab(): ReactElement {
       <div>
         <h3 style={sectionTitleStyle}>Backend</h3>
         <p style={descStyle}>
-          Choisissez où FAKT stocke vos données : sur ce poste (mode solo) ou sur un serveur
-          partagé (mode équipe self-host).
+          Choisissez où FAKT stocke vos données : sur ce poste (mode solo) ou sur un serveur partagé
+          (mode équipe self-host).
         </p>
       </div>
 

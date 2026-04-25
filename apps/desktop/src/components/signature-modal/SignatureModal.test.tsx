@@ -87,7 +87,7 @@ beforeAll(() => {
 });
 
 afterAll(() => {
-  delete (window as unknown as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__;
+  (window as unknown as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__ = undefined;
 });
 
 afterEach(() => {

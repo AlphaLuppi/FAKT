@@ -13,7 +13,7 @@ import { DesktopOnlyButton } from "./DesktopOnlyButton.js";
 describe("<DesktopOnlyButton />", () => {
   describe("en mode web (navigateur)", () => {
     afterEach(() => {
-      delete (window as unknown as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__;
+      (window as unknown as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__ = undefined;
     });
 
     it("rend le bouton désactivé", () => {
@@ -51,7 +51,7 @@ describe("<DesktopOnlyButton />", () => {
     });
 
     afterEach(() => {
-      delete (window as unknown as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__;
+      (window as unknown as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__ = undefined;
     });
 
     it("rend le bouton actif (pas de désactivation forcée)", () => {

@@ -220,7 +220,7 @@ export class ApiClient {
     if (this.#mode === "local") {
       if (this.#token) headers["X-FAKT-Token"] = this.#token;
     } else {
-      if (this.#jwtBearer) headers["Authorization"] = `Bearer ${this.#jwtBearer}`;
+      if (this.#jwtBearer) headers.Authorization = `Bearer ${this.#jwtBearer}`;
       if (this.#workspaceId) headers["X-FAKT-Workspace-Id"] = this.#workspaceId;
     }
 
@@ -279,7 +279,7 @@ export class ApiClient {
       if (this.#token) headers["X-FAKT-Token"] = this.#token;
     } else {
       // Mode 2 remote : Bearer JWT (et cookie httpOnly via credentials: include)
-      if (this.#jwtBearer) headers["Authorization"] = `Bearer ${this.#jwtBearer}`;
+      if (this.#jwtBearer) headers.Authorization = `Bearer ${this.#jwtBearer}`;
       if (this.#workspaceId) headers["X-FAKT-Workspace-Id"] = this.#workspaceId;
     }
 

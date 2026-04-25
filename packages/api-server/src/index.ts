@@ -19,7 +19,7 @@
  */
 
 import { createApp } from "./app.js";
-import { loadConfig, type AppRuntimeConfig } from "./config.js";
+import { type AppRuntimeConfig, loadConfig } from "./config.js";
 import type { AppConfig, SqliteLike } from "./types.js";
 
 function fail(reason: string): never {
@@ -36,9 +36,7 @@ async function bootstrap(): Promise<void> {
   }
 
   const { db, sqlite } =
-    config.dbDialect === "postgresql"
-      ? await setupPostgres(config)
-      : await setupSqlite(config);
+    config.dbDialect === "postgresql" ? await setupPostgres(config) : await setupSqlite(config);
 
   const appConfig: AppConfig = {
     db,
@@ -143,7 +141,10 @@ function applyMigrationsIfNeeded(
     "CREATE TABLE IF NOT EXISTS __fakt_migrations (name TEXT PRIMARY KEY, applied_at INTEGER NOT NULL);"
   );
   const applied = new Set(
-    db.query<{ name: string }>("SELECT name FROM __fakt_migrations").all().map((r) => r.name)
+    db
+      .query<{ name: string }>("SELECT name FROM __fakt_migrations")
+      .all()
+      .map((r) => r.name)
   );
   for (const { name, sql } of migrations) {
     if (applied.has(name)) continue;

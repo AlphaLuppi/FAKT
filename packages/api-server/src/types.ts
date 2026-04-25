@@ -1,5 +1,5 @@
-import type { DbInstance } from "@fakt/db/adapter";
 import type { PgDbInstance } from "@fakt/db";
+import type { DbInstance } from "@fakt/db/adapter";
 
 /**
  * Type structurel minimal pour le driver SQLite brut.

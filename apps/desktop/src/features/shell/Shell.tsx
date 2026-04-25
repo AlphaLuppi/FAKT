@@ -218,12 +218,7 @@ function BottomNav(): ReactElement {
   const currentPath = location.pathname;
 
   return (
-    <nav
-      className="fakt-bottom-nav"
-      role="navigation"
-      aria-label="Navigation mobile"
-      data-testid="bottom-nav"
-    >
+    <nav className="fakt-bottom-nav" aria-label="Navigation mobile" data-testid="bottom-nav">
       {BOTTOM_NAV_ITEMS.map((item) => {
         const isActive =
           item.path === "/" ? currentPath === "/" : currentPath.startsWith(item.path);
