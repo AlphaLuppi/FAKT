@@ -269,7 +269,7 @@ export function DashboardRoute(): ReactElement {
         }}
       >
         <KpiCard
-          testId="kpi-ca-emis"
+          testId="dashboard-kpi-ca-emis"
           title={fr.dashboard.kpi.caEmisTitle}
           hint={fr.dashboard.kpi.caEmisHint}
           value={loading ? null : formatEur(caEmis)}
@@ -277,7 +277,7 @@ export function DashboardRoute(): ReactElement {
           onClick={() => void navigate("/invoices")}
         />
         <KpiCard
-          testId="kpi-ca-encaisse"
+          testId="dashboard-kpi-ca-encaisse"
           title={fr.dashboard.kpi.caEncaisseTitle}
           hint={fr.dashboard.kpi.caEncaisseHint}
           value={loading ? null : formatEur(caEncaisse)}
@@ -285,7 +285,7 @@ export function DashboardRoute(): ReactElement {
           onClick={() => void navigate("/invoices?status=paid")}
         />
         <KpiCard
-          testId="kpi-devis-attente"
+          testId="dashboard-kpi-devis-attente"
           title={fr.dashboard.kpi.devisAttenteTitle}
           hint={fr.dashboard.kpi.devisAttenteHint}
           value={loading ? null : String(pendingQuotes.length)}
@@ -293,7 +293,7 @@ export function DashboardRoute(): ReactElement {
           onClick={() => void navigate("/quotes?status=sent")}
         />
         <KpiCard
-          testId="kpi-factures-retard"
+          testId="dashboard-kpi-factures-retard"
           title={fr.dashboard.kpi.facturesRetardTitle}
           hint={fr.dashboard.kpi.facturesRetardHint}
           value={loading ? null : String(overdueInvoices.length)}
@@ -333,6 +333,7 @@ export function DashboardRoute(): ReactElement {
               label={fr.dashboard.pipeline[stage]}
               count={pipelineCounts[stage]}
               isLast={idx === 4}
+              testId={`dashboard-pipeline-${stage}`}
               onClick={() => {
                 if (stage === "paid") void navigate("/invoices?status=paid");
                 else void navigate(`/quotes?status=${stage}`);
@@ -353,7 +354,7 @@ export function DashboardRoute(): ReactElement {
       >
         {/* Activity feed */}
         <section
-          data-testid="widget-recent-activity"
+          data-testid="dashboard-recent-activity"
           style={{
             border: `${tokens.stroke.bold} solid ${tokens.color.ink}`,
             background: tokens.color.surface,
@@ -444,6 +445,7 @@ export function DashboardRoute(): ReactElement {
                 return (
                   <li
                     key={inv.id}
+                    data-testid={`dashboard-suggestion-${inv.id}`}
                     style={{
                       border: `${tokens.stroke.base} solid ${tokens.color.ink}`,
                       padding: tokens.spacing[3],
@@ -498,6 +500,7 @@ export function DashboardRoute(): ReactElement {
                     </div>
                     <button
                       type="button"
+                      data-testid={`dashboard-suggestion-draft-relance-${inv.id}`}
                       onClick={() => {
                         openWithContext(
                           {
@@ -654,12 +657,20 @@ function PipelineStage({
   count,
   isLast,
   onClick,
-}: { label: string; count: number; isLast: boolean; onClick: () => void }): ReactElement {
+  testId,
+}: {
+  label: string;
+  count: number;
+  isLast: boolean;
+  onClick: () => void;
+  testId?: string;
+}): ReactElement {
   return (
     <>
       <button
         type="button"
         onClick={onClick}
+        data-testid={testId}
         style={{
           border: `${tokens.stroke.base} solid ${tokens.color.ink}`,
           background: tokens.color.surface,
@@ -739,7 +750,7 @@ function ActivityRow({
   const [hovered, setHovered] = useState(false);
   return (
     <li
-      data-testid={`activity-row-${entry.id}`}
+      data-testid={`dashboard-activity-row-${entry.id}`}
       onClick={onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -802,7 +813,11 @@ function ActivityRow({
       >
         {entry.reference}
       </span>
-      <StatusPill status={ACTIVITY_PILL[entry.kind]} size="sm" />
+      <StatusPill
+        status={ACTIVITY_PILL[entry.kind]}
+        size="sm"
+        data-testid={`dashboard-activity-status-${entry.id}`}
+      />
     </li>
   );
 }

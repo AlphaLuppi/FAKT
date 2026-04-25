@@ -11,7 +11,7 @@
  *   - Linux : DISPLAY ou xvfb-run requis
  */
 
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./helpers/test.js";
 
 // En l'absence de tauri-driver configuré, ce smoke valide que Playwright
 // peut charger la page en mode devUrl (développement local).
@@ -24,6 +24,14 @@ test.describe("FAKT — smoke tests", () => {
 
     // Attendre que l'app soit prête (titre de la fenêtre ou heading visible)
     await expect(page).toHaveTitle(/FAKT/, { timeout: 10_000 });
+
+    // Confirmer le mount React via un testid stable. Selon l'état initial de
+    // l'app, le user atterrit soit sur le wizard (workspace vide), soit sur
+    // le dashboard (workspace seedé), soit sur /login (mode 2 sans token).
+    const mountedRoot = page
+      .locator('[data-testid="dashboard-root"], [data-testid="wizard"], [data-testid="login"]')
+      .first();
+    await expect(mountedRoot).toBeVisible({ timeout: 10_000 });
   });
 
   test("la page charge sans erreurs JavaScript console critiques", async ({ page }) => {
@@ -49,6 +57,7 @@ test.describe("FAKT — smoke tests", () => {
         !e.includes("favicon") && // Favicon manquant toléré
         !e.includes("Failed to load resource") && // Backend API non démarré
         !e.includes("ERR_CONNECTION_REFUSED") && // idem
+        !e.includes("CORS policy") && // Mocks Playwright suffisent
         !e.includes("__TAURI_INTERNALS__") && // Bridge Tauri absent en vite dev
         !e.includes("window.__TAURI") // idem variantes
     );

@@ -49,7 +49,7 @@ export function ClaudeCliStep({ onNext, onPrev }: Props): ReactElement {
 
       <div style={cardStyle}>
         {loading && (
-          <div style={statusRowStyle}>
+          <div style={statusRowStyle} data-testid="wizard-claudecli-status-checking">
             <span style={dotStyle("checking")} />
             <span style={statusTextStyle}>{fr.onboarding.step2.checking}</span>
           </div>
@@ -57,7 +57,12 @@ export function ClaudeCliStep({ onNext, onPrev }: Props): ReactElement {
 
         {!loading && cliInfo !== null && (
           <>
-            <div style={statusRowStyle}>
+            <div
+              style={statusRowStyle}
+              data-testid={
+                cliInfo.installed ? "wizard-claudecli-status-ok" : "wizard-claudecli-status-missing"
+              }
+            >
               <span style={dotStyle(cliInfo.installed ? "ok" : "missing")} />
               <span style={statusTextStyle}>
                 {cliInfo.installed ? fr.onboarding.step2.detected : fr.onboarding.step2.missing}
@@ -88,6 +93,7 @@ export function ClaudeCliStep({ onNext, onPrev }: Props): ReactElement {
               void runCheck();
             }}
             disabled={loading}
+            data-testid="wizard-claudecli-recheck"
           >
             {fr.onboarding.step2.recheck}
           </Button>
@@ -97,6 +103,7 @@ export function ClaudeCliStep({ onNext, onPrev }: Props): ReactElement {
               onClick={() => {
                 window.open("https://claude.ai/code", "_blank");
               }}
+              data-testid="wizard-claudecli-open-install-page"
             >
               {fr.onboarding.step2.openInstallPage}
             </Button>
@@ -108,14 +115,15 @@ export function ClaudeCliStep({ onNext, onPrev }: Props): ReactElement {
         label={fr.onboarding.step2.skipLabel}
         checked={skipped}
         onChange={(e) => setSkipped(e.target.checked)}
+        data-testid="wizard-claudecli-skip"
       />
       {skipped && <p style={{ ...descStyle, marginTop: -12 }}>{fr.onboarding.step2.skipHint}</p>}
 
       <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <Button variant="secondary" onClick={onPrev}>
+        <Button variant="secondary" onClick={onPrev} data-testid="wizard-prev">
           {fr.onboarding.prev}
         </Button>
-        <Button onClick={handleNext} disabled={!canProceed}>
+        <Button onClick={handleNext} disabled={!canProceed} data-testid="wizard-next">
           {fr.onboarding.next}
         </Button>
       </div>

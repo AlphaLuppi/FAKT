@@ -94,6 +94,7 @@ export function IdentityStep({ onNext }: Props): ReactElement {
           invalid={!!errors.name}
           hint={errors.name?.message}
           autoComplete="organization"
+          data-testid="wizard-identity-name"
           {...register("name")}
         />
         <Select
@@ -101,6 +102,7 @@ export function IdentityStep({ onNext }: Props): ReactElement {
           options={LEGAL_FORM_OPTIONS}
           invalid={!!errors.legalForm}
           hint={errors.legalForm?.message}
+          data-testid="wizard-identity-legal-form"
           {...register("legalForm")}
         />
       </div>
@@ -113,6 +115,7 @@ export function IdentityStep({ onNext }: Props): ReactElement {
         maxLength={17}
         inputMode="numeric"
         style={{ fontFamily: "var(--font-mono)" }}
+        data-testid="wizard-identity-siret"
         {...register("siret")}
       />
       <SiretCheckerField control={control} name="siret" />
@@ -123,6 +126,7 @@ export function IdentityStep({ onNext }: Props): ReactElement {
         hint={errors.address?.message}
         rows={3}
         placeholder={"12 rue de la République\n13001 Marseille"}
+        data-testid="wizard-identity-address"
         {...register("address")}
       />
 
@@ -133,6 +137,7 @@ export function IdentityStep({ onNext }: Props): ReactElement {
           invalid={!!errors.email}
           hint={errors.email?.message}
           autoComplete="email"
+          data-testid="wizard-identity-email"
           {...register("email")}
         />
         <Input
@@ -141,6 +146,7 @@ export function IdentityStep({ onNext }: Props): ReactElement {
           invalid={!!errors.phone}
           hint={errors.phone?.message}
           autoComplete="tel"
+          data-testid="wizard-identity-phone"
           {...register("phone")}
         />
       </div>
@@ -151,11 +157,12 @@ export function IdentityStep({ onNext }: Props): ReactElement {
         hint={errors.iban?.message ?? "Optionnel — ex : FR76 3000 6000 0112 3456 7890 189"}
         placeholder="FR76 ..."
         style={{ fontFamily: "var(--font-mono)" }}
+        data-testid="wizard-identity-iban"
         {...register("iban")}
       />
 
       <div style={{ display: "flex", justifyContent: "flex-end" }}>
-        <Button type="submit" disabled={!isValid}>
+        <Button type="submit" disabled={!isValid} data-testid="wizard-next">
           {fr.onboarding.next}
         </Button>
       </div>

@@ -10,6 +10,7 @@ export interface OverlayProps {
   closeOnEscape?: boolean;
   className?: string;
   labelledBy?: string;
+  "data-testid"?: string;
 }
 
 /** Scrim/backdrop brutal. Seule exception transparence dans le design system. */
@@ -21,6 +22,7 @@ export function Overlay({
   closeOnEscape = true,
   className,
   labelledBy,
+  "data-testid": testId,
 }: OverlayProps): ReactElement | null {
   useEffect(() => {
     if (!open || !closeOnEscape || !onClose) return;
@@ -45,6 +47,7 @@ export function Overlay({
       role="dialog"
       aria-modal="true"
       aria-labelledby={labelledBy}
+      data-testid={testId}
       onClick={onBackdrop}
     >
       {children}

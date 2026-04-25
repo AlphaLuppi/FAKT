@@ -77,6 +77,7 @@ export function ShortcutsOverlay({ onClose }: ShortcutsOverlayProps): ReactEleme
             type="button"
             onClick={onClose}
             aria-label={fr.shortcuts.close}
+            data-testid="shortcuts-overlay-close"
             style={{
               width: 28,
               height: 28,

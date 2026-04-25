@@ -18,6 +18,14 @@ export interface CommandPaletteProps {
   items: ReadonlyArray<CommandItem>;
   onSelect: (item: CommandItem) => void;
   placeholder?: string;
+  /** Testid sur l'overlay backdrop. */
+  "data-testid"?: string;
+  /** Testid sur le wrapper interne `.fakt-cmdpalette`. */
+  testIdContent?: string;
+  /** Testid sur l'input de recherche. */
+  testIdInput?: string;
+  /** Préfixe testid pour chaque option : `${testIdItemPrefix}-${item.id}`. Défaut: `command-palette-option`. */
+  testIdItemPrefix?: string;
 }
 
 /** Palette de commandes type ⌘K. Filtre fuzzy simple, navigation clavier. */
@@ -27,6 +35,10 @@ export function CommandPalette({
   items,
   onSelect,
   placeholder = "Que voulez-vous faire ?",
+  "data-testid": testId,
+  testIdContent,
+  testIdInput,
+  testIdItemPrefix,
 }: CommandPaletteProps): ReactElement | null {
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
@@ -79,8 +91,16 @@ export function CommandPalette({
   if (!open) return null;
 
   return (
-    <Overlay open={open} onClose={onClose}>
-      <div className="fakt-cmdpalette" onClick={(e) => e.stopPropagation()}>
+    <Overlay
+      open={open}
+      onClose={onClose}
+      {...(testId !== undefined ? { "data-testid": testId } : {})}
+    >
+      <div
+        className="fakt-cmdpalette"
+        data-testid={testIdContent}
+        onClick={(e) => e.stopPropagation()}
+      >
         <input
           className="fakt-cmdpalette__search"
           placeholder={placeholder}
@@ -88,6 +108,7 @@ export function CommandPalette({
           onChange={(e: ChangeEvent<HTMLInputElement>) => setQuery(e.currentTarget.value)}
           onKeyDown={onKey}
           aria-label="Commande"
+          data-testid={testIdInput}
         />
         <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
           {filtered.length === 0 && (
@@ -109,6 +130,7 @@ export function CommandPalette({
                 type="button"
                 className="fakt-cmdpalette__item"
                 data-active={i === activeIndex ? "true" : "false"}
+                data-testid={`${testIdItemPrefix ?? "command-palette-option"}-${it.id}`}
                 onMouseEnter={() => setActiveIndex(i)}
                 onClick={() => choose(it)}
               >

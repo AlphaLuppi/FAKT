@@ -73,13 +73,13 @@ export function ClientDetail({
       size="lg"
       footer={
         <>
-          <Button variant="danger" onClick={onDelete}>
+          <Button variant="danger" onClick={onDelete} data-testid="client-detail-archive">
             Archiver
           </Button>
-          <Button variant="secondary" onClick={onClose}>
+          <Button variant="secondary" onClick={onClose} data-testid="client-detail-close">
             Fermer
           </Button>
-          <Button variant="primary" onClick={onEdit}>
+          <Button variant="primary" onClick={onEdit} data-testid="client-detail-edit">
             {fr.clients.actions.edit}
           </Button>
         </>

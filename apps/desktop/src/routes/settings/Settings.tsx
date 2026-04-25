@@ -16,15 +16,16 @@ type TabId = "identity" | "backend" | "cli" | "aiSessions" | "certificate" | "te
 interface TabDef {
   id: TabId;
   label: string;
+  testid: string;
 }
 
 const TABS: TabDef[] = [
-  { id: "identity", label: fr.settings.tabs.identity },
-  { id: "backend", label: "BACKEND" },
-  { id: "cli", label: fr.settings.tabs.cli },
-  { id: "aiSessions", label: fr.settings.tabs.aiSessions },
-  { id: "certificate", label: fr.settings.tabs.certificate },
-  { id: "telemetry", label: fr.settings.tabs.telemetry },
+  { id: "identity", label: fr.settings.tabs.identity, testid: "settings-tab-identity" },
+  { id: "backend", label: "BACKEND", testid: "settings-tab-backend" },
+  { id: "cli", label: fr.settings.tabs.cli, testid: "settings-tab-claudecli" },
+  { id: "aiSessions", label: fr.settings.tabs.aiSessions, testid: "settings-tab-ai" },
+  { id: "certificate", label: fr.settings.tabs.certificate, testid: "settings-tab-certificate" },
+  { id: "telemetry", label: fr.settings.tabs.telemetry, testid: "settings-tab-telemetry" },
 ];
 
 /**
@@ -84,7 +85,7 @@ export function SettingsRoute(): ReactElement {
   }
 
   return (
-    <div style={outerStyle}>
+    <div style={outerStyle} data-testid="settings">
       <div style={headerStyle}>
         <h1 style={pageTitleStyle}>{fr.settings.title}</h1>
       </div>
@@ -98,6 +99,7 @@ export function SettingsRoute(): ReactElement {
             aria-selected={activeTab === tab.id}
             onClick={() => setActiveTab(tab.id)}
             style={tabButtonStyle(activeTab === tab.id)}
+            data-testid={tab.testid}
           >
             {tab.label}
           </button>
@@ -105,7 +107,7 @@ export function SettingsRoute(): ReactElement {
       </div>
 
       {/* Tab content */}
-      <div style={contentStyle} role="tabpanel">
+      <div style={contentStyle} role="tabpanel" data-testid="settings-tabpanel">
         {activeTab === "identity" && (
           <IdentityTab workspace={workspace} onSaved={(updated) => setWorkspace(updated)} />
         )}

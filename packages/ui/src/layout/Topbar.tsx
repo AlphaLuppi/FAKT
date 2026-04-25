@@ -8,11 +8,19 @@ export interface TopbarProps {
   actions?: ReactNode;
   search?: ReactNode;
   className?: string;
+  "data-testid"?: string;
 }
 
-export function Topbar({ title, subtitle, actions, search, className }: TopbarProps): ReactElement {
+export function Topbar({
+  title,
+  subtitle,
+  actions,
+  search,
+  className,
+  "data-testid": testId,
+}: TopbarProps): ReactElement {
   return (
-    <div className={classNames("fakt-topbar", className)}>
+    <div className={classNames("fakt-topbar", className)} data-testid={testId}>
       <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
         {title !== undefined && (
           <div

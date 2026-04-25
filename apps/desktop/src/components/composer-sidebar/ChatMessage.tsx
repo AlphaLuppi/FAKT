@@ -80,6 +80,7 @@ export function ChatMessage({ message, timestamp }: ChatMessageProps): ReactElem
     return (
       <div
         data-testid="composer-msg-user"
+        data-message-id={message.id}
         style={{
           display: "flex",
           flexDirection: "column",

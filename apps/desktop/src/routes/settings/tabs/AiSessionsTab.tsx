@@ -129,7 +129,7 @@ export function AiSessionsTab(): ReactElement {
         <p style={descStyle}>{fr.settings.aiSessions.description}</p>
       </div>
 
-      <div style={verboseSectionStyle} data-testid="ai-verbose-section">
+      <div style={verboseSectionStyle} data-testid="settings-ai-verbose-section">
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           <span style={verboseTitleStyle}>{fr.settings.aiSessions.verboseModeTitle}</span>
           <p style={verboseHintStyle}>{fr.settings.aiSessions.verboseModeHint}</p>
@@ -138,7 +138,7 @@ export function AiSessionsTab(): ReactElement {
           label={fr.settings.aiSessions.verboseModeLabel}
           checked={verbose}
           onChange={(e) => setVerbose(e.target.checked)}
-          data-testid="ai-verbose-toggle"
+          data-testid="settings-ai-verbose-toggle"
         />
       </div>
 
@@ -150,13 +150,19 @@ export function AiSessionsTab(): ReactElement {
           flexWrap: "wrap",
         }}
       >
-        <Button variant="secondary" onClick={() => void refresh()} disabled={loading}>
+        <Button
+          variant="secondary"
+          onClick={() => void refresh()}
+          disabled={loading}
+          data-testid="settings-ai-refresh"
+        >
           {fr.settings.aiSessions.refresh}
         </Button>
         <Button
           variant="ghost"
           onClick={() => void handleClear()}
           disabled={snapshot.history.length === 0}
+          data-testid="settings-ai-clear-history"
         >
           {fr.settings.aiSessions.clearHistory}
         </Button>
@@ -165,19 +171,22 @@ export function AiSessionsTab(): ReactElement {
             type="checkbox"
             checked={autoRefresh}
             onChange={(e) => setAutoRefresh(e.target.checked)}
+            data-testid="settings-ai-auto-refresh"
           />
           <span>{fr.settings.aiSessions.autoRefresh}</span>
         </label>
       </div>
 
       {error !== null && (
-        <div role="alert" style={errorBoxStyle}>
+        <div role="alert" style={errorBoxStyle} data-testid="settings-ai-error">
           {error}
         </div>
       )}
 
       {totalSessions === 0 && !loading && error === null && (
-        <div style={emptyStyle}>{fr.settings.aiSessions.empty}</div>
+        <div style={emptyStyle} data-testid="settings-ai-empty">
+          {fr.settings.aiSessions.empty}
+        </div>
       )}
 
       {snapshot.active.length > 0 && (
@@ -257,8 +266,13 @@ function SessionRow({
           : fr.settings.aiSessions.kinds.unknown;
 
   return (
-    <div style={rowCardStyle(session.status)}>
-      <button type="button" style={rowHeaderStyle} onClick={onToggle}>
+    <div style={rowCardStyle(session.status)} data-testid={`settings-ai-session-${session.id}`}>
+      <button
+        type="button"
+        style={rowHeaderStyle}
+        onClick={onToggle}
+        data-testid={`settings-ai-session-toggle-${session.id}`}
+      >
         <div style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1, minWidth: 0 }}>
           <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
             <StatusBadge status={session.status} />
@@ -351,7 +365,10 @@ function SessionRow({
 
           {session.raw_events.length > 0 && (
             <details style={{ marginTop: 4 }}>
-              <summary style={detailHeadingStyle}>
+              <summary
+                style={detailHeadingStyle}
+                data-testid={`settings-ai-session-raw-events-toggle-${session.id}`}
+              >
                 {fr.settings.aiSessions.rawEventsTitle} ({session.raw_events.length})
               </summary>
               <pre style={{ ...preStyle, maxHeight: 400 }}>{session.raw_events.join("\n")}</pre>
@@ -425,6 +442,7 @@ function StatusBadge({ status }: { status: SessionStatus }): ReactElement {
   const label = fr.settings.aiSessions.statusLabel[status];
   return (
     <span
+      data-testid={`settings-ai-status-${status}`}
       style={{
         display: "inline-flex",
         alignItems: "center",

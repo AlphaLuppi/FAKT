@@ -131,7 +131,11 @@ export function ServicesRoute(): ReactElement {
         id: "status",
         header: "Statut",
         accessor: (s) =>
-          s.archivedAt ? <StatusPill status="cancelled" size="sm" label="Archivé" /> : null,
+          s.archivedAt ? (
+            <span data-testid={`service-list-row-${s.id}-status`}>
+              <StatusPill status="cancelled" size="sm" label="Archivé" />
+            </span>
+          ) : null,
         width: 90,
       },
       {
@@ -147,6 +151,7 @@ export function ServicesRoute(): ReactElement {
                   e.stopPropagation();
                   void restorePrestation(s.id);
                 }}
+                data-testid={`service-list-restore-${s.id}`}
               >
                 Restaurer
               </Button>
@@ -160,6 +165,7 @@ export function ServicesRoute(): ReactElement {
                     setSelectedPrestation(s);
                     setFormOpen(true);
                   }}
+                  data-testid={`service-list-edit-${s.id}`}
                 >
                   Modifier
                 </Button>
@@ -170,6 +176,7 @@ export function ServicesRoute(): ReactElement {
                     e.stopPropagation();
                     void deletePrestation(s.id);
                   }}
+                  data-testid={`service-list-archive-${s.id}`}
                 >
                   Archiver
                 </Button>
@@ -201,7 +208,7 @@ export function ServicesRoute(): ReactElement {
         >
           {fr.services.title}
         </h1>
-        <Button variant="primary" onClick={handleNew}>
+        <Button variant="primary" onClick={handleNew} data-testid="service-list-new">
           {fr.services.new}
         </Button>
       </div>
@@ -215,11 +222,13 @@ export function ServicesRoute(): ReactElement {
           onChange={(e) => setSearch(e.currentTarget.value)}
           style={{ flex: 1, maxWidth: 360 }}
           aria-label="Recherche prestation"
+          data-testid="service-list-search"
         />
         <Chip
           tone={showArchived ? "accent" : "neutral"}
           onClick={() => setShowArchived((v) => !v)}
           style={{ cursor: "pointer", userSelect: "none" }}
+          data-testid="service-list-toggle-archived"
         >
           Afficher la corbeille
         </Chip>

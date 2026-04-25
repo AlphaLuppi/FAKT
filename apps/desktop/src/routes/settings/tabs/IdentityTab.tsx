@@ -97,6 +97,7 @@ export function IdentityTab({ workspace, onSaved }: Props): ReactElement {
           invalid={!!errors.name}
           hint={errors.name?.message}
           autoComplete="organization"
+          data-testid="settings-identity-name"
           {...register("name")}
         />
         <Select
@@ -104,6 +105,7 @@ export function IdentityTab({ workspace, onSaved }: Props): ReactElement {
           options={LEGAL_FORM_OPTIONS}
           invalid={!!errors.legalForm}
           hint={errors.legalForm?.message}
+          data-testid="settings-identity-legal-form"
           {...register("legalForm")}
         />
       </div>
@@ -114,6 +116,7 @@ export function IdentityTab({ workspace, onSaved }: Props): ReactElement {
         hint={errors.siret?.message}
         placeholder="732 829 320 00074"
         style={{ fontFamily: "var(--font-mono)" }}
+        data-testid="settings-identity-siret"
         {...register("siret")}
       />
       <SiretCheckerField control={control} name="siret" />
@@ -123,6 +126,7 @@ export function IdentityTab({ workspace, onSaved }: Props): ReactElement {
         invalid={!!errors.address}
         hint={errors.address?.message}
         rows={3}
+        data-testid="settings-identity-address"
         {...register("address")}
       />
 
@@ -132,9 +136,15 @@ export function IdentityTab({ workspace, onSaved }: Props): ReactElement {
           type="email"
           invalid={!!errors.email}
           hint={errors.email?.message}
+          data-testid="settings-identity-email"
           {...register("email")}
         />
-        <Input label={fr.settings.workspace.phone} type="tel" {...register("phone")} />
+        <Input
+          label={fr.settings.workspace.phone}
+          type="tel"
+          data-testid="settings-identity-phone"
+          {...register("phone")}
+        />
       </div>
 
       <Input
@@ -142,11 +152,12 @@ export function IdentityTab({ workspace, onSaved }: Props): ReactElement {
         invalid={!!errors.iban}
         hint={errors.iban?.message}
         style={{ fontFamily: "var(--font-mono)" }}
+        data-testid="settings-identity-iban"
         {...register("iban")}
       />
 
       <div style={{ display: "flex", justifyContent: "flex-end" }}>
-        <Button type="submit" disabled={saving || !isDirty}>
+        <Button type="submit" disabled={saving || !isDirty} data-testid="settings-identity-submit">
           {saving ? "Enregistrement…" : fr.settings.save}
         </Button>
       </div>

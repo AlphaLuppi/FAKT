@@ -142,6 +142,7 @@ export function VerifyRoute(): ReactElement {
 
   return (
     <div
+      data-testid="signature-verify-root"
       style={{
         padding: tokens.spacing[6],
         display: "flex",
@@ -194,7 +195,7 @@ export function VerifyRoute(): ReactElement {
                 void navigate(-1);
               }
             }}
-            data-testid="verify-back"
+            data-testid="signature-verify-back"
           >
             {fr.verify.backToDocument}
           </Button>
@@ -202,7 +203,7 @@ export function VerifyRoute(): ReactElement {
             variant="primary"
             onClick={(): void => void downloadSignedPdf()}
             disabled={!report}
-            data-testid="verify-download"
+            data-testid="signature-verify-download"
           >
             {fr.verify.downloadSignedPdf}
           </Button>
@@ -212,7 +213,7 @@ export function VerifyRoute(): ReactElement {
       {loading && (
         <div
           style={{ fontFamily: tokens.font.ui, color: tokens.color.muted }}
-          data-testid="verify-loading"
+          data-testid="signature-verify-loading"
         >
           {fr.verify.loading}
         </div>
@@ -221,7 +222,7 @@ export function VerifyRoute(): ReactElement {
       {error !== null && (
         <div
           role="alert"
-          data-testid="verify-error"
+          data-testid="signature-verify-error"
           style={{
             border: `${tokens.stroke.bold} solid ${tokens.color.ink}`,
             background: tokens.color.dangerBg,
@@ -238,7 +239,7 @@ export function VerifyRoute(): ReactElement {
       {report && (
         <>
           <section
-            data-testid="verify-document"
+            data-testid="signature-verify-document"
             style={{
               border: `${tokens.stroke.bold} solid ${tokens.color.ink}`,
               background: tokens.color.surface,
@@ -257,7 +258,7 @@ export function VerifyRoute(): ReactElement {
           </section>
 
           <section
-            data-testid="verify-signature"
+            data-testid="signature-verify-signature"
             style={{
               border: `${tokens.stroke.bold} solid ${tokens.color.ink}`,
               background: tokens.color.surface,
@@ -284,7 +285,7 @@ export function VerifyRoute(): ReactElement {
           </section>
 
           <section
-            data-testid="verify-integrity"
+            data-testid="signature-verify-integrity"
             style={{
               border: `${tokens.stroke.bold} solid ${tokens.color.ink}`,
               background: tokens.color.surface,
@@ -333,7 +334,7 @@ export function VerifyRoute(): ReactElement {
           </section>
 
           <section
-            data-testid="verify-chain"
+            data-testid="signature-verify-chain"
             style={{
               border: `${tokens.stroke.bold} solid ${tokens.color.ink}`,
               background: tokens.color.surface,

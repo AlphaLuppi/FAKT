@@ -228,6 +228,7 @@ export function ArchiveRoute(): ReactElement {
 
   return (
     <div
+      data-testid="archive-root"
       style={{
         padding: tokens.spacing[6],
         display: "flex",
@@ -289,9 +290,18 @@ export function ArchiveRoute(): ReactElement {
           gap: tokens.spacing[4],
         }}
       >
-        <StatCard label={fr.archive.stats.quotesIssued} value={String(issuedQuotes.length)} />
-        <StatCard label={fr.archive.stats.invoicesIssued} value={String(issuedInvoices.length)} />
         <StatCard
+          testId="archive-stat-quotes"
+          label={fr.archive.stats.quotesIssued}
+          value={String(issuedQuotes.length)}
+        />
+        <StatCard
+          testId="archive-stat-invoices"
+          label={fr.archive.stats.invoicesIssued}
+          value={String(issuedInvoices.length)}
+        />
+        <StatCard
+          testId="archive-stat-size"
           label={fr.archive.stats.estimatedSize}
           value={`~${estimatedSizeMb.toFixed(1)} Mo`}
         />
@@ -310,6 +320,7 @@ export function ArchiveRoute(): ReactElement {
 
       {exporting && (
         <div
+          data-testid="archive-export-progress"
           style={{
             border: `${tokens.stroke.base} solid ${tokens.color.ink}`,
             height: 20,
@@ -419,6 +430,7 @@ export function ArchiveRoute(): ReactElement {
                   .map((row) => (
                     <tr
                       key={`${row.type}-${row.number}`}
+                      data-testid={`archive-row-${row.type.toLowerCase()}-${row.number}`}
                       style={{
                         borderBottom: `${tokens.stroke.hair} solid ${tokens.color.ink}`,
                       }}
@@ -481,9 +493,16 @@ export function ArchiveRoute(): ReactElement {
         title={fr.archive.confirmModal.title}
         onClose={() => setConfirmOpen(false)}
         size="sm"
+        data-testid="archive-confirm-modal"
+        testIdContent="archive-confirm-modal-content"
+        testIdClose="archive-confirm-modal-close"
         footer={
           <>
-            <Button variant="ghost" onClick={() => setConfirmOpen(false)}>
+            <Button
+              variant="ghost"
+              onClick={() => setConfirmOpen(false)}
+              data-testid="archive-confirm-cancel"
+            >
               {fr.archive.actions.cancel}
             </Button>
             <Button
@@ -511,9 +530,18 @@ export function ArchiveRoute(): ReactElement {
   );
 }
 
-function StatCard({ label, value }: { label: string; value: string }): ReactElement {
+function StatCard({
+  label,
+  value,
+  testId,
+}: {
+  label: string;
+  value: string;
+  testId?: string;
+}): ReactElement {
   return (
     <div
+      data-testid={testId}
       style={{
         border: `${tokens.stroke.bold} solid ${tokens.color.ink}`,
         background: tokens.color.surface,

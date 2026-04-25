@@ -36,6 +36,7 @@ export function WorkspaceSwitcher(): ReactElement | null {
         value={currentWorkspaceId ?? ""}
         onChange={(e) => setCurrentWorkspaceId(e.target.value || null)}
         aria-label="Workspace courant"
+        data-testid="topbar-workspace-switcher"
         style={{
           appearance: "none",
           padding: "6px 28px 6px 12px",

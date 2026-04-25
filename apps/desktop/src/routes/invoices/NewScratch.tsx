@@ -129,7 +129,11 @@ export function NewScratch(): ReactElement {
             {fr.invoices.modes.fromScratch}
           </p>
         </div>
-        <Button variant="ghost" onClick={() => void navigate("/invoices")}>
+        <Button
+          variant="ghost"
+          onClick={() => void navigate("/invoices")}
+          data-testid="invoice-new-scratch-back"
+        >
           {fr.invoices.actions.backToList}
         </Button>
       </header>

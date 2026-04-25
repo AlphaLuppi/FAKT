@@ -68,7 +68,7 @@ export function WizardRoute(): ReactElement {
 
   return (
     <OnboardingContext.Provider value={{ state, setIdentity, setCliInfo, setCertInfo }}>
-      <div style={outerStyle}>
+      <div data-testid="wizard" style={outerStyle}>
         <div style={containerStyle}>
           {/* Header */}
           <div style={headerStyle}>

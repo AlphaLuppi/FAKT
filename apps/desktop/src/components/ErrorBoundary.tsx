@@ -57,6 +57,7 @@ function DefaultFallback({
 }): ReactElement {
   return (
     <div
+      data-testid="error-boundary"
       style={{
         minHeight: "100vh",
         background: "var(--paper)",
@@ -146,6 +147,7 @@ function DefaultFallback({
           <button
             type="button"
             onClick={onReset}
+            data-testid="error-boundary-retry"
             style={{
               fontFamily: "var(--font-ui)",
               fontWeight: 800,
@@ -165,6 +167,7 @@ function DefaultFallback({
           <button
             type="button"
             onClick={() => window.location.reload()}
+            data-testid="error-boundary-reload"
             style={{
               fontFamily: "var(--font-ui)",
               fontWeight: 800,

@@ -7,6 +7,7 @@ export interface SegmentedControlOption<T extends string = string> {
   value: T;
   label: ReactNode;
   disabled?: boolean;
+  "data-testid"?: string;
 }
 
 export interface SegmentedControlProps<T extends string = string> {
@@ -17,6 +18,8 @@ export interface SegmentedControlProps<T extends string = string> {
   className?: string;
   /** Si true (défaut), s'étend sur 100% — sinon inline-flex. */
   fullWidth?: boolean;
+  /** Préfixe testid auto-appliqué : `${testIdPrefix}-${value}` sur chaque <button>. */
+  testIdPrefix?: string;
 }
 
 /**
@@ -33,6 +36,7 @@ export function SegmentedControl<T extends string>({
   ariaLabel,
   className,
   fullWidth = true,
+  testIdPrefix,
 }: SegmentedControlProps<T>): ReactElement {
   const baseId = useId();
 
@@ -89,6 +93,10 @@ export function SegmentedControl<T extends string>({
         const selected = option.value === value;
         const id = `${baseId}-seg-${option.value}`;
         const isLast = idx === options.length - 1;
+        const explicitTestId = option["data-testid"];
+        const computedTestId =
+          explicitTestId ??
+          (testIdPrefix !== undefined ? `${testIdPrefix}-${option.value}` : undefined);
         return (
           <button
             key={option.value}
@@ -98,6 +106,7 @@ export function SegmentedControl<T extends string>({
             aria-selected={selected}
             tabIndex={selected ? 0 : -1}
             disabled={option.disabled}
+            data-testid={computedTestId}
             onClick={(): void => {
               if (!option.disabled) onChange(option.value);
             }}

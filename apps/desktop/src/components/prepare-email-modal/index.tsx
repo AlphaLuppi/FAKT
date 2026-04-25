@@ -261,7 +261,7 @@ export function PrepareEmailModal(props: PrepareEmailModalProps): ReactElement {
             variant="ghost"
             onClick={onClose}
             disabled={submitting}
-            data-testid="email-modal-cancel"
+            data-testid="prepare-email-modal-cancel"
           >
             {fr.email.actions.cancel}
           </Button>
@@ -269,7 +269,7 @@ export function PrepareEmailModal(props: PrepareEmailModalProps): ReactElement {
             variant="primary"
             onClick={() => void handleOpenDraft()}
             disabled={submitting}
-            data-testid="email-modal-submit"
+            data-testid="prepare-email-modal-submit"
           >
             {submitting ? fr.email.actions.generating : fr.email.actions.openInMail}
           </Button>
@@ -298,7 +298,7 @@ export function PrepareEmailModal(props: PrepareEmailModalProps): ReactElement {
           options={TEMPLATE_OPTIONS}
           value={templateKey}
           onChange={(e) => setTemplateKey(e.target.value as EmailTemplateKey)}
-          data-testid="email-modal-template"
+          data-testid="prepare-email-modal-template"
         />
 
         <Input
@@ -308,7 +308,7 @@ export function PrepareEmailModal(props: PrepareEmailModalProps): ReactElement {
           onChange={(e) => setToEmail(e.target.value)}
           placeholder="client@example.com"
           invalid={!toEmail.trim() && submitError !== null}
-          data-testid="email-modal-to"
+          data-testid="prepare-email-modal-to"
         />
 
         <Input
@@ -316,7 +316,7 @@ export function PrepareEmailModal(props: PrepareEmailModalProps): ReactElement {
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
           invalid={!subject.trim() && submitError !== null}
-          data-testid="email-modal-subject"
+          data-testid="prepare-email-modal-subject"
         />
 
         <Textarea
@@ -325,7 +325,7 @@ export function PrepareEmailModal(props: PrepareEmailModalProps): ReactElement {
           onChange={(e) => setBody(e.target.value)}
           rows={8}
           invalid={!body.trim() && submitError !== null}
-          data-testid="email-modal-body"
+          data-testid="prepare-email-modal-body"
         />
 
         <div
@@ -368,7 +368,7 @@ export function PrepareEmailModal(props: PrepareEmailModalProps): ReactElement {
             type="checkbox"
             checked={useMailto}
             onChange={(e) => setUseMailto(e.target.checked)}
-            data-testid="email-modal-mailto-toggle"
+            data-testid="prepare-email-modal-mailto-toggle"
             style={{ width: 14, height: 14 }}
           />
           {fr.email.fields.useMailto}
@@ -377,7 +377,7 @@ export function PrepareEmailModal(props: PrepareEmailModalProps): ReactElement {
         {submitError && (
           <div
             role="alert"
-            data-testid="email-modal-error"
+            data-testid="prepare-email-modal-error"
             style={{
               border: `${tokens.stroke.bold} solid ${tokens.color.ink}`,
               background: tokens.color.dangerBg,

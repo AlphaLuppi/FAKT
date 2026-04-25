@@ -107,10 +107,21 @@ export function PrestationForm({
       size="md"
       footer={
         <>
-          <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>
+          <Button
+            variant="secondary"
+            onClick={onClose}
+            disabled={isSubmitting}
+            data-testid="service-form-cancel"
+          >
             Annuler
           </Button>
-          <Button variant="primary" type="submit" form="prestation-form" disabled={isSubmitting}>
+          <Button
+            variant="primary"
+            type="submit"
+            form="prestation-form"
+            disabled={isSubmitting}
+            data-testid="service-form-submit"
+          >
             {isSubmitting ? "Enregistrement…" : "Enregistrer"}
           </Button>
         </>
@@ -122,21 +133,29 @@ export function PrestationForm({
           void handleFormSubmit(e);
         }}
         style={{ display: "flex", flexDirection: "column", gap: 16 }}
+        data-testid="service-form"
       >
         <Input
           label={fr.services.labels.name}
           invalid={!!errors.name}
           hint={errors.name?.message}
+          data-testid="service-form-name"
           {...register("name")}
         />
 
-        <Textarea label={fr.services.labels.description} rows={3} {...register("description")} />
+        <Textarea
+          label={fr.services.labels.description}
+          rows={3}
+          data-testid="service-form-description"
+          {...register("description")}
+        />
 
         <Select
           label={fr.services.labels.unit}
           options={UNIT_OPTIONS}
           invalid={!!errors.unit}
           hint={errors.unit?.message}
+          data-testid="service-form-unit"
           {...register("unit")}
         />
 
@@ -152,6 +171,7 @@ export function PrestationForm({
             const euros = Number.parseFloat(e.currentTarget.value) || 0;
             setValue("unitPriceCents", Math.round(euros * 100));
           }}
+          data-testid="service-form-unit-price"
         />
 
         {/* Tags */}
@@ -176,6 +196,7 @@ export function PrestationForm({
                   key={tag}
                   type="button"
                   onClick={() => toggleTag(tag)}
+                  data-testid={`service-form-tag-${tag}`}
                   style={{
                     padding: "4px 10px",
                     border: "1.5px solid var(--ink)",

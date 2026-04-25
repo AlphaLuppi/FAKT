@@ -6,6 +6,7 @@ export interface AvatarProps {
   size?: number;
   initials?: string;
   bg?: string;
+  "data-testid"?: string;
 }
 
 function deriveInitials(name: string): string {
@@ -19,13 +20,20 @@ function deriveInitials(name: string): string {
 }
 
 /** Avatar carré brutal (pas de border-radius). */
-export function Avatar({ name, size = 32, initials, bg }: AvatarProps): ReactElement {
+export function Avatar({
+  name,
+  size = 32,
+  initials,
+  bg,
+  "data-testid": testId,
+}: AvatarProps): ReactElement {
   const ini = initials ?? deriveInitials(name);
   const fs = Math.max(10, Math.round(size * 0.42));
   return (
     <span
       role="img"
       aria-label={name}
+      data-testid={testId}
       style={{
         width: size,
         height: size,

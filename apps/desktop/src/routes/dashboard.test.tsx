@@ -130,10 +130,10 @@ describe("DashboardRoute", () => {
     setupApis({ quotes: [], invoices: [] });
     renderDashboard();
     await waitFor(() => {
-      expect(screen.getByTestId("kpi-ca-emis")).toBeInTheDocument();
-      expect(screen.getByTestId("kpi-ca-encaisse")).toBeInTheDocument();
-      expect(screen.getByTestId("kpi-devis-attente")).toBeInTheDocument();
-      expect(screen.getByTestId("kpi-factures-retard")).toBeInTheDocument();
+      expect(screen.getByTestId("dashboard-kpi-ca-emis")).toBeInTheDocument();
+      expect(screen.getByTestId("dashboard-kpi-ca-encaisse")).toBeInTheDocument();
+      expect(screen.getByTestId("dashboard-kpi-devis-attente")).toBeInTheDocument();
+      expect(screen.getByTestId("dashboard-kpi-factures-retard")).toBeInTheDocument();
     });
   });
 
@@ -157,7 +157,7 @@ describe("DashboardRoute", () => {
     });
     renderDashboard();
     await waitFor(() => {
-      expect(screen.getByTestId("kpi-devis-attente-value")).toHaveTextContent("2");
+      expect(screen.getByTestId("dashboard-kpi-devis-attente-value")).toHaveTextContent("2");
     });
   });
 
@@ -199,7 +199,7 @@ describe("DashboardRoute", () => {
     });
     renderDashboard();
     await waitFor(() => {
-      expect(screen.getByTestId("kpi-factures-retard-value")).toHaveTextContent("2");
+      expect(screen.getByTestId("dashboard-kpi-factures-retard-value")).toHaveTextContent("2");
     });
   });
 
@@ -242,10 +242,10 @@ describe("DashboardRoute", () => {
     });
     renderDashboard();
     await waitFor(() => {
-      expect(screen.getByTestId("widget-recent-activity")).toBeInTheDocument();
+      expect(screen.getByTestId("dashboard-recent-activity")).toBeInTheDocument();
     });
     await waitFor(() => {
-      const section = screen.getByTestId("widget-recent-activity");
+      const section = screen.getByTestId("dashboard-recent-activity");
       expect(section.textContent).toContain("F2026-001");
       expect(section.textContent).toContain("D2026-002");
     });

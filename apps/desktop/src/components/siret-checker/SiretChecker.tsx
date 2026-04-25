@@ -114,7 +114,9 @@ function LuhnExplanation({ diag }: { diag: SiretExplanation }): ReactElement {
         dérapé.
       </p>
       <details style={detailsStyle}>
-        <summary style={summaryStyle}>Pourquoi ce contrôle&nbsp;?</summary>
+        <summary style={summaryStyle} data-testid="siret-checker-explain-toggle">
+          Pourquoi ce contrôle&nbsp;?
+        </summary>
         <p style={detailsBodyStyle}>
           Le dernier chiffre d'un SIRET est une «&nbsp;clé de sécurité&nbsp;» calculée à partir des
           13 autres (algorithme de Luhn). Son seul rôle est de détecter les fautes de frappe : si un

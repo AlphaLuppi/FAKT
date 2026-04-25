@@ -147,6 +147,8 @@ export function MarkPaidModal({
       title={fr.payment.modal.title}
       onClose={onClose}
       size="md"
+      data-testid="invoice-mark-paid-modal"
+      testIdClose="invoice-mark-paid-modal-close"
       footer={
         <>
           <Button

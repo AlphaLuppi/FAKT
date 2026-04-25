@@ -11,6 +11,7 @@
     "format": "biome format --write .",
     "test": "turbo run test",
     "test:e2e": "playwright test",
+    "test:e2e:release": "wdio run wdio.conf.ts",
     "db:generate": "bun --cwd packages/db drizzle-kit generate",
     "db:migrate": "bun --cwd packages/db drizzle-kit migrate",
     "release": "turbo run build && bun --cwd apps/desktop tauri build"
@@ -19,7 +20,17 @@
     "@biomejs/biome": "^1.9",
     "turbo": "^2.3",
     "typescript": "^5.6",
-    "@playwright/test": "^1.49"
+    "@playwright/test": "^1.49",
+    "@wdio/cli": "^9.4",
+    "@wdio/globals": "^9.4",
+    "@wdio/local-runner": "^9.4",
+    "@wdio/mocha-framework": "^9.4",
+    "@wdio/spec-reporter": "^9.4",
+    "@wdio/types": "^9.4",
+    "@types/mocha": "^10.0",
+    "@types/node": "^22",
+    "expect-webdriverio": "^5.0",
+    "webdriverio": "^9.4"
   },
   "dependencies": {
     "astro": "^6.1.9",

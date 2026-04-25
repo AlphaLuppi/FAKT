@@ -131,19 +131,19 @@ describe("SignatureModal", () => {
 
   it("refuse l'envoi sans acceptation", async () => {
     renderModal();
-    const submit = screen.getByTestId("signature-submit") as HTMLButtonElement;
+    const submit = screen.getByTestId("signature-modal-submit") as HTMLButtonElement;
     expect(submit.disabled).toBe(true);
   });
 
   it("refuse l'envoi avec signature vide", async () => {
     const { api } = renderModal();
-    fireEvent.click(screen.getByTestId("signature-ack"));
-    fireEvent.click(screen.getByTestId("signature-submit"));
+    fireEvent.click(screen.getByTestId("signature-modal-ack"));
+    fireEvent.click(screen.getByTestId("signature-modal-submit"));
     await act(async () => {
       await Promise.resolve();
     });
     expect(api.sign).not.toHaveBeenCalled();
-    expect(screen.getByTestId("signature-field-error")).toBeInTheDocument();
+    expect(screen.getByTestId("signature-modal-field-error")).toBeInTheDocument();
   });
 
   it("bascule entre onglets draw et type", () => {
@@ -151,7 +151,7 @@ describe("SignatureModal", () => {
     const typeTab = screen.getAllByRole("tab")[1];
     if (!typeTab) throw new Error("missing type tab");
     fireEvent.click(typeTab);
-    expect(screen.getByTestId("signature-type-input")).toBeInTheDocument();
+    expect(screen.getByTestId("signature-modal-type-input")).toBeInTheDocument();
   });
 
   it("signe via l'onglet clavier et appelle onSigned", async () => {
@@ -159,11 +159,11 @@ describe("SignatureModal", () => {
     const typeTab = screen.getAllByRole("tab")[1];
     if (!typeTab) throw new Error("missing type tab");
     fireEvent.click(typeTab);
-    const input = screen.getByTestId("signature-type-input") as HTMLInputElement;
+    const input = screen.getByTestId("signature-modal-type-input") as HTMLInputElement;
     fireEvent.change(input, { target: { value: "Tom Andrieu" } });
-    fireEvent.click(screen.getByTestId("signature-ack"));
+    fireEvent.click(screen.getByTestId("signature-modal-ack"));
     await act(async () => {
-      fireEvent.click(screen.getByTestId("signature-submit"));
+      fireEvent.click(screen.getByTestId("signature-modal-submit"));
       await Promise.resolve();
       await Promise.resolve();
       await Promise.resolve();
@@ -183,17 +183,17 @@ describe("SignatureModal", () => {
     const typeTab = screen.getAllByRole("tab")[1];
     if (!typeTab) throw new Error("missing type tab");
     fireEvent.click(typeTab);
-    fireEvent.change(screen.getByTestId("signature-type-input"), {
+    fireEvent.change(screen.getByTestId("signature-modal-type-input"), {
       target: { value: "X" },
     });
-    fireEvent.click(screen.getByTestId("signature-ack"));
+    fireEvent.click(screen.getByTestId("signature-modal-ack"));
     await act(async () => {
-      fireEvent.click(screen.getByTestId("signature-submit"));
+      fireEvent.click(screen.getByTestId("signature-modal-submit"));
       await Promise.resolve();
       await Promise.resolve();
     });
     expect(api.sign).toHaveBeenCalled();
-    expect(screen.getByTestId("signature-submit-error")).toBeInTheDocument();
-    expect(screen.getByTestId("signature-cert-cta")).toBeInTheDocument();
+    expect(screen.getByTestId("signature-modal-submit-error")).toBeInTheDocument();
+    expect(screen.getByTestId("signature-modal-cert-cta")).toBeInTheDocument();
   });
 });

@@ -107,38 +107,38 @@ function renderModal(open = true) {
 describe("PrepareEmailModal", () => {
   it("ne rend rien quand open=false", () => {
     renderModal(false);
-    expect(screen.queryByTestId("email-modal-submit")).toBeNull();
+    expect(screen.queryByTestId("prepare-email-modal-submit")).toBeNull();
   });
 
   it("affiche les champs quand open=true", () => {
     renderModal(true);
-    expect(screen.getByTestId("email-modal-to")).toBeDefined();
-    expect(screen.getByTestId("email-modal-subject")).toBeDefined();
-    expect(screen.getByTestId("email-modal-body")).toBeDefined();
-    expect(screen.getByTestId("email-modal-template")).toBeDefined();
+    expect(screen.getByTestId("prepare-email-modal-to")).toBeDefined();
+    expect(screen.getByTestId("prepare-email-modal-subject")).toBeDefined();
+    expect(screen.getByTestId("prepare-email-modal-body")).toBeDefined();
+    expect(screen.getByTestId("prepare-email-modal-template")).toBeDefined();
   });
 
   it("pré-remplit l'email du client", () => {
     renderModal(true);
-    const input = screen.getByTestId("email-modal-to") as HTMLInputElement;
+    const input = screen.getByTestId("prepare-email-modal-to") as HTMLInputElement;
     expect(input.value).toBe("contact@berthe.fr");
   });
 
   it("change de template au dropdown", () => {
     renderModal(true);
-    const select = screen.getByTestId("email-modal-template") as HTMLSelectElement;
+    const select = screen.getByTestId("prepare-email-modal-template") as HTMLSelectElement;
     fireEvent.change(select, { target: { value: "reminder" } });
     expect(select.value).toBe("reminder");
   });
 
   it("affiche le bouton annuler", () => {
     renderModal(true);
-    expect(screen.getByTestId("email-modal-cancel")).toBeDefined();
+    expect(screen.getByTestId("prepare-email-modal-cancel")).toBeDefined();
   });
 
   it("affiche le toggle mailto", () => {
     renderModal(true);
-    expect(screen.getByTestId("email-modal-mailto-toggle")).toBeDefined();
+    expect(screen.getByTestId("prepare-email-modal-mailto-toggle")).toBeDefined();
   });
 
   it("affiche alerte si email client absent", () => {

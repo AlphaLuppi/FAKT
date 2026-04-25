@@ -116,6 +116,7 @@ export function QuotesListRoute(): ReactElement {
         header: fr.quotes.labels.number,
         accessor: (q) => (
           <span
+            data-testid={`quote-list-row-${q.id}`}
             style={{
               fontFamily: tokens.font.mono,
               fontSize: tokens.fontSize.xs,
@@ -177,7 +178,11 @@ export function QuotesListRoute(): ReactElement {
       {
         id: "status",
         header: fr.quotes.labels.status,
-        accessor: (q) => <StatusPill status={q.status as StatusKind} size="sm" />,
+        accessor: (q) => (
+          <span data-testid={`quote-list-row-${q.id}-status`}>
+            <StatusPill status={q.status as StatusKind} size="sm" />
+          </span>
+        ),
         sortable: true,
         sortValue: (q) => q.status,
         width: 120,
@@ -212,13 +217,13 @@ export function QuotesListRoute(): ReactElement {
               <ActionChip
                 label={fr.quotes.actions.sign}
                 onClick={() => void navigate(`/quotes/${q.id}`)}
-                testId={`sign-${q.id}`}
+                testId={`quote-list-sign-${q.id}`}
               />
             )}
             <ActionChip
               label={fr.quotes.actions.duplicate}
               onClick={() => void handleDuplicate(q)}
-              testId={`dup-${q.id}`}
+              testId={`quote-list-duplicate-${q.id}`}
             />
           </div>
         ),

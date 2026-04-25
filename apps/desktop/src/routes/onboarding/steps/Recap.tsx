@@ -208,7 +208,7 @@ export function RecapStep({ onPrev, onFinish }: Props): ReactElement {
       </div>
 
       <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <Button variant="secondary" onClick={onPrev}>
+        <Button variant="secondary" onClick={onPrev} data-testid="wizard-prev">
           {fr.onboarding.prev}
         </Button>
         <Button
@@ -217,6 +217,7 @@ export function RecapStep({ onPrev, onFinish }: Props): ReactElement {
             void handleFinish();
           }}
           disabled={saving || identity === null}
+          data-testid="wizard-finish"
         >
           {saving ? "Enregistrement…" : fr.onboarding.finish}
         </Button>

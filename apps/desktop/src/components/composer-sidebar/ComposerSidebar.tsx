@@ -374,6 +374,7 @@ export function ComposerSidebar(): ReactElement {
           <button
             type="button"
             onClick={() => setContextEnabled((v) => !v)}
+            data-testid="composer-context-toggle"
             style={{
               padding: "2px 6px",
               border: `${hair} solid ${ink}`,
@@ -447,11 +448,12 @@ export function ComposerSidebar(): ReactElement {
             flexShrink: 0,
           }}
         >
-          {SUGGESTIONS.map((s) => (
+          {SUGGESTIONS.map((s, i) => (
             <button
               key={s}
               type="button"
               onClick={() => void sendMessage(s)}
+              data-testid={`composer-suggestion-${i}`}
               style={{
                 padding: "4px 10px",
                 border: `${hair} solid ${ink}`,

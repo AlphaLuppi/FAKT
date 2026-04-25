@@ -142,7 +142,11 @@ export function NewManual(): ReactElement {
             {fr.quotes.modes.manual}
           </p>
         </div>
-        <Button variant="ghost" onClick={() => void navigate("/quotes")}>
+        <Button
+          variant="ghost"
+          onClick={() => void navigate("/quotes")}
+          data-testid="quote-new-manual-back"
+        >
           {fr.quotes.actions.backToList}
         </Button>
       </header>

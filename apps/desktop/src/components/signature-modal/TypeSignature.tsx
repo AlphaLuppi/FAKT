@@ -97,7 +97,7 @@ export const TypeSignature = forwardRef<TypeSignatureHandle, TypeSignatureProps>
           label={fr.signature.type}
           placeholder={fr.signature.modal.typePlaceholder}
           value={name}
-          data-testid="signature-type-input"
+          data-testid="signature-modal-type-input"
           onChange={(e): void => {
             const v = e.target.value;
             setName(v);
@@ -109,7 +109,7 @@ export const TypeSignature = forwardRef<TypeSignatureHandle, TypeSignatureProps>
           ref={canvasRef}
           width={width}
           height={height}
-          data-testid="signature-type-canvas"
+          data-testid="signature-modal-type-canvas"
           aria-label="Aperçu signature cursive"
           role="img"
           style={{

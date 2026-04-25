@@ -30,6 +30,7 @@ export function RequireAuth({ children }: { children: ReactNode }): ReactElement
 function LoadingScreen(): ReactElement {
   return (
     <div
+      data-testid="auth-loading"
       style={{
         height: "100vh",
         display: "flex",

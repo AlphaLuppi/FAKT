@@ -96,12 +96,14 @@ export function BackendTab(): ReactElement {
             checked={config.mode === "local"}
             disabled={!isDesktop()}
             onSelect={() => setConfig({ ...config, mode: "local" })}
+            data-testid="settings-backend-mode-local"
           />
           <ModeRadioButton
             label="Distant (équipe)"
             description="Backend self-host partagé"
             checked={config.mode === "remote"}
             onSelect={() => setConfig({ ...config, mode: "remote" })}
+            data-testid="settings-backend-mode-remote"
           />
         </div>
         {!isDesktop() && (
@@ -120,6 +122,7 @@ export function BackendTab(): ReactElement {
             value={config.url}
             placeholder={DEFAULT_REMOTE_URL}
             onChange={(e) => setConfig({ ...config, url: e.target.value })}
+            data-testid="settings-backend-url"
           />
           <HealthBadge status={healthStatus} />
         </div>
@@ -128,11 +131,20 @@ export function BackendTab(): ReactElement {
       <div style={dividerStyle} />
 
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-        <Button variant="primary" onClick={() => void handleSave()} disabled={saving}>
+        <Button
+          variant="primary"
+          onClick={() => void handleSave()}
+          disabled={saving}
+          data-testid="settings-backend-submit"
+        >
           {saving ? "Enregistrement…" : "Enregistrer"}
         </Button>
         {config.mode === "remote" && status === "authenticated" && (
-          <Button variant="ghost" onClick={() => void handleLogout()}>
+          <Button
+            variant="ghost"
+            onClick={() => void handleLogout()}
+            data-testid="settings-backend-logout"
+          >
             Se déconnecter
           </Button>
         )}
@@ -147,12 +159,14 @@ function ModeRadioButton({
   checked,
   disabled,
   onSelect,
+  "data-testid": dataTestId,
 }: {
   label: string;
   description: string;
   checked: boolean;
   disabled?: boolean;
   onSelect: () => void;
+  "data-testid"?: string;
 }): ReactElement {
   return (
     <button
@@ -161,6 +175,7 @@ function ModeRadioButton({
       aria-checked={checked}
       onClick={onSelect}
       disabled={disabled}
+      data-testid={dataTestId}
       style={{
         flex: 1,
         padding: "12px 16px",
@@ -206,6 +221,7 @@ function HealthBadge({ status }: { status: HealthStatus }): ReactElement | null 
   const config = healthBadgeConfig(status);
   return (
     <div
+      data-testid={`settings-backend-health-${status}`}
       style={{
         display: "inline-flex",
         alignItems: "center",

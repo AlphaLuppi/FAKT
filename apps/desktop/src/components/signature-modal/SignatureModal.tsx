@@ -82,7 +82,7 @@ export function SignatureModal({
         onClose={onClose}
         size="md"
         footer={
-          <Button variant="primary" onClick={onClose} data-testid="signature-web-close">
+          <Button variant="primary" onClick={onClose} data-testid="signature-modal-web-close">
             {fr.shortcuts.close}
           </Button>
         }
@@ -97,7 +97,7 @@ export function SignatureModal({
             color: tokens.color.ink,
             lineHeight: 1.5,
           }}
-          data-testid="signature-web-unavailable"
+          data-testid="signature-modal-web-unavailable"
         >
           <p style={{ margin: 0 }}>{fr.signature.modal.webUnavailableBody}</p>
           <p style={{ margin: 0, color: tokens.color.muted }}>
@@ -232,7 +232,7 @@ export function SignatureModal({
             variant="ghost"
             onClick={handleClear}
             disabled={submitting}
-            data-testid="signature-clear"
+            data-testid="signature-modal-clear"
           >
             {fr.signature.modal.clear}
           </Button>
@@ -240,7 +240,7 @@ export function SignatureModal({
             variant="ghost"
             onClick={onClose}
             disabled={submitting}
-            data-testid="signature-cancel"
+            data-testid="signature-modal-cancel"
           >
             {fr.signature.modal.cancel}
           </Button>
@@ -250,7 +250,7 @@ export function SignatureModal({
               void handleSubmit();
             }}
             disabled={submitting || !ack}
-            data-testid="signature-submit"
+            data-testid="signature-modal-submit"
           >
             {submitting
               ? submitState === "signing"
@@ -306,7 +306,10 @@ export function SignatureModal({
           )}
         </div>
 
-        <div data-testid="signature-pane" style={{ display: "flex", justifyContent: "center" }}>
+        <div
+          data-testid="signature-modal-pane"
+          style={{ display: "flex", justifyContent: "center" }}
+        >
           {mode === "draw" ? (
             <SignatureCanvas
               ref={drawRef}
@@ -321,13 +324,13 @@ export function SignatureModal({
           checked={ack}
           onChange={(e): void => setAck(e.target.checked)}
           label={fr.signature.modal.ackLabel}
-          data-testid="signature-ack"
+          data-testid="signature-modal-ack"
         />
 
         {fieldError !== null && (
           <div
             role="alert"
-            data-testid="signature-field-error"
+            data-testid="signature-modal-field-error"
             style={{
               border: `${tokens.stroke.bold} solid ${tokens.color.ink}`,
               background: tokens.color.dangerBg,
@@ -344,7 +347,7 @@ export function SignatureModal({
         {errorMessage !== null && (
           <div
             role="alert"
-            data-testid="signature-submit-error"
+            data-testid="signature-modal-submit-error"
             style={{
               border: `${tokens.stroke.bold} solid ${tokens.color.ink}`,
               background: tokens.color.dangerBg,
@@ -364,7 +367,7 @@ export function SignatureModal({
                 <Button
                   variant="secondary"
                   onClick={handleCertMissingNav}
-                  data-testid="signature-cert-cta"
+                  data-testid="signature-modal-cert-cta"
                 >
                   {fr.signature.modal.certMissingCta}
                 </Button>
@@ -374,7 +377,7 @@ export function SignatureModal({
                   onClick={(): void => {
                     void handleSubmit();
                   }}
-                  data-testid="signature-retry"
+                  data-testid="signature-modal-retry"
                 >
                   {fr.signature.modal.retry}
                 </Button>

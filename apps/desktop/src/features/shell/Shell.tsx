@@ -91,6 +91,7 @@ function ShellInner({ children }: ShellProps): ReactElement {
         <Topbar />
         <main
           className="fakt-shell-main"
+          data-testid="shell-main"
           style={{
             flex: 1,
             overflow: "auto",
@@ -115,6 +116,7 @@ function Sidebar(): ReactElement {
   return (
     <aside
       className="fakt-shell-sidebar"
+      data-testid="sidebar"
       style={{
         width: 232,
         background: "var(--surface)",
@@ -160,6 +162,7 @@ function Sidebar(): ReactElement {
             <button
               key={item.id}
               onClick={() => void navigate(item.path)}
+              data-testid={`sidebar-link-${item.id}`}
               style={{
                 width: "100%",
                 display: "flex",
@@ -186,6 +189,7 @@ function Sidebar(): ReactElement {
       <div style={{ padding: 10, borderTop: "2px solid var(--line)" }}>
         <button
           onClick={() => void navigate("/settings")}
+          data-testid="sidebar-link-settings"
           style={{
             width: "100%",
             display: "flex",
@@ -227,6 +231,7 @@ function BottomNav(): ReactElement {
           <button
             key={item.id}
             onClick={() => void navigate(item.path)}
+            data-testid={`nav-bottom-${item.id}`}
             style={{
               flex: 1,
               display: "flex",
@@ -266,6 +271,7 @@ function Topbar(): ReactElement {
   return (
     <div
       className="fakt-shell-topbar"
+      data-testid="topbar"
       style={{
         height: 56,
         borderBottom: "2px solid var(--line)",
@@ -280,6 +286,7 @@ function Topbar(): ReactElement {
       <div style={{ flex: 1 }}>
         <div
           className="fakt-shell-title"
+          data-testid="topbar-title"
           style={{
             fontSize: 15,
             fontWeight: 700,
@@ -336,6 +343,7 @@ function Topbar(): ReactElement {
       {/* Bouton ⌘K */}
       <button
         onClick={open}
+        data-testid="topbar-search-trigger"
         aria-label="Recherche globale"
         title="Recherche globale (⌘K / Ctrl+K)"
         style={{

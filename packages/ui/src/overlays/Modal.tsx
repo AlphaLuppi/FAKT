@@ -10,6 +10,12 @@ export interface ModalProps {
   children?: ReactNode;
   footer?: ReactNode;
   size?: "sm" | "md" | "lg";
+  /** Testid sur le wrapper backdrop (overlay scrim). */
+  "data-testid"?: string;
+  /** Testid sur le `<div class="fakt-modal">` (panneau de contenu). */
+  testIdContent?: string;
+  /** Testid sur le bouton de fermeture (croix). */
+  testIdClose?: string;
 }
 
 const SIZE_WIDTHS: Record<NonNullable<ModalProps["size"]>, number> = {
@@ -25,6 +31,9 @@ export function Modal({
   children,
   footer,
   size = "md",
+  "data-testid": testId,
+  testIdContent,
+  testIdClose,
 }: ModalProps): ReactElement | null {
   if (!open) return null;
   const titleId =
@@ -36,8 +45,9 @@ export function Modal({
       open={open}
       {...(onClose ? { onClose } : {})}
       {...(titleId !== undefined ? { labelledBy: titleId } : {})}
+      {...(testId !== undefined ? { "data-testid": testId } : {})}
     >
-      <div className="fakt-modal" style={{ width: SIZE_WIDTHS[size] }}>
+      <div className="fakt-modal" data-testid={testIdContent} style={{ width: SIZE_WIDTHS[size] }}>
         {title !== undefined && (
           <header
             style={{
@@ -64,7 +74,13 @@ export function Modal({
               {title}
             </h2>
             {onClose !== undefined && (
-              <Button variant="ghost" size="sm" onClick={onClose} aria-label="Fermer">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onClose}
+                aria-label="Fermer"
+                data-testid={testIdClose}
+              >
                 X
               </Button>
             )}

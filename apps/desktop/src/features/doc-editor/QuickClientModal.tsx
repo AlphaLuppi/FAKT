@@ -92,9 +92,16 @@ export function QuickClientModal({
       onClose={onClose}
       title={fr.quotes.form.clientQuickNew}
       size="sm"
+      data-testid="quick-client-modal"
+      testIdClose="quick-client-modal-close"
       footer={
         <>
-          <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>
+          <Button
+            variant="secondary"
+            onClick={onClose}
+            disabled={isSubmitting}
+            data-testid="quick-client-cancel"
+          >
             {fr.quotes.actions.cancel}
           </Button>
           <Button

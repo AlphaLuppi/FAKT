@@ -86,6 +86,10 @@ function GlobalPaletteWrapper({
       items={items}
       onSelect={onSelect}
       placeholder={`${fr.nav.dashboard}, clients, devis… (⌘K)`}
+      data-testid="command-palette"
+      testIdContent="command-palette-content"
+      testIdInput="command-palette-input"
+      testIdItemPrefix="command-palette-option"
     />
   );
 }

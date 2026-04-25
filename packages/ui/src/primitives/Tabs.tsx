@@ -7,6 +7,7 @@ export interface TabItem {
   value: string;
   label: ReactNode;
   disabled?: boolean;
+  "data-testid"?: string;
 }
 
 export interface TabsProps {
@@ -15,9 +16,18 @@ export interface TabsProps {
   onChange: (value: string) => void;
   ariaLabel?: string;
   className?: string;
+  /** Préfixe testid auto-appliqué : `${testIdPrefix}-${value}` sur chaque <button role="tab">. */
+  testIdPrefix?: string;
 }
 
-export function Tabs({ items, value, onChange, ariaLabel, className }: TabsProps): ReactElement {
+export function Tabs({
+  items,
+  value,
+  onChange,
+  ariaLabel,
+  className,
+  testIdPrefix,
+}: TabsProps): ReactElement {
   const baseId = useId();
 
   const indexByValue = useMemo(() => {
@@ -72,6 +82,10 @@ export function Tabs({ items, value, onChange, ariaLabel, className }: TabsProps
         const selected = item.value === value;
         const id = `${baseId}-tab-${item.value}`;
         const panelId = `${baseId}-panel-${item.value}`;
+        const explicitTestId = item["data-testid"];
+        const computedTestId =
+          explicitTestId ??
+          (testIdPrefix !== undefined ? `${testIdPrefix}-${item.value}` : undefined);
         return (
           <button
             key={item.value}
@@ -82,6 +96,7 @@ export function Tabs({ items, value, onChange, ariaLabel, className }: TabsProps
             aria-controls={panelId}
             tabIndex={selected ? 0 : -1}
             disabled={item.disabled}
+            data-testid={computedTestId}
             onClick={(): void => {
               if (!item.disabled) onChange(item.value);
             }}

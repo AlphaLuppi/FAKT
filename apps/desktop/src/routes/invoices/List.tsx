@@ -99,6 +99,7 @@ export function InvoicesListRoute(): ReactElement {
         header: fr.invoices.labels.number,
         accessor: (inv) => (
           <span
+            data-testid={`invoice-list-row-${inv.id}`}
             style={{
               fontFamily: tokens.font.mono,
               fontSize: tokens.fontSize.xs,
@@ -163,7 +164,11 @@ export function InvoicesListRoute(): ReactElement {
         accessor: (inv) => {
           const isOverdue = inv.status === "sent" && inv.dueDate !== null && inv.dueDate < now;
           const displayStatus: StatusKind = isOverdue ? "overdue" : (inv.status as StatusKind);
-          return <StatusPill status={displayStatus} size="sm" />;
+          return (
+            <span data-testid={`invoice-list-row-${inv.id}-status`}>
+              <StatusPill status={displayStatus} size="sm" />
+            </span>
+          );
         },
         sortable: true,
         sortValue: (inv) => inv.status,

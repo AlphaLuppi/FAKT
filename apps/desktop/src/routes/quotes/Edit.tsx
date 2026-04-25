@@ -105,7 +105,11 @@ export function QuoteEditRoute(): ReactElement {
         >
           {fr.quotes.actions.edit}
         </h1>
-        <Button variant="ghost" onClick={() => void navigate(`/quotes/${quote.id}`)}>
+        <Button
+          variant="ghost"
+          onClick={() => void navigate(`/quotes/${quote.id}`)}
+          data-testid="quote-edit-cancel"
+        >
           {fr.quotes.actions.cancel}
         </Button>
       </header>

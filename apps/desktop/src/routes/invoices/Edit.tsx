@@ -109,7 +109,11 @@ export function InvoiceEditRoute(): ReactElement {
           {fr.invoices.detail.issuedNotEditable}
         </div>
         <div style={{ display: "flex", gap: tokens.spacing[3] }}>
-          <Button variant="ghost" onClick={() => void navigate(`/invoices/${invoice.id}`)}>
+          <Button
+            variant="ghost"
+            onClick={() => void navigate(`/invoices/${invoice.id}`)}
+            data-testid="invoice-edit-back"
+          >
             {fr.invoices.actions.backToList}
           </Button>
           <Button
@@ -154,7 +158,11 @@ export function InvoiceEditRoute(): ReactElement {
         >
           {fr.invoices.actions.edit}
         </h1>
-        <Button variant="ghost" onClick={() => void navigate(`/invoices/${invoice.id}`)}>
+        <Button
+          variant="ghost"
+          onClick={() => void navigate(`/invoices/${invoice.id}`)}
+          data-testid="invoice-edit-cancel"
+        >
           {fr.invoices.actions.cancel}
         </Button>
       </header>

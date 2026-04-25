@@ -25,6 +25,12 @@ export interface TableProps<T> {
   className?: string;
   empty?: ReactNode;
   rowsPerPage?: number;
+  /** Si défini, applique `data-testid={prefix}-${rowId}` sur chaque <tr>. */
+  rowTestIdPrefix?: string;
+  /** Testid sur le bouton "Précédent" pagination. */
+  testIdPrev?: string;
+  /** Testid sur le bouton "Suivant" pagination. */
+  testIdNext?: string;
 }
 
 type SortState = { columnId: string; dir: "asc" | "desc" } | null;
@@ -46,6 +52,9 @@ export function Table<T>({
   className,
   empty,
   rowsPerPage = 100,
+  rowTestIdPrefix,
+  testIdPrev,
+  testIdNext,
 }: TableProps<T>): ReactElement {
   const [sort, setSort] = useState<SortState>(null);
   const [page, setPage] = useState(0);
@@ -148,25 +157,31 @@ export function Table<T>({
               </td>
             </tr>
           )}
-          {visible.map((row) => (
-            <tr
-              key={getRowId(row)}
-              onClick={onRowClick ? () => onRowClick(row) : undefined}
-              style={{ cursor: onRowClick ? "pointer" : undefined }}
-            >
-              {columns.map((c) => (
-                <td
-                  key={c.id}
-                  style={{
-                    textAlign: c.align ?? "left",
-                    width: c.width,
-                  }}
-                >
-                  {c.accessor(row)}
-                </td>
-              ))}
-            </tr>
-          ))}
+          {visible.map((row) => {
+            const rowId = getRowId(row);
+            return (
+              <tr
+                key={rowId}
+                data-testid={
+                  rowTestIdPrefix !== undefined ? `${rowTestIdPrefix}-${rowId}` : undefined
+                }
+                onClick={onRowClick ? () => onRowClick(row) : undefined}
+                style={{ cursor: onRowClick ? "pointer" : undefined }}
+              >
+                {columns.map((c) => (
+                  <td
+                    key={c.id}
+                    style={{
+                      textAlign: c.align ?? "left",
+                      width: c.width,
+                    }}
+                  >
+                    {c.accessor(row)}
+                  </td>
+                ))}
+              </tr>
+            );
+          })}
         </tbody>
       </table>
       {useVirtual && totalPages > 1 && (
@@ -193,6 +208,7 @@ export function Table<T>({
               type="button"
               className="fakt-btn fakt-btn--secondary fakt-btn--sm"
               disabled={page === 0}
+              data-testid={testIdPrev}
               onClick={() => setPage((p) => Math.max(0, p - 1))}
             >
               Précédent
@@ -201,6 +217,7 @@ export function Table<T>({
               type="button"
               className="fakt-btn fakt-btn--secondary fakt-btn--sm"
               disabled={page >= totalPages - 1}
+              data-testid={testIdNext}
               onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
             >
               Suivant

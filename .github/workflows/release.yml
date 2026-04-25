@@ -12,7 +12,19 @@ permissions:
   contents: write
 
 jobs:
+  # Gate de release : avant tout build/upload, on lance la suite E2E sur le
+  # binaire compilé en mode release. Si E2E échoue → la release n'est PAS
+  # publiée (le job `release` reste en `skipped` parce que `needs:` n'est pas
+  # satisfait). C'est le filet de sécurité contre les bugs release-only que
+  # `bun run dev` ne détecte pas. macOS est exclu (tauri-driver non supporté).
+  e2e-release-gate:
+    name: E2E gate (binaire release)
+    uses: ./.github/workflows/e2e-release.yml
+    permissions:
+      contents: read
+
   release:
+    needs: e2e-release-gate
     name: Release ${{ github.ref_name }} (${{ matrix.os }})
     strategy:
       fail-fast: false

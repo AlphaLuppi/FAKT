@@ -308,7 +308,11 @@ export function NewAi(): ReactElement {
           >
             {fr.quotes.new} · {fr.quotes.modes.ai}
           </h1>
-          <Button variant="ghost" onClick={() => setApplied(null)}>
+          <Button
+            variant="ghost"
+            onClick={() => setApplied(null)}
+            data-testid="quote-new-ai-cancel-applied"
+          >
             {fr.quotes.actions.cancel}
           </Button>
         </header>
@@ -365,7 +369,11 @@ export function NewAi(): ReactElement {
             {fr.quotes.modes.ai}
           </p>
         </div>
-        <Button variant="ghost" onClick={() => void navigate("/quotes")}>
+        <Button
+          variant="ghost"
+          onClick={() => void navigate("/quotes")}
+          data-testid="quote-new-ai-back"
+        >
           {fr.quotes.actions.backToList}
         </Button>
       </header>
@@ -871,7 +879,11 @@ function CliMissingBlock({ onFallback }: { onFallback: () => void }): ReactEleme
           {fr.quotes.ai.cliMissingDetail}
         </p>
         <div style={{ display: "flex", gap: tokens.spacing[2] }}>
-          <Button variant="primary" onClick={() => void navigate("/settings")}>
+          <Button
+            variant="primary"
+            onClick={() => void navigate("/settings")}
+            data-testid="quote-new-ai-cli-go-settings"
+          >
             {fr.quotes.ai.goSettings}
           </Button>
           <Button
@@ -880,6 +892,7 @@ function CliMissingBlock({ onFallback }: { onFallback: () => void }): ReactEleme
               onFallback();
               void navigate("/quotes/new?mode=manual");
             }}
+            data-testid="quote-new-ai-cli-go-manual"
           >
             {fr.quotes.ai.goManual}
           </Button>

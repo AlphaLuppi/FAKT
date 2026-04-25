@@ -27,14 +27,15 @@ test.describe("FAKT Login (mode web)", () => {
     // Le titre de l'app
     await expect(page).toHaveTitle(/FAKT/, { timeout: 10_000 });
 
+    // Wrapper de la page login
+    await expect(page.getByTestId("login")).toBeVisible({ timeout: 10_000 });
+
     // Champs du form
-    await expect(page.getByLabel(/email/i)).toBeVisible();
-    await expect(page.getByLabel(/mot de passe/i)).toBeVisible();
+    await expect(page.getByTestId("login-email")).toBeVisible();
+    await expect(page.getByTestId("login-password")).toBeVisible();
 
     // Bouton submit
-    await expect(
-      page.getByRole("button", { name: /(connexion|se connecter|login)/i })
-    ).toBeVisible();
+    await expect(page.getByTestId("login-submit")).toBeVisible();
   });
 
   test("le form login est responsive sur mobile (375x812)", async ({ page }) => {
@@ -49,6 +50,6 @@ test.describe("FAKT Login (mode web)", () => {
     expect(bodyWidth).toBeLessThanOrEqual(375 + 5); // +5 pour scrollbar tolérance
 
     // La carte de login est visible et le form fonctionnel
-    await expect(page.getByLabel(/email/i)).toBeVisible();
+    await expect(page.getByTestId("login-email")).toBeVisible();
   });
 });

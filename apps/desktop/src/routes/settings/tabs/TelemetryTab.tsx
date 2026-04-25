@@ -52,6 +52,7 @@ export function TelemetryTab({
           onChange={(e) => {
             void handleTelemetryToggle(e.target.checked);
           }}
+          data-testid="settings-telemetry-opt-in"
         />
         <p style={hintStyle}>{fr.settings.telemetry.description}</p>
       </div>
@@ -61,6 +62,7 @@ export function TelemetryTab({
           label={fr.settings.telemetry.verboseLogs}
           checked={verboseLogs}
           onChange={(e) => onVerboseChange(e.target.checked)}
+          data-testid="settings-telemetry-verbose-logs"
         />
         <p style={hintStyle}>{fr.settings.telemetry.verboseLogsHint}</p>
       </div>
@@ -74,6 +76,7 @@ export function TelemetryTab({
             variant="ghost"
             size="sm"
             onClick={() => window.open("https://github.com/AlphaLuppi/fakt/issues", "_blank")}
+            data-testid="settings-telemetry-github-issues"
           >
             {fr.settings.telemetry.githubIssues}
           </Button>
@@ -83,6 +86,7 @@ export function TelemetryTab({
             onClick={() =>
               window.open("https://github.com/AlphaLuppi/fakt/blob/main/CHANGELOG.md", "_blank")
             }
+            data-testid="settings-telemetry-changelog"
           >
             {fr.settings.telemetry.changelog}
           </Button>

@@ -312,7 +312,7 @@ export function AuditTimeline({
           <li
             key={`${entry.kind}-${entry.timestamp}-${idx}`}
             style={{ position: "relative" }}
-            data-testid={`audit-entry-${entry.kind}`}
+            data-testid={`audit-timeline-entry-${entry.kind}`}
           >
             <span
               aria-hidden
@@ -422,7 +422,7 @@ export function AuditTimeline({
                   <Button
                     variant="secondary"
                     size="sm"
-                    data-testid="audit-verify"
+                    data-testid="audit-timeline-verify"
                     onClick={(): void => {
                       void navigate(`/signatures/${entry.signatureEventId}/verify`);
                     }}

@@ -132,13 +132,14 @@ export function CertificateStep({ onNext, onPrev }: Props): ReactElement {
                 void handleGenerate();
               }}
               disabled={generating || identity === null}
+              data-testid="wizard-certificate-generate"
             >
               {generating ? fr.onboarding.step3.generating : fr.onboarding.step3.generate}
             </Button>
           </div>
         </div>
       ) : (
-        <div style={cardStyle}>
+        <div style={cardStyle} data-testid="wizard-certificate-generated">
           <div style={statusRowStyle}>
             <span style={checkmarkStyle}>✓</span>
             <span style={statusTextStyle}>{fr.onboarding.step3.generated}</span>
@@ -169,7 +170,7 @@ export function CertificateStep({ onNext, onPrev }: Props): ReactElement {
       )}
 
       <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <Button variant="secondary" onClick={onPrev}>
+        <Button variant="secondary" onClick={onPrev} data-testid="wizard-prev">
           {fr.onboarding.prev}
         </Button>
         <div style={{ display: "flex", gap: 10 }}>
@@ -180,11 +181,12 @@ export function CertificateStep({ onNext, onPrev }: Props): ReactElement {
                 void handleGenerate();
               }}
               disabled={generating}
+              data-testid="wizard-certificate-retry"
             >
               {fr.onboarding.step3.retry}
             </Button>
           )}
-          <Button onClick={onNext} disabled={certInfo === null}>
+          <Button onClick={onNext} disabled={certInfo === null} data-testid="wizard-next">
             {fr.onboarding.next}
           </Button>
         </div>

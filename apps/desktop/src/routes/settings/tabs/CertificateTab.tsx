@@ -129,6 +129,9 @@ export function CertificateTab({ workspace }: Props): ReactElement {
           variant={certInfo !== null ? "danger" : "primary"}
           onClick={() => setShowWarning(true)}
           disabled={rotating || workspace === null}
+          data-testid={
+            certInfo !== null ? "settings-certificate-rotate" : "settings-certificate-generate"
+          }
         >
           {certInfo !== null ? fr.settings.certificate.rotate : fr.settings.certificate.generate}
         </Button>
@@ -140,7 +143,11 @@ export function CertificateTab({ workspace }: Props): ReactElement {
         onClose={() => setShowWarning(false)}
         footer={
           <>
-            <Button variant="secondary" onClick={() => setShowWarning(false)}>
+            <Button
+              variant="secondary"
+              onClick={() => setShowWarning(false)}
+              data-testid="settings-certificate-rotate-cancel"
+            >
               {fr.settings.certificate.rotateCancel}
             </Button>
             <Button
@@ -149,6 +156,7 @@ export function CertificateTab({ workspace }: Props): ReactElement {
                 void handleRotate();
               }}
               disabled={rotating}
+              data-testid="settings-certificate-rotate-confirm"
             >
               {rotating ? "Régénération…" : fr.settings.certificate.rotateConfirm}
             </Button>

@@ -313,7 +313,11 @@ export function InvoiceDetailRoute(): ReactElement {
           </p>
         </div>
         <div style={{ display: "flex", gap: tokens.spacing[2] }}>
-          <Button variant="ghost" onClick={() => void navigate("/invoices")}>
+          <Button
+            variant="ghost"
+            onClick={() => void navigate("/invoices")}
+            data-testid="invoice-detail-back"
+          >
             {fr.invoices.actions.backToList}
           </Button>
           <Button
@@ -375,6 +379,7 @@ export function InvoiceDetailRoute(): ReactElement {
               <div style={{ display: "flex", gap: tokens.spacing[2] }}>
                 <InvPdfToolbarButton
                   label="Zoom +"
+                  testId="invoice-detail-zoom-in"
                   onClick={() => {
                     const iframe = document.querySelector<HTMLIFrameElement>(
                       "[data-testid='invoice-pdf-iframe']"
@@ -385,6 +390,7 @@ export function InvoiceDetailRoute(): ReactElement {
                 />
                 <InvPdfToolbarButton
                   label="Zoom -"
+                  testId="invoice-detail-zoom-out"
                   onClick={() => {
                     const iframe = document.querySelector<HTMLIFrameElement>(
                       "[data-testid='invoice-pdf-iframe']"
@@ -395,6 +401,7 @@ export function InvoiceDetailRoute(): ReactElement {
                 />
                 <InvPdfToolbarButton
                   label="Plein écran"
+                  testId="invoice-detail-fullscreen"
                   onClick={() => {
                     if (pdfUrl) window.open(pdfUrl, "_blank");
                   }}
@@ -595,6 +602,8 @@ export function InvoiceDetailRoute(): ReactElement {
           }
         }}
         size="sm"
+        data-testid="invoice-detail-mark-sent-modal"
+        testIdClose="invoice-detail-mark-sent-modal-close"
         footer={
           <>
             <Button
@@ -719,11 +728,13 @@ function buildInvoiceExtras(inv: Invoice): BaseAuditEntry[] {
 function InvPdfToolbarButton({
   label,
   onClick,
-}: { label: string; onClick: () => void }): ReactElement {
+  testId,
+}: { label: string; onClick: () => void; testId?: string }): ReactElement {
   return (
     <button
       type="button"
       onClick={onClick}
+      data-testid={testId}
       style={{
         padding: "2px 8px",
         border: `1.5px solid ${tokens.color.ink}`,

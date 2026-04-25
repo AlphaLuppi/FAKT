@@ -79,11 +79,16 @@ export function ClaudeCliTab(): ReactElement {
             void runCheck();
           }}
           disabled={loading}
+          data-testid="settings-claudecli-recheck"
         >
           {fr.settings.cli.recheck}
         </Button>
         {cliInfo !== null && !cliInfo.installed && (
-          <Button variant="ghost" onClick={() => window.open("https://claude.ai/code", "_blank")}>
+          <Button
+            variant="ghost"
+            onClick={() => window.open("https://claude.ai/code", "_blank")}
+            data-testid="settings-claudecli-open-install-page"
+          >
             {fr.settings.cli.openInstallPage}
           </Button>
         )}
@@ -92,6 +97,7 @@ export function ClaudeCliTab(): ReactElement {
           onClick={() =>
             window.open("https://docs.anthropic.com/en/docs/claude-code/overview", "_blank")
           }
+          data-testid="settings-claudecli-doc-link"
         >
           {fr.settings.cli.docLink}
         </Button>
@@ -105,7 +111,10 @@ function StatusBadge({
   version,
 }: { installed: boolean; version?: string }): ReactElement {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+    <div
+      data-testid={installed ? "settings-claudecli-status-ok" : "settings-claudecli-status-missing"}
+      style={{ display: "flex", alignItems: "center", gap: 8 }}
+    >
       <span
         style={{
           display: "inline-flex",

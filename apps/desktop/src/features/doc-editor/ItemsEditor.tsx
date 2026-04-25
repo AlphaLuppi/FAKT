@@ -307,6 +307,7 @@ function ItemRow(props: ItemRowProps): ReactElement {
           onUpdate({ quantity: Math.max(0, milli) });
         }}
         disabled={readOnly}
+        data-testid={`item-quantity-${idx}`}
       />
 
       <Select
@@ -315,6 +316,7 @@ function ItemRow(props: ItemRowProps): ReactElement {
         value={item.unit}
         onChange={(e) => onUpdate({ unit: e.target.value as DocumentUnit })}
         disabled={readOnly}
+        data-testid={`item-unit-${idx}`}
       />
 
       <Input
@@ -329,6 +331,7 @@ function ItemRow(props: ItemRowProps): ReactElement {
           onUpdate({ unitPriceCents: Math.max(0, cents) });
         }}
         disabled={readOnly}
+        data-testid={`item-unit-price-${idx}`}
       />
 
       <div
@@ -362,6 +365,7 @@ function ItemRow(props: ItemRowProps): ReactElement {
               aria-label={fr.quotes.form.moveUp}
               disabled={idx === 0}
               onClick={() => onMove(-1)}
+              data-testid={`item-move-up-${idx}`}
             >
               ↑
             </button>
@@ -371,6 +375,7 @@ function ItemRow(props: ItemRowProps): ReactElement {
               aria-label={fr.quotes.form.moveDown}
               disabled={idx === lastIdx}
               onClick={() => onMove(1)}
+              data-testid={`item-move-down-${idx}`}
             >
               ↓
             </button>

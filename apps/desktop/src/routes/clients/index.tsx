@@ -104,7 +104,11 @@ export function ClientsRoute(): ReactElement {
         id: "status",
         header: "Statut",
         accessor: (c) =>
-          c.archivedAt ? <StatusPill status="cancelled" size="sm" label="Archivé" /> : null,
+          c.archivedAt ? (
+            <span data-testid={`client-list-row-${c.id}-status`}>
+              <StatusPill status="cancelled" size="sm" label="Archivé" />
+            </span>
+          ) : null,
         width: 100,
       },
       {
@@ -133,6 +137,7 @@ export function ClientsRoute(): ReactElement {
                   e.stopPropagation();
                   void restoreClient(c.id);
                 }}
+                data-testid={`client-list-restore-${c.id}`}
               >
                 Restaurer
               </Button>
@@ -145,6 +150,7 @@ export function ClientsRoute(): ReactElement {
                   setSelectedClient(c);
                   setFormOpen(true);
                 }}
+                data-testid={`client-list-edit-${c.id}`}
               >
                 {fr.clients.actions.edit}
               </Button>
@@ -175,7 +181,7 @@ export function ClientsRoute(): ReactElement {
         >
           {fr.clients.title}
         </h1>
-        <Button variant="primary" onClick={handleNewClient}>
+        <Button variant="primary" onClick={handleNewClient} data-testid="client-list-new">
           {fr.clients.new}
         </Button>
       </div>
@@ -189,11 +195,13 @@ export function ClientsRoute(): ReactElement {
           onChange={(e) => setSearch(e.currentTarget.value)}
           style={{ flex: 1, maxWidth: 360 }}
           aria-label="Recherche client"
+          data-testid="client-list-search"
         />
         <Chip
           tone={showArchived ? "accent" : "neutral"}
           onClick={() => setShowArchived((v) => !v)}
           style={{ cursor: "pointer", userSelect: "none" }}
+          data-testid="client-list-toggle-archived"
         >
           Afficher la corbeille
         </Chip>

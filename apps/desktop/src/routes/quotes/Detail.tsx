@@ -274,7 +274,11 @@ export function QuoteDetailRoute(): ReactElement {
           </p>
         </div>
         <div style={{ display: "flex", gap: tokens.spacing[2] }}>
-          <Button variant="ghost" onClick={() => void navigate("/quotes")}>
+          <Button
+            variant="ghost"
+            onClick={() => void navigate("/quotes")}
+            data-testid="quote-detail-back"
+          >
             {fr.quotes.actions.backToList}
           </Button>
           <Button
@@ -348,6 +352,7 @@ export function QuoteDetailRoute(): ReactElement {
               <div style={{ display: "flex", gap: tokens.spacing[2] }}>
                 <PdfToolbarButton
                   label="Zoom +"
+                  data-testid="quote-detail-zoom-in"
                   onClick={() => {
                     const iframe = document.querySelector<HTMLIFrameElement>(
                       "[data-testid='pdf-iframe']"
@@ -358,6 +363,7 @@ export function QuoteDetailRoute(): ReactElement {
                 />
                 <PdfToolbarButton
                   label="Zoom -"
+                  data-testid="quote-detail-zoom-out"
                   onClick={() => {
                     const iframe = document.querySelector<HTMLIFrameElement>(
                       "[data-testid='pdf-iframe']"
@@ -368,6 +374,7 @@ export function QuoteDetailRoute(): ReactElement {
                 />
                 <PdfToolbarButton
                   label="Plein écran"
+                  data-testid="quote-detail-fullscreen"
                   onClick={() => {
                     if (pdfUrl) window.open(pdfUrl, "_blank");
                   }}
@@ -573,6 +580,8 @@ export function QuoteDetailRoute(): ReactElement {
           }
         }}
         size="sm"
+        data-testid="quote-detail-mark-sent-modal"
+        testIdClose="quote-detail-mark-sent-modal-close"
         footer={
           <>
             <Button
@@ -637,6 +646,8 @@ export function QuoteDetailRoute(): ReactElement {
           }
         }}
         size="sm"
+        data-testid="quote-detail-unmark-sent-modal"
+        testIdClose="quote-detail-unmark-sent-modal-close"
         footer={
           <>
             <Button
@@ -799,11 +810,17 @@ function DescriptionLabel({
 function PdfToolbarButton({
   label,
   onClick,
-}: { label: string; onClick: () => void }): ReactElement {
+  "data-testid": dataTestId,
+}: {
+  label: string;
+  onClick: () => void;
+  "data-testid"?: string;
+}): ReactElement {
   return (
     <button
       type="button"
       onClick={onClick}
+      data-testid={dataTestId}
       style={{
         padding: "2px 8px",
         border: `1.5px solid ${tokens.color.ink}`,

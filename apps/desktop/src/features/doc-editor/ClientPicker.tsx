@@ -98,7 +98,13 @@ export function ClientPicker(props: ClientPickerProps): ReactElement {
           {selected ? fr.quotes.actions.edit : fr.quotes.form.clientPlaceholder}
         </Button>
         {onQuickCreate && (
-          <Button variant="ghost" size="sm" onClick={onQuickCreate} disabled={disabled}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onQuickCreate}
+            disabled={disabled}
+            data-testid="client-picker-quick-new"
+          >
             {fr.quotes.form.clientQuickNew}
           </Button>
         )}
@@ -122,6 +128,7 @@ export function ClientPicker(props: ClientPickerProps): ReactElement {
             placeholder={fr.quotes.form.clientPlaceholder}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            data-testid="client-picker-search"
           />
           <div
             role="listbox"

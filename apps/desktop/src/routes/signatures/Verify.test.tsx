@@ -72,10 +72,12 @@ describe("VerifyRoute", () => {
       tsaProvider: report.tsaProvider,
     };
     renderRoute(buildApi(report, [event]));
-    await waitFor(() => expect(screen.getByTestId("verify-document")).toBeInTheDocument());
-    expect(screen.getByTestId("verify-signature")).toBeInTheDocument();
-    expect(screen.getByTestId("verify-integrity")).toBeInTheDocument();
-    expect(screen.getByTestId("verify-chain")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByTestId("signature-verify-document")).toBeInTheDocument()
+    );
+    expect(screen.getByTestId("signature-verify-signature")).toBeInTheDocument();
+    expect(screen.getByTestId("signature-verify-integrity")).toBeInTheDocument();
+    expect(screen.getByTestId("signature-verify-chain")).toBeInTheDocument();
     expect(screen.getByText(/PAdES-B-T/)).toBeInTheDocument();
     expect(screen.getAllByText(/Intégrité vérifiée/).length).toBeGreaterThan(0);
   });
@@ -98,7 +100,9 @@ describe("VerifyRoute", () => {
       padesLevel: "B",
     };
     renderRoute(buildApi(report, []));
-    await waitFor(() => expect(screen.getByTestId("verify-integrity")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId("signature-verify-integrity")).toBeInTheDocument()
+    );
     expect(screen.getAllByText(/Hash divergent/).length).toBeGreaterThan(0);
   });
 
@@ -114,6 +118,6 @@ describe("VerifyRoute", () => {
       getSignedPdf: vi.fn(async () => null),
     } satisfies SignatureApi;
     renderRoute(api);
-    await waitFor(() => expect(screen.getByTestId("verify-error")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByTestId("signature-verify-error")).toBeInTheDocument());
   });
 });

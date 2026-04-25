@@ -1,0 +1,4 @@
+{
+  "extends": "../../../../tsconfig.wdio.json",
+  "include": ["**/*.ts"]
+}

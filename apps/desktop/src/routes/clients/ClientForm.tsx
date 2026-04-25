@@ -99,10 +99,21 @@ export function ClientForm({ open, onClose, onSubmit, initial }: ClientFormProps
       size="md"
       footer={
         <>
-          <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>
+          <Button
+            variant="secondary"
+            onClick={onClose}
+            disabled={isSubmitting}
+            data-testid="client-form-cancel"
+          >
             Annuler
           </Button>
-          <Button variant="primary" type="submit" form="client-form" disabled={isSubmitting}>
+          <Button
+            variant="primary"
+            type="submit"
+            form="client-form"
+            disabled={isSubmitting}
+            data-testid="client-form-submit"
+          >
             {isSubmitting ? "Enregistrement…" : "Enregistrer"}
           </Button>
         </>
@@ -114,17 +125,20 @@ export function ClientForm({ open, onClose, onSubmit, initial }: ClientFormProps
           void handleFormSubmit(e);
         }}
         style={{ display: "flex", flexDirection: "column", gap: 16 }}
+        data-testid="client-form"
       >
         <Input
           label={fr.clients.labels.name}
           invalid={!!errors.name}
           hint={errors.name?.message}
+          data-testid="client-form-name"
           {...register("name")}
         />
 
         <Select
           label={fr.clients.labels.legalForm}
           options={LEGAL_FORM_OPTIONS}
+          data-testid="client-form-legal-form"
           {...register("legalForm")}
         />
 
@@ -134,6 +148,7 @@ export function ClientForm({ open, onClose, onSubmit, initial }: ClientFormProps
           hint={errors.siret?.message ?? "14 chiffres — optionnel"}
           placeholder="732 829 320 00074"
           style={{ fontFamily: "var(--font-mono)" }}
+          data-testid="client-form-siret"
           {...register("siret")}
         />
         <SiretCheckerField control={control} name="siret" />
@@ -142,26 +157,38 @@ export function ClientForm({ open, onClose, onSubmit, initial }: ClientFormProps
           label={fr.clients.labels.address}
           rows={3}
           hint="Adresse complète (rue, CP, ville)"
+          data-testid="client-form-address"
           {...register("address")}
         />
 
-        <Input label={fr.clients.labels.contactName} {...register("contactName")} />
+        <Input
+          label={fr.clients.labels.contactName}
+          data-testid="client-form-contact-name"
+          {...register("contactName")}
+        />
 
         <Input
           label={fr.clients.labels.email}
           type="email"
           invalid={!!errors.email}
           hint={errors.email?.message}
+          data-testid="client-form-email"
           {...register("email")}
         />
 
         <Input
           label={fr.clients.labels.sector}
           hint="Ex : tech, design, conseil…"
+          data-testid="client-form-sector"
           {...register("sector")}
         />
 
-        <Textarea label={fr.clients.labels.note} rows={3} {...register("note")} />
+        <Textarea
+          label={fr.clients.labels.note}
+          rows={3}
+          data-testid="client-form-note"
+          {...register("note")}
+        />
       </form>
     </Modal>
   );

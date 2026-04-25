@@ -55,8 +55,8 @@ describe("AuditTimeline", () => {
         />
       )
     );
-    expect(screen.getByTestId("audit-entry-signed")).toBeInTheDocument();
-    expect(screen.getByTestId("audit-verify")).toBeInTheDocument();
+    expect(screen.getByTestId("audit-timeline-entry-signed")).toBeInTheDocument();
+    expect(screen.getByTestId("audit-timeline-verify")).toBeInTheDocument();
     expect(screen.getByText(/Tom Andrieu/)).toBeInTheDocument();
     expect(screen.getByText(/freetsa\.org/)).toBeInTheDocument();
   });
@@ -76,9 +76,9 @@ describe("AuditTimeline", () => {
         />
       )
     );
-    expect(screen.getByTestId("audit-entry-created")).toBeInTheDocument();
-    expect(screen.getByTestId("audit-entry-sent")).toBeInTheDocument();
-    expect(screen.getByTestId("audit-entry-signed")).toBeInTheDocument();
+    expect(screen.getByTestId("audit-timeline-entry-created")).toBeInTheDocument();
+    expect(screen.getByTestId("audit-timeline-entry-sent")).toBeInTheDocument();
+    expect(screen.getByTestId("audit-timeline-entry-signed")).toBeInTheDocument();
   });
 
   it("affiche les activity events (mark sent / unmark sent) en plus des signatures", () => {
@@ -112,8 +112,8 @@ describe("AuditTimeline", () => {
         />
       )
     );
-    expect(screen.getByTestId("audit-entry-sent")).toBeInTheDocument();
-    expect(screen.getByTestId("audit-entry-unsent")).toBeInTheDocument();
+    expect(screen.getByTestId("audit-timeline-entry-sent")).toBeInTheDocument();
+    expect(screen.getByTestId("audit-timeline-entry-unsent")).toBeInTheDocument();
   });
 
   it("dédoublonne extraEntries.sent quand un activity event sent existe", () => {
@@ -143,8 +143,8 @@ describe("AuditTimeline", () => {
       )
     );
     // Une seule entrée "sent" malgré la double source.
-    const sentEntries = screen.getAllByTestId("audit-entry-sent");
+    const sentEntries = screen.getAllByTestId("audit-timeline-entry-sent");
     expect(sentEntries).toHaveLength(1);
-    expect(screen.getByTestId("audit-entry-created")).toBeInTheDocument();
+    expect(screen.getByTestId("audit-timeline-entry-created")).toBeInTheDocument();
   });
 });

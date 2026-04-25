@@ -163,6 +163,7 @@ export function InvoiceForm(props: InvoiceFormProps): ReactElement {
           onChange={(e) => setValues((v) => ({ ...v, title: e.target.value }))}
           invalid={errors.includes(fr.invoices.errors.missingTitle)}
           disabled={readOnly}
+          data-testid="invoice-form-title"
         />
 
         <div
@@ -183,6 +184,7 @@ export function InvoiceForm(props: InvoiceFormProps): ReactElement {
               }
             }}
             disabled={readOnly}
+            data-testid="invoice-form-issued-at"
           />
           <Input
             type="number"
@@ -195,6 +197,7 @@ export function InvoiceForm(props: InvoiceFormProps): ReactElement {
               if (Number.isFinite(n) && n >= 1) setDueDays(n);
             }}
             disabled={readOnly}
+            data-testid="invoice-form-due-days"
           />
           <div
             style={{
@@ -245,6 +248,7 @@ export function InvoiceForm(props: InvoiceFormProps): ReactElement {
             }))
           }
           disabled={readOnly}
+          data-testid="invoice-form-payment-method"
         />
       </section>
 
@@ -311,6 +315,7 @@ export function InvoiceForm(props: InvoiceFormProps): ReactElement {
           onChange={(e) => setValues((v) => ({ ...v, notes: e.target.value }))}
           rows={3}
           disabled={readOnly}
+          data-testid="invoice-form-notes"
         />
       </section>
 
@@ -400,7 +405,12 @@ export function InvoiceForm(props: InvoiceFormProps): ReactElement {
             justifyContent: "flex-end",
           }}
         >
-          <Button variant="ghost" onClick={onCancel} disabled={submitting === true}>
+          <Button
+            variant="ghost"
+            onClick={onCancel}
+            disabled={submitting === true}
+            data-testid="invoice-form-cancel"
+          >
             {fr.invoices.actions.cancel}
           </Button>
           <Button

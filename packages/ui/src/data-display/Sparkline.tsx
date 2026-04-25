@@ -8,6 +8,7 @@ export interface SparklineProps {
   stroke?: string;
   fill?: string;
   ariaLabel?: string;
+  "data-testid"?: string;
 }
 
 /** Mini graphique polyline, sans blur ni gradient. */
@@ -18,10 +19,17 @@ export function Sparkline({
   stroke,
   fill,
   ariaLabel,
+  "data-testid": testId,
 }: SparklineProps): ReactElement {
   if (data.length === 0) {
     return (
-      <svg width={width} height={height} role="img" aria-label={ariaLabel ?? "Graphique vide"} />
+      <svg
+        width={width}
+        height={height}
+        role="img"
+        aria-label={ariaLabel ?? "Graphique vide"}
+        data-testid={testId}
+      />
     );
   }
   const max = Math.max(...data);
@@ -38,6 +46,7 @@ export function Sparkline({
       height={height}
       role="img"
       aria-label={ariaLabel ?? "Tendance"}
+      data-testid={testId}
       style={{ overflow: "visible" }}
     >
       {fill !== undefined && (

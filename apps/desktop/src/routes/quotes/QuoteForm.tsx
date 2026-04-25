@@ -129,6 +129,7 @@ export function QuoteForm(props: QuoteFormProps): ReactElement {
           onChange={(e) => setValues((v) => ({ ...v, title: e.target.value }))}
           invalid={errors.includes(fr.quotes.errors.missingTitle)}
           disabled={readOnly}
+          data-testid="quote-form-title"
         />
 
         <div
@@ -149,6 +150,7 @@ export function QuoteForm(props: QuoteFormProps): ReactElement {
               }
             }}
             disabled={readOnly}
+            data-testid="quote-form-issued-at"
           />
           <Input
             type="number"
@@ -161,6 +163,7 @@ export function QuoteForm(props: QuoteFormProps): ReactElement {
               if (Number.isFinite(n) && n >= 1) setValidityDays(n);
             }}
             disabled={readOnly}
+            data-testid="quote-form-validity-days"
           />
           <div
             style={{
@@ -260,6 +263,7 @@ export function QuoteForm(props: QuoteFormProps): ReactElement {
           onChange={(e) => setValues((v) => ({ ...v, notes: e.target.value }))}
           rows={4}
           disabled={readOnly}
+          data-testid="quote-form-notes"
         />
       </section>
 
@@ -308,7 +312,12 @@ export function QuoteForm(props: QuoteFormProps): ReactElement {
             justifyContent: "flex-end",
           }}
         >
-          <Button variant="ghost" onClick={onCancel} disabled={submitting === true}>
+          <Button
+            variant="ghost"
+            onClick={onCancel}
+            disabled={submitting === true}
+            data-testid="quote-form-cancel"
+          >
             {fr.quotes.actions.cancel}
           </Button>
           <Button

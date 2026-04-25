@@ -267,7 +267,11 @@ export function NewFromQuote(): ReactElement {
             {fr.invoices.modes.fromQuote}
           </p>
         </div>
-        <Button variant="ghost" onClick={() => void navigate("/invoices")}>
+        <Button
+          variant="ghost"
+          onClick={() => void navigate("/invoices")}
+          data-testid="invoice-new-from-quote-back"
+        >
           {fr.invoices.actions.backToList}
         </Button>
       </header>

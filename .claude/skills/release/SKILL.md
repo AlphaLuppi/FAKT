@@ -17,6 +17,7 @@ Tu vas piloter la release de la version **$ARGUMENTS** de FAKT, du diff au tag G
 3. Le tag `v$ARGUMENTS` ne doit pas déjà exister : `git tag -l "v$ARGUMENTS"` doit être vide. Sinon : stop.
 4. Récupérer le tag précédent : `git describe --tags --abbrev=0` → `<previous-tag>`.
 5. Vérifier que `$ARGUMENTS` > version dans `apps/desktop/src-tauri/Cargo.toml` et `apps/desktop/package.json` — sinon il faut bumper d'abord.
+6. **Gate E2E release** : la dernière run du workflow `e2e-release.yml` sur `main` doit être verte. Vérifier avec `gh run list --workflow=e2e-release.yml --branch=main --limit=1 --json conclusion,status,createdAt`. Si rouge ou stale (> 7j) : stop, lancer un re-run et investiguer avant de tagger. Le tag déclenche `release.yml` qui est gaté sur `e2e-release.yml` (`needs: e2e-release-gate`) — un échec E2E annule la publication des binaires, donc autant le détecter avant.
 
 ## Étape 1 — Lister les commits user-facing
 
@@ -147,6 +148,7 @@ gh release create "v$ARGUMENTS" \
 
 ## Garde-fous
 
+- **Si le gate E2E release a échoué après le tag** : la job `release` reste en `skipped`, donc aucun binaire n'est uploadé. Investiguer dans l'ordre : (a) télécharger les `wdio-logs-*` artifacts depuis l'onglet Actions, (b) reproduire localement avec `bun --cwd apps/desktop tauri:build && bun run test:e2e:release`, (c) une fois corrigé, supprimer le tag (`git push --delete origin v$ARGUMENTS && git tag -d v$ARGUMENTS`), commiter le fix, retag.
 - **Si le diff `<previous-tag>..HEAD` ne contient AUCUN commit user-facing** (uniquement chore/test/ci) : ne pas créer de release. Demander à Tom s'il veut quand même un tag de maintenance, et dans ce cas mettre une seule ligne dans Améliorations type "Stabilité interne (CI, tests, dépendances)".
 - **Si une release existe déjà** pour `v$ARGUMENTS` : ne jamais l'écraser. Stopper et demander.
 - **Ne jamais utiliser `--no-verify`** sur le commit de release.

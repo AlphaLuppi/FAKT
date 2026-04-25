@@ -7,6 +7,7 @@ export interface SidebarItem {
   label: string;
   icon?: ReactNode;
   badge?: string | number;
+  "data-testid"?: string;
 }
 
 export interface SidebarProps {
@@ -16,6 +17,9 @@ export interface SidebarProps {
   onSelect?: (id: string) => void;
   footer?: ReactNode;
   className?: string;
+  /** Préfixe testid auto-appliqué : `${testIdPrefix}-${id}` sur chaque item nav. */
+  testIdPrefix?: string;
+  "data-testid"?: string;
 }
 
 export function Sidebar({
@@ -25,9 +29,11 @@ export function Sidebar({
   onSelect,
   footer,
   className,
+  testIdPrefix,
+  "data-testid": testId,
 }: SidebarProps): ReactElement {
   return (
-    <aside className={classNames("fakt-sidebar", className)}>
+    <aside className={classNames("fakt-sidebar", className)} data-testid={testId}>
       {brand !== undefined && (
         <div
           style={{
@@ -53,30 +59,36 @@ export function Sidebar({
           gap: tokens.spacing[1],
         }}
       >
-        {items.map((it) => (
-          <button
-            key={it.id}
-            type="button"
-            className="fakt-sidebar__item"
-            data-active={currentId === it.id ? "true" : "false"}
-            onClick={() => onSelect?.(it.id)}
-          >
-            {it.icon}
-            <span style={{ flex: 1 }}>{it.label}</span>
-            {it.badge !== undefined && (
-              <span
-                style={{
-                  fontFamily: tokens.font.mono,
-                  fontSize: tokens.fontSize.xs,
-                  padding: "1px 6px",
-                  border: `${tokens.stroke.hair} solid currentColor`,
-                }}
-              >
-                {it.badge}
-              </span>
-            )}
-          </button>
-        ))}
+        {items.map((it) => {
+          const explicitTestId = it["data-testid"];
+          const computedTestId =
+            explicitTestId ?? (testIdPrefix !== undefined ? `${testIdPrefix}-${it.id}` : undefined);
+          return (
+            <button
+              key={it.id}
+              type="button"
+              className="fakt-sidebar__item"
+              data-active={currentId === it.id ? "true" : "false"}
+              data-testid={computedTestId}
+              onClick={() => onSelect?.(it.id)}
+            >
+              {it.icon}
+              <span style={{ flex: 1 }}>{it.label}</span>
+              {it.badge !== undefined && (
+                <span
+                  style={{
+                    fontFamily: tokens.font.mono,
+                    fontSize: tokens.fontSize.xs,
+                    padding: "1px 6px",
+                    border: `${tokens.stroke.hair} solid currentColor`,
+                  }}
+                >
+                  {it.badge}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </nav>
       {footer !== undefined && (
         <div

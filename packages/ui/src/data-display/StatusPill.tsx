@@ -90,15 +90,22 @@ export interface StatusPillProps {
   status: StatusKind;
   size?: "sm" | "md";
   label?: string;
+  "data-testid"?: string;
 }
 
-export function StatusPill({ status, size = "md", label }: StatusPillProps): ReactElement {
+export function StatusPill({
+  status,
+  size = "md",
+  label,
+  "data-testid": testId,
+}: StatusPillProps): ReactElement {
   const s = STATUS_STYLES[status];
   const sm = size === "sm";
   return (
     <span
       className="fakt-status"
       data-status={status}
+      data-testid={testId}
       style={{
         background: s.bg,
         color: s.fg,
