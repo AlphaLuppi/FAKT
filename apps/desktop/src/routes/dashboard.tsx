@@ -748,11 +748,20 @@ function ActivityRow({
         gridTemplateColumns: "auto 1fr auto auto",
         alignItems: "center",
         gap: tokens.spacing[3],
-        padding: `${tokens.spacing[2]} ${tokens.spacing[2]}`,
-        borderBottom: `${tokens.stroke.hair} solid ${tokens.color.ink}`,
+        padding: `${tokens.spacing[3]} ${tokens.spacing[3]}`,
+        borderBottom: hovered
+          ? `${tokens.stroke.base} solid ${tokens.color.ink}`
+          : `${tokens.stroke.hair} solid ${tokens.color.ink}`,
+        borderLeft: hovered
+          ? `${tokens.stroke.thick} solid ${tokens.color.ink}`
+          : `${tokens.stroke.thick} solid transparent`,
         cursor: "pointer",
         background: hovered ? tokens.color.accentSoft : "transparent",
-        transition: "background 80ms",
+        transform: hovered ? "translateX(2px)" : "translateX(0)",
+        transition:
+          "background 80ms ease-out, transform 80ms ease-out, border-left-color 80ms ease-out, padding-left 80ms ease-out",
+        position: "relative",
+        zIndex: hovered ? 2 : 1,
       }}
     >
       <span
