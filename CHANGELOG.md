@@ -25,6 +25,32 @@ et [Semantic Versioning 2.0.0](https://semver.org/lang/fr/).
 
 ---
 
+## [0.1.13] - 2026-04-25
+
+### Nouveautés
+
+- **Mode "self-host" (entreprise)** — vous pouvez désormais déployer FAKT
+  sur votre propre serveur, avec PostgreSQL et plusieurs comptes utilisateurs.
+  L'app desktop se connecte à votre serveur via une URL configurable, et
+  l'authentification se fait par email + mot de passe.
+- **Sélecteur d'espace de travail** — un menu déroulant en haut de l'app
+  permet de basculer rapidement entre plusieurs espaces (utile en mode
+  self-host quand vous gérez plusieurs activités, ou pour une équipe).
+- **Onglet Paramètres → Backend** — configurez l'URL du serveur et le
+  mode de connexion (sidecar local ou serveur distant) directement depuis
+  l'app, sans toucher aux fichiers de config.
+
+### Corrections
+
+- **Audit trail des devis désormais complet** — quand vous cliquiez sur
+  « Marquer envoyé » puis « Annuler l'envoi », l'historique d'audit ne
+  reflétait pas l'annulation et continuait d'afficher « Envoyé ».
+  Désormais chaque action (envoi, annulation, signature, paiement…)
+  ajoute sa propre entrée datée dans l'historique chronologique du
+  document.
+
+---
+
 ## [0.1.11] - 2026-04-25
 
 ### Added
