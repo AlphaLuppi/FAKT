@@ -120,9 +120,11 @@ export class ApiClient {
     if (typeof window !== "undefined" && window.__FAKT_MODE__ === 2) {
       return "remote";
     }
-    const env = readEnv();
-    if (env.VITE_FAKT_DEFAULT_MODE === "remote") return "remote";
-    if (env.FAKT_TARGET === "web") return "remote"; // build web ⇒ toujours remote
+    // Accès direct à `import.meta.env.X` pour que Vite fasse le replacement
+    // static au build. Tout déréférencement intermédiaire (`const m = import.meta`)
+    // empêche le replacement et renvoie undefined au runtime.
+    if (import.meta.env.VITE_FAKT_DEFAULT_MODE === "remote") return "remote";
+    if (import.meta.env.FAKT_TARGET === "web") return "remote"; // build web ⇒ toujours remote
     return "local";
   }
 
@@ -130,21 +132,19 @@ export class ApiClient {
     if (typeof window !== "undefined" && window.__FAKT_API_URL__) {
       return window.__FAKT_API_URL__;
     }
-    const env = readEnv();
     if (mode === "remote") {
-      if (
-        typeof env.VITE_FAKT_DEFAULT_BACKEND_URL === "string" &&
-        env.VITE_FAKT_DEFAULT_BACKEND_URL.length > 0
-      ) {
-        return env.VITE_FAKT_DEFAULT_BACKEND_URL;
+      const backend = import.meta.env.VITE_FAKT_DEFAULT_BACKEND_URL;
+      if (typeof backend === "string" && backend.length > 0) {
+        return backend;
       }
       // En mode web, fallback sur l'origin courant (frontend + api-server même domaine)
       if (typeof window !== "undefined" && window.location?.origin) {
         return window.location.origin;
       }
     }
-    if (typeof env.VITE_FAKT_API_URL === "string" && env.VITE_FAKT_API_URL.length > 0) {
-      return env.VITE_FAKT_API_URL;
+    const apiUrl = import.meta.env.VITE_FAKT_API_URL;
+    if (typeof apiUrl === "string" && apiUrl.length > 0) {
+      return apiUrl;
     }
     return "http://127.0.0.1:8765";
   }
@@ -153,9 +153,9 @@ export class ApiClient {
     if (typeof window !== "undefined" && window.__FAKT_API_TOKEN__) {
       return window.__FAKT_API_TOKEN__;
     }
-    const env = readEnv();
-    if (typeof env.VITE_FAKT_API_TOKEN === "string" && env.VITE_FAKT_API_TOKEN.length > 0) {
-      return env.VITE_FAKT_API_TOKEN;
+    const token = import.meta.env.VITE_FAKT_API_TOKEN;
+    if (typeof token === "string" && token.length > 0) {
+      return token;
     }
     return "";
   }
@@ -283,15 +283,6 @@ export class ApiClient {
     }
 
     return payload as T;
-  }
-}
-
-function readEnv(): Record<string, string | undefined> {
-  try {
-    const meta = import.meta as unknown as { env?: Record<string, string | undefined> };
-    return meta.env ?? {};
-  } catch {
-    return {};
   }
 }
 
