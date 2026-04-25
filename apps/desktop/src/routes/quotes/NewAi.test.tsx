@@ -262,7 +262,10 @@ describe("NewAi", () => {
     );
   });
 
-  it("le bouton Annuler débloque l'extraction en cours quand un fichier pend", async () => {
+  // Timeout généreux : la 1re invocation charge le module pdfjs-dist (~3 MB)
+  // qui peut prendre 5-10 s sur Windows CI, ce qui faisait timeout sur la
+  // valeur par défaut Vitest (5 s).
+  it("le bouton Annuler débloque l'extraction en cours quand un fichier pend", { timeout: 20000 }, async () => {
     setAi(createProvider({ installed: true, extractResult: FIXTURE_EXTRACTED }));
     renderRoute();
     await waitFor(() => {
