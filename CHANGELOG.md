@@ -25,6 +25,37 @@ et [Semantic Versioning 2.0.0](https://semver.org/lang/fr/).
 
 ---
 
+## [0.1.19] - 2026-04-26
+
+### Nouveautés
+
+- **Bouton « Créer une facture » sur les devis signés** — depuis la
+  fiche d'un devis envoyé ou signé, un nouveau bouton permet désormais
+  de générer directement la facture liée (acompte, solde ou totale)
+  sans passer par le menu Factures. Le devis sélectionné est
+  pré-rempli automatiquement.
+
+### Corrections
+
+- **« Créer et émettre » envoie vraiment le devis** — le bouton ne
+  laissait plus le devis bloqué en brouillon : il attribue le numéro
+  séquentiel **et** bascule le statut en « Envoyé », ce qui débloque
+  immédiatement la génération du PDF et la signature électronique.
+  Auparavant il fallait cliquer trois fois (créer → marquer envoyé →
+  signer) pour arriver au même résultat.
+- **Signature accessible dès l'émission** — comme conséquence du
+  point ci-dessus, le bouton « Signer » n'est plus grisé après
+  création : le PDF est disponible immédiatement et la signature
+  PAdES peut être posée sans étape intermédiaire.
+- **Sélection du devis à facturer** — sur l'écran « Nouvelle facture
+  depuis un devis signé », le premier devis disponible est désormais
+  pré-sélectionné automatiquement. Auparavant la liste déroulante
+  affichait visuellement un devis mais le formulaire restait vide tant
+  qu'on n'avait pas re-cliqué dessus, donnant l'impression que
+  l'écran était cassé.
+
+---
+
 ## [0.1.18] - 2026-04-25
 
 ### Améliorations
