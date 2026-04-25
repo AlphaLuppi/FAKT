@@ -25,7 +25,7 @@ import { describe, expect, it } from "vitest";
 
 describe("Mentions légales obligatoires (FR-016)", () => {
   const workspace = {
-    name: "Atelier Mercier",
+    name: "Mon Entreprise",
     legalForm: "Micro-entreprise" as const,
     siret: "73282932000074",
     address: "10 rue du Test, 84000 Avignon",
@@ -107,7 +107,7 @@ describe("Mentions légales obligatoires (FR-016)", () => {
 
     // 1. Nom + forme juridique + adresse + SIRET workspace
     expect(snapshot).toContain("Micro-entreprise");
-    expect(snapshot).toContain("Atelier Mercier");
+    expect(snapshot).toContain("Mon Entreprise");
     expect(snapshot).toContain("73282932000074");
 
     // 2. TVA non applicable (art. 293 B CGI)

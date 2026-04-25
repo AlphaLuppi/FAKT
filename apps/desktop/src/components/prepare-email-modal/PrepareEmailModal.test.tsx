@@ -66,7 +66,7 @@ const MOCK_RENDER_ARGS = {
   },
   workspace: {
     id: "ws1",
-    name: "Atelier Mercier",
+    name: "Mon Entreprise",
     legalForm: "Micro-entreprise" as const,
     siret: "12345678901234",
     address: "1 rue des Arts, Avignon",
@@ -96,7 +96,7 @@ function renderModal(open = true) {
         doc={MOCK_QUOTE}
         clientName="Maison Berthe"
         clientEmail="contact@berthe.fr"
-        workspaceName="Atelier Mercier"
+        workspaceName="Mon Entreprise"
         workspaceEmail="contact@mercier.fr"
         renderArgs={MOCK_RENDER_ARGS}
       />
@@ -151,7 +151,7 @@ describe("PrepareEmailModal", () => {
           doc={MOCK_QUOTE}
           clientName="Maison Berthe"
           clientEmail={null}
-          workspaceName="Atelier Mercier"
+          workspaceName="Mon Entreprise"
           workspaceEmail="contact@mercier.fr"
           renderArgs={MOCK_RENDER_ARGS}
         />

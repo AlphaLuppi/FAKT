@@ -7,7 +7,7 @@ const VALID_IBAN = "FR7630006000011234567890189";
 describe("identitySchema — validation SIRET", () => {
   it("accepte un SIRET valide", () => {
     const result = identitySchema.safeParse({
-      name: "Atelier Mercier",
+      name: "Mon Entreprise",
       legalForm: "Micro-entreprise",
       siret: VALID_SIRET,
       address: "12 rue de la République, 13001 Marseille",
@@ -18,7 +18,7 @@ describe("identitySchema — validation SIRET", () => {
 
   it("rejette un SIRET trop court", () => {
     const result = identitySchema.safeParse({
-      name: "Atelier Mercier",
+      name: "Mon Entreprise",
       legalForm: "Micro-entreprise",
       siret: "1234567",
       address: "12 rue test",
@@ -30,7 +30,7 @@ describe("identitySchema — validation SIRET", () => {
 
   it("rejette un SIRET avec clé Luhn incorrecte", () => {
     const result = identitySchema.safeParse({
-      name: "Atelier Mercier",
+      name: "Mon Entreprise",
       legalForm: "Micro-entreprise",
       siret: "73282932000075", // dernier chiffre modifié → clé invalide
       address: "12 rue test",
@@ -42,7 +42,7 @@ describe("identitySchema — validation SIRET", () => {
 
   it("accepte un SIRET avec espaces (normalisé)", () => {
     const result = identitySchema.safeParse({
-      name: "Atelier Mercier",
+      name: "Mon Entreprise",
       legalForm: "Micro-entreprise",
       siret: "732 829 320 00074",
       address: "12 rue de la République, 13001 Marseille",
@@ -55,7 +55,7 @@ describe("identitySchema — validation SIRET", () => {
 describe("identitySchema — validation IBAN", () => {
   it("accepte un IBAN FR valide", () => {
     const result = identitySchema.safeParse({
-      name: "Atelier Mercier",
+      name: "Mon Entreprise",
       legalForm: "Micro-entreprise",
       siret: VALID_SIRET,
       address: "12 rue test",
@@ -67,7 +67,7 @@ describe("identitySchema — validation IBAN", () => {
 
   it("accepte un IBAN vide (optionnel)", () => {
     const result = identitySchema.safeParse({
-      name: "Atelier Mercier",
+      name: "Mon Entreprise",
       legalForm: "Micro-entreprise",
       siret: VALID_SIRET,
       address: "12 rue test",
@@ -79,7 +79,7 @@ describe("identitySchema — validation IBAN", () => {
 
   it("rejette un IBAN non-français (DE)", () => {
     const result = identitySchema.safeParse({
-      name: "Atelier Mercier",
+      name: "Mon Entreprise",
       legalForm: "Micro-entreprise",
       siret: VALID_SIRET,
       address: "12 rue test",
@@ -91,7 +91,7 @@ describe("identitySchema — validation IBAN", () => {
 
   it("rejette un IBAN FR avec mauvaise longueur", () => {
     const result = identitySchema.safeParse({
-      name: "Atelier Mercier",
+      name: "Mon Entreprise",
       legalForm: "Micro-entreprise",
       siret: VALID_SIRET,
       address: "12 rue test",
@@ -105,7 +105,7 @@ describe("identitySchema — validation IBAN", () => {
 describe("identitySchema — validation email", () => {
   it("rejette un email invalide", () => {
     const result = identitySchema.safeParse({
-      name: "Atelier Mercier",
+      name: "Mon Entreprise",
       legalForm: "Micro-entreprise",
       siret: VALID_SIRET,
       address: "12 rue test",
@@ -116,7 +116,7 @@ describe("identitySchema — validation email", () => {
 
   it("accepte un email valide", () => {
     const result = identitySchema.safeParse({
-      name: "Atelier Mercier",
+      name: "Mon Entreprise",
       legalForm: "Micro-entreprise",
       siret: VALID_SIRET,
       address: "12 rue test, 13001 Marseille",

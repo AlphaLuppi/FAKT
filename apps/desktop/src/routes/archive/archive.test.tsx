@@ -24,7 +24,7 @@ vi.mock("../quotes/hooks.js", () => ({
   useWorkspace: () => ({
     workspace: {
       id: "ws1",
-      name: "Atelier Mercier",
+      name: "Mon Entreprise",
       siret: "12345678901234",
       legalForm: "Micro-entreprise",
       address: "Avignon",

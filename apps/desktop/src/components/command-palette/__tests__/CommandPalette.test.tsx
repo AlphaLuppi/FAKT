@@ -11,7 +11,7 @@ const mockClients: Client[] = [
   {
     id: "c1",
     workspaceId: "ws-1",
-    name: "Atelier Mercier",
+    name: "Mon Entreprise",
     legalForm: "Micro-entreprise",
     siret: null,
     address: null,
@@ -120,7 +120,7 @@ describe("CommandPaletteProvider", () => {
     await userEvent.click(screen.getByText("Ouvrir"));
 
     await waitFor(() => {
-      expect(screen.getByText("Atelier Mercier")).toBeInTheDocument();
+      expect(screen.getByText("Mon Entreprise")).toBeInTheDocument();
     });
   });
 

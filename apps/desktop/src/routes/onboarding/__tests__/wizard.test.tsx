@@ -74,7 +74,7 @@ describe("Wizard — navigation étape 1 → 2", () => {
     const addressInput = screen.getByLabelText(/adresse/i);
     const emailInput = screen.getByLabelText(/email de facturation/i);
 
-    await user.type(nameInput, "Atelier Mercier");
+    await user.type(nameInput, "Mon Entreprise");
     await user.type(siretInput, VALID_SIRET);
     await user.type(addressInput, "12 rue de la République, 13001 Marseille");
     await user.type(emailInput, "contact@atelier-mercier.fr");
@@ -92,7 +92,7 @@ describe("Wizard — navigation étape 1 → 2", () => {
     const addressInput = screen.getByLabelText(/adresse/i);
     const emailInput = screen.getByLabelText(/email de facturation/i);
 
-    await user.type(nameInput, "Atelier Mercier");
+    await user.type(nameInput, "Mon Entreprise");
     await user.type(siretInput, VALID_SIRET);
     await user.type(addressInput, "12 rue de la République, 13001 Marseille");
     await user.type(emailInput, "contact@atelier-mercier.fr");

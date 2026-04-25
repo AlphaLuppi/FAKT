@@ -65,7 +65,7 @@ import { SettingsRoute } from "../Settings.js";
 
 const mockWorkspace = {
   id: "ws-1",
-  name: "Atelier Mercier",
+  name: "Mon Entreprise",
   legalForm: "Micro-entreprise",
   siret: "73282932000074",
   address: "12 rue de la République, 13001 Marseille",
@@ -160,7 +160,7 @@ describe("SettingsRoute — tab Identité", () => {
     await waitFor(
       () => {
         const nameInput = screen.getByLabelText(/nom ou raison/i) as HTMLInputElement;
-        expect(nameInput.value).toBe("Atelier Mercier");
+        expect(nameInput.value).toBe("Mon Entreprise");
       },
       { timeout: 2000 }
     );

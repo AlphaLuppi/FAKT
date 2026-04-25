@@ -26,7 +26,7 @@ import {
 
 export const FIXTURE_WORKSPACE: Workspace = {
   id: "ws-1",
-  name: "Atelier Mercier",
+  name: "Mon Entreprise",
   legalForm: "Micro-entreprise",
   siret: "12345678901234",
   address: "10 rue du Test, 84000 Avignon",

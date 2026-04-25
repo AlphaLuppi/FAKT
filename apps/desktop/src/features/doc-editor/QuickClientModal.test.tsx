@@ -59,14 +59,14 @@ describe("QuickClientModal", () => {
   });
 
   it("crée un client avec le payload minimal et appelle onCreated", async () => {
-    const created = buildClient({ name: "Atelier Mercier" });
+    const created = buildClient({ name: "Mon Entreprise" });
     createMock.mockResolvedValueOnce(created);
     const onCreated = vi.fn();
     const onClose = vi.fn();
 
     render(<QuickClientModal open={true} onClose={onClose} onCreated={onCreated} />);
     fireEvent.change(screen.getByTestId("quick-client-name"), {
-      target: { value: "Atelier Mercier" },
+      target: { value: "Mon Entreprise" },
     });
     fireEvent.click(screen.getByTestId("quick-client-submit"));
 
@@ -76,7 +76,7 @@ describe("QuickClientModal", () => {
     const firstCall = createMock.mock.calls[0];
     if (!firstCall) throw new Error("createMock was not called");
     const payload = firstCall[0];
-    expect(payload.name).toBe("Atelier Mercier");
+    expect(payload.name).toBe("Mon Entreprise");
     expect(payload.email).toBeNull();
     expect(payload.siret).toBeNull();
     expect(onCreated).toHaveBeenCalledWith(created);

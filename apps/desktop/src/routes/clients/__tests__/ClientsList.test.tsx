@@ -10,7 +10,7 @@ const mockClients: Client[] = [
   {
     id: "c1",
     workspaceId: "ws-1",
-    name: "Atelier Mercier",
+    name: "Mon Entreprise",
     legalForm: "Micro-entreprise",
     siret: null,
     address: "12 rue Pasteur, 84000 Avignon",
@@ -103,7 +103,7 @@ describe("ClientsRoute", () => {
   it("affiche la liste des clients", async () => {
     renderWithRouter(<ClientsRoute />);
     await waitFor(() => {
-      expect(screen.getByText("Atelier Mercier")).toBeInTheDocument();
+      expect(screen.getByText("Mon Entreprise")).toBeInTheDocument();
       expect(screen.getByText("StartupTech")).toBeInTheDocument();
     });
   });

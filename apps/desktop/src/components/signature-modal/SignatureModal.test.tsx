@@ -111,7 +111,7 @@ function renderModal(apiOverride?: Partial<SignatureApi>): {
         docId={VALID_UUID}
         docType="quote"
         docNumber="D2026-001"
-        clientName="Atelier Mercier"
+        clientName="Mon Entreprise"
         signerName="Tom"
         signerEmail="tom@alphaluppi.com"
         pdfBytes={new Uint8Array([37, 80, 68, 70])}

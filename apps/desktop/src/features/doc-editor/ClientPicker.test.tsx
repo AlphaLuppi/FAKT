@@ -22,7 +22,7 @@ const CLIENTS: Client[] = [
   {
     id: "c2",
     workspaceId: "ws",
-    name: "Atelier Mercier",
+    name: "Mon Entreprise",
     legalForm: null,
     siret: null,
     address: null,
