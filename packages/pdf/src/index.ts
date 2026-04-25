@@ -2,22 +2,23 @@
  * @fakt/pdf — Wrapper TypeScript pour le rendu PDF.
  *
  * Architecture :
- *   - Les templates Typst vivent dans packages/pdf/templates/*.typ (compilés
- *     côté Rust via le crate `typst` embarqué).
+ *   - Les templates Typst vivent dans packages/pdf/templates/*.typ.
  *   - Les DTOs métier (QuoteInput / InvoiceInput) sont transformés en contexte
  *     JSON via context-builder.ts, puis injectés dans Typst à compile time.
  *   - Le résultat est un Uint8Array PDF retourné à l'UI.
  *
- * IPC Tauri : la commande Rust `render_pdf` reçoit {docType, ctxJson} et
- * retourne Vec<u8>. Côté TS, on sérialise le contexte avec JSON.stringify
- * puis on appelle invoke(...).
+ * **Dual desktop/web** :
+ *   - Sur Tauri (mode 1 sidecar et mode 2 client desktop), on `invoke("render_pdf")`
+ *     vers la commande Rust qui shell-out vers Typst CLI local.
+ *   - Sur le navigateur (mode 2 web AlphaLuppi), on appelle `POST /api/render/pdf`
+ *     côté serveur (Typst CLI dans le Dockerfile).
  *
- * CONTRAT DE SWAPABILITÉ : les consommateurs doivent importer `renderPdf`
- * ou `renderQuotePdf`/`renderInvoicePdf` et NE PAS dépendre directement du
- * shape de PdfCtx — c'est un détail d'implémentation templating.
+ * La stratégie est swappable via `setRenderStrategy()`. Le default est l'invoke
+ * Tauri (lazy import pour ne pas bundler `@tauri-apps/api` dans le build web).
+ *
+ * CONTRAT : les consommateurs importent `renderPdf` ou `renderQuotePdf` /
+ * `renderInvoicePdf` et NE PAS dépendre du shape de PdfCtx (détail templating).
  */
-
-import { invoke } from "@tauri-apps/api/core";
 
 import {
   type BuildInvoiceCtxArgs,
@@ -53,21 +54,41 @@ export type {
 
 export type DocType = "quote" | "invoice";
 
-// ─── Appel IPC ───────────────────────────────────────────────────────────────
+// ─── Strategy pattern ────────────────────────────────────────────────────────
 
 /**
- * Invoque la commande Tauri `render_pdf` avec un contexte JSON pré-sérialisé.
- * Retourne un Uint8Array — bytes bruts du PDF.
- *
- * En cas d'erreur Typst (template invalide, dépassement de mémoire, etc.),
- * la commande Rust remonte un String d'erreur qu'on propage tel quel.
+ * Stratégie de rendu : prend (docType, dataJson) → bytes du PDF.
+ * Le default fait un dynamic import de `@tauri-apps/api/core` pour invoquer
+ * la commande Rust. En mode web, l'application doit appeler
+ * `setRenderStrategy(httpStrategy)` au boot pour rediriger vers
+ * `POST /api/render/pdf` côté serveur.
  */
-async function invokeRender(docType: DocType, ctxJson: string): Promise<Uint8Array> {
-  const bytes = await invoke<number[]>("render_pdf", {
-    docType,
-    dataJson: ctxJson,
-  });
+export type RenderStrategy = (docType: DocType, dataJson: string) => Promise<Uint8Array>;
+
+/**
+ * Stratégie par défaut : `invoke("render_pdf")` Tauri.
+ * Le `import` est dynamique pour qu'un build web sans Tauri ne pull pas le SDK.
+ */
+async function defaultStrategy(docType: DocType, dataJson: string): Promise<Uint8Array> {
+  const { invoke } = await import("@tauri-apps/api/core");
+  const bytes = await invoke<number[]>("render_pdf", { docType, dataJson });
   return new Uint8Array(bytes);
+}
+
+let _strategy: RenderStrategy = defaultStrategy;
+
+/**
+ * Substitue la stratégie globale de rendu PDF.
+ * - Passe `null` pour restaurer la stratégie par défaut (invoke Tauri).
+ * - À appeler une fois au boot de l'application (ex: en mode web,
+ *   pointer vers `POST /api/render/pdf`).
+ */
+export function setRenderStrategy(strategy: RenderStrategy | null): void {
+  _strategy = strategy ?? defaultStrategy;
+}
+
+async function invokeRender(docType: DocType, ctxJson: string): Promise<Uint8Array> {
+  return _strategy(docType, ctxJson);
 }
 
 // ─── API publique : render à partir d'un contexte pré-construit ─────────────

@@ -208,6 +208,63 @@ export class ApiClient {
     return this.#request<T>("DELETE", path, undefined, undefined);
   }
 
+  /**
+   * POST avec réponse binaire (Uint8Array). Utilisé pour les endpoints qui
+   * retournent du PDF brut (ex: /api/render/pdf en mode web). Headers d'auth
+   * et workspace identiques à `#request`.
+   */
+  async postBinary(path: string, body?: unknown): Promise<Uint8Array> {
+    const url = `${this.#baseUrl}${path.startsWith("/") ? path : `/${path}`}`;
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+
+    if (this.#mode === "local") {
+      if (this.#token) headers["X-FAKT-Token"] = this.#token;
+    } else {
+      if (this.#jwtBearer) headers["Authorization"] = `Bearer ${this.#jwtBearer}`;
+      if (this.#workspaceId) headers["X-FAKT-Workspace-Id"] = this.#workspaceId;
+    }
+
+    const init: RequestInit = {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body ?? {}),
+      ...(this.#mode === "remote" ? { credentials: "include" } : {}),
+    };
+
+    let response: Response;
+    try {
+      response = await fetch(url, init);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      throw new ApiError("NETWORK_ERROR", `network error: ${msg}`, 0);
+    }
+
+    if (!response.ok) {
+      if (response.status === 401 && this.#mode === "remote" && typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("fakt:auth-expired"));
+      }
+      let message = `HTTP ${response.status}`;
+      try {
+        const text = await response.text();
+        if (text.length > 0) {
+          try {
+            const json: unknown = JSON.parse(text);
+            if (isApiErrorBody(json)) message = json.error.message;
+            else message = text;
+          } catch {
+            message = text;
+          }
+        }
+      } catch {
+        /* keep default */
+      }
+      throw new ApiError(statusToCode(response.status), message, response.status);
+    }
+
+    const buf = await response.arrayBuffer();
+    return new Uint8Array(buf);
+  }
+
   async #request<T>(
     method: string,
     path: string,

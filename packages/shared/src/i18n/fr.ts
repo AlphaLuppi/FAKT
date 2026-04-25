@@ -549,6 +549,11 @@ export const fr = {
       certMissingCta: "Configurer mon certificat",
       level: "Niveau eIDAS",
       levelValue: "Avancée (AdES-B-T)",
+      webUnavailableTitle: "Signature indisponible sur le web",
+      webUnavailableBody:
+        "La signature électronique avancée nécessite la clé privée de votre certificat X.509, stockée de façon sécurisée dans le keychain de votre poste. Elle ne peut donc pas être effectuée depuis le navigateur.",
+      webUnavailableHint:
+        "Ouvrez l'application desktop FAKT pour signer ce document. Téléchargez-la depuis votre administrateur si elle n'est pas encore installée.",
     },
   },
 

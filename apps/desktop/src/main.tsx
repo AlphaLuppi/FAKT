@@ -5,6 +5,11 @@ import { BrowserRouter } from "react-router";
 import "./styles/globals.css";
 import "@fakt/ui/styles.css";
 import { App } from "./App.js";
+import { bootstrapRenderStrategy } from "./utils/render-bootstrap.js";
+
+// Bootstrap : sur web, redirige le rendu PDF vers POST /api/render/pdf.
+// Sur desktop, garde la stratégie par défaut (invoke Tauri).
+bootstrapRenderStrategy();
 
 const queryClient = new QueryClient({
   defaultOptions: {

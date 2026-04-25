@@ -8,6 +8,7 @@ import type { ReactElement } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { AuditTimeline, type BaseAuditEntry } from "../../components/audit-timeline/index.js";
+import { DesktopOnlyButton } from "../../components/DesktopOnlyButton.js";
 import { PrepareEmailModal } from "../../components/prepare-email-modal/index.js";
 import { SignatureModal } from "../../components/signature-modal/index.js";
 import { clientsApi } from "../../features/doc-editor/clients-api.js";
@@ -549,14 +550,14 @@ export function QuoteDetailRoute(): ReactElement {
               </Button>
             )}
             {(quote.status === "draft" || quote.status === "sent") && (
-              <Button
+              <DesktopOnlyButton
                 variant="secondary"
                 onClick={() => setSignOpen(true)}
                 disabled={!quote.number || !pdfBytes || pdfBytes.byteLength === 0}
                 data-testid="detail-sign"
               >
                 {fr.quotes.actions.sign}
-              </Button>
+              </DesktopOnlyButton>
             )}
           </div>
         </aside>

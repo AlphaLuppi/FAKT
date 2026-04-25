@@ -7,6 +7,7 @@ import { quotesApi } from "./quotes.js";
 import { searchApi } from "./search.js";
 import { servicesApi } from "./services.js";
 import { settingsApi } from "./settings.js";
+import { renderApi } from "./render.js";
 import { signaturesApi } from "./signatures.js";
 import { workspaceApi } from "./workspace.js";
 
@@ -30,6 +31,7 @@ export { activityApi } from "./activity.js";
 export { searchApi, type SearchHit, type SearchResponse } from "./search.js";
 export { signaturesApi } from "./signatures.js";
 export { backupsApi } from "./backups.js";
+export { renderApi, type RenderPdfInput } from "./render.js";
 
 export * from "./workspace.js";
 export type {
@@ -89,4 +91,5 @@ export const api = {
   search: searchApi,
   signatures: signaturesApi,
   backups: backupsApi,
+  render: renderApi,
 } as const;

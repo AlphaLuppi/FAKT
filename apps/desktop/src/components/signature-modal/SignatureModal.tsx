@@ -6,6 +6,7 @@ import type { ReactElement } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { signatureApi } from "../../features/doc-editor/signature-api.js";
+import { isWeb } from "../../utils/runtime.js";
 import { SignatureCanvas, type SignatureCanvasHandle } from "./SignatureCanvas.js";
 import { TypeSignature, type TypeSignatureHandle } from "./TypeSignature.js";
 import { validateSignatureSubmit } from "./schema.js";
@@ -70,6 +71,42 @@ export function SignatureModal({
       setMode("draw");
     }
   }, [open]);
+
+  // Mode web : la signature PAdES nécessite la clé privée X.509 du keychain OS,
+  // donc 100% desktop. On affiche une modal informative à la place.
+  if (open && isWeb()) {
+    return (
+      <Modal
+        open={open}
+        title={fr.signature.modal.webUnavailableTitle}
+        onClose={onClose}
+        size="md"
+        footer={
+          <Button variant="primary" onClick={onClose} data-testid="signature-web-close">
+            {fr.shortcuts.close}
+          </Button>
+        }
+      >
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: tokens.spacing[3],
+            fontFamily: tokens.font.ui,
+            fontSize: tokens.fontSize.sm,
+            color: tokens.color.ink,
+            lineHeight: 1.5,
+          }}
+          data-testid="signature-web-unavailable"
+        >
+          <p style={{ margin: 0 }}>{fr.signature.modal.webUnavailableBody}</p>
+          <p style={{ margin: 0, color: tokens.color.muted }}>
+            {fr.signature.modal.webUnavailableHint}
+          </p>
+        </div>
+      </Modal>
+    );
+  }
 
   const title = useMemo((): string => {
     const label = `${docNumber ?? fr.quotes.labels.numberPending} — ${clientName}`;
