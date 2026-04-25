@@ -1,23 +1,36 @@
 /**
- * Singleton ApiClient : consomme le sidecar Bun+Hono (api-server).
- * Récupère URL + token depuis `window.__FAKT_API_URL__` / `window.__FAKT_API_TOKEN__`
- * injectés par le runtime Tauri (webview init script). Fallback env-var pour dev web.
+ * Singleton ApiClient — supporte deux modes de déploiement :
  *
- * Auth : header `X-FAKT-Token` (constant-time comparison côté sidecar).
- * Erreurs : l'api-server renvoie `{ error: { code, message, details? } }`.
+ *   - **Mode "local"** (mode 1 sidecar) : récupère URL + token depuis
+ *     `window.__FAKT_API_URL__` / `window.__FAKT_API_TOKEN__` injectés par Tauri,
+ *     auth via header `X-FAKT-Token` (constant-time compare).
+ *
+ *   - **Mode "remote"** (mode 2 self-host) : URL configurable depuis Settings,
+ *     auth via JWT — soit `Authorization: Bearer <jwt>` (en mémoire) soit cookie
+ *     httpOnly `fakt_session`. `credentials: "include"` activé pour cross-origin.
+ *
+ * Détection : `window.__FAKT_MODE__` injecté par Rust. 1 = local sidecar, 2 = remote.
+ * Override : `setMode()` / `setBaseUrl()` côté UI Settings.
+ *
+ * Errors : l'api-server renvoie `{ error: { code, message, details? } }`.
+ * 401 en mode remote → dispatch `window.dispatchEvent(new CustomEvent("fakt:auth-expired"))`
+ * pour que `useAuth` puisse rediriger vers /login.
  */
 
 declare global {
   interface Window {
     __FAKT_API_URL__?: string;
     __FAKT_API_TOKEN__?: string;
-    __FAKT_MODE__?: 0 | 1;
+    /** 0 = unset, 1 = local sidecar, 2 = remote backend */
+    __FAKT_MODE__?: 0 | 1 | 2;
     __TAURI_INTERNALS__?: unknown;
   }
 }
 
 export const IS_TAURI: boolean =
   typeof window !== "undefined" && Boolean(window.__TAURI_INTERNALS__);
+
+export type ApiMode = "local" | "remote";
 
 export type ApiErrorCode =
   | "VALIDATION_ERROR"
@@ -91,17 +104,45 @@ function isApiErrorBody(value: unknown): value is ApiErrorBody {
 export class ApiClient {
   #baseUrl: string;
   #token: string;
+  #mode: ApiMode;
+  /** JWT bearer en mémoire pour mode remote (cookie httpOnly est l'autorité primaire) */
+  #jwtBearer: string | null = null;
+  /** Workspace courant (mode remote, header X-FAKT-Workspace-Id) */
+  #workspaceId: string | null = null;
 
-  constructor(baseUrl?: string, token?: string) {
-    this.#baseUrl = (baseUrl ?? ApiClient.resolveBaseUrl()).replace(/\/+$/, "");
+  constructor(baseUrl?: string, token?: string, mode?: ApiMode) {
+    this.#mode = mode ?? ApiClient.resolveMode();
+    this.#baseUrl = (baseUrl ?? ApiClient.resolveBaseUrl(this.#mode)).replace(/\/+$/, "");
     this.#token = token ?? ApiClient.resolveToken();
   }
 
-  static resolveBaseUrl(): string {
+  static resolveMode(): ApiMode {
+    if (typeof window !== "undefined" && window.__FAKT_MODE__ === 2) {
+      return "remote";
+    }
+    const env = readEnv();
+    if (env.VITE_FAKT_DEFAULT_MODE === "remote") return "remote";
+    if (env.FAKT_TARGET === "web") return "remote"; // build web ⇒ toujours remote
+    return "local";
+  }
+
+  static resolveBaseUrl(mode: ApiMode): string {
     if (typeof window !== "undefined" && window.__FAKT_API_URL__) {
       return window.__FAKT_API_URL__;
     }
     const env = readEnv();
+    if (mode === "remote") {
+      if (
+        typeof env.VITE_FAKT_DEFAULT_BACKEND_URL === "string" &&
+        env.VITE_FAKT_DEFAULT_BACKEND_URL.length > 0
+      ) {
+        return env.VITE_FAKT_DEFAULT_BACKEND_URL;
+      }
+      // En mode web, fallback sur l'origin courant (frontend + api-server même domaine)
+      if (typeof window !== "undefined" && window.location?.origin) {
+        return window.location.origin;
+      }
+    }
     if (typeof env.VITE_FAKT_API_URL === "string" && env.VITE_FAKT_API_URL.length > 0) {
       return env.VITE_FAKT_API_URL;
     }
@@ -127,8 +168,24 @@ export class ApiClient {
     this.#baseUrl = baseUrl.replace(/\/+$/, "");
   }
 
+  setMode(mode: ApiMode): void {
+    this.#mode = mode;
+  }
+
+  setJwtBearer(jwt: string | null): void {
+    this.#jwtBearer = jwt;
+  }
+
+  setWorkspaceId(workspaceId: string | null): void {
+    this.#workspaceId = workspaceId;
+  }
+
   get baseUrl(): string {
     return this.#baseUrl;
+  }
+
+  get mode(): ApiMode {
+    return this.#mode;
   }
 
   async get<T>(path: string, query?: QueryRecord): Promise<T> {
@@ -158,10 +215,22 @@ export class ApiClient {
     body: unknown
   ): Promise<T> {
     const url = `${this.#baseUrl}${path.startsWith("/") ? path : `/${path}`}${buildQueryString(query)}`;
-    const headers: Record<string, string> = {
-      "X-FAKT-Token": this.#token,
+    const headers: Record<string, string> = {};
+
+    if (this.#mode === "local") {
+      // Mode 1 sidecar : token shared X-FAKT-Token
+      if (this.#token) headers["X-FAKT-Token"] = this.#token;
+    } else {
+      // Mode 2 remote : Bearer JWT (et cookie httpOnly via credentials: include)
+      if (this.#jwtBearer) headers["Authorization"] = `Bearer ${this.#jwtBearer}`;
+      if (this.#workspaceId) headers["X-FAKT-Workspace-Id"] = this.#workspaceId;
+    }
+
+    const init: RequestInit = {
+      method,
+      headers,
+      ...(this.#mode === "remote" ? { credentials: "include" } : {}),
     };
-    const init: RequestInit = { method, headers };
     if (body !== undefined) {
       headers["Content-Type"] = "application/json";
       init.body = JSON.stringify(body);
@@ -197,6 +266,10 @@ export class ApiClient {
     }
 
     if (!response.ok) {
+      // Mode 2 : 401 → notifier useAuth pour redirect /login
+      if (response.status === 401 && this.#mode === "remote" && typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("fakt:auth-expired"));
+      }
       if (isApiErrorBody(payload)) {
         const raw = payload.error.code;
         const code = statusToCode(response.status, isKnownCode(raw) ? raw : undefined);
@@ -247,4 +320,9 @@ export function getApiClient(): ApiClient {
 /** Test helper : remplace le singleton (rétablit le défaut si `null`). */
 export function setApiClient(client: ApiClient | null): void {
   singleton = client;
+}
+
+/** Helper : reset le singleton après changement de mode/URL via Settings. */
+export function resetApiClient(): void {
+  singleton = null;
 }

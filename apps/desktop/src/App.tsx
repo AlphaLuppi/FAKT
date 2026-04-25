@@ -2,7 +2,11 @@ import type { ReactElement } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router";
 import { ErrorBoundary } from "./components/ErrorBoundary.js";
 import { Shell } from "./features/shell/Shell.js";
+// useAuth importé pour son side-effect (mount initial fetch /me en mode remote)
+import { useAuth } from "./hooks/useAuth.js";
 import { ArchiveRoute } from "./routes/archive/index.js";
+import { LoginRoute } from "./routes/auth/Login.js";
+import { RequireAuth } from "./routes/auth/RequireAuth.js";
 import { ClientsRoute } from "./routes/clients/index.js";
 import { DashboardRoute } from "./routes/dashboard.js";
 import { InvoicesRouter } from "./routes/invoices/index.js";
@@ -14,8 +18,23 @@ import { SettingsRoute } from "./routes/settings/Settings.js";
 import { SignaturesRouter } from "./routes/signatures/index.js";
 
 export function App(): ReactElement {
+  // useAuth side-effect : sur mount en mode remote, fetch /api/auth/me pour
+  // restaurer la session via le cookie httpOnly. Bypass en mode local sidecar.
+  useAuth();
+
   const guard = useOnboardingGuard();
   const location = useLocation();
+
+  // La page /login est publique : skip onboarding/auth guards
+  if (location.pathname === "/login") {
+    return (
+      <ErrorBoundary>
+        <Routes>
+          <Route path="/login" element={<LoginRoute />} />
+        </Routes>
+      </ErrorBoundary>
+    );
+  }
 
   if (guard === "loading") {
     return <LoadingScreen />;
@@ -30,29 +49,33 @@ export function App(): ReactElement {
   if (isOnboarding) {
     return (
       <ErrorBoundary>
-        <Routes>
-          <Route path="/onboarding" element={<WizardRoute />} />
-          <Route path="*" element={<Navigate to="/onboarding" replace />} />
-        </Routes>
+        <RequireAuth>
+          <Routes>
+            <Route path="/onboarding" element={<WizardRoute />} />
+            <Route path="*" element={<Navigate to="/onboarding" replace />} />
+          </Routes>
+        </RequireAuth>
       </ErrorBoundary>
     );
   }
 
   return (
     <ErrorBoundary>
-      <Shell>
-        <Routes>
-          <Route path="/" element={<DashboardRoute />} />
-          <Route path="/quotes/*" element={<QuotesRouter />} />
-          <Route path="/invoices/*" element={<InvoicesRouter />} />
-          <Route path="/clients/*" element={<ClientsRoute />} />
-          <Route path="/services/*" element={<ServicesRoute />} />
-          <Route path="/signatures/*" element={<SignaturesRouter />} />
-          <Route path="/archive" element={<ArchiveRoute />} />
-          <Route path="/settings" element={<SettingsRoute />} />
-          <Route path="*" element={<Placeholder title="404 — Page introuvable" />} />
-        </Routes>
-      </Shell>
+      <RequireAuth>
+        <Shell>
+          <Routes>
+            <Route path="/" element={<DashboardRoute />} />
+            <Route path="/quotes/*" element={<QuotesRouter />} />
+            <Route path="/invoices/*" element={<InvoicesRouter />} />
+            <Route path="/clients/*" element={<ClientsRoute />} />
+            <Route path="/services/*" element={<ServicesRoute />} />
+            <Route path="/signatures/*" element={<SignaturesRouter />} />
+            <Route path="/archive" element={<ArchiveRoute />} />
+            <Route path="/settings" element={<SettingsRoute />} />
+            <Route path="*" element={<Placeholder title="404 — Page introuvable" />} />
+          </Routes>
+        </Shell>
+      </RequireAuth>
     </ErrorBoundary>
   );
 }
