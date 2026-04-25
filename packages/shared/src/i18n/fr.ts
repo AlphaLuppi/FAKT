@@ -916,6 +916,8 @@ export const fr = {
       draftOpened: "Brouillon ouvert dans votre application mail.",
       mailtoOpened: "Client mail ouvert (mode mailto — sans pièce jointe).",
       fallbackUsed: "Brouillon ouvert en mode mailto (pièce jointe non supportée par votre OS).",
+      webDraftOpened:
+        "PDF téléchargé. Joignez-le manuellement dans votre client mail (mode web — pas d'accès filesystem).",
     },
     activity: {
       drafted: "Brouillon email préparé",

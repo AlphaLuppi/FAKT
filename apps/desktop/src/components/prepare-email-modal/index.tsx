@@ -5,12 +5,12 @@ import { fr } from "@fakt/shared";
 import type { Invoice, Quote } from "@fakt/shared";
 import { Button, Input, Modal, Select, Textarea, toast } from "@fakt/ui";
 import type { SelectOption } from "@fakt/ui";
-import { invoke } from "@tauri-apps/api/core";
 import type { ReactElement } from "react";
 import { useEffect, useState } from "react";
 import { api } from "../../api/index.js";
 import { pdfApi } from "../../features/doc-editor/pdf-api.js";
 import type { RenderInvoiceArgs, RenderQuoteArgs } from "../../features/doc-editor/pdf-api.js";
+import { isWeb, tauriInvoke } from "../../utils/runtime.js";
 
 type DocType = "quote" | "invoice";
 
@@ -128,9 +128,54 @@ export function PrepareEmailModal(props: PrepareEmailModalProps): ReactElement {
     setSubmitError(null);
 
     try {
+      // Mode web : pas d'accès filesystem ni de plugin-shell — on télécharge le
+      // PDF via blob URL + on ouvre un mailto: simple (sans pièce jointe). Le
+      // user joint le PDF manuellement dans son client mail. Un toast prévient.
+      if (isWeb()) {
+        let pdfBytes: Uint8Array;
+        try {
+          if (docType === "quote") {
+            pdfBytes = await pdfApi.renderQuote((props as PrepareEmailModalQuoteProps).renderArgs);
+          } else {
+            pdfBytes = await pdfApi.renderInvoice(
+              (props as PrepareEmailModalInvoiceProps).renderArgs
+            );
+          }
+        } catch {
+          throw new Error(fr.email.errors.pdfFailed);
+        }
+
+        const filename = `${doc.number ?? "document"}.pdf`;
+        const blob = new Blob([new Uint8Array(pdfBytes)], { type: "application/pdf" });
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(blobUrl);
+
+        const url = buildMailtoUrl({ to: toEmail, subject, body });
+        window.open(url, "_self");
+
+        api.activity
+          .append({
+            type: "email_drafted",
+            entityType: docType,
+            entityId: doc.id,
+            payload: JSON.stringify({ template: templateKey, to: toEmail, fallback: "web-mailto" }),
+          })
+          .catch(() => {});
+
+        toast.success(fr.email.success.webDraftOpened);
+        onClose();
+        return;
+      }
+
       if (useMailto) {
         const url = buildMailtoUrl({ to: toEmail, subject, body });
-        await invoke("open_mailto_fallback", { url });
+        await tauriInvoke("open_mailto_fallback", { url });
         toast.success(fr.email.success.mailtoOpened);
         onClose();
         return;
@@ -168,10 +213,10 @@ export function PrepareEmailModal(props: PrepareEmailModalProps): ReactElement {
 
       const emlPath = await saveEmlTemp(emlContent, doc.number ?? "draft");
       let fellBackToMailto = false;
-      await invoke("open_email_draft", { emlPath }).catch(async () => {
+      await tauriInvoke("open_email_draft", { emlPath }).catch(async () => {
         fellBackToMailto = true;
         const url = buildMailtoUrl({ to: toEmail, subject, body });
-        await invoke("open_mailto_fallback", { url });
+        await tauriInvoke("open_mailto_fallback", { url });
         toast.success(fr.email.success.fallbackUsed);
       });
 
@@ -352,15 +397,15 @@ export function PrepareEmailModal(props: PrepareEmailModalProps): ReactElement {
 
 async function saveEmlTemp(content: string, docNumber: string): Promise<string> {
   const filename = `${docNumber}-${Date.now()}.eml`;
-  const tmpPath = await invoke<string>("plugin:path|temp_dir").catch(() => "/tmp");
+  const tmpPath = await tauriInvoke<string>("plugin:path|temp_dir").catch(() => "/tmp");
   const fullPath = `${tmpPath}/fakt-drafts/${filename}`;
 
-  await invoke("plugin:fs|create_dir", {
+  await tauriInvoke("plugin:fs|create_dir", {
     path: `${tmpPath}/fakt-drafts`,
     options: { recursive: true },
   }).catch(() => {});
 
-  await invoke("plugin:fs|write_text_file", {
+  await tauriInvoke("plugin:fs|write_text_file", {
     path: fullPath,
     contents: content,
   });
