@@ -25,6 +25,23 @@ et [Semantic Versioning 2.0.0](https://semver.org/lang/fr/).
 
 ---
 
+## [0.1.15] - 2026-04-25
+
+### Corrections
+
+- **Page de connexion lisible** — le bouton « Se connecter » apparaissait
+  noir sur noir et restait invisible ; il s'affiche désormais en jaune
+  vif avec son ombre portée comme le reste de l'interface.
+- **Card du choix de mode (Paramètres → Backend)** — l'option sélectionnée
+  devenait un rectangle noir avec son texte invisible ; elle est désormais
+  surlignée en jaune avec le label parfaitement lisible.
+- **Activité récente du tableau de bord plus lisible** — au survol d'une
+  ligne, la date et la référence du document (par ex. `D2026-001`)
+  restent maintenant en noir franc sur le fond jaune. Les codes
+  numériques ne sont plus recolorés par le navigateur.
+
+---
+
 ## [0.1.14] - 2026-04-25
 
 ### Améliorations
