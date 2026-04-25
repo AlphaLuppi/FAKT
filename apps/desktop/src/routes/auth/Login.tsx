@@ -2,6 +2,7 @@ import { type FormEvent, type ReactElement, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router";
 import { ApiError } from "../../api/client.js";
 import { useAuth } from "../../hooks/useAuth.js";
+import { LoginBackendConfig } from "./LoginBackendConfig.js";
 
 /**
  * Page de login pour le mode 2 self-host.
@@ -49,6 +50,7 @@ export function LoginRoute(): ReactElement {
 
   return (
     <div
+      data-testid="login"
       style={{
         minHeight: "100vh",
         display: "flex",
@@ -111,6 +113,7 @@ export function LoginRoute(): ReactElement {
             </label>
             <input
               id="email"
+              data-testid="login-email"
               type="email"
               autoComplete="email"
               required
@@ -146,6 +149,7 @@ export function LoginRoute(): ReactElement {
             </label>
             <input
               id="password"
+              data-testid="login-password"
               type="password"
               autoComplete="current-password"
               required
@@ -168,6 +172,7 @@ export function LoginRoute(): ReactElement {
           {error && (
             <div
               role="alert"
+              data-testid="login-error"
               style={{
                 padding: "var(--s-3) var(--s-4)",
                 background: "var(--danger-bg)",
@@ -194,6 +199,13 @@ export function LoginRoute(): ReactElement {
         >
           Mot de passe oublié ? Contactez votre administrateur.
         </p>
+
+        {/*
+         * Configuration backend (desktop uniquement) — disclosure discret en
+         * bas de la card. Permet de basculer Local (sidecar) ↔ Distant + URL
+         * personnalisée sans passer par Settings. Au save, l'app relaunch.
+         */}
+        <LoginBackendConfig />
       </div>
     </div>
   );
@@ -206,6 +218,7 @@ function SubmitButton({ loading }: { loading: boolean }): ReactElement {
   return (
     <button
       type="submit"
+      data-testid="login-submit"
       disabled={loading}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => {
