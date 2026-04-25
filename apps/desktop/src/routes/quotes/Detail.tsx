@@ -566,6 +566,15 @@ export function QuoteDetailRoute(): ReactElement {
                 {fr.quotes.actions.sign}
               </DesktopOnlyButton>
             )}
+            {(quote.status === "signed" || quote.status === "sent") && (
+              <Button
+                variant="primary"
+                onClick={() => void navigate(`/invoices/new?fromQuote=1&quoteId=${quote.id}`)}
+                data-testid="detail-create-invoice"
+              >
+                {fr.quotes.actions.createInvoice}
+              </Button>
+            )}
           </div>
         </aside>
       </div>

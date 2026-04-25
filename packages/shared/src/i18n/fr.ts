@@ -172,7 +172,7 @@ export const fr = {
       downloadPdf: "Télécharger le PDF",
       sign: "Signer",
       saveDraft: "Enregistrer brouillon",
-      createAndIssue: "Créer et attribuer numéro",
+      createAndIssue: "Créer et émettre",
       backToList: "Retour à la liste",
       confirm: "Confirmer",
     },

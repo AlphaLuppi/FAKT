@@ -103,6 +103,11 @@ export function NewFromQuote(): ReactElement {
         if (!cancelled) {
           setQuotes(data);
           setLoadingQuotes(false);
+          // Auto-sélectionne le 1er devis si rien n'est pré-sélectionné.
+          // Sinon le <select> HTML affiche la 1ère option visuellement mais
+          // n'émet pas onChange tant que l'utilisateur ne change pas la valeur,
+          // d'où l'impression de "rien ne se passe" après ouverture.
+          setSelectedQuoteId((current) => current ?? data[0]?.id ?? null);
         }
       })
       .catch(() => {

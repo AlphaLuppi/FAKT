@@ -107,7 +107,19 @@ const httpQuotesApi: QuotesApi = {
       })),
     });
     if (input.issueNumber) {
-      return httpApi.quotes.issue(created.id);
+      // "Créer et émettre" : 1) attribue le numéro séquentiel (CGI 289),
+      // 2) bascule draft → sent pour fixer issuedAt et débloquer PDF + signature.
+      // Sans markSent, le PDF reste indisponible (gate quote.issuedAt côté UI)
+      // et le bouton "Signer" est désactivé.
+      const issued = await httpApi.quotes.issue(created.id);
+      try {
+        return await httpApi.quotes.markSent(issued.id);
+      } catch {
+        // markSent peut échouer (ex. transition refusée). On retourne au moins
+        // le devis numéroté ; l'UI affichera le statut réel et l'utilisateur
+        // pourra cliquer "Marquer envoyé" manuellement.
+        return issued;
+      }
     }
     return created;
   },
