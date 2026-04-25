@@ -21,6 +21,7 @@ apps/desktop/src-tauri/tests/output/
 
 # Build outputs
 dist/
+dist-web/
 build/
 out/
 .next/

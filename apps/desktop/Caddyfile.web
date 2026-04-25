@@ -1,0 +1,29 @@
+# ============================================================================
+# Caddy interne du container web-frontend.
+# ============================================================================
+# Sert le bundle statique React produit par `bun run build:web`.
+# Le reverse proxy Caddy externe (deploy/Caddyfile.alphaluppi) route /api/*
+# vers api-server et tout le reste vers ce container.
+# ============================================================================
+
+:80 {
+    root * /usr/share/caddy
+    encode gzip zstd
+
+    # Cache assets immutables (hashés par Vite)
+    @assets path /assets/*
+    header @assets Cache-Control "public, max-age=31536000, immutable"
+
+    # Pas de cache sur index.html (bust à chaque déploiement)
+    @html path /
+    header @html Cache-Control "no-cache, must-revalidate"
+
+    # Sécurité minimale (HSTS / CSP est ajouté par le Caddy externe)
+    header X-Content-Type-Options "nosniff"
+    header X-Frame-Options "DENY"
+    header Referrer-Policy "strict-origin-when-cross-origin"
+
+    # SPA fallback : toute route non-existante → index.html
+    try_files {path} /index.html
+    file_server
+}
