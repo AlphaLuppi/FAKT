@@ -1,6 +1,6 @@
 {
   "name": "@fakt/pdf",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "private": true,
   "description": "PDF renderer — Typst templates + Tauri bridge for FAKT quotes and invoices.",
   "type": "module",

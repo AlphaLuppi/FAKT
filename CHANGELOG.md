@@ -7,7 +7,7 @@ et [Semantic Versioning 2.0.0](https://semver.org/lang/fr/).
 
 ---
 
-## [Unreleased]
+## [0.1.10] - 2026-04-25
 
 ### Added
 - **Mises à jour in-app via `tauri-plugin-updater` v2.** Au boot, FAKT
