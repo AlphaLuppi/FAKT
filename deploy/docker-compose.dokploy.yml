@@ -40,6 +40,8 @@ services:
     build:
       context: ..
       dockerfile: apps/desktop/Dockerfile.web
+      args:
+        - VITE_FAKT_DEFAULT_BACKEND_URL=https://api.fakt.alphaluppi.fr
     restart: unless-stopped
     networks:
       - dokploy-network

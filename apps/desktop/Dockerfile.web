@@ -35,6 +35,8 @@ RUN bun install --frozen-lockfile
 COPY apps/desktop/src ./apps/desktop/src
 
 # Build mode web — output dist-web/
+ARG VITE_FAKT_DEFAULT_BACKEND_URL=""
+ENV VITE_FAKT_DEFAULT_BACKEND_URL=${VITE_FAKT_DEFAULT_BACKEND_URL}
 WORKDIR /app/apps/desktop
 RUN bun run build:web
 
