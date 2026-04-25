@@ -760,7 +760,9 @@ function ActivityRow({
           fontFamily: tokens.font.mono,
           fontSize: tokens.fontSize.xs,
           color: hovered ? tokens.color.ink : tokens.color.muted,
+          WebkitTextFillColor: hovered ? tokens.color.ink : tokens.color.muted,
           fontVariantNumeric: "tabular-nums",
+          textDecoration: "none",
         }}
       >
         {formatFrDate(entry.at)}
@@ -770,9 +772,11 @@ function ActivityRow({
           fontFamily: tokens.font.ui,
           fontSize: tokens.fontSize.sm,
           color: tokens.color.ink,
+          WebkitTextFillColor: tokens.color.ink,
           fontWeight: Number(tokens.fontWeight.bold),
           textTransform: "uppercase",
           letterSpacing: "0.04em",
+          textDecoration: "none",
         }}
       >
         {entry.label}
@@ -782,7 +786,9 @@ function ActivityRow({
           fontFamily: tokens.font.mono,
           fontSize: tokens.fontSize.xs,
           color: tokens.color.ink,
+          WebkitTextFillColor: tokens.color.ink,
           fontVariantNumeric: "tabular-nums",
+          textDecoration: "none",
         }}
       >
         {entry.reference}
