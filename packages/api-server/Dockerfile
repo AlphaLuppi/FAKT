@@ -65,7 +65,7 @@ RUN mkdir -p /var/lib/fakt/signed && chown -R fakt:fakt /var/lib/fakt
 USER fakt
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD wget -qO- http://localhost:${FAKT_API_PORT:-3001}/health || exit 1
+  CMD wget -qO- http://127.0.0.1:${FAKT_API_PORT:-3001}/health || exit 1
 
 # Default env (overridé par docker-compose / Dokploy)
 ENV BIND=0.0.0.0
