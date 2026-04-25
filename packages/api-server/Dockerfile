@@ -46,6 +46,7 @@ RUN apt-get update \
        ca-certificates \
        curl \
        libssl3 \
+       xz-utils \
   && curl -fsSL "https://github.com/typst/typst/releases/download/v${TYPST_VERSION}/typst-x86_64-unknown-linux-musl.tar.xz" \
      | tar -xJ -C /tmp \
   && mv /tmp/typst-x86_64-unknown-linux-musl/typst /usr/local/bin/typst \
