@@ -58,6 +58,9 @@ WORKDIR /app
 COPY --from=builder /app/packages/api-server/fakt-api /app/fakt-api
 RUN chmod +x /app/fakt-api
 
+# Templates Typst (pour render PDF côté serveur en mode web)
+COPY --from=builder /app/packages/pdf/templates /app/templates
+
 # Volume pour les PDFs signés
 RUN mkdir -p /var/lib/fakt/signed && chown -R fakt:fakt /var/lib/fakt
 
@@ -73,6 +76,7 @@ ENV FAKT_API_PORT=3001
 ENV AUTH_MODE=jwt
 ENV LOG_LEVEL=info
 ENV FAKT_SIGNED_PDFS_DIR=/var/lib/fakt/signed
+ENV FAKT_PDF_TEMPLATES_DIR=/app/templates
 
 EXPOSE 3001
 

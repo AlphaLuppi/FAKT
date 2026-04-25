@@ -11,6 +11,7 @@ import {
   invoicesRoutes,
   numberingRoutes,
   quotesRoutes,
+  renderRoutes,
   searchRoutes,
   servicesRoutes,
   settingsRoutes,
@@ -118,6 +119,7 @@ export function createApp(config: AppConfig): Hono<AppEnv> {
   app.route("/api/search", searchRoutes);
   app.route("/api", signaturesRoutes);
   app.route("/api/backups", backupsRoutes);
+  app.route("/api/render", renderRoutes);
 
   app.notFound((c) =>
     c.json(

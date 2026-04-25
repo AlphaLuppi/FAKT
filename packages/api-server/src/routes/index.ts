@@ -10,3 +10,4 @@ export { activityRoutes } from "./activity.js";
 export { searchRoutes } from "./search.js";
 export { signaturesRoutes } from "./signatures.js";
 export { backupsRoutes } from "./backups.js";
+export { renderRoutes } from "./render.js";
