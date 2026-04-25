@@ -46,7 +46,10 @@
     },
     "windows": {
       "digestAlgorithm": "sha256",
-      "certificateThumbprint": null
+      "certificateThumbprint": null,
+      "nsis": {
+        "installMode": "currentUser"
+      }
     }
   }
 }

@@ -82,7 +82,7 @@ export function UpdateModal({ open, onClose }: UpdateModalProps): ReactElement |
               textTransform: "uppercase",
             }}
           >
-            Relancement de l'application…
+            Installation terminée — FAKT redémarre…
           </p>
         )}
 

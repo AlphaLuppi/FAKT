@@ -128,6 +128,10 @@ export function UpdaterProvider({
   const [dismissed, setDismissed] = useState(false);
   const checkInFlight = useRef(false);
   const installInFlight = useRef(false);
+  // Handle Update conservé entre check() et install() : garantit que les notes
+  // affichées dans la modale correspondent EXACTEMENT à l'artifact téléchargé,
+  // même si la release GitHub est modifiée entre la détection et le clic.
+  const updateHandleRef = useRef<UpdateHandleLike | null>(null);
 
   const loadUpdater = useCallback(async (): Promise<UpdaterModuleLike> => {
     if (updaterModule) return updaterModule;
@@ -146,9 +150,11 @@ export function UpdaterProvider({
       const mod = await loadUpdater();
       const update = await mod.check();
       if (!update) {
+        updateHandleRef.current = null;
         setInfo(null);
         return;
       }
+      updateHandleRef.current = update;
       setInfo({
         version: update.version,
         currentVersion: update.currentVersion,
@@ -160,6 +166,7 @@ export function UpdaterProvider({
       // Pas d'update detecte / endpoint injoignable / pubkey absente : silent.
       // L'app doit booter même si GitHub est down.
       console.warn("[updater] check failed:", err);
+      updateHandleRef.current = null;
       setInfo(null);
     } finally {
       checkInFlight.current = false;
@@ -172,8 +179,15 @@ export function UpdaterProvider({
     installInFlight.current = true;
     setProgress({ phase: "downloading", total: null, downloaded: 0, error: null });
     try {
-      const mod = await loadUpdater();
-      const update = await mod.check();
+      // Réutilise le handle obtenu lors du check initial : garantit que les
+      // notes affichées correspondent à l'artifact téléchargé. Si pas de handle
+      // (re-check forcé entre-temps, edge case tests), on refait un check.
+      let update = updateHandleRef.current;
+      if (!update) {
+        const mod = await loadUpdater();
+        update = await mod.check();
+        updateHandleRef.current = update;
+      }
       if (!update) {
         setProgress({
           phase: "error",
@@ -206,6 +220,10 @@ export function UpdaterProvider({
         }
       });
       setProgress((p) => ({ ...p, phase: "done" }));
+      // Sur Windows en mode `passive`, NSIS lance l'installer qui tue le
+      // processus actuel et relance le binaire mis à jour : relaunch() est
+      // alors no-op (process déjà mort). Sur macOS/Linux, downloadAndInstall
+      // applique le patch à chaud et relaunch() est nécessaire pour redémarrer.
       const proc = await loadProcess();
       await proc.relaunch();
     } catch (err) {
