@@ -4,6 +4,7 @@ pub mod crypto;
 mod pdf;
 pub mod sidecar;
 pub mod trace;
+pub mod win_console;
 
 use std::sync::Arc;
 

@@ -187,6 +187,7 @@ pub(crate) async fn render_pdf_internal(
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .current_dir(root);
+    crate::win_console::silence_tokio(&mut cmd);
 
     let output = cmd.output().await.map_err(|e| {
         if e.kind() == std::io::ErrorKind::NotFound {

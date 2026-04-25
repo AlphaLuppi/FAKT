@@ -55,9 +55,10 @@ fn dispatch_open(target: &str) -> Result<(), String> {
         // `rundll32 url.dll,FileProtocolHandler <target>` passe le target comme
         // argument unique à rundll32 (pas de shell parsing), puis url.dll l'ouvre
         // via ShellExecute comme le ferait un double-clic Explorer.
-        Command::new("rundll32")
-            .args(["url.dll,FileProtocolHandler", target])
-            .spawn()
+        let mut cmd = Command::new("rundll32");
+        cmd.args(["url.dll,FileProtocolHandler", target]);
+        crate::win_console::silence_std(&mut cmd);
+        cmd.spawn()
             .map_err(|e| format!("Impossible d'ouvrir : {}", e))?;
     }
 
