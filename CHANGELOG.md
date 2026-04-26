@@ -25,6 +25,20 @@ et [Semantic Versioning 2.0.0](https://semver.org/lang/fr/).
 
 ---
 
+## [0.1.22] - 2026-04-26
+
+### Corrections
+
+- **Fenêtre de mise à jour qui affichait toujours « Notes de version en
+  cours d'édition »** — vous voyez désormais les vraies notes de la
+  nouvelle version (nouveautés, améliorations, corrections) directement
+  dans la fenêtre d'installation, au lieu du texte temporaire figé au
+  moment du build. La fenêtre va chercher en direct les notes publiées
+  sur la page de release GitHub. Si le réseau est indisponible, on
+  retombe gracieusement sur les anciennes notes embarquées.
+
+---
+
 ## [0.1.21] - 2026-04-26
 
 ### Corrections
