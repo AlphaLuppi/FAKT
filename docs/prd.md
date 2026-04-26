@@ -1106,6 +1106,9 @@ Explicitement exclu du MVP — ne pas confondre avec « jamais ».
 - ❌ **Rôles granulaires** multi-membre — mono-user uniquement MVP (v0.2+).
 - ❌ **Signature qualifiée eIDAS** via PSCo accrédité ANSSI — nécessite intégration Yousign API, ajouté en v0.3+ comme option.
 - ❌ **Webhooks et API REST** — pas d'API externe exposée en MVP (v0.2+).
+- ❌ **Sortie Factur-X (PDF/A-3 + XML CII embarqué) profil EN 16931** — cible v0.2 dans le cadre de la réforme facturation électronique FR (obligation émission micro/TPE 1er sept. 2027). Cf. `docs/e-invoicing-reform-north-star.md`.
+- ❌ **Connecteur PDP (Plateforme de Dématérialisation Partenaire)** pour transmission des factures à une PDP tierce — cible v0.3. FAKT reste compatible PDP, **n'est pas une PDP** (pas d'immatriculation DGFiP). Cf. `docs/e-invoicing-reform-north-star.md`.
+- ❌ **e-reporting B2C / paiements** vers DGFiP via PDP — v0.4+, conditionné à la trajectoire SaaS.
 
 ---
 
