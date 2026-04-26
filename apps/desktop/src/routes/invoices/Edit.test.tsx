@@ -16,6 +16,8 @@ function mkInvoice(override: Partial<Invoice>): Invoice {
     number: null,
     year: null,
     sequence: null,
+    externalNumber: null,
+    importedAt: null,
     kind: "independent",
     depositPercent: null,
     title: "Sample",

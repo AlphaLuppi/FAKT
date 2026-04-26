@@ -74,6 +74,20 @@ export const quoteSearchQuerySchema = z.object({
   q: z.string().min(1, "q requis").max(200),
 });
 
+export const importQuoteSchema = z.object({
+  id: uuidSchema,
+  clientId: uuidSchema,
+  externalNumber: z.string().max(100).nullable().optional(),
+  title: z.string().min(1, "titre requis").max(200),
+  totalHtCents: z.number().int().min(0),
+  issuedAt: z.number().int().nullable().optional(),
+  signedAt: z.number().int().nullable().optional(),
+  status: z.enum(["sent", "signed"]).optional(),
+  notes: optionalString,
+  items: z.array(quoteItemInputSchema).min(1, "au moins une ligne requise"),
+});
+
 export type CreateQuoteBody = z.infer<typeof createQuoteSchema>;
 export type UpdateQuoteBody = z.infer<typeof updateQuoteSchema>;
 export type QuoteItemInputBody = z.infer<typeof quoteItemInputSchema>;
+export type ImportQuoteBody = z.infer<typeof importQuoteSchema>;

@@ -118,18 +118,45 @@ export function QuotesListRoute(): ReactElement {
           <span
             data-testid={`quote-list-row-${q.id}`}
             style={{
-              fontFamily: tokens.font.mono,
-              fontSize: tokens.fontSize.xs,
-              fontVariantNumeric: "tabular-nums",
-              color: q.number ? tokens.color.ink : tokens.color.muted,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: tokens.spacing[1],
+              flexWrap: "wrap",
             }}
           >
-            {q.number ?? fr.quotes.labels.numberPending}
+            <span
+              style={{
+                fontFamily: tokens.font.mono,
+                fontSize: tokens.fontSize.xs,
+                fontVariantNumeric: "tabular-nums",
+                color: q.number || q.externalNumber ? tokens.color.ink : tokens.color.muted,
+              }}
+            >
+              {q.number ?? q.externalNumber ?? fr.quotes.labels.numberPending}
+            </span>
+            {q.importedAt !== null && (
+              <span
+                data-testid={`quote-imported-badge-${q.id}`}
+                style={{
+                  fontFamily: tokens.font.ui,
+                  fontSize: 9,
+                  fontWeight: Number(tokens.fontWeight.bold),
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                  padding: "1px 4px",
+                  border: `${tokens.stroke.hair} solid ${tokens.color.ink}`,
+                  background: tokens.color.accentSoft,
+                  color: tokens.color.ink,
+                }}
+              >
+                {fr.imports.badge}
+              </span>
+            )}
           </span>
         ),
         sortable: true,
-        sortValue: (q) => q.number ?? "",
-        width: 120,
+        sortValue: (q) => q.number ?? q.externalNumber ?? "",
+        width: 160,
       },
       {
         id: "client",
@@ -328,6 +355,26 @@ export function QuotesListRoute(): ReactElement {
                 style={{ justifyContent: "flex-start", height: 40, paddingInline: 16 }}
               >
                 {fr.quotes.newMenu.ai}
+              </button>
+              <div
+                style={{
+                  height: 1,
+                  background: tokens.color.ink,
+                  opacity: 0.15,
+                }}
+              />
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setMenuOpen(false);
+                  void navigate("/imports?type=quote");
+                }}
+                data-testid="new-quote-import"
+                className="fakt-btn fakt-btn--ghost"
+                style={{ justifyContent: "flex-start", height: 40, paddingInline: 16 }}
+              >
+                {fr.imports.listTriggerLabel}
               </button>
             </div>
           )}

@@ -14,6 +14,8 @@ const ISSUED_QUOTE: Quote = {
   number: "D2026-001",
   year: 2026,
   sequence: 1,
+  externalNumber: null,
+  importedAt: null,
   title: "Site vitrine",
   status: "sent",
   totalHtCents: 350000,

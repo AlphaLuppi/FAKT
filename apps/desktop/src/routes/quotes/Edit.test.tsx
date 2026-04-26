@@ -14,6 +14,8 @@ const DRAFT_QUOTE: Quote = {
   number: null,
   year: null,
   sequence: null,
+  externalNumber: null,
+  importedAt: null,
   title: "Titre préchargé",
   status: "draft",
   totalHtCents: 50000,

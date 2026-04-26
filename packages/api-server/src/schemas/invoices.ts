@@ -86,9 +86,27 @@ export const invoiceSearchQuerySchema = z.object({
   q: z.string().min(1, "q requis").max(200),
 });
 
+// ─── Import historique ───────────────────────────────────────────────────────
+
+export const importInvoiceSchema = z.object({
+  id: uuidSchema,
+  clientId: uuidSchema,
+  externalNumber: z.string().max(100).nullable().optional(),
+  title: z.string().min(1).max(500),
+  totalHtCents: z.number().int().min(0),
+  issuedAt: z.number().int().nullable().optional(),
+  paidAt: z.number().int().nullable().optional(),
+  paymentMethod: paymentMethodSchema.nullable().optional(),
+  paymentNotes: z.string().max(2000).nullable().optional(),
+  status: z.enum(["sent", "paid", "overdue"]).optional(),
+  legalMentions: z.string().min(1),
+  items: z.array(invoiceItemInputSchema).min(1, "au moins une ligne requise"),
+});
+
 // ─── Type exports ────────────────────────────────────────────────────────────
 
 export type CreateInvoiceBody = z.infer<typeof createInvoiceSchema>;
 export type FromQuoteBody = z.infer<typeof fromQuoteSchema>;
 export type UpdateInvoiceBody = z.infer<typeof updateInvoiceSchema>;
 export type MarkPaidBody = z.infer<typeof markPaidSchema>;
+export type ImportInvoiceBody = z.infer<typeof importInvoiceSchema>;

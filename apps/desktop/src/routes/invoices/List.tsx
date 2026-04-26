@@ -101,18 +101,45 @@ export function InvoicesListRoute(): ReactElement {
           <span
             data-testid={`invoice-list-row-${inv.id}`}
             style={{
-              fontFamily: tokens.font.mono,
-              fontSize: tokens.fontSize.xs,
-              fontVariantNumeric: "tabular-nums",
-              color: inv.number ? tokens.color.ink : tokens.color.muted,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: tokens.spacing[1],
+              flexWrap: "wrap",
             }}
           >
-            {inv.number ?? fr.invoices.labels.numberPending}
+            <span
+              style={{
+                fontFamily: tokens.font.mono,
+                fontSize: tokens.fontSize.xs,
+                fontVariantNumeric: "tabular-nums",
+                color: inv.number || inv.externalNumber ? tokens.color.ink : tokens.color.muted,
+              }}
+            >
+              {inv.number ?? inv.externalNumber ?? fr.invoices.labels.numberPending}
+            </span>
+            {inv.importedAt !== null && (
+              <span
+                data-testid={`invoice-imported-badge-${inv.id}`}
+                style={{
+                  fontFamily: tokens.font.ui,
+                  fontSize: 9,
+                  fontWeight: Number(tokens.fontWeight.bold),
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                  padding: "1px 4px",
+                  border: `${tokens.stroke.hair} solid ${tokens.color.ink}`,
+                  background: tokens.color.accentSoft,
+                  color: tokens.color.ink,
+                }}
+              >
+                {fr.imports.badge}
+              </span>
+            )}
           </span>
         ),
         sortable: true,
-        sortValue: (inv) => inv.number ?? "",
-        width: 120,
+        sortValue: (inv) => inv.number ?? inv.externalNumber ?? "",
+        width: 160,
       },
       {
         id: "client",
@@ -297,6 +324,26 @@ export function InvoicesListRoute(): ReactElement {
                 style={{ justifyContent: "flex-start", height: 40, paddingInline: 16 }}
               >
                 {fr.invoices.newMenu.fromScratch}
+              </button>
+              <div
+                style={{
+                  height: 1,
+                  background: tokens.color.ink,
+                  opacity: 0.15,
+                }}
+              />
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setMenuOpen(false);
+                  void navigate("/imports?type=invoice");
+                }}
+                data-testid="new-invoice-import"
+                className="fakt-btn fakt-btn--ghost"
+                style={{ justifyContent: "flex-start", height: 40, paddingInline: 16 }}
+              >
+                {fr.imports.listTriggerLabel}
               </button>
             </div>
           )}

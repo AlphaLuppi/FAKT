@@ -85,6 +85,8 @@ function rowToInvoice(
     number: row.number ?? null,
     year: row.year ?? null,
     sequence: row.sequence ?? null,
+    externalNumber: row.externalNumber ?? null,
+    importedAt: row.importedAt ? Number(row.importedAt) : null,
     kind: row.kind as InvoiceKind,
     depositPercent: row.depositPercent ?? null,
     title: row.title,
@@ -485,6 +487,64 @@ export function archiveInvoice(db: DbInstance, id: string): Invoice {
   const updated = getInvoice(db, id);
   if (!updated) throw new Error(`archiveInvoice: could not reload invoice id=${id}`);
   return updated;
+}
+
+export interface CreateImportedInvoiceInput {
+  id: string;
+  workspaceId: string;
+  clientId: string;
+  externalNumber: string | null;
+  title: string;
+  totalHtCents: number;
+  /** Date d'émission d'origine (sur le PDF importé). */
+  issuedAt: number | null;
+  /** Date de paiement d'origine. Si fournie, le statut sera "paid". */
+  paidAt: number | null;
+  paymentMethod?: PaymentMethod | null;
+  paymentNotes?: string | null;
+  /** Statut explicite — par défaut "paid" si paidAt présent, sinon "sent". */
+  status?: InvoiceStatus;
+  legalMentions: string;
+  items: InvoiceItemInput[];
+}
+
+/**
+ * Crée une facture IMPORTÉE depuis un PDF externe.
+ * - n'occupe PAS la séquence FAKT (number/year/sequence restent NULL)
+ * - porte un externalNumber libre
+ * - importedAt est posé à maintenant
+ * - kind = "independent" car pas issue d'un devis FAKT
+ */
+export function createImportedInvoice(db: DbInstance, input: CreateImportedInvoiceInput): Invoice {
+  const now = new Date(Date.now());
+  const status: InvoiceStatus = input.status ?? (input.paidAt ? "paid" : "sent");
+
+  db.insert(invoices)
+    .values({
+      id: input.id,
+      workspaceId: input.workspaceId,
+      clientId: input.clientId,
+      externalNumber: input.externalNumber,
+      importedAt: now,
+      kind: "independent",
+      title: input.title,
+      status,
+      totalHtCents: input.totalHtCents,
+      legalMentions: input.legalMentions,
+      issuedAt: input.issuedAt ? new Date(input.issuedAt) : null,
+      paidAt: input.paidAt ? new Date(input.paidAt) : null,
+      paymentMethod: input.paymentMethod ?? null,
+      paymentNotes: input.paymentNotes ?? null,
+      createdAt: now,
+      updatedAt: now,
+    })
+    .run();
+
+  upsertItems(db, input.id, input.items);
+
+  const created = getInvoice(db, input.id);
+  if (!created) throw new Error(`createImportedInvoice: could not reload invoice id=${input.id}`);
+  return created;
 }
 
 /** Recherche de factures par titre ou numéro (prefix/infix simple). */

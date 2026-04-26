@@ -72,6 +72,8 @@ function rowToQuote(
     number: row.number ?? null,
     year: row.year ?? null,
     sequence: row.sequence ?? null,
+    externalNumber: row.externalNumber ?? null,
+    importedAt: row.importedAt ? Number(row.importedAt) : null,
     title: row.title,
     status: row.status as QuoteStatus,
     totalHtCents: row.totalHtCents,
@@ -288,6 +290,58 @@ export function updateQuoteStatus(db: DbInstance, id: string, newStatus: QuoteSt
   const updated = getQuote(db, id);
   if (!updated) throw new Error(`updateQuoteStatus: could not reload quote id=${id}`);
   return updated;
+}
+
+export interface CreateImportedQuoteInput {
+  id: string;
+  workspaceId: string;
+  clientId: string;
+  externalNumber: string | null;
+  title: string;
+  totalHtCents: number;
+  /** Date d'émission d'origine (sur le PDF importé). */
+  issuedAt: number | null;
+  /** Date de signature d'origine. Si fournie, le statut sera "signed". */
+  signedAt: number | null;
+  /** Statut explicite — par défaut "signed" si signedAt présent, sinon "sent". */
+  status?: QuoteStatus;
+  notes?: string | null;
+  items: QuoteItemInput[];
+}
+
+/**
+ * Crée un devis IMPORTÉ depuis un PDF externe.
+ * - n'occupe PAS la séquence FAKT (number/year/sequence restent NULL)
+ * - porte un externalNumber libre
+ * - importedAt est posé à maintenant
+ */
+export function createImportedQuote(db: DbInstance, input: CreateImportedQuoteInput): Quote {
+  const now = new Date(Date.now());
+  const status: QuoteStatus = input.status ?? (input.signedAt ? "signed" : "sent");
+
+  db.insert(quotes)
+    .values({
+      id: input.id,
+      workspaceId: input.workspaceId,
+      clientId: input.clientId,
+      externalNumber: input.externalNumber,
+      importedAt: now,
+      title: input.title,
+      status,
+      totalHtCents: input.totalHtCents,
+      notes: input.notes ?? null,
+      issuedAt: input.issuedAt ? new Date(input.issuedAt) : null,
+      signedAt: input.signedAt ? new Date(input.signedAt) : null,
+      createdAt: now,
+      updatedAt: now,
+    })
+    .run();
+
+  upsertItems(db, input.id, input.items);
+
+  const created = getQuote(db, input.id);
+  if (!created) throw new Error(`createImportedQuote: could not reload quote id=${input.id}`);
+  return created;
 }
 
 /** Recherche de devis par titre ou numéro. */

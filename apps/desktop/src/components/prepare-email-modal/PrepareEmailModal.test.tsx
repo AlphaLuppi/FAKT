@@ -31,6 +31,8 @@ const MOCK_QUOTE: Quote = {
   number: "D2026-001",
   year: 2026,
   sequence: 1,
+  externalNumber: null,
+  importedAt: null,
   title: "Mission dev",
   status: "sent",
   totalHtCents: 300000,

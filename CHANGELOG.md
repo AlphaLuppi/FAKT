@@ -19,7 +19,27 @@ et [Semantic Versioning 2.0.0](https://semver.org/lang/fr/).
 
 ### Nouveautés
 
+- **Importer des devis signés et des factures déjà payées** — un nouvel
+  écran « Importer un document existant » permet de charger des PDF de
+  devis signés ailleurs ou de factures historiques pour compléter ton
+  historique sans repartir de zéro. L'IA pré-remplit le client, les
+  lignes, les dates, et tu n'as plus qu'à valider. Ces documents
+  apparaissent avec un badge « IMPORTÉ » distinct et n'occupent pas la
+  séquence officielle FAKT (CGI art. 289 préservé).
+
 ### Améliorations
+
+- **Création de devis avec l'IA plus claire** — la zone de saisie est
+  désormais découpée en deux onglets explicites : « Coller un brief »
+  pour le texte libre et « Déposer un fichier » pour les PDF/DOCX/MD/TXT.
+  Quand tu déposes un fichier, son contenu n'est plus injecté en vrac
+  dans la zone de texte ; il devient une carte récap avec son nom, sa
+  taille et son statut (lecture en cours / prêt / erreur).
+- **Aperçu IA modifiable** — après extraction, tu peux corriger le nom
+  du client, son email, chaque ligne du devis (description, quantité,
+  unité, prix), et ajouter ou supprimer des lignes avant de basculer
+  dans l'éditeur. Plus besoin de tout retaper si l'IA s'est trompée sur
+  un détail.
 
 ### Corrections
 

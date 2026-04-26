@@ -101,6 +101,8 @@ export function installMockApis(options?: {
         number,
         year,
         sequence,
+        externalNumber: null,
+        importedAt: null,
         title: input.title,
         status: "draft",
         totalHtCents: input.totalHtCents,

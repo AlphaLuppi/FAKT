@@ -88,6 +88,10 @@ export interface Quote {
   number: string | null;
   year: number | null;
   sequence: number | null;
+  /** Numéro libre pour les devis importés (créés hors FAKT). */
+  externalNumber: string | null;
+  /** Timestamp ms de l'import. Non-null = devis importé, hors séquence FAKT. */
+  importedAt: TimestampMs | null;
   title: string;
   status: QuoteStatus;
   totalHtCents: Cents;
@@ -110,6 +114,10 @@ export interface Invoice {
   number: string | null;
   year: number | null;
   sequence: number | null;
+  /** Numéro libre pour les factures importées (créées hors FAKT). */
+  externalNumber: string | null;
+  /** Timestamp ms de l'import. Non-null = facture importée, hors séquence FAKT. */
+  importedAt: TimestampMs | null;
   kind: InvoiceKind;
   depositPercent: number | null;
   title: string;

@@ -41,6 +41,19 @@ export interface UpdateQuoteInput {
   items?: QuoteItemInput[];
 }
 
+export interface ImportQuoteInput {
+  id: string;
+  clientId: string;
+  externalNumber?: string | null;
+  title: string;
+  totalHtCents: Cents;
+  issuedAt?: TimestampMs | null;
+  signedAt?: TimestampMs | null;
+  status?: "sent" | "signed";
+  notes?: string | null;
+  items: QuoteItemInput[];
+}
+
 interface ListResponse<T> {
   items: T[];
   pagination?: { limit: number; offset: number; count: number };
@@ -85,6 +98,9 @@ export const quotesApi = {
   },
   async create(input: CreateQuoteInput): Promise<Quote> {
     return getApiClient().post<Quote>("/api/quotes", input);
+  },
+  async importExisting(input: ImportQuoteInput): Promise<Quote> {
+    return getApiClient().post<Quote>("/api/quotes/import", input);
   },
   async update(id: string, input: UpdateQuoteInput): Promise<Quote> {
     return getApiClient().patch<Quote>(`/api/quotes/${id}`, input);

@@ -219,6 +219,8 @@ export const quotes = pgTable(
     number: text("number"),
     year: integer("year"),
     sequence: integer("sequence"),
+    externalNumber: text("external_number"),
+    importedAt: timestamp("imported_at", { precision: 3, withTimezone: true }),
     title: text("title").notNull(),
     status: text("status", {
       enum: ["draft", "sent", "viewed", "signed", "invoiced", "refused", "expired"],
@@ -244,6 +246,7 @@ export const quotes = pgTable(
     index("quotes_client_idx").on(t.clientId),
     index("quotes_ws_idx").on(t.workspaceId),
     uniqueIndex("quotes_number_uq").on(t.workspaceId, t.year, t.sequence),
+    index("quotes_imported_idx").on(t.importedAt),
   ]
 );
 
@@ -280,6 +283,8 @@ export const invoices = pgTable(
     number: text("number"),
     year: integer("year"),
     sequence: integer("sequence"),
+    externalNumber: text("external_number"),
+    importedAt: timestamp("imported_at", { precision: 3, withTimezone: true }),
     kind: text("kind", {
       enum: ["deposit", "balance", "total", "independent"],
     }).notNull(),
@@ -310,6 +315,7 @@ export const invoices = pgTable(
     index("invoices_status_idx").on(t.status),
     index("invoices_due_idx").on(t.dueDate),
     index("invoices_ws_idx").on(t.workspaceId),
+    index("invoices_imported_idx").on(t.importedAt),
   ]
 );
 

@@ -2,6 +2,7 @@ import { canTransitionInvoice } from "@fakt/core";
 import {
   type CreateFromQuoteMode,
   archiveInvoice,
+  createImportedInvoice,
   createInvoice,
   createInvoiceFromQuote,
   deleteInvoice,
@@ -24,6 +25,7 @@ import { uuidSchema } from "../schemas/common.js";
 import {
   createInvoiceSchema,
   fromQuoteSchema,
+  importInvoiceSchema,
   invoiceSearchQuerySchema,
   listInvoicesQuerySchema,
   markPaidSchema,
@@ -122,6 +124,47 @@ invoicesRoutes.post("/", async (c) => {
   });
   logActivity(c.var.db, workspaceId, "invoice.created", created.id, {
     kind: created.kind,
+    totalHtCents: created.totalHtCents,
+  });
+  return c.json(created, 201);
+});
+
+/**
+ * POST /api/invoices/import — crée une facture IMPORTÉE depuis un PDF externe.
+ * - n'occupe PAS la séquence FAKT (CGI 289 préservé)
+ * - externalNumber libre, importedAt posé à maintenant
+ * - kind = "independent", statut par défaut "paid" si paidAt présent
+ */
+invoicesRoutes.post("/import", async (c) => {
+  const body = await parseBody(c, importInvoiceSchema);
+  const workspaceId = requireWorkspaceId(c.var.db);
+
+  const created = createImportedInvoice(c.var.db, {
+    id: body.id,
+    workspaceId,
+    clientId: body.clientId,
+    externalNumber: body.externalNumber ?? null,
+    title: body.title,
+    totalHtCents: body.totalHtCents,
+    issuedAt: body.issuedAt ?? null,
+    paidAt: body.paidAt ?? null,
+    paymentMethod: body.paymentMethod ?? null,
+    paymentNotes: body.paymentNotes ?? null,
+    ...(body.status ? { status: body.status } : {}),
+    legalMentions: body.legalMentions,
+    items: body.items.map((it) => ({
+      id: it.id,
+      position: it.position,
+      description: it.description,
+      quantity: it.quantity,
+      unitPriceCents: it.unitPriceCents,
+      unit: it.unit,
+      lineTotalCents: it.lineTotalCents,
+      serviceId: it.serviceId ?? null,
+    })),
+  });
+  logActivity(c.var.db, workspaceId, "invoice.imported", created.id, {
+    externalNumber: body.externalNumber ?? null,
     totalHtCents: created.totalHtCents,
   });
   return c.json(created, 201);

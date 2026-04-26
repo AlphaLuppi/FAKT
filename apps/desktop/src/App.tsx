@@ -9,6 +9,7 @@ import { LoginRoute } from "./routes/auth/Login.js";
 import { RequireAuth } from "./routes/auth/RequireAuth.js";
 import { ClientsRoute } from "./routes/clients/index.js";
 import { DashboardRoute } from "./routes/dashboard.js";
+import { ImportsRoute } from "./routes/imports/index.js";
 import { InvoicesRouter } from "./routes/invoices/index.js";
 import { WizardRoute } from "./routes/onboarding/Wizard.js";
 import { useOnboardingGuard } from "./routes/onboarding/guard.js";
@@ -67,6 +68,7 @@ export function App(): ReactElement {
             <Route path="/" element={<DashboardRoute />} />
             <Route path="/quotes/*" element={<QuotesRouter />} />
             <Route path="/invoices/*" element={<InvoicesRouter />} />
+            <Route path="/imports" element={<ImportsRoute />} />
             <Route path="/clients/*" element={<ClientsRoute />} />
             <Route path="/services/*" element={<ServicesRoute />} />
             <Route path="/signatures/*" element={<SignaturesRouter />} />

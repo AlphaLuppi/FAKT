@@ -105,6 +105,8 @@ export const quotes = sqliteTable(
     number: text("number"),
     year: integer("year"),
     sequence: integer("sequence"),
+    externalNumber: text("external_number"),
+    importedAt: integer("imported_at", { mode: "timestamp_ms" }),
     title: text("title").notNull(),
     status: text("status", {
       enum: ["draft", "sent", "viewed", "signed", "invoiced", "refused", "expired"],
@@ -129,6 +131,7 @@ export const quotes = sqliteTable(
     statusIdx: index("quotes_status_idx").on(t.status),
     clientIdx: index("quotes_client_idx").on(t.clientId),
     numberUniq: unique("quotes_number_uq").on(t.workspaceId, t.year, t.sequence),
+    importedIdx: index("quotes_imported_idx").on(t.importedAt),
   })
 );
 
@@ -166,6 +169,8 @@ export const invoices = sqliteTable(
     number: text("number"),
     year: integer("year"),
     sequence: integer("sequence"),
+    externalNumber: text("external_number"),
+    importedAt: integer("imported_at", { mode: "timestamp_ms" }),
     kind: text("kind", {
       enum: ["deposit", "balance", "total", "independent"],
     }).notNull(),
@@ -195,6 +200,7 @@ export const invoices = sqliteTable(
     numberUniq: unique("invoices_number_uq").on(t.workspaceId, t.year, t.sequence),
     statusIdx: index("invoices_status_idx").on(t.status),
     dueIdx: index("invoices_due_idx").on(t.dueDate),
+    importedIdx: index("invoices_imported_idx").on(t.importedAt),
   })
 );
 

@@ -6,7 +6,7 @@ import {
   type ExtractedQuote,
   setAi,
 } from "@fakt/ai";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { NewAi } from "./NewAi.js";
@@ -16,14 +16,7 @@ function createProvider(opts: {
   installed: boolean;
   extractResult?: ExtractedQuote;
   throwAbort?: boolean;
-  /**
-   * Simule le fallback côté Rust : quand l'extracteur JSON n'a pas pu
-   * parser la sortie CLI, il renvoie une string brute. L'UI doit afficher
-   * un message d'erreur + le bouton "Voir la sortie brute", pas une card
-   * vide à 0€.
-   */
   rawStringResult?: string;
-  /** Simule un done avec un ExtractedQuote sans items (items: []). */
   emptyItemsResult?: ExtractedQuote;
 }): AiProvider {
   return {
@@ -32,8 +25,6 @@ function createProvider(opts: {
     },
     async *extractQuoteFromBrief(_brief, options): AsyncIterable<AiStreamEvent<ExtractedQuote>> {
       if (opts.rawStringResult !== undefined) {
-        // Le Rust renvoie une string brute quand son parser JSON échoue —
-        // on caste via unknown pour respecter la signature générique.
         yield {
           type: "done",
           data: opts.rawStringResult as unknown as ExtractedQuote,
@@ -79,18 +70,20 @@ const FIXTURE_EXTRACTED: ExtractedQuote = {
       unit: "day",
     },
   ],
+  validUntil: "2026-12-31",
+  notes: "Livraison avant la fête des mères.",
 };
 
-describe("NewAi", () => {
-  let mocks: ReturnType<typeof installMockApis>;
+describe("NewAi route", () => {
+  let mocks: ReturnType<typeof installMockApis> | null = null;
 
   beforeEach(() => {
     mocks = installMockApis();
   });
 
   afterEach(() => {
-    mocks.reset();
-    setAi(null);
+    mocks?.reset();
+    mocks = null;
   });
 
   function renderRoute(): void {
@@ -109,7 +102,31 @@ describe("NewAi", () => {
     });
   });
 
-  it("lance l'extraction et affiche les lignes extraites", async () => {
+  it("affiche par défaut l'onglet texte avec le textarea brief", async () => {
+    setAi(createProvider({ installed: true, extractResult: FIXTURE_EXTRACTED }));
+    renderRoute();
+    await waitFor(() => {
+      expect(screen.getByTestId("ai-tab-text")).toBeInTheDocument();
+    });
+    expect(screen.getByTestId("ai-brief")).toBeInTheDocument();
+    expect(screen.queryByTestId("ai-dropzone")).toBeNull();
+  });
+
+  it("bascule sur l'onglet fichier et affiche la dropzone", async () => {
+    setAi(createProvider({ installed: true, extractResult: FIXTURE_EXTRACTED }));
+    renderRoute();
+    await waitFor(() => {
+      expect(screen.getByTestId("ai-tab-file")).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByTestId("ai-tab-file"));
+    await waitFor(() => {
+      expect(screen.getByTestId("ai-dropzone")).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId("ai-brief")).toBeNull();
+    expect(screen.getByTestId("ai-dropzone-hint")).toBeInTheDocument();
+  });
+
+  it("lance l'extraction et affiche les lignes extraites éditables", async () => {
     setAi(createProvider({ installed: true, extractResult: FIXTURE_EXTRACTED }));
     renderRoute();
     await waitFor(() => {
@@ -125,12 +142,15 @@ describe("NewAi", () => {
     await waitFor(() => {
       expect(screen.getByTestId("ai-extracted")).toBeInTheDocument();
     });
-    expect(screen.getAllByText(/Maison Berthe/).length).toBeGreaterThan(0);
-    expect(screen.getByText(/Cadrage & design/)).toBeInTheDocument();
-    expect(screen.getByText(/Intégration Shopify/)).toBeInTheDocument();
+    const nameInput = screen.getByTestId("ai-edit-client-name") as HTMLInputElement;
+    expect(nameInput.value).toBe("Maison Berthe");
+    const desc0 = screen.getByTestId("ai-edit-item-0-desc") as HTMLInputElement;
+    expect(desc0.value).toBe("Cadrage & design");
+    const desc1 = screen.getByTestId("ai-edit-item-1-desc") as HTMLInputElement;
+    expect(desc1.value).toBe("Intégration Shopify");
   });
 
-  it("disable le bouton Extraire quand le brief est vide", async () => {
+  it("désactive le bouton Extraire quand aucun contenu n'est saisi", async () => {
     setAi(createProvider({ installed: true, extractResult: FIXTURE_EXTRACTED }));
     renderRoute();
     await waitFor(() => {
@@ -158,6 +178,53 @@ describe("NewAi", () => {
     const total = screen.getByTestId("ai-extracted-total");
     expect(total.textContent).toMatch(/6\s*100/);
     expect(screen.getByTestId("ai-apply")).not.toBeDisabled();
+  });
+
+  it("permet d'éditer le nom client extrait avant d'appliquer", async () => {
+    setAi(createProvider({ installed: true, extractResult: FIXTURE_EXTRACTED }));
+    renderRoute();
+    await waitFor(() => expect(screen.getByTestId("ai-brief")).toBeInTheDocument());
+    fireEvent.change(screen.getByTestId("ai-brief"), { target: { value: "brief" } });
+    fireEvent.click(screen.getByTestId("ai-extract"));
+    await waitFor(() => expect(screen.getByTestId("ai-extracted")).toBeInTheDocument());
+
+    const nameInput = screen.getByTestId("ai-edit-client-name") as HTMLInputElement;
+    fireEvent.change(nameInput, { target: { value: "Maison Berthe SARL" } });
+    expect((screen.getByTestId("ai-edit-client-name") as HTMLInputElement).value).toBe(
+      "Maison Berthe SARL"
+    );
+  });
+
+  it("permet d'ajouter et supprimer une ligne dans la preview", async () => {
+    setAi(createProvider({ installed: true, extractResult: FIXTURE_EXTRACTED }));
+    renderRoute();
+    await waitFor(() => expect(screen.getByTestId("ai-brief")).toBeInTheDocument());
+    fireEvent.change(screen.getByTestId("ai-brief"), { target: { value: "brief" } });
+    fireEvent.click(screen.getByTestId("ai-extract"));
+    await waitFor(() => expect(screen.getByTestId("ai-extracted")).toBeInTheDocument());
+
+    const list = screen.getByTestId("ai-edit-items");
+    expect(within(list).getAllByRole("listitem")).toHaveLength(2);
+
+    fireEvent.click(screen.getByTestId("ai-edit-item-add"));
+    expect(within(screen.getByTestId("ai-edit-items")).getAllByRole("listitem")).toHaveLength(3);
+
+    fireEvent.click(screen.getByTestId("ai-edit-item-2-remove"));
+    expect(within(screen.getByTestId("ai-edit-items")).getAllByRole("listitem")).toHaveLength(2);
+  });
+
+  it("recalcule le total quand on édite la quantité d'une ligne", async () => {
+    setAi(createProvider({ installed: true, extractResult: FIXTURE_EXTRACTED }));
+    renderRoute();
+    await waitFor(() => expect(screen.getByTestId("ai-brief")).toBeInTheDocument());
+    fireEvent.change(screen.getByTestId("ai-brief"), { target: { value: "brief" } });
+    fireEvent.click(screen.getByTestId("ai-extract"));
+    await waitFor(() => expect(screen.getByTestId("ai-extracted")).toBeInTheDocument());
+
+    fireEvent.change(screen.getByTestId("ai-edit-item-1-qty"), { target: { value: "5" } });
+    const total = screen.getByTestId("ai-extracted-total");
+    // 2500 + 5 * 1200 = 8500
+    expect(total.textContent).toMatch(/8\s*500/);
   });
 
   it("affiche un message d'aide quand aucune ligne n'est extraite", async () => {
@@ -212,9 +279,11 @@ describe("NewAi", () => {
     expect(screen.getByTestId("ai-raw-output-content").textContent).toMatch(/reformuler/);
   });
 
-  it("drag-drop d'un .txt pré-remplit le brief", async () => {
+  it("drag-drop d'un .txt dans l'onglet fichier crée une carte status=ready", async () => {
     setAi(createProvider({ installed: true, extractResult: FIXTURE_EXTRACTED }));
     renderRoute();
+    await waitFor(() => expect(screen.getByTestId("ai-tab-file")).toBeInTheDocument());
+    fireEvent.click(screen.getByTestId("ai-tab-file"));
     await waitFor(() => {
       expect(screen.getByTestId("ai-dropzone")).toBeInTheDocument();
     });
@@ -225,18 +294,22 @@ describe("NewAi", () => {
     });
     fireEvent.drop(zone, { dataTransfer: { files: [file] } });
 
-    const area = await waitFor(() => {
-      const el = screen.getByTestId("ai-brief") as HTMLTextAreaElement;
-      if (!el.value.includes("Maison Berthe")) throw new Error("not yet");
-      return el;
+    await waitFor(() => {
+      expect(screen.getByTestId("ai-file-list")).toBeInTheDocument();
     });
-    expect(area.value).toContain("Contenu de brief.txt");
-    expect(area.value).toContain("budget 8k€");
+    expect(screen.getByText(/brief\.txt/)).toBeInTheDocument();
+
+    await waitFor(() => {
+      const ready = document.querySelectorAll('[data-status="ready"]');
+      if (ready.length === 0) throw new Error("file not ready yet");
+    });
+    expect(screen.getByTestId("ai-extract")).not.toBeDisabled();
   });
 
-  it("drag-drop d'un format non supporté affiche une erreur fichier", async () => {
+  it("drag-drop d'un format non supporté crée une carte avec status=error", async () => {
     setAi(createProvider({ installed: true, extractResult: FIXTURE_EXTRACTED }));
     renderRoute();
+    fireEvent.click(screen.getByTestId("ai-tab-file"));
     await waitFor(() => {
       expect(screen.getByTestId("ai-dropzone")).toBeInTheDocument();
     });
@@ -246,61 +319,56 @@ describe("NewAi", () => {
     fireEvent.drop(zone, { dataTransfer: { files: [file] } });
 
     await waitFor(() => {
-      expect(screen.getByTestId("ai-file-errors")).toBeInTheDocument();
+      const errors = document.querySelectorAll('[data-status="error"]');
+      if (errors.length === 0) throw new Error("error not yet");
     });
-    expect(screen.getByTestId("ai-file-errors").textContent).toContain("bad.png");
+    expect(screen.getAllByText(/bad\.png/).length).toBeGreaterThan(0);
+    expect(screen.getByTestId("ai-extract")).toBeDisabled();
   });
 
-  it("affiche un hint 'Ou glisse un fichier ici' sous la dropzone", async () => {
+  it("affiche un hint formats sous la dropzone dans l'onglet fichier", async () => {
     setAi(createProvider({ installed: true, extractResult: FIXTURE_EXTRACTED }));
     renderRoute();
+    fireEvent.click(screen.getByTestId("ai-tab-file"));
     await waitFor(() => {
       expect(screen.getByTestId("ai-dropzone-hint")).toBeInTheDocument();
     });
-    expect(screen.getByTestId("ai-dropzone-hint").textContent?.toLowerCase()).toContain(
-      "glisse un fichier"
-    );
+    const hint = screen.getByTestId("ai-dropzone-hint").textContent ?? "";
+    expect(hint.toUpperCase()).toContain("PDF");
   });
 
-  // Timeout généreux : la 1re invocation charge le module pdfjs-dist (~3 MB)
-  // qui peut prendre 5-10 s sur Windows CI, ce qui faisait timeout sur la
-  // valeur par défaut Vitest (5 s).
   it(
-    "le bouton Annuler débloque l'extraction en cours quand un fichier pend",
+    "le bouton Retirer enlève une carte fichier en cours de parsing",
     { timeout: 20000 },
     async () => {
       setAi(createProvider({ installed: true, extractResult: FIXTURE_EXTRACTED }));
       renderRoute();
+      fireEvent.click(screen.getByTestId("ai-tab-file"));
       await waitFor(() => {
         expect(screen.getByTestId("ai-dropzone")).toBeInTheDocument();
       });
 
       const zone = screen.getByTestId("ai-dropzone");
-      // On construit un File avec un nom .pdf pour déclencher parsePdfFile,
-      // mais jsdom n'a pas de vrai worker pdfjs — en pratique l'appel throw
-      // ou pend. On teste l'UX : le bouton Annuler force la sortie du mode
-      // parsing même si l'extraction ne s'est pas terminée naturellement.
-      // Pour garantir un parsing "en cours", on override File.arrayBuffer pour
-      // renvoyer une promise qui ne résout jamais — simule un hang.
       const hangingFile = new File(["fake pdf"], "stuck.pdf", { type: "application/pdf" });
       Object.defineProperty(hangingFile, "arrayBuffer", {
         value: () => new Promise<ArrayBuffer>(() => {}),
       });
       fireEvent.drop(zone, { dataTransfer: { files: [hangingFile] } });
 
-      // L'indicateur d'extraction apparaît.
       await waitFor(() => {
-        expect(screen.getByTestId("ai-parsing")).toBeInTheDocument();
+        const parsing = document.querySelectorAll('[data-status="parsing"]');
+        if (parsing.length === 0) throw new Error("parsing not yet");
       });
 
-      // Et le bouton Annuler est visible.
-      expect(screen.getByTestId("ai-parsing-cancel")).toBeInTheDocument();
+      const removeButtons = screen.getAllByText(/Retirer/i);
+      expect(removeButtons.length).toBeGreaterThan(0);
+      const firstRemove = removeButtons[0];
+      if (!firstRemove) throw new Error("no remove button");
+      fireEvent.click(firstRemove);
 
-      fireEvent.click(screen.getByTestId("ai-parsing-cancel"));
-
-      // L'indicateur disparaît immédiatement.
       await waitFor(() => {
-        expect(screen.queryByTestId("ai-parsing")).toBeNull();
+        const parsing = document.querySelectorAll('[data-status="parsing"]');
+        expect(parsing.length).toBe(0);
       });
     }
   );

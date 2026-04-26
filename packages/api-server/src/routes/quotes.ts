@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { DbInstance } from "@fakt/db/adapter";
 import {
+  createImportedQuote,
   createQuote,
   deleteQuote,
   getClient,
@@ -21,6 +22,7 @@ import { parseBody, parseParam, parseQuery } from "../middleware/zod.js";
 import { uuidSchema } from "../schemas/common.js";
 import {
   createQuoteSchema,
+  importQuoteSchema,
   listQuotesQuerySchema,
   quoteSearchQuerySchema,
   updateQuoteSchema,
@@ -301,6 +303,51 @@ quotesRoutes.post("/:id/mark-invoiced", (c) => {
     payload: null,
   });
   return c.json(updated);
+});
+
+/**
+ * POST /api/quotes/import — crée un devis IMPORTÉ depuis un PDF externe.
+ * - n'occupe PAS la séquence FAKT (CGI 289 préservé)
+ * - externalNumber libre, importedAt posé à maintenant
+ * - statut par défaut "signed" si signedAt présent, sinon "sent"
+ */
+quotesRoutes.post("/import", async (c) => {
+  const body = await parseBody(c, importQuoteSchema);
+  const workspaceId = requireWorkspaceId(c.var.db);
+  const client = getClient(c.var.db, body.clientId);
+  if (!client) throw conflict(`client ${body.clientId} introuvable`);
+
+  const created = createImportedQuote(c.var.db, {
+    id: body.id,
+    workspaceId,
+    clientId: body.clientId,
+    externalNumber: body.externalNumber ?? null,
+    title: body.title,
+    totalHtCents: body.totalHtCents,
+    issuedAt: body.issuedAt ?? null,
+    signedAt: body.signedAt ?? null,
+    ...(body.status ? { status: body.status } : {}),
+    notes: body.notes ?? null,
+    items: body.items.map((item) => ({
+      id: item.id,
+      position: item.position,
+      description: item.description,
+      quantity: item.quantity,
+      unitPriceCents: item.unitPriceCents,
+      unit: item.unit,
+      lineTotalCents: item.lineTotalCents,
+      serviceId: item.serviceId ?? null,
+    })),
+  });
+  insertActivity(c.var.db, {
+    id: randomUUID(),
+    workspaceId,
+    type: "quote_imported",
+    entityType: "quote",
+    entityId: created.id,
+    payload: JSON.stringify({ externalNumber: body.externalNumber ?? null }),
+  });
+  return c.json(created, 201);
 });
 
 /** Helper : appelle updateQuoteStatus ; convertit "invalid transition" → HTTP 422. */

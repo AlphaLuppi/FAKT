@@ -8,14 +8,16 @@ import {
 import { tokens } from "@fakt/design-tokens";
 import { addDays, formatEur, fr, today } from "@fakt/shared";
 import type { DocumentUnit } from "@fakt/shared";
-import { Button, Dropzone, Textarea } from "@fakt/ui";
+import { Button, Dropzone, Input, Textarea } from "@fakt/ui";
 import type { ReactElement } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { quotesApi } from "../../features/doc-editor/quotes-api.js";
 import { QuoteForm, type QuoteFormValues } from "./QuoteForm.js";
 
-function mapExtractedUnit(u: ExtractedQuoteItem["unit"]): DocumentUnit {
+type ExtractedUnit = ExtractedQuoteItem["unit"];
+
+function mapExtractedUnit(u: ExtractedUnit): DocumentUnit {
   switch (u) {
     case "hour":
       return "heure";
@@ -28,30 +30,14 @@ function mapExtractedUnit(u: ExtractedQuoteItem["unit"]): DocumentUnit {
   }
 }
 
-/**
- * Type guard — s'assure que la donnée reçue du stream `done` ressemble à un
- * ExtractedQuote structuré. On accepte tout objet qui a au moins un des champs
- * connus du schéma (client, items, validUntil, notes, depositPercent) pour
- * rester tolérant aux réponses partielles.
- *
- * On rejette :
- *   - les strings brutes (fallback du Rust quand JSON parsing a échoué)
- *   - les arrays (le LLM a pu renvoyer juste la liste d'items au mauvais niveau)
- *   - les objets `{ text: "..." }` venant des chunks de streaming
- */
 function isStructuredQuote(value: unknown): value is Partial<ExtractedQuote> {
   if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
   const obj = value as Record<string, unknown>;
-  // Les tokens streamés arrivent sous forme { text: "..." } — on les exclut.
   if ("text" in obj && Object.keys(obj).length === 1) return false;
   const knownKeys = ["client", "items", "validUntil", "notes", "depositPercent"];
   return knownKeys.some((k) => k in obj);
 }
 
-/**
- * Linéarise l'output d'un stream en JSON-string pour le bloc debug. Les
- * strings sont retournées telles quelles, les objets sont beautifiés.
- */
 function stringifyRawOutput(value: unknown): string {
   if (typeof value === "string") return value;
   try {
@@ -61,19 +47,39 @@ function stringifyRawOutput(value: unknown): string {
   }
 }
 
+type FileStatus = "parsing" | "ready" | "error";
+
+interface AttachedFile {
+  id: string;
+  name: string;
+  size: number;
+  status: FileStatus;
+  text: string;
+  error?: string;
+}
+
+type InputMode = "text" | "file";
+
+function newFileId(): string {
+  if (typeof globalThis.crypto?.randomUUID === "function") {
+    return globalThis.crypto.randomUUID();
+  }
+  return `f-${Math.random().toString(36).slice(2, 10)}-${Date.now().toString(36)}`;
+}
+
 export function NewAi(): ReactElement {
   const navigate = useNavigate();
+  const [inputMode, setInputMode] = useState<InputMode>("text");
   const [brief, setBrief] = useState<string>("");
+  const [files, setFiles] = useState<AttachedFile[]>([]);
   const [extracting, setExtracting] = useState(false);
   const [extracted, setExtracted] = useState<Partial<ExtractedQuote> | null>(null);
   const [streamError, setStreamError] = useState<string | null>(null);
   const [cliMissing, setCliMissing] = useState(false);
   const [rawOutput, setRawOutput] = useState<string | null>(null);
   const [showRawOutput, setShowRawOutput] = useState(false);
-  const [parsingFiles, setParsingFiles] = useState(false);
-  const [fileErrors, setFileErrors] = useState<string[]>([]);
   const abortRef = useRef<AbortController | null>(null);
-  const parseCancelledRef = useRef(false);
+  const parseCancelTokens = useRef<Map<string, () => void>>(new Map());
 
   useEffect(() => {
     let cancelled = false;
@@ -91,8 +97,18 @@ export function NewAi(): ReactElement {
     };
   }, []);
 
+  const briefForExtract = useMemo<string>(() => {
+    if (inputMode === "text") return brief.trim();
+    const ready = files.filter((f) => f.status === "ready" && f.text.trim().length > 0);
+    if (ready.length === 0) return "";
+    return ready.map((f) => `--- Contenu de ${f.name} ---\n\n${f.text}`).join("\n\n");
+  }, [inputMode, brief, files]);
+
+  const canExtract = briefForExtract.length > 0;
+  const filesParsing = files.some((f) => f.status === "parsing");
+
   async function handleExtract(): Promise<void> {
-    if (brief.trim().length === 0) return;
+    if (!canExtract) return;
     setExtracting(true);
     setExtracted(null);
     setStreamError(null);
@@ -104,26 +120,22 @@ export function NewAi(): ReactElement {
 
     try {
       const provider = getAi();
-      const stream = provider.extractQuoteFromBrief(brief, {
+      const stream = provider.extractQuoteFromBrief(briefForExtract, {
         signal: controller.signal,
       });
 
       for await (const event of stream) {
         if (event.type === "delta") {
-          // Les delta du CLI sont des chunks de texte (non structurés). On les
-          // garde pour le bloc debug mais on n'essaie pas de merger dans
-          // `extracted` qui doit rester un ExtractedQuote cohérent.
           if (isStructuredQuote(event.data)) {
             setExtracted((prev) => ({ ...(prev ?? {}), ...event.data }));
           } else {
             setRawOutput((prev) =>
-              prev === null ? stringifyRawOutput(event.data) : prev + stringifyRawOutput(event.data)
+              prev === null
+                ? stringifyRawOutput(event.data)
+                : prev + stringifyRawOutput(event.data)
             );
           }
         } else if (event.type === "done") {
-          // Le Rust a tenté un parsing JSON robuste. Si ça a échoué il renvoie
-          // une string brute — on la stocke dans `rawOutput` et on affiche une
-          // erreur explicite plutôt qu'une card vide "0€".
           setRawOutput(stringifyRawOutput(event.data));
           if (isStructuredQuote(event.data)) {
             setExtracted(event.data);
@@ -153,65 +165,78 @@ export function NewAi(): ReactElement {
     setExtracting(false);
   }
 
-  async function handleDroppedFiles(files: File[]): Promise<void> {
-    if (files.length === 0) return;
-    parseCancelledRef.current = false;
-    setParsingFiles(true);
-    setFileErrors([]);
-    const errors: string[] = [];
-    const chunks: string[] = [];
-    try {
-      for (const file of files) {
-        if (parseCancelledRef.current) {
-          errors.push(`${file.name} : extraction annulée.`);
+  async function handleDroppedFiles(dropped: File[]): Promise<void> {
+    if (dropped.length === 0) return;
+    // Bascule auto sur l'onglet fichier si l'utilisateur drop depuis l'onglet texte.
+    setInputMode("file");
+
+    const newAttached: AttachedFile[] = dropped.map((file) => ({
+      id: newFileId(),
+      name: file.name,
+      size: file.size,
+      status: "parsing" as FileStatus,
+      text: "",
+    }));
+    setFiles((prev) => [...prev, ...newAttached]);
+
+    for (let i = 0; i < dropped.length; i++) {
+      const file = dropped[i];
+      const attached = newAttached[i];
+      if (!file || !attached) continue;
+      let cancelled = false;
+      parseCancelTokens.current.set(attached.id, () => {
+        cancelled = true;
+      });
+      try {
+        const parsed = await parseFile(file);
+        if (cancelled) {
+          setFiles((prev) =>
+            prev.map((f) =>
+              f.id === attached.id
+                ? { ...f, status: "error", error: "Lecture annulée." }
+                : f
+            )
+          );
           continue;
         }
-        try {
-          const parsed = await parseFile(file);
-          if (parseCancelledRef.current) {
-            errors.push(`${file.name} : extraction annulée.`);
-            continue;
-          }
-          if (parsed.text.trim().length > 0) {
-            chunks.push(`--- Contenu de ${parsed.filename} ---\n\n${parsed.text}`);
-          } else {
-            errors.push(`${file.name} : fichier vide ou non-lisible.`);
-          }
-        } catch (err) {
-          const msg = err instanceof Error ? err.message : String(err);
-          errors.push(`${file.name} : ${msg}`);
+        if (parsed.text.trim().length === 0) {
+          setFiles((prev) =>
+            prev.map((f) =>
+              f.id === attached.id
+                ? { ...f, status: "error", error: "Fichier vide ou non-lisible." }
+                : f
+            )
+          );
+        } else {
+          setFiles((prev) =>
+            prev.map((f) =>
+              f.id === attached.id ? { ...f, status: "ready", text: parsed.text } : f
+            )
+          );
         }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        setFiles((prev) =>
+          prev.map((f) => (f.id === attached.id ? { ...f, status: "error", error: msg } : f))
+        );
+      } finally {
+        parseCancelTokens.current.delete(attached.id);
       }
-      if (chunks.length > 0) {
-        setBrief((prev) => {
-          const joined = chunks.join("\n\n");
-          if (prev.trim().length === 0) return joined;
-          return `${prev}\n\n${joined}`;
-        });
-      }
-      setFileErrors(errors);
-    } finally {
-      // Toujours repasser à false, quoi qu'il arrive — c'est ce qui bloquait
-      // l'UI quand un parse hang-forever se produisait.
-      setParsingFiles(false);
-      parseCancelledRef.current = false;
     }
   }
 
-  function handleCancelParsing(): void {
-    parseCancelledRef.current = true;
-    // On ne peut pas interrompre un parseFile() en cours (pas d'AbortSignal
-    // côté pdfjs), mais on coupe l'UI immédiatement pour débloquer Tom.
-    // Le parse en cours remplira `errors` via le flag cancelled.
-    setParsingFiles(false);
-    setFileErrors((prev) => (prev.length > 0 ? prev : ["Extraction annulée par l'utilisateur."]));
+  function handleRemoveFile(id: string): void {
+    const cancel = parseCancelTokens.current.get(id);
+    if (cancel) {
+      cancel();
+      parseCancelTokens.current.delete(id);
+    }
+    setFiles((prev) => prev.filter((f) => f.id !== id));
   }
 
-  async function handleApply(): Promise<void> {
-    if (!extracted || !extracted.items) return;
+  async function handleApply(edited: ExtractedQuote): Promise<void> {
     const issuedAt = today();
-    const items = (extracted.items ?? []).map((it, idx) => ({
-      // UUID v4 : le backend valide le schéma Zod strictement (items[*].id).
+    const items = edited.items.map((it, idx) => ({
       id: crypto.randomUUID(),
       position: idx,
       description: it.description,
@@ -222,12 +247,12 @@ export function NewAi(): ReactElement {
       serviceId: null,
     }));
     const initial: Partial<QuoteFormValues> = {
-      title: extracted.client?.name ? `Devis — ${extracted.client.name}` : "Devis",
+      title: edited.client?.name ? `Devis — ${edited.client.name}` : "Devis",
       issuedAt,
-      validityDate: extracted.validUntil
-        ? new Date(extracted.validUntil).getTime()
+      validityDate: edited.validUntil
+        ? new Date(edited.validUntil).getTime()
         : addDays(issuedAt, 30),
-      notes: extracted.notes ?? "",
+      notes: edited.notes ?? "",
       items,
     };
     setApplied(initial);
@@ -238,7 +263,6 @@ export function NewAi(): ReactElement {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   async function handleSubmitApplied(values: QuoteFormValues, issueNumber: boolean): Promise<void> {
-    // Guard synchrone double-submit.
     if (submitting) return;
     if (!values.clientId) {
       setSubmitError(fr.quotes.errors.missingClient);
@@ -382,135 +406,85 @@ export function NewAi(): ReactElement {
         style={{
           border: `${tokens.stroke.bold} solid ${tokens.color.ink}`,
           background: tokens.color.surface,
-          padding: tokens.spacing[5],
           boxShadow: tokens.shadow.sm,
           display: "flex",
           flexDirection: "column",
-          gap: tokens.spacing[3],
         }}
       >
-        <Dropzone
-          onFiles={handleDroppedFiles}
-          accept={SUPPORTED_ACCEPT}
-          disabled={extracting || parsingFiles}
-          label="DÉPOSE TON FICHIER ICI"
-          data-testid="ai-dropzone"
-        >
-          <Textarea
-            aria-label={fr.quotes.ai.briefLabel}
-            label={fr.quotes.ai.briefLabel}
-            placeholder={fr.quotes.ai.briefPlaceholder}
-            value={brief}
-            rows={6}
-            onChange={(e) => setBrief(e.target.value)}
-            disabled={extracting || parsingFiles}
-            data-testid="ai-brief"
-          />
-        </Dropzone>
+        <InputModeTabs
+          mode={inputMode}
+          onChange={setInputMode}
+          fileCount={files.length}
+          briefFilled={brief.trim().length > 0}
+        />
+
         <div
           style={{
+            padding: tokens.spacing[5],
             display: "flex",
-            alignItems: "center",
-            gap: tokens.spacing[2],
-            fontFamily: tokens.font.ui,
-            fontSize: tokens.fontSize.xs,
-            fontWeight: 700,
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-            color: tokens.color.ink,
+            flexDirection: "column",
+            gap: tokens.spacing[4],
           }}
-          data-testid="ai-dropzone-hint"
         >
-          <span
-            aria-hidden="true"
-            style={{
-              display: "inline-block",
-              padding: "2px 6px",
-              background: tokens.color.accentSoft,
-              border: `1.5px solid ${tokens.color.ink}`,
-            }}
-          >
-            ⬇
-          </span>
-          <span>Ou glisse un fichier ici · TXT · MD · EML · PDF · DOCX</span>
-        </div>
+          {inputMode === "text" ? (
+            <Textarea
+              aria-label={fr.quotes.ai.briefLabel}
+              label={fr.quotes.ai.briefLabel}
+              placeholder={fr.quotes.ai.briefPlaceholder}
+              value={brief}
+              rows={8}
+              onChange={(e) => setBrief(e.target.value)}
+              disabled={extracting}
+              data-testid="ai-brief"
+            />
+          ) : (
+            <FileInputPanel
+              files={files}
+              onFiles={handleDroppedFiles}
+              onRemove={handleRemoveFile}
+              disabled={extracting}
+            />
+          )}
 
-        {parsingFiles && (
           <div
-            data-testid="ai-parsing"
             style={{
-              border: `${tokens.stroke.base} dashed ${tokens.color.ink}`,
-              padding: tokens.spacing[3],
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
               gap: tokens.spacing[3],
-              fontFamily: tokens.font.ui,
-              fontSize: tokens.fontSize.sm,
-              color: tokens.color.muted,
-              textTransform: "uppercase",
-              letterSpacing: "0.06em",
+              flexWrap: "wrap",
             }}
           >
-            <span>Extraction du contenu…</span>
-            <Button variant="ghost" onClick={handleCancelParsing} data-testid="ai-parsing-cancel">
-              Annuler
-            </Button>
-          </div>
-        )}
-
-        {fileErrors.length > 0 && (
-          <div
-            role="alert"
-            data-testid="ai-file-errors"
-            style={{
-              border: `${tokens.stroke.bold} solid ${tokens.color.ink}`,
-              background: tokens.color.dangerBg,
-              padding: tokens.spacing[3],
-              fontFamily: tokens.font.ui,
-              fontSize: tokens.fontSize.sm,
-            }}
-          >
-            <strong
+            <span
               style={{
-                display: "block",
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
+                fontFamily: tokens.font.ui,
                 fontSize: tokens.fontSize.xs,
-                marginBottom: tokens.spacing[1],
+                color: tokens.color.muted,
+                fontWeight: Number(tokens.fontWeight.med),
               }}
+              data-testid="ai-extract-hint"
             >
-              Fichier(s) non lus :
-            </strong>
-            <ul style={{ margin: 0, paddingLeft: tokens.spacing[4] }}>
-              {fileErrors.map((msg, i) => (
-                <li key={i}>{msg}</li>
-              ))}
-            </ul>
+              {canExtract
+                ? fr.quotes.ai.tabFileHint && inputMode === "file"
+                  ? fr.quotes.ai.tabFileHint
+                  : fr.quotes.ai.tabTextHint
+                : fr.quotes.ai.noContentHint}
+            </span>
+            {extracting ? (
+              <Button variant="danger" onClick={handleCancel} data-testid="ai-cancel">
+                {fr.quotes.ai.cancel}
+              </Button>
+            ) : (
+              <Button
+                variant="primary"
+                onClick={() => void handleExtract()}
+                disabled={!canExtract || filesParsing}
+                data-testid="ai-extract"
+              >
+                {fr.quotes.ai.extract}
+              </Button>
+            )}
           </div>
-        )}
-
-        <div
-          style={{
-            display: "flex",
-            gap: tokens.spacing[2],
-            justifyContent: "flex-end",
-          }}
-        >
-          {extracting ? (
-            <Button variant="danger" onClick={handleCancel} data-testid="ai-cancel">
-              {fr.quotes.ai.cancel}
-            </Button>
-          ) : (
-            <Button
-              variant="primary"
-              onClick={() => void handleExtract()}
-              disabled={brief.trim().length === 0 || parsingFiles}
-              data-testid="ai-extract"
-            >
-              {fr.quotes.ai.extract}
-            </Button>
-          )}
         </div>
       </section>
 
@@ -545,7 +519,12 @@ export function NewAi(): ReactElement {
         </div>
       )}
 
-      {extracted && <ExtractedPreview extracted={extracted} onApply={() => void handleApply()} />}
+      {extracted && (
+        <ExtractedEditor
+          extracted={extracted}
+          onApply={(edited) => void handleApply(edited)}
+        />
+      )}
 
       {rawOutput !== null && (
         <RawOutputToggle
@@ -554,6 +533,304 @@ export function NewAi(): ReactElement {
           onToggle={() => setShowRawOutput((v) => !v)}
         />
       )}
+    </div>
+  );
+}
+
+interface InputModeTabsProps {
+  mode: InputMode;
+  onChange: (m: InputMode) => void;
+  fileCount: number;
+  briefFilled: boolean;
+}
+
+function InputModeTabs({
+  mode,
+  onChange,
+  fileCount,
+  briefFilled,
+}: InputModeTabsProps): ReactElement {
+  const tabs: ReadonlyArray<{
+    value: InputMode;
+    label: string;
+    badge: string | null;
+    testId: string;
+  }> = [
+    {
+      value: "text",
+      label: fr.quotes.ai.tabText,
+      badge: briefFilled ? "•" : null,
+      testId: "ai-tab-text",
+    },
+    {
+      value: "file",
+      label: fr.quotes.ai.tabFile,
+      badge: fileCount > 0 ? String(fileCount) : null,
+      testId: "ai-tab-file",
+    },
+  ];
+
+  return (
+    <div
+      role="tablist"
+      style={{
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
+        borderBottom: `${tokens.stroke.bold} solid ${tokens.color.ink}`,
+      }}
+    >
+      {tabs.map((t, idx) => {
+        const active = mode === t.value;
+        const isFirst = idx === 0;
+        return (
+          <button
+            type="button"
+            key={t.value}
+            role="tab"
+            aria-selected={active}
+            onClick={() => onChange(t.value)}
+            data-testid={t.testId}
+            style={{
+              padding: `${tokens.spacing[3]} ${tokens.spacing[4]}`,
+              border: "none",
+              borderRight: isFirst ? `${tokens.stroke.bold} solid ${tokens.color.ink}` : "none",
+              background: active ? tokens.color.ink : tokens.color.surface,
+              color: active ? tokens.color.accentSoft : tokens.color.ink,
+              fontFamily: tokens.font.ui,
+              fontWeight: Number(tokens.fontWeight.black),
+              fontSize: tokens.fontSize.sm,
+              textTransform: "uppercase",
+              letterSpacing: "0.04em",
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: tokens.spacing[2],
+            }}
+          >
+            <span>{t.label}</span>
+            {t.badge !== null && (
+              <span
+                aria-hidden="true"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  minWidth: 22,
+                  height: 22,
+                  padding: "0 6px",
+                  fontFamily: tokens.font.mono,
+                  fontSize: tokens.fontSize.xs,
+                  fontWeight: Number(tokens.fontWeight.bold),
+                  border: `${tokens.stroke.hair} solid ${active ? tokens.color.accentSoft : tokens.color.ink}`,
+                  background: active ? tokens.color.ink : tokens.color.accentSoft,
+                  color: active ? tokens.color.accentSoft : tokens.color.ink,
+                }}
+              >
+                {t.badge}
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+interface FileInputPanelProps {
+  files: AttachedFile[];
+  onFiles: (files: File[]) => void | Promise<void>;
+  onRemove: (id: string) => void;
+  disabled: boolean;
+}
+
+function FileInputPanel({
+  files,
+  onFiles,
+  onRemove,
+  disabled,
+}: FileInputPanelProps): ReactElement {
+  return (
+    <div
+      style={{ display: "flex", flexDirection: "column", gap: tokens.spacing[3] }}
+      data-testid="ai-file-panel"
+    >
+      <Dropzone
+        onFiles={onFiles}
+        accept={SUPPORTED_ACCEPT}
+        disabled={disabled}
+        label="DÉPOSE TON FICHIER ICI"
+        data-testid="ai-dropzone"
+      >
+        <div
+          style={{
+            border: `${tokens.stroke.base} dashed ${tokens.color.ink}`,
+            padding: tokens.spacing[6],
+            textAlign: "center",
+            display: "flex",
+            flexDirection: "column",
+            gap: tokens.spacing[2],
+            background: tokens.color.paper,
+            cursor: disabled ? "not-allowed" : "pointer",
+          }}
+        >
+          <span
+            aria-hidden="true"
+            style={{
+              fontSize: tokens.fontSize.xl,
+              fontFamily: tokens.font.mono,
+              fontWeight: Number(tokens.fontWeight.black),
+            }}
+          >
+            ⬇
+          </span>
+          <span
+            style={{
+              fontFamily: tokens.font.ui,
+              fontSize: tokens.fontSize.md,
+              fontWeight: Number(tokens.fontWeight.black),
+              textTransform: "uppercase",
+              letterSpacing: "0.04em",
+            }}
+          >
+            {fr.quotes.ai.dropzoneTitle}
+          </span>
+          <span
+            data-testid="ai-dropzone-hint"
+            style={{
+              fontFamily: tokens.font.ui,
+              fontSize: tokens.fontSize.xs,
+              color: tokens.color.muted,
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+            }}
+          >
+            {fr.quotes.ai.dropzoneFormats}
+          </span>
+        </div>
+      </Dropzone>
+
+      {files.length > 0 && (
+        <ul
+          data-testid="ai-file-list"
+          style={{
+            margin: 0,
+            padding: 0,
+            listStyle: "none",
+            display: "flex",
+            flexDirection: "column",
+            gap: tokens.spacing[2],
+          }}
+        >
+          {files.map((f) => (
+            <li key={f.id}>
+              <FileCard file={f} onRemove={() => onRemove(f.id)} />
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+interface FileCardProps {
+  file: AttachedFile;
+  onRemove: () => void;
+}
+
+function FileCard({ file, onRemove }: FileCardProps): ReactElement {
+  const statusLabel =
+    file.status === "parsing"
+      ? fr.quotes.ai.fileCardParsing
+      : file.status === "ready"
+        ? fr.quotes.ai.fileCardReady
+        : (file.error ?? fr.quotes.ai.fileCardError);
+
+  const statusBg =
+    file.status === "ready"
+      ? tokens.color.accentSoft
+      : file.status === "error"
+        ? tokens.color.dangerBg
+        : tokens.color.paper;
+
+  return (
+    <div
+      data-testid={`ai-file-card-${file.id}`}
+      data-status={file.status}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: tokens.spacing[3],
+        padding: `${tokens.spacing[2]} ${tokens.spacing[3]}`,
+        border: `${tokens.stroke.base} solid ${tokens.color.ink}`,
+        background: tokens.color.surface,
+      }}
+    >
+      <span
+        aria-hidden="true"
+        style={{
+          fontFamily: tokens.font.mono,
+          fontWeight: Number(tokens.fontWeight.black),
+          fontSize: tokens.fontSize.sm,
+          width: 32,
+          height: 32,
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          border: `${tokens.stroke.hair} solid ${tokens.color.ink}`,
+          background: statusBg,
+        }}
+      >
+        {file.status === "parsing" ? "…" : file.status === "ready" ? "✓" : "!"}
+      </span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div
+          style={{
+            fontFamily: tokens.font.ui,
+            fontSize: tokens.fontSize.sm,
+            fontWeight: Number(tokens.fontWeight.bold),
+            color: tokens.color.ink,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {file.name}
+        </div>
+        <div
+          style={{
+            fontFamily: tokens.font.ui,
+            fontSize: tokens.fontSize.xs,
+            color: tokens.color.muted,
+            display: "flex",
+            gap: tokens.spacing[2],
+          }}
+        >
+          <span>{fr.quotes.ai.fileCardSize(file.size)}</span>
+          <span aria-hidden="true">·</span>
+          <span data-testid={`ai-file-status-${file.id}`}>{statusLabel}</span>
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={onRemove}
+        data-testid={`ai-file-remove-${file.id}`}
+        aria-label={fr.quotes.ai.fileCardRemove}
+        style={{
+          padding: `${tokens.spacing[1]} ${tokens.spacing[2]}`,
+          border: `${tokens.stroke.hair} solid ${tokens.color.ink}`,
+          background: tokens.color.surface,
+          color: tokens.color.ink,
+          cursor: "pointer",
+          fontFamily: tokens.font.ui,
+          fontSize: tokens.fontSize.xs,
+          fontWeight: Number(tokens.fontWeight.bold),
+          textTransform: "uppercase",
+          letterSpacing: "0.06em",
+        }}
+      >
+        {fr.quotes.ai.fileCardRemove}
+      </button>
     </div>
   );
 }
@@ -637,17 +914,88 @@ function RawOutputToggle({
   );
 }
 
-function ExtractedPreview({
-  extracted,
-  onApply,
-}: {
+interface ExtractedEditorProps {
   extracted: Partial<ExtractedQuote>;
-  onApply: () => void;
-}): ReactElement {
-  const total = (extracted.items ?? []).reduce(
-    (s, it) => s + (it.quantity || 1) * (it.unitPrice || 0),
-    0
+  onApply: (final: ExtractedQuote) => void;
+}
+
+const UNIT_OPTIONS: ReadonlyArray<{ value: ExtractedUnit; label: string }> = [
+  { value: "forfait", label: "Forfait" },
+  { value: "hour", label: "Heure" },
+  { value: "day", label: "Jour" },
+  { value: "unit", label: "Unité" },
+];
+
+function ExtractedEditor({ extracted, onApply }: ExtractedEditorProps): ReactElement {
+  const [clientName, setClientName] = useState<string>(extracted.client?.name ?? "");
+  const [clientEmail, setClientEmail] = useState<string>(extracted.client?.email ?? "");
+  const [items, setItems] = useState<ExtractedQuoteItem[]>(() =>
+    (extracted.items ?? []).map((it) => ({
+      description: it.description,
+      quantity: it.quantity,
+      unitPrice: it.unitPrice,
+      unit: it.unit,
+    }))
   );
+  const [notes, setNotes] = useState<string>(extracted.notes ?? "");
+
+  // Si l'extracted change (ex. nouveau stream), on ré-initialise.
+  useEffect(() => {
+    setClientName(extracted.client?.name ?? "");
+    setClientEmail(extracted.client?.email ?? "");
+    setItems(
+      (extracted.items ?? []).map((it) => ({
+        description: it.description,
+        quantity: it.quantity,
+        unitPrice: it.unitPrice,
+        unit: it.unit,
+      }))
+    );
+    setNotes(extracted.notes ?? "");
+  }, [extracted]);
+
+  const total = useMemo<number>(
+    () => items.reduce((s, it) => s + (it.quantity || 0) * (it.unitPrice || 0), 0),
+    [items]
+  );
+
+  function updateItem(idx: number, patch: Partial<ExtractedQuoteItem>): void {
+    setItems((prev) => prev.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
+  }
+
+  function removeItem(idx: number): void {
+    setItems((prev) => prev.filter((_, i) => i !== idx));
+  }
+
+  function addItem(): void {
+    setItems((prev) => [
+      ...prev,
+      { description: "", quantity: 1, unitPrice: 0, unit: "forfait" },
+    ]);
+  }
+
+  const canApply = clientName.trim().length > 0 && items.length > 0;
+
+  function handleApplyClick(): void {
+    onApply({
+      client: {
+        name: clientName.trim(),
+        ...(clientEmail.trim().length > 0 ? { email: clientEmail.trim() } : {}),
+      },
+      items: items.map((it) => ({
+        description: it.description,
+        quantity: it.quantity,
+        unitPrice: it.unitPrice,
+        unit: it.unit,
+      })),
+      ...(notes.trim().length > 0 ? { notes: notes.trim() } : {}),
+      ...(extracted.validUntil ? { validUntil: extracted.validUntil } : {}),
+      ...(extracted.depositPercent !== undefined
+        ? { depositPercent: extracted.depositPercent }
+        : {}),
+    });
+  }
+
   return (
     <section
       data-testid="ai-extracted"
@@ -662,113 +1010,255 @@ function ExtractedPreview({
           padding: `${tokens.spacing[3]} ${tokens.spacing[5]}`,
           background: tokens.color.accentSoft,
           borderBottom: `${tokens.stroke.base} solid ${tokens.color.ink}`,
-          fontFamily: tokens.font.ui,
-          fontWeight: Number(tokens.fontWeight.black),
-          textTransform: "uppercase",
-          letterSpacing: "-0.01em",
-          fontSize: tokens.fontSize.md,
+          display: "flex",
+          flexDirection: "column",
+          gap: tokens.spacing[1],
         }}
       >
-        {fr.quotes.ai.extractedTitle}
+        <div
+          style={{
+            fontFamily: tokens.font.ui,
+            fontWeight: Number(tokens.fontWeight.black),
+            textTransform: "uppercase",
+            letterSpacing: "-0.01em",
+            fontSize: tokens.fontSize.md,
+          }}
+        >
+          {fr.quotes.ai.extractedTitle}
+        </div>
+        <div
+          style={{
+            fontFamily: tokens.font.ui,
+            fontSize: tokens.fontSize.xs,
+            color: tokens.color.ink,
+            opacity: 0.8,
+          }}
+        >
+          {fr.quotes.ai.extractedSubtitle}
+        </div>
       </div>
+
       <div
         style={{
           padding: tokens.spacing[5],
           display: "flex",
           flexDirection: "column",
-          gap: tokens.spacing[3],
+          gap: tokens.spacing[4],
         }}
       >
-        {extracted.client && (
-          <div>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: tokens.spacing[3],
+          }}
+        >
+          <Input
+            label={fr.quotes.ai.extractedClientName}
+            value={clientName}
+            onChange={(e) => setClientName(e.target.value)}
+            data-testid="ai-edit-client-name"
+            required
+          />
+          <Input
+            label={fr.quotes.ai.extractedClientEmail}
+            value={clientEmail}
+            onChange={(e) => setClientEmail(e.target.value)}
+            data-testid="ai-edit-client-email"
+            type="email"
+          />
+        </div>
+
+        <div>
+          <div
+            style={{
+              fontFamily: tokens.font.ui,
+              fontSize: tokens.fontSize.xs,
+              fontWeight: Number(tokens.fontWeight.bold),
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+              color: tokens.color.muted,
+              marginBottom: tokens.spacing[2],
+            }}
+          >
+            {fr.quotes.ai.extractedItems}
+          </div>
+          {items.length === 0 ? (
             <div
+              data-testid="ai-no-items-hint"
+              role="status"
               style={{
+                border: `${tokens.stroke.base} solid ${tokens.color.ink}`,
+                background: tokens.color.warnBg,
+                padding: tokens.spacing[3],
                 fontFamily: tokens.font.ui,
-                fontSize: tokens.fontSize.xs,
-                fontWeight: Number(tokens.fontWeight.bold),
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-                color: tokens.color.muted,
-              }}
-            >
-              {fr.quotes.ai.extractedClient}
-            </div>
-            <div
-              style={{
-                fontFamily: tokens.font.ui,
-                fontSize: tokens.fontSize.md,
-                fontWeight: Number(tokens.fontWeight.bold),
+                fontSize: tokens.fontSize.sm,
                 color: tokens.color.ink,
               }}
             >
-              {extracted.client.name}
+              {fr.quotes.ai.noItemsHint}
             </div>
-            {extracted.client.email && (
-              <div
-                style={{
-                  fontFamily: tokens.font.ui,
-                  fontSize: tokens.fontSize.sm,
-                  color: tokens.color.muted,
-                }}
-              >
-                {extracted.client.email}
-              </div>
-            )}
-          </div>
-        )}
-
-        {extracted.items && extracted.items.length > 0 && (
-          <div>
-            <div
-              style={{
-                fontFamily: tokens.font.ui,
-                fontSize: tokens.fontSize.xs,
-                fontWeight: Number(tokens.fontWeight.bold),
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-                color: tokens.color.muted,
-                marginBottom: tokens.spacing[2],
-              }}
-            >
-              {fr.quotes.ai.extractedItems}
-            </div>
+          ) : (
             <ul
+              data-testid="ai-edit-items"
               style={{
                 margin: 0,
                 padding: 0,
                 listStyle: "none",
                 display: "flex",
                 flexDirection: "column",
-                gap: tokens.spacing[1],
+                gap: tokens.spacing[2],
               }}
             >
-              {extracted.items.map((item, idx) => (
+              {items.map((it, idx) => (
                 <li
                   key={idx}
+                  data-testid={`ai-edit-item-${idx}`}
                   style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    padding: `${tokens.spacing[2]} ${tokens.spacing[3]}`,
-                    border: `1.5px solid ${tokens.color.line}`,
-                    fontFamily: tokens.font.ui,
-                    fontSize: tokens.fontSize.sm,
+                    border: `${tokens.stroke.base} solid ${tokens.color.ink}`,
+                    padding: tokens.spacing[3],
+                    display: "grid",
+                    gridTemplateColumns: "minmax(0, 2fr) 80px 110px 110px auto",
+                    gap: tokens.spacing[2],
+                    alignItems: "end",
                   }}
                 >
-                  <span>{item.description}</span>
-                  <span
+                  <Input
+                    label={fr.quotes.ai.extractedItemDescription}
+                    value={it.description}
+                    onChange={(e) => updateItem(idx, { description: e.target.value })}
+                    data-testid={`ai-edit-item-${idx}-desc`}
+                  />
+                  <Input
+                    label={fr.quotes.ai.extractedItemQuantity}
+                    type="number"
+                    min={0}
+                    step={0.5}
+                    value={it.quantity}
+                    onChange={(e) =>
+                      updateItem(idx, { quantity: Number(e.target.value) || 0 })
+                    }
+                    data-testid={`ai-edit-item-${idx}-qty`}
+                  />
+                  <label
                     style={{
-                      fontFamily: tokens.font.mono,
-                      fontVariantNumeric: "tabular-nums",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: tokens.spacing[1],
+                      fontFamily: tokens.font.ui,
+                      fontSize: tokens.fontSize.xs,
                     }}
                   >
-                    {item.quantity} {mapExtractedUnit(item.unit)} ×{" "}
-                    {formatEur(Math.round(item.unitPrice * 100))}
-                  </span>
+                    <span
+                      style={{
+                        fontWeight: Number(tokens.fontWeight.bold),
+                        textTransform: "uppercase",
+                        letterSpacing: "0.06em",
+                        color: tokens.color.muted,
+                      }}
+                    >
+                      {fr.quotes.ai.extractedItemUnit}
+                    </span>
+                    <select
+                      value={it.unit}
+                      onChange={(e) =>
+                        updateItem(idx, { unit: e.target.value as ExtractedUnit })
+                      }
+                      data-testid={`ai-edit-item-${idx}-unit`}
+                      style={{
+                        height: 36,
+                        padding: `0 ${tokens.spacing[2]}`,
+                        border: `${tokens.stroke.base} solid ${tokens.color.ink}`,
+                        background: tokens.color.surface,
+                        fontFamily: tokens.font.ui,
+                        fontSize: tokens.fontSize.sm,
+                        fontWeight: Number(tokens.fontWeight.med),
+                      }}
+                    >
+                      {UNIT_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <Input
+                    label={fr.quotes.ai.extractedItemPrice}
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={it.unitPrice}
+                    onChange={(e) =>
+                      updateItem(idx, { unitPrice: Number(e.target.value) || 0 })
+                    }
+                    data-testid={`ai-edit-item-${idx}-price`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeItem(idx)}
+                    data-testid={`ai-edit-item-${idx}-remove`}
+                    aria-label={fr.quotes.ai.extractedItemRemove}
+                    style={{
+                      height: 36,
+                      padding: `0 ${tokens.spacing[2]}`,
+                      border: `${tokens.stroke.base} solid ${tokens.color.ink}`,
+                      background: tokens.color.surface,
+                      cursor: "pointer",
+                      fontFamily: tokens.font.ui,
+                      fontWeight: Number(tokens.fontWeight.bold),
+                      textTransform: "uppercase",
+                      letterSpacing: "0.06em",
+                      fontSize: tokens.fontSize.xs,
+                    }}
+                  >
+                    ×
+                  </button>
                 </li>
               ))}
             </ul>
+          )}
+          <div style={{ marginTop: tokens.spacing[2] }}>
+            <Button variant="secondary" onClick={addItem} data-testid="ai-edit-item-add">
+              {fr.quotes.ai.extractedItemAdd}
+            </Button>
           </div>
-        )}
+        </div>
+
+        <label
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: tokens.spacing[1],
+            fontFamily: tokens.font.ui,
+          }}
+        >
+          <span
+            style={{
+              fontSize: tokens.fontSize.xs,
+              fontWeight: Number(tokens.fontWeight.bold),
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+              color: tokens.color.muted,
+            }}
+          >
+            {fr.quotes.ai.extractedNotes}
+          </span>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder={fr.quotes.ai.extractedNotesPlaceholder}
+            rows={3}
+            data-testid="ai-edit-notes"
+            style={{
+              padding: tokens.spacing[2],
+              border: `${tokens.stroke.base} solid ${tokens.color.ink}`,
+              background: tokens.color.surface,
+              fontFamily: tokens.font.ui,
+              fontSize: tokens.fontSize.sm,
+              resize: "vertical",
+            }}
+          />
+        </label>
 
         <div
           style={{
@@ -804,29 +1294,12 @@ function ExtractedPreview({
           </span>
         </div>
 
-        {(!extracted.items || extracted.items.length === 0) && (
-          <div
-            data-testid="ai-no-items-hint"
-            role="status"
-            style={{
-              border: `${tokens.stroke.base} solid ${tokens.color.ink}`,
-              background: tokens.color.warnBg,
-              padding: tokens.spacing[3],
-              fontFamily: tokens.font.ui,
-              fontSize: tokens.fontSize.sm,
-              color: tokens.color.ink,
-            }}
-          >
-            {fr.quotes.ai.noItemsHint}
-          </div>
-        )}
-
         <div style={{ display: "flex", justifyContent: "flex-end" }}>
           <Button
             variant="primary"
-            onClick={onApply}
+            onClick={handleApplyClick}
             data-testid="ai-apply"
-            disabled={!extracted.items || extracted.items.length === 0}
+            disabled={!canApply}
           >
             {fr.quotes.ai.applyAndEdit}
           </Button>

@@ -66,6 +66,21 @@ export interface MarkPaidInput {
   notes?: string | null;
 }
 
+export interface ImportInvoiceInput {
+  id: string;
+  clientId: string;
+  externalNumber?: string | null;
+  title: string;
+  totalHtCents: Cents;
+  issuedAt?: TimestampMs | null;
+  paidAt?: TimestampMs | null;
+  paymentMethod?: PaymentMethod | null;
+  paymentNotes?: string | null;
+  status?: "sent" | "paid" | "overdue";
+  legalMentions: string;
+  items: InvoiceItemInput[];
+}
+
 interface ListResponse<T> {
   items: T[];
   pagination?: { limit: number; offset: number; count: number };
@@ -103,6 +118,9 @@ export const invoicesApi = {
   },
   async create(input: CreateInvoiceInput): Promise<Invoice> {
     return getApiClient().post<Invoice>("/api/invoices", input);
+  },
+  async importExisting(input: ImportInvoiceInput): Promise<Invoice> {
+    return getApiClient().post<Invoice>("/api/invoices/import", input);
   },
   async createFromQuote(quoteId: string, input: FromQuoteInput): Promise<Invoice> {
     return getApiClient().post<Invoice>(`/api/invoices/from-quote/${quoteId}`, input);

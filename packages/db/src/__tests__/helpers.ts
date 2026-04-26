@@ -82,6 +82,8 @@ const SCHEMA_DDL = [
     number TEXT,
     year INTEGER,
     sequence INTEGER,
+    external_number TEXT,
+    imported_at INTEGER,
     title TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'draft',
     total_ht_cents INTEGER NOT NULL DEFAULT 0,
@@ -97,6 +99,7 @@ const SCHEMA_DDL = [
   )`,
   "CREATE INDEX IF NOT EXISTS quotes_status_idx ON quotes(status)",
   "CREATE INDEX IF NOT EXISTS quotes_client_idx ON quotes(client_id)",
+  "CREATE INDEX IF NOT EXISTS quotes_imported_idx ON quotes(imported_at) WHERE imported_at IS NOT NULL",
   `CREATE TABLE IF NOT EXISTS quote_items (
     id TEXT PRIMARY KEY,
     quote_id TEXT NOT NULL REFERENCES quotes(id) ON DELETE CASCADE,
@@ -117,6 +120,8 @@ const SCHEMA_DDL = [
     number TEXT,
     year INTEGER,
     sequence INTEGER,
+    external_number TEXT,
+    imported_at INTEGER,
     kind TEXT NOT NULL,
     deposit_percent INTEGER,
     title TEXT NOT NULL,
@@ -135,6 +140,7 @@ const SCHEMA_DDL = [
   )`,
   "CREATE INDEX IF NOT EXISTS invoices_status_idx ON invoices(status)",
   "CREATE INDEX IF NOT EXISTS invoices_due_idx ON invoices(due_date)",
+  "CREATE INDEX IF NOT EXISTS invoices_imported_idx ON invoices(imported_at) WHERE imported_at IS NOT NULL",
   `CREATE TABLE IF NOT EXISTS invoice_items (
     id TEXT PRIMARY KEY,
     invoice_id TEXT NOT NULL REFERENCES invoices(id) ON DELETE CASCADE,
