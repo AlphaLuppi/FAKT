@@ -1,9 +1,9 @@
 import { computeDepositAmount } from "@fakt/core";
 import { tokens } from "@fakt/design-tokens";
 import { buildLegalMentionsSnapshot } from "@fakt/legal";
-import { addDays, fr, today } from "@fakt/shared";
-import type { DocumentUnit, Quote, UUID } from "@fakt/shared";
-import { Button, Select } from "@fakt/ui";
+import { addDays, formatEur, fr, today } from "@fakt/shared";
+import type { DocumentUnit, Invoice, Quote, UUID } from "@fakt/shared";
+import { Button, Modal } from "@fakt/ui";
 import type { ReactElement } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
@@ -77,6 +77,19 @@ async function computeBalanceItems(quote: Quote): Promise<EditableItem[]> {
   ];
 }
 
+type BillingState = "unbilled" | "deposit-paid";
+type FilterMode = "all" | "unbilled" | "deposit-paid";
+
+function computeBillingState(quoteId: UUID, invoices: ReadonlyArray<Invoice>): BillingState | "billed" {
+  // Une facture "active" = non annulée. On considère draft + sent + paid + overdue.
+  const linked = invoices.filter((i) => i.quoteId === quoteId && i.status !== "cancelled");
+  const hasFinal = linked.some((i) => i.kind === "total" || i.kind === "balance");
+  if (hasFinal) return "billed";
+  const hasDeposit = linked.some((i) => i.kind === "deposit");
+  if (hasDeposit) return "deposit-paid";
+  return "unbilled";
+}
+
 export function NewFromQuote(): ReactElement {
   const navigate = useNavigate();
   const [params] = useSearchParams();
@@ -86,40 +99,61 @@ export function NewFromQuote(): ReactElement {
   const { workspace } = useWorkspace();
 
   const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [allInvoices, setAllInvoices] = useState<Invoice[]>([]);
   const [selectedQuoteId, setSelectedQuoteId] = useState<UUID | null>(preselectedQuoteId ?? null);
   const [mode, setMode] = useState<CreateFromQuoteMode>("deposit30");
   const [initialValues, setInitialValues] = useState<Partial<InvoiceFormValues>>();
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [loadingQuotes, setLoadingQuotes] = useState(true);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [filter, setFilter] = useState<FilterMode>("all");
 
-  // Charge la liste des devis signés.
+  // Charge les devis signés et toutes les factures pour calculer le billing state.
   useEffect(() => {
     let cancelled = false;
     setLoadingQuotes(true);
-    quotesApi
-      .list({ status: ["sent", "signed"] })
-      .then((data) => {
-        if (!cancelled) {
-          setQuotes(data);
-          setLoadingQuotes(false);
-          // Auto-sélectionne le 1er devis si rien n'est pré-sélectionné.
-          // Sinon le <select> HTML affiche la 1ère option visuellement mais
-          // n'émet pas onChange tant que l'utilisateur ne change pas la valeur,
-          // d'où l'impression de "rien ne se passe" après ouverture.
-          setSelectedQuoteId((current) => current ?? data[0]?.id ?? null);
-        }
+    Promise.all([quotesApi.list({ status: "signed" }), invoiceApi.list({})])
+      .then(([qs, invs]) => {
+        if (cancelled) return;
+        setQuotes(qs);
+        setAllInvoices(invs);
+        setLoadingQuotes(false);
+        // Auto-sélectionne le 1er devis éligible si rien n'est pré-sélectionné.
+        setSelectedQuoteId((current) => {
+          if (current) return current;
+          const eligible = qs.find((q) => computeBillingState(q.id, invs) !== "billed");
+          return eligible?.id ?? null;
+        });
       })
       .catch(() => {
-        if (!cancelled) {
-          setQuotes([]);
-          setLoadingQuotes(false);
-        }
+        if (cancelled) return;
+        setQuotes([]);
+        setAllInvoices([]);
+        setLoadingQuotes(false);
       });
     return (): void => {
       cancelled = true;
     };
   }, []);
+
+  const billingByQuote = useMemo((): Map<UUID, BillingState | "billed"> => {
+    const m = new Map<UUID, BillingState | "billed">();
+    for (const q of quotes) m.set(q.id, computeBillingState(q.id, allInvoices));
+    return m;
+  }, [quotes, allInvoices]);
+
+  // Devis éligibles : signés ET pas encore facturés totalement.
+  const eligibleQuotes = useMemo(
+    () => quotes.filter((q) => billingByQuote.get(q.id) !== "billed"),
+    [quotes, billingByQuote]
+  );
+
+  // Devis éligibles filtrés selon le filtre actif (modal picker).
+  const filteredQuotes = useMemo(() => {
+    if (filter === "all") return eligibleQuotes;
+    return eligibleQuotes.filter((q) => billingByQuote.get(q.id) === filter);
+  }, [eligibleQuotes, billingByQuote, filter]);
 
   const selectedQuote = useMemo(
     () => quotes.find((q) => q.id === selectedQuoteId) ?? null,
@@ -323,7 +357,7 @@ export function NewFromQuote(): ReactElement {
             >
               Chargement…
             </div>
-          ) : quotes.length === 0 ? (
+          ) : eligibleQuotes.length === 0 ? (
             <div
               data-testid="no-signed-quote"
               style={{
@@ -335,35 +369,28 @@ export function NewFromQuote(): ReactElement {
               {fr.invoices.form.noSignedQuote}
             </div>
           ) : (
-            <>
-              <Select
-                aria-label={fr.invoices.form.selectQuote}
-                options={quotes.map((q) => ({
-                  value: q.id,
-                  label: `${q.number ?? "—"} · ${q.title}`,
-                }))}
-                value={selectedQuoteId ?? ""}
-                onChange={(e) => setSelectedQuoteId(e.target.value || null)}
-                data-testid="quote-picker"
-              />
-              <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                <Button
-                  variant="primary"
-                  disabled={!selectedQuoteId}
-                  onClick={() => {
-                    document
-                      .querySelector('[data-testid="mode-picker-section"]')
-                      ?.scrollIntoView({ behavior: "smooth", block: "start" });
-                  }}
-                  data-testid="quote-picker-continue"
-                >
-                  {fr.invoices.form.continueWithQuote}
-                </Button>
-              </div>
-            </>
+            <QuotePickerTrigger
+              selected={selectedQuote}
+              billingState={selectedQuote ? billingByQuote.get(selectedQuote.id) ?? null : null}
+              onOpen={() => setPickerOpen(true)}
+            />
           )}
         </section>
       )}
+
+      <QuotePickerModal
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        quotes={filteredQuotes}
+        billingByQuote={billingByQuote}
+        filter={filter}
+        onFilterChange={setFilter}
+        selectedId={selectedQuoteId}
+        onSelect={(id) => {
+          setSelectedQuoteId(id);
+          setPickerOpen(false);
+        }}
+      />
 
       {selectedQuote && (
         <>
@@ -435,6 +462,321 @@ export function NewFromQuote(): ReactElement {
         </>
       )}
     </div>
+  );
+}
+
+interface QuotePickerTriggerProps {
+  selected: Quote | null;
+  billingState: BillingState | "billed" | null;
+  onOpen: () => void;
+}
+
+function QuotePickerTrigger(props: QuotePickerTriggerProps): ReactElement {
+  const { selected, billingState, onOpen } = props;
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      data-testid="quote-picker-trigger"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: tokens.spacing[3],
+        padding: `${tokens.spacing[3]} ${tokens.spacing[4]}`,
+        border: `${tokens.stroke.base} solid ${tokens.color.ink}`,
+        background: tokens.color.surface,
+        boxShadow: tokens.shadow.sm,
+        cursor: "pointer",
+        textAlign: "left",
+        fontFamily: tokens.font.ui,
+        color: tokens.color.ink,
+      }}
+    >
+      {selected ? (
+        <span
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: tokens.spacing[1],
+            minWidth: 0,
+          }}
+        >
+          <span
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: tokens.spacing[2],
+            }}
+          >
+            <span
+              style={{
+                fontFamily: tokens.font.mono,
+                fontSize: tokens.fontSize.sm,
+                fontWeight: Number(tokens.fontWeight.bold),
+              }}
+            >
+              {selected.number ?? "—"}
+            </span>
+            <BillingBadge state={billingState} />
+          </span>
+          <span
+            style={{
+              fontSize: tokens.fontSize.sm,
+              fontWeight: Number(tokens.fontWeight.med),
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {selected.title} · {formatEur(selected.totalHtCents)}
+          </span>
+        </span>
+      ) : (
+        <span
+          style={{
+            fontSize: tokens.fontSize.sm,
+            fontWeight: Number(tokens.fontWeight.bold),
+            textTransform: "uppercase",
+            letterSpacing: "0.04em",
+          }}
+        >
+          {fr.invoices.form.pickerOpen}
+        </span>
+      )}
+      <span
+        style={{
+          fontFamily: tokens.font.ui,
+          fontSize: tokens.fontSize.xs,
+          fontWeight: Number(tokens.fontWeight.bold),
+          textTransform: "uppercase",
+          letterSpacing: "0.08em",
+          padding: `${tokens.spacing[1]} ${tokens.spacing[2]}`,
+          border: `${tokens.stroke.hair} solid ${tokens.color.ink}`,
+        }}
+      >
+        {selected ? fr.invoices.form.pickerChange : "▾"}
+      </span>
+    </button>
+  );
+}
+
+interface QuotePickerModalProps {
+  open: boolean;
+  onClose: () => void;
+  quotes: ReadonlyArray<Quote>;
+  billingByQuote: Map<UUID, BillingState | "billed">;
+  filter: FilterMode;
+  onFilterChange: (f: FilterMode) => void;
+  selectedId: UUID | null;
+  onSelect: (id: UUID) => void;
+}
+
+function QuotePickerModal(props: QuotePickerModalProps): ReactElement {
+  const { open, onClose, quotes, billingByQuote, filter, onFilterChange, selectedId, onSelect } =
+    props;
+
+  const filters: ReadonlyArray<{ value: FilterMode; label: string }> = [
+    { value: "all", label: fr.invoices.form.pickerFilterAll },
+    { value: "unbilled", label: fr.invoices.form.pickerFilterUnbilled },
+    { value: "deposit-paid", label: fr.invoices.form.pickerFilterDeposit },
+  ];
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={fr.invoices.form.selectQuote}
+      size="lg"
+      data-testid="quote-picker-modal"
+      testIdClose="quote-picker-modal-close"
+    >
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: tokens.spacing[4],
+        }}
+      >
+        <div
+          role="radiogroup"
+          aria-label={fr.invoices.form.selectQuote}
+          style={{
+            display: "flex",
+            gap: tokens.spacing[2],
+            flexWrap: "wrap",
+          }}
+        >
+          {filters.map((f) => {
+            const active = filter === f.value;
+            return (
+              <button
+                type="button"
+                key={f.value}
+                role="radio"
+                aria-checked={active}
+                onClick={() => onFilterChange(f.value)}
+                data-testid={`quote-picker-filter-${f.value}`}
+                style={{
+                  padding: `${tokens.spacing[2]} ${tokens.spacing[3]}`,
+                  border: `${tokens.stroke.base} solid ${tokens.color.ink}`,
+                  background: active ? tokens.color.ink : tokens.color.surface,
+                  color: active ? tokens.color.accentSoft : tokens.color.ink,
+                  fontFamily: tokens.font.ui,
+                  fontSize: tokens.fontSize.xs,
+                  fontWeight: Number(tokens.fontWeight.bold),
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                  cursor: "pointer",
+                  boxShadow: active ? "none" : tokens.shadow.sm,
+                }}
+              >
+                {f.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {quotes.length === 0 ? (
+          <div
+            data-testid="quote-picker-empty"
+            style={{
+              fontFamily: tokens.font.ui,
+              fontSize: tokens.fontSize.sm,
+              color: tokens.color.muted,
+              padding: tokens.spacing[4],
+              textAlign: "center",
+              border: `${tokens.stroke.hair} dashed ${tokens.color.muted}`,
+            }}
+          >
+            {fr.invoices.form.pickerEmpty}
+          </div>
+        ) : (
+          <ul
+            data-testid="quote-picker-list"
+            style={{
+              listStyle: "none",
+              margin: 0,
+              padding: 0,
+              display: "flex",
+              flexDirection: "column",
+              gap: tokens.spacing[2],
+              maxHeight: 420,
+              overflowY: "auto",
+            }}
+          >
+            {quotes.map((q) => {
+              const active = q.id === selectedId;
+              return (
+                <li key={q.id}>
+                  <button
+                    type="button"
+                    onClick={() => onSelect(q.id)}
+                    data-testid={`quote-picker-row-${q.id}`}
+                    style={{
+                      width: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: tokens.spacing[3],
+                      padding: tokens.spacing[3],
+                      border: `${tokens.stroke.base} solid ${tokens.color.ink}`,
+                      background: active ? tokens.color.accentSoft : tokens.color.surface,
+                      boxShadow: active ? "none" : tokens.shadow.sm,
+                      textAlign: "left",
+                      cursor: "pointer",
+                      fontFamily: tokens.font.ui,
+                      color: tokens.color.ink,
+                    }}
+                  >
+                    <span
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: tokens.spacing[1],
+                        minWidth: 0,
+                        flex: 1,
+                      }}
+                    >
+                      <span
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: tokens.spacing[2],
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontFamily: tokens.font.mono,
+                            fontSize: tokens.fontSize.sm,
+                            fontWeight: Number(tokens.fontWeight.bold),
+                          }}
+                        >
+                          {q.number ?? "—"}
+                        </span>
+                        <BillingBadge state={billingByQuote.get(q.id) ?? null} />
+                      </span>
+                      <span
+                        style={{
+                          fontSize: tokens.fontSize.sm,
+                          fontWeight: Number(tokens.fontWeight.med),
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {q.title}
+                      </span>
+                    </span>
+                    <span
+                      style={{
+                        fontFamily: tokens.font.mono,
+                        fontSize: tokens.fontSize.sm,
+                        fontWeight: Number(tokens.fontWeight.bold),
+                        fontVariantNumeric: "tabular-nums",
+                      }}
+                    >
+                      {formatEur(q.totalHtCents)}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+    </Modal>
+  );
+}
+
+function BillingBadge({
+  state,
+}: {
+  state: BillingState | "billed" | null;
+}): ReactElement | null {
+  if (state === null || state === "billed") return null;
+  const label =
+    state === "deposit-paid"
+      ? fr.invoices.form.pickerBadgeDeposit
+      : fr.invoices.form.pickerBadgeUnbilled;
+  const isDeposit = state === "deposit-paid";
+  return (
+    <span
+      data-testid={`billing-badge-${state}`}
+      style={{
+        fontFamily: tokens.font.ui,
+        fontSize: tokens.fontSize.xs,
+        fontWeight: Number(tokens.fontWeight.bold),
+        textTransform: "uppercase",
+        letterSpacing: "0.06em",
+        padding: `${tokens.spacing[1]} ${tokens.spacing[2]}`,
+        border: `${tokens.stroke.hair} solid ${tokens.color.ink}`,
+        background: isDeposit ? tokens.color.accentSoft : tokens.color.surface,
+        color: tokens.color.ink,
+      }}
+    >
+      {label}
+    </span>
   );
 }
 
