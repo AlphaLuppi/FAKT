@@ -381,6 +381,7 @@ export const fr = {
         check: "Chèque",
         other: "Autre",
       },
+      continueWithQuote: "Continuer avec ce devis",
       legalMentionsTitle: "Mentions légales obligatoires",
       legalMentionsHint: "Ces mentions seront automatiquement ajoutées au PDF (CGI art. 289).",
       depositLabel: (quoteNumber: string) => `Acompte 30 % sur devis ${quoteNumber}`,

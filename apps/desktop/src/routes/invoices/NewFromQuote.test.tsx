@@ -43,6 +43,15 @@ describe("NewFromQuote", () => {
     });
   });
 
+  it("affiche un bouton Continuer actif sous le picker (auto-select 1er devis)", async () => {
+    renderRoute();
+    // Auto-sélection du 1er devis (FIXTURE_SIGNED_QUOTE est seul) → bouton actif sans clic.
+    const button = await screen.findByTestId("quote-picker-continue");
+    expect(button).toBeInTheDocument();
+    expect(button).not.toBeDisabled();
+    expect(button.textContent).toContain("Continuer");
+  });
+
   it("mode acompte 30% : affiche une ligne avec 30% du total", async () => {
     renderRoute();
     await waitFor(() => {

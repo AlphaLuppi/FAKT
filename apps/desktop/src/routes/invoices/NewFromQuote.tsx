@@ -335,16 +335,32 @@ export function NewFromQuote(): ReactElement {
               {fr.invoices.form.noSignedQuote}
             </div>
           ) : (
-            <Select
-              aria-label={fr.invoices.form.selectQuote}
-              options={quotes.map((q) => ({
-                value: q.id,
-                label: `${q.number ?? "—"} · ${q.title}`,
-              }))}
-              value={selectedQuoteId ?? ""}
-              onChange={(e) => setSelectedQuoteId(e.target.value || null)}
-              data-testid="quote-picker"
-            />
+            <>
+              <Select
+                aria-label={fr.invoices.form.selectQuote}
+                options={quotes.map((q) => ({
+                  value: q.id,
+                  label: `${q.number ?? "—"} · ${q.title}`,
+                }))}
+                value={selectedQuoteId ?? ""}
+                onChange={(e) => setSelectedQuoteId(e.target.value || null)}
+                data-testid="quote-picker"
+              />
+              <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                <Button
+                  variant="primary"
+                  disabled={!selectedQuoteId}
+                  onClick={() => {
+                    document
+                      .querySelector('[data-testid="mode-picker-section"]')
+                      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }}
+                  data-testid="quote-picker-continue"
+                >
+                  {fr.invoices.form.continueWithQuote}
+                </Button>
+              </div>
+            </>
           )}
         </section>
       )}
