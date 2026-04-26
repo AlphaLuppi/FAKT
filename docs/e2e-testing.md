@@ -1,6 +1,6 @@
 # Stratégie E2E — FAKT
 
-**Statut :** v0.1.17 (introduction de la suite double Playwright + WebdriverIO)
+**Statut :** v0.1.20 (MVP Windows + macOS uniquement, Linux retiré post-v0.1.19)
 **Mainteneur :** Tom Andrieu
 
 ## Pourquoi deux suites distinctes
@@ -25,16 +25,19 @@ Les bugs trouvés sur la version release publiée sur le store ne sont **pas rep
 │ Speed : ~5-10 min, ~16 fichiers spec    │         │ Speed : ~10-20 min selon OS             │
 │ Déps : page.route() mocks API           │         │ Déps : tauri-driver + cargo build       │
 │ Quand : chaque PR + push main           │         │ Quand : push main + gate avant release  │
-│ Plateformes : Linux/macOS/Windows       │         │ Plateformes : Linux + Windows (pas Mac) │
+│ Plateformes : Windows + macOS (MVP)     │         │ Plateformes : Windows uniquement        │
 │ Couverture : 30 user journeys via mocks │         │ Couverture : smoke + boot + sidecar     │
 └─────────────────────────────────────────┘         └─────────────────────────────────────────┘
        │                                                       │
        ▼                                                       ▼
-.github/workflows/e2e.yml                            .github/workflows/e2e-release.yml
-                                                              │
-                                                              ▼
-                                       .github/workflows/release.yml (needs: e2e-release-gate)
-                                       → si E2E rouge, pas de bundle uploadé
+.github/workflows/ci.yml (job lint·typecheck·test)  .github/workflows/e2e-release.yml
+       │                                                       │
+       └─── Les 2 tournent sur push main et PR ────────────────┘
+
+.github/workflows/release.yml ne dépend plus du gate E2E (bloquait
+trop souvent sur transients GitHub infra ou bugs WebdriverIO encore
+jeunes). Le gate redeviendra bloquant en v0.2 quand la suite est
+stable.
 ```
 
 ## Suite 1 — Playwright (dev mode)
@@ -145,21 +148,20 @@ apps/desktop/tests/e2e-release/
 | `FAKT_RELEASE_BINARY` | Override le path détecté (utile pour tester un installer extrait, par ex. `.deb` mounted) |
 | `FAKT_E2E_DRIVER_EXTERNAL=1` | Skip le spawn auto de tauri-driver (utile en CI où on lance le driver dans un step séparé pour les logs) |
 
-## CI — gate de release
+## CI — état actuel (MVP)
 
-Le tag `v*` déclenche `release.yml`, qui déclare :
+Le tag `v*` déclenche `release.yml` qui build et upload les binaires Windows
++ macOS. **Le gate E2E bloquant a été retiré post-v0.1.19** parce qu'il
+échouait trop souvent sur des transients GitHub (502 setup-bun) ou des
+bugs WebdriverIO encore jeunes — tout le release était bloqué sans raison
+valable.
 
-```yaml
-jobs:
-  e2e-release-gate:
-    uses: ./.github/workflows/e2e-release.yml
+`e2e-release.yml` continue à tourner sur chaque push main de manière
+**informative** (Windows seulement). En cas de rouge, le mainteneur reçoit
+la notification GitHub et peut investiguer sans bloquer la production.
 
-  release:
-    needs: e2e-release-gate
-    # build + bundle + upload assets
-```
-
-→ Si E2E release échoue, `release` reste `skipped`, **aucun binaire n'est uploadé**, le tag reste mais sans assets attachés. Procédure de récupération dans `.claude/skills/release/SKILL.md` (section Garde-fous).
+→ Réactiver le gate (`needs: e2e-release-gate`) quand la suite Windows
+tourne 10× de suite sans flaky. Probable v0.2.x.
 
 ## Mappage user journey ↔ spec
 
@@ -212,3 +214,18 @@ Les journeys 21 (AI sidebar PDF parse), 24 (auto-update) et 26 (multi-workspace 
 ### Pourquoi pas de macOS en release suite
 
 Apple ne fournit pas d'accès WebDriver à WKWebView pour des raisons de sécurité système. Le seul contournement viable serait XCUITest (Swift), trop lourd pour un projet solo. La suite 1 (Playwright) couvre le frontend en dev sur macOS — pour le binaire packagé, on s'appuie sur des tests manuels avant tag (cf. checklist DoD dans le skill release).
+
+### Pourquoi pas de Linux du tout
+
+Le MVP cible Windows + macOS. Linux est hors scope post-v0.1.19 :
+- Les tests release sur WebKitGTK demandent `xvfb-run` + libs GTK + dbus en
+  CI, fragiles à maintenir pour un seul mainteneur.
+- Les builds Linux (`.deb`, AppImage) ajoutaient ~5 minutes par release sans
+  audience confirmée.
+- Le code Rust crypto + le frontend continuent de **compiler** sur Linux
+  (Cargo gère la cible), mais ne sont plus testés ni packagés en CI.
+
+Un mainteneur Linux qui souhaite contribuer un build packagé peut
+réintroduire la matrice Ubuntu dans `release.yml` et `crypto-ci.yml` —
+les anciennes configs sont préservées dans l'historique git
+(commit `chore(release): v0.1.19` et antérieurs).

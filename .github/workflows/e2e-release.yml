@@ -1,13 +1,18 @@
 name: E2E Release Binary
 
-# Job standalone qui build le binaire en mode release et lance WebdriverIO +
-# tauri-driver pour valider que rien n'explose en mode release. Déclenché :
-#   - Push sur main → smoke check continu
-#   - Manual dispatch → debug local
-#   - Pre-tag : appelé en `needs` par release.yml
+# E2E sur le binaire Tauri packagé en mode release.
 #
-# macOS est exclu — tauri-driver n'est pas supporté par Apple WebDriver.
-# La couverture macOS reste sur Playwright dev mode + tests manuels avant tag.
+# Plateformes :
+#   - Windows : pris en charge via tauri-driver + Edge WebDriver auto-téléchargé.
+#   - macOS   : NON pris en charge — Apple ne fournit pas de WebDriver pour
+#               WKWebView. Le binaire macOS est validé manuellement avant tag.
+#   - Linux   : retiré post-v0.1.19 (hors scope MVP).
+#
+# Déclenché :
+#   - push main → smoke check continu
+#   - workflow_dispatch → debug local
+#   - workflow_call → consommé par release.yml comme gate informatif (non bloquant
+#     pour le MVP cf. note dans release.yml).
 
 on:
   push:
@@ -20,12 +25,8 @@ permissions:
 
 jobs:
   e2e-release:
-    name: E2E release (${{ matrix.os }})
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
+    name: E2E release (windows-latest)
+    runs-on: windows-latest
 
     steps:
       - uses: actions/checkout@v4
@@ -40,63 +41,30 @@ jobs:
         with:
           workspaces: apps/desktop/src-tauri
 
-      - name: Install Linux system deps
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libgtk-3-dev \
-            libwebkit2gtk-4.1-dev \
-            libayatana-appindicator3-dev \
-            librsvg2-dev \
-            pkg-config \
-            libssl-dev \
-            libdbus-1-dev \
-            libfuse2 \
-            xvfb \
-            webkit2gtk-driver
-
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
       # tauri-driver est un binaire CLI Rust qui wrap le binaire Tauri en
-      # WebDriver server. Sur Linux, il utilise WebKitGTK web inspector ;
-      # sur Windows, il télécharge automatiquement Edge WebDriver.
+      # WebDriver server. Sur Windows, il télécharge automatiquement Edge
+      # WebDriver au premier lancement.
       - name: Install tauri-driver
         run: cargo install tauri-driver --locked
 
-      # Le sidecar Bun doit être compilé pour la cible OS du runner avant
+      # Le sidecar Bun doit être compilé pour la cible Windows avant
       # `tauri build`. Sinon `bundle.externalBin` cherche un binaire absent
       # et tauri build échoue avant même de produire le release binary.
       - name: Build sidecar (Windows x64)
-        if: matrix.os == 'windows-latest'
         run: bun run packages/api-server/scripts/build-sidecar.ts --target=bun-windows-x64
 
-      - name: Build sidecar (Linux x64)
-        if: matrix.os == 'ubuntu-latest'
-        run: bun run packages/api-server/scripts/build-sidecar.ts --target=bun-linux-x64
-
-      # Build le binaire en mode release. Pas de signing — l'objectif est de
-      # valider le mode release pur, pas l'installateur signé. Le binaire est
-      # généré dans `apps/desktop/src-tauri/target/release/`.
+      # Build le binaire en mode release. --no-bundle skip les installateurs
+      # (.msi/.nsis) — on a juste besoin de l'exe pour les tests E2E.
       - name: Build Tauri release binary
         working-directory: apps/desktop
         run: bun run tauri:build -- --no-bundle
         env:
-          # Skip les tâches de bundling pour gagner du temps — on a juste
-          # besoin du binaire, pas du .msi/.deb installable.
           CI: "true"
 
-      # Sur Linux le binaire a besoin d'un display X11 — xvfb-run le fournit.
-      # Sur Windows pas de display server requis (WebView2 fonctionne headless).
-      - name: Run E2E release tests (Linux headless)
-        if: matrix.os == 'ubuntu-latest'
-        run: xvfb-run --auto-servernum bun run test:e2e:release
-        env:
-          FAKT_E2E_DRIVER_EXTERNAL: "0"
-
-      - name: Run E2E release tests (Windows)
-        if: matrix.os == 'windows-latest'
+      - name: Run E2E release tests
         run: bun run test:e2e:release
         env:
           FAKT_E2E_DRIVER_EXTERNAL: "0"
@@ -105,7 +73,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: wdio-logs-${{ matrix.os }}-${{ github.run_id }}
+          name: wdio-logs-windows-${{ github.run_id }}
           path: |
             ./.wdio/
             ./logs/

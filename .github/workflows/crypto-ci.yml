@@ -1,9 +1,8 @@
-# CI matrix cross-OS pour le module crypto Rust (Track D).
+# CI ciblée pour le module crypto Rust (PAdES, keychain).
 #
-# Ce workflow est un **squelette** — Track L finalisera la CI globale (front TS,
-# Tauri build, releases). Ici on ne valide que `cargo test` du module crypto
-# sur Windows / macOS / Linux pour confirmer que le keyring crate et les crates
-# PAdES compilent et que les round-trips passent.
+# Tourne uniquement sur Windows + macOS — MVP cible ces 2 OS. Linux a été
+# retiré post-v0.1.19 (non couvert par le MVP, et le keychain Linux nécessite
+# un démon Secret Service + dbus-run-session non triviaux à orchestrer en CI).
 
 name: crypto-ci
 
@@ -23,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -48,24 +47,6 @@ jobs:
             apps/desktop/src-tauri/target
           key: ${{ runner.os }}-cargo-${{ hashFiles('apps/desktop/src-tauri/Cargo.lock') }}
 
-      # Linux : `cargo check --lib` compile fakt_lib qui dépend de Tauri,
-      # donc GTK + WebKit2GTK + appindicator + rsvg sont requis même pour
-      # un `check` (build.rs tauri-build linke vs. ces libs via glib-sys).
-      # Secret Service + keyutils peuvent manquer aussi (keychain ignored
-      # en CI Linux tant que Track L n'ajoute pas dbus-run-session + seahorse).
-      - name: Install Linux deps (skip keychain tests)
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            pkg-config \
-            libssl-dev \
-            libdbus-1-dev \
-            libgtk-3-dev \
-            libwebkit2gtk-4.1-dev \
-            libayatana-appindicator3-dev \
-            librsvg2-dev
-
       # build.rs Tauri vérifie l'existence du sidecar binary avant cargo check
       # (externalBin dans tauri.conf.json). Sans ça, cargo check échoue.
       - name: Install monorepo deps + build sidecar
@@ -77,21 +58,17 @@ jobs:
         working-directory: apps/desktop/src-tauri
         run: cargo check --lib
 
-      - name: cargo test (unit + integration, keychain ignored)
+      - name: cargo test (unit + integration)
         working-directory: apps/desktop/src-tauri
         run: cargo test --lib --tests
 
-      # Round-trip keychain effectif — Windows + macOS uniquement pour l'instant.
-      # Sur Linux CI headless il faut un démon keyring ; à ajouter dans Track L.
-      - name: cargo test keychain round-trip (Windows/macOS)
-        if: runner.os != 'Linux'
+      # Round-trip keychain effectif — Windows + macOS uniquement (Linux drop).
+      - name: cargo test keychain round-trip
         working-directory: apps/desktop/src-tauri
         run: cargo test --test cert_roundtrip -- --ignored
 
       # Clippy en mode informationnel (pas `-D warnings`) : on signale les
-      # style lints mais on ne bloque pas le release. Dette v0.1.1 : nettoyer
-      # `uninlined_format_args` + `type_complexity` + `await_holding_lock` des
-      # tests + doc-comment whitespace (cf. commit 8d64f8b pour le JS/TS).
+      # style lints mais on ne bloque pas le release.
       - name: cargo clippy (warnings informational)
         working-directory: apps/desktop/src-tauri
         run: cargo clippy --lib --tests

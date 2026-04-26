@@ -1,5 +1,10 @@
 name: CI
 
+# CI principale : lint, typecheck, unit tests Vitest, Playwright dev mode,
+# cargo check Rust. MVP cible Windows + macOS uniquement (cf. note dans le
+# CHANGELOG v0.1.20). Linux est exclu de la matrice — les utilisateurs Linux
+# attendront un effort post-MVP.
+
 on:
   pull_request:
   push:
@@ -12,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -27,19 +32,6 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: apps/desktop/src-tauri
-
-      - name: Install Linux system deps
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libgtk-3-dev \
-            libwebkit2gtk-4.1-dev \
-            libayatana-appindicator3-dev \
-            librsvg2-dev \
-            pkg-config \
-            libssl-dev \
-            libdbus-1-dev
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
@@ -60,7 +52,6 @@ jobs:
       # build.rs Tauri vérifie l'existence du binaire sidecar déclaré dans
       # tauri.conf.json bundle.externalBin AVANT cargo check. Sans ce build,
       # cargo check échoue en "resource path binaries/fakt-api-<triple> doesn't exist".
-      # On compile uniquement le target natif du runner (pas --all) pour garder le job rapide.
       - name: Build sidecar api-server (target natif runner)
         run: bun run packages/api-server/scripts/build-sidecar.ts
 
@@ -68,7 +59,17 @@ jobs:
         working-directory: apps/desktop/src-tauri
         run: cargo check --locked
 
-      # Non-bloquant en v0.1.0 — vulnérabilités hautes à vérifier manuellement
+      # ── E2E Playwright dev mode (mocked sidecar) ───────────────────────
+      # Anciennement dans e2e.yml séparé — fusionné ici pour réduire le
+      # nombre de workflows. La suite tourne contre Vite dev server avec
+      # mocks API (~42s, indépendant du binaire packagé).
+      - name: Install Playwright browsers
+        run: bunx playwright install --with-deps chromium
+
+      - name: Playwright dev mode (mocked)
+        run: bun run test:e2e
+
+      # Non-bloquant en v0.1.x — vulnérabilités hautes à vérifier manuellement
       # avant chaque release tag. Deviendra bloquant en v0.2.
       - name: Cargo audit (non-bloquant)
         working-directory: apps/desktop/src-tauri
