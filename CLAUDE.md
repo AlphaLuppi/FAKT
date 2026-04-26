@@ -88,6 +88,8 @@ Règles absolues (source : `packages/design-tokens/` à venir, originellement da
 - Brief produit : `docs/product-brief.md`
 - PRD : `docs/prd.md` (à venir)
 - Architecture : `docs/architecture.md` (à venir)
+- North Star multi-workspace : `docs/multi-workspace-north-star.md`
+- North Star réforme facturation électronique FR (compatible PDP, pas PDP) : `docs/e-invoicing-reform-north-star.md`
 - Pattern outil interne : https://github.com/AlphaLuppi/mnm
 - Règles BMAD : `bmad/config.yaml`
 
