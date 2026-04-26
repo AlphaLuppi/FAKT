@@ -17,6 +17,16 @@ et [Semantic Versioning 2.0.0](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+### Nouveautés
+
+### Améliorations
+
+### Corrections
+
+---
+
+## [0.1.25] - 2026-04-26
+
 ### Améliorations
 
 - **Votre signature apparaît maintenant sur le PDF du devis signé** — quand
