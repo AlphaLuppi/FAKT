@@ -1,4 +1,5 @@
 /// <reference types="node" />
+/// <reference types="@wdio/globals/types" />
 /**
  * WebdriverIO configuration — tests E2E **mode release** sur le binaire Tauri
  * packagé.
@@ -166,5 +167,59 @@ export const config: Options.Testrunner = {
   },
   onComplete: () => {
     killTauriDriver();
+  },
+
+  /**
+   * Avant la suite, attendre que le webview ait :
+   *   1. atteint readyState=complete (HTML chargé)
+   *   2. mount au moins un élément React (heading visible)
+   *
+   * Sans ça, le 1er `getTitle()`/`$$()` race avec le mount React et retourne
+   * `""`/`[]` — c'est ce qui faisait fail tous les smoke tests en CI Windows
+   * sur les premières releases. Voir failure logs run 24944180949.
+   *
+   * 30s de timeout HTML + 15s de timeout React = enveloppe large pour CI
+   * lente (Windows runners GHA peuvent prendre 5-10s à boot WebView2).
+   */
+  before: async () => {
+    await browser.waitUntil(
+      async () => {
+        try {
+          const ready = await browser.execute(
+            () => document.readyState === "complete" && document.body !== null
+          );
+          return Boolean(ready);
+        } catch {
+          return false;
+        }
+      },
+      {
+        timeout: 30_000,
+        interval: 500,
+        timeoutMsg:
+          "Le webview n'a pas atteint readyState=complete après 30s — binaire FAKT possiblement crashé au boot.",
+      }
+    );
+
+    await browser.waitUntil(
+      async () => {
+        try {
+          // Query DOM via browser.execute pour éviter les soucis de typing
+          // sur ChainablePromiseArray dans wdio 9. Aussi rapide en pratique.
+          const count = await browser.execute(
+            () => document.querySelectorAll("h1, h2, h3").length
+          );
+          return count > 0;
+        } catch {
+          return false;
+        }
+      },
+      {
+        timeout: 15_000,
+        interval: 500,
+        timeoutMsg:
+          "Aucune heading h1/h2/h3 montée après 15s — React n'a pas mount, voir CSP/script-src ou path /assets/.",
+      }
+    );
   },
 };
