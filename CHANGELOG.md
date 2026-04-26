@@ -25,6 +25,19 @@ et [Semantic Versioning 2.0.0](https://semver.org/lang/fr/).
 
 ---
 
+## [0.1.20] - 2026-04-26
+
+### Améliorations
+
+- **Bouton « Continuer avec ce devis »** — sur l'écran « Nouvelle
+  facture depuis un devis signé », un bouton bien visible apparaît
+  désormais juste sous la liste de sélection. Il fait défiler la page
+  vers le formulaire de facture et confirme visuellement que le devis
+  est sélectionné — fini la sensation que rien ne se passe après avoir
+  ouvert la liste déroulante.
+
+---
+
 ## [0.1.19] - 2026-04-26
 
 ### Nouveautés
