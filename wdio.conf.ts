@@ -206,9 +206,7 @@ export const config: Options.Testrunner = {
         try {
           // Query DOM via browser.execute pour éviter les soucis de typing
           // sur ChainablePromiseArray dans wdio 9. Aussi rapide en pratique.
-          const count = await browser.execute(
-            () => document.querySelectorAll("h1, h2, h3").length
-          );
+          const count = await browser.execute(() => document.querySelectorAll("h1, h2, h3").length);
           return count > 0;
         } catch {
           return false;
