@@ -44,9 +44,19 @@ function makeProcess(): ProcessModuleLike {
   return { relaunch: vi.fn().mockResolvedValue(undefined) };
 }
 
-function wrapper(updater: UpdaterModuleLike, proc: ProcessModuleLike) {
+function wrapper(
+  updater: UpdaterModuleLike,
+  proc: ProcessModuleLike,
+  releaseFetcher: (version: string, signal: AbortSignal) => Promise<string | null> = async () =>
+    null
+) {
   return ({ children }: { children: ReactNode }): ReactElement => (
-    <UpdaterProvider updaterModule={updater} processModule={proc} autoCheck={true}>
+    <UpdaterProvider
+      updaterModule={updater}
+      processModule={proc}
+      autoCheck={true}
+      releaseFetcher={releaseFetcher}
+    >
       {children}
     </UpdaterProvider>
   );
@@ -140,6 +150,38 @@ describe("UpdaterContext", () => {
 
     expect(result.current.dismissed).toBe(true);
     expect(result.current.info).not.toBeNull();
+  });
+
+  it("remplace les notes du latest.json par le body GitHub si dispo", async () => {
+    const updater = makeUpdater({
+      available: true,
+      version: "0.1.21",
+      notes: "🛠️ Notes de version en cours d'édition…",
+    });
+    const proc = makeProcess();
+    const ghBody = "### Corrections\n\n- **Aperçu PDF** — fix\n";
+    const fetcher = vi.fn().mockResolvedValue(ghBody);
+    const { result } = renderHook(() => useUpdater(), {
+      wrapper: wrapper(updater, proc, fetcher),
+    });
+    await waitFor(() => expect(result.current.info?.notes).toBe(ghBody));
+    expect(fetcher).toHaveBeenCalledWith("0.1.21", expect.any(AbortSignal));
+  });
+
+  it("conserve les notes du latest.json si le fetch GitHub retourne null", async () => {
+    const updater = makeUpdater({
+      available: true,
+      version: "0.2.0",
+      notes: "Notes locales",
+    });
+    const proc = makeProcess();
+    const fetcher = vi.fn().mockResolvedValue(null);
+    const { result } = renderHook(() => useUpdater(), {
+      wrapper: wrapper(updater, proc, fetcher),
+    });
+    await waitFor(() => expect(result.current.available).toBe(true));
+    await waitFor(() => expect(fetcher).toHaveBeenCalled());
+    expect(result.current.info?.notes).toBe("Notes locales");
   });
 
   it("ne déclenche pas check() automatique quand autoCheck=false", async () => {

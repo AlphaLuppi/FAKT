@@ -32,7 +32,7 @@ function setup(opts: { available?: boolean }): {
   };
   const proc: ProcessModuleLike = { relaunch: vi.fn().mockResolvedValue(undefined) };
   const rendered = (
-    <UpdaterProvider updaterModule={updater} processModule={proc}>
+    <UpdaterProvider updaterModule={updater} processModule={proc} releaseFetcher={async () => null}>
       <UpdateBanner />
     </UpdaterProvider>
   );
