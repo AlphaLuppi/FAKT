@@ -25,6 +25,26 @@ et [Semantic Versioning 2.0.0](https://semver.org/lang/fr/).
 
 ---
 
+## [0.1.24] - 2026-04-26
+
+### Améliorations
+
+- **Mises à jour sans interruption** — quand vous cliquez sur « Mettre à
+  jour » dans la bannière jaune, la nouvelle version se télécharge en
+  arrière-plan et FAKT reste utilisable pendant ce temps. Un bouton
+  « Redémarrer maintenant » apparaît dès qu'elle est prête à être
+  appliquée — vous choisissez quand redémarrer, plus rien ne se ferme
+  dans votre dos.
+
+### Corrections
+
+- L'erreur Windows « Error opening file for writing » qui s'affichait
+  pendant l'installation d'une mise à jour ne se déclenche plus —
+  l'app libère proprement ses fichiers avant que l'installeur ne prenne
+  le relais, le wizard NSIS classique ne s'ouvre plus du tout.
+
+---
+
 ## [0.1.23] - 2026-04-26
 
 ### Nouveautés
