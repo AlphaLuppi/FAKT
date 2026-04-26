@@ -1,6 +1,6 @@
 [package]
 name = "fakt"
-version = "0.1.20"
+version = "0.1.21"
 description = "FAKT — Devis et factures freelance FR. Signé."
 authors = ["Tom Andrieu <contact@alphaluppi.com>"]
 license = "BUSL-1.1"

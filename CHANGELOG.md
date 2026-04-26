@@ -25,6 +25,25 @@ et [Semantic Versioning 2.0.0](https://semver.org/lang/fr/).
 
 ---
 
+## [0.1.21] - 2026-04-26
+
+### Corrections
+
+- **Aperçu PDF qui ne s'affichait plus** — sur les écrans Détail devis
+  et Détail facture, l'aperçu restait bloqué derrière le message
+  « Ce contenu a été bloqué ». Le PDF s'affiche maintenant
+  correctement dès qu'un numéro est attribué au document, en local
+  comme côté serveur.
+- **Sélecteur de devis repensé dans Nouvelle facture** — la liste
+  déroulante laisse place à une fenêtre dédiée avec 3 filtres
+  (tous les éligibles, sans facture, acompte facturé), un badge
+  visuel indiquant l'état de facturation de chaque devis, et un
+  filtrage automatique : les devis dont la facture totale est déjà
+  émise n'apparaissent plus. Le formulaire se met à jour dès que
+  vous choisissez un devis, sans étape supplémentaire.
+
+---
+
 ## [0.1.20] - 2026-04-26
 
 ### Améliorations
