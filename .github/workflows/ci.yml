@@ -45,7 +45,10 @@ jobs:
       - name: Unit tests (Vitest)
         run: bun run test
 
+      # Vite build est OS-indépendant (JS/HTML/CSS portables). On le lance
+      # uniquement sur Windows pour économiser ~1 min sur le job macOS.
       - name: Frontend build (Vite — sans Tauri pour la vitesse CI)
+        if: matrix.os == 'windows-latest'
         working-directory: apps/desktop
         run: bun run build
 
@@ -60,22 +63,32 @@ jobs:
         run: cargo check --locked
 
       # ── E2E Playwright dev mode (mocked sidecar) ───────────────────────
-      # Anciennement dans e2e.yml séparé — fusionné ici pour réduire le
-      # nombre de workflows. La suite tourne contre Vite dev server avec
-      # mocks API (~42s, indépendant du binaire packagé).
+      # Tests dev mode = Vite + Chromium + mocks API. Indépendants de l'OS,
+      # donc lancés uniquement sur Windows pour économiser ~3 min sur macOS.
+      # Le binaire packagé macOS est validé en manuel avant chaque tag.
       - name: Install Playwright browsers
+        if: matrix.os == 'windows-latest'
         run: bunx playwright install --with-deps chromium
 
       - name: Playwright dev mode (mocked)
+        if: matrix.os == 'windows-latest'
         run: bun run test:e2e
 
-      # Non-bloquant en v0.1.x — vulnérabilités hautes à vérifier manuellement
-      # avant chaque release tag. Deviendra bloquant en v0.2.
-      - name: Cargo audit (non-bloquant)
-        working-directory: apps/desktop/src-tauri
-        run: cargo install cargo-audit --quiet && cargo audit || true
+      # Audits non-bloquants. Concentrés sur le job Windows pour éviter de
+      # dupliquer ~2 min sur macOS (les CVE des deps sont OS-indépendantes).
+      # taiki-e/install-action télécharge un binaire pré-compilé de
+      # cargo-audit (~5s) au lieu de le compiler from scratch (~2 min).
+      - name: Install cargo-audit (binaire pré-compilé)
+        if: matrix.os == 'windows-latest'
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-audit
 
-      # Non-bloquant — certains packages transitifs en BETA peuvent avoir des
-      # advisories. Vérification manuelle avant tag recommandée.
+      - name: Cargo audit (non-bloquant)
+        if: matrix.os == 'windows-latest'
+        working-directory: apps/desktop/src-tauri
+        run: cargo audit || true
+
       - name: Bun audit (non-bloquant)
+        if: matrix.os == 'windows-latest'
         run: bun audit || true

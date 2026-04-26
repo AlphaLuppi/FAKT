@@ -1,6 +1,5 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // `vi.mock` est hoisté en haut du fichier. Pour partager des spies entre la
@@ -221,7 +220,7 @@ describe("SettingsRoute — tab Sessions IA (verbose mode)", () => {
     await user.click(screen.getByRole("tab", { name: /sessions ia/i }));
 
     await waitFor(() => {
-      expect(screen.getByTestId("ai-verbose-section")).toBeInTheDocument();
+      expect(screen.getByTestId("settings-ai-verbose-section")).toBeInTheDocument();
     });
   });
 
@@ -232,7 +231,7 @@ describe("SettingsRoute — tab Sessions IA (verbose mode)", () => {
     await user.click(screen.getByRole("tab", { name: /sessions ia/i }));
 
     const checkbox = await waitFor(
-      () => screen.getByTestId("ai-verbose-toggle") as HTMLInputElement
+      () => screen.getByTestId("settings-ai-verbose-toggle") as HTMLInputElement
     );
     expect(checkbox.checked).toBe(true);
   });
@@ -244,7 +243,7 @@ describe("SettingsRoute — tab Sessions IA (verbose mode)", () => {
     await user.click(screen.getByRole("tab", { name: /sessions ia/i }));
 
     const checkbox = await waitFor(
-      () => screen.getByTestId("ai-verbose-toggle") as HTMLInputElement
+      () => screen.getByTestId("settings-ai-verbose-toggle") as HTMLInputElement
     );
     await user.click(checkbox);
     await waitFor(() => {
