@@ -6,6 +6,7 @@ pub mod files;
 pub mod ping;
 pub mod signatures;
 pub mod state;
+pub mod updater;
 
 pub use backend::*;
 pub use backup::*;
@@ -15,3 +16,4 @@ pub use files::*;
 pub use ping::*;
 pub use signatures::*;
 pub use state::{AppState, FaktError, FaktResult, NumberingPayload};
+pub use updater::prepare_for_install;

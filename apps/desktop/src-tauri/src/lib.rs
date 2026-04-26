@@ -172,6 +172,7 @@ fn run_inner() -> Result<(), String> {
             ai::cli::spawn_claude,
             ai::sessions::list_ai_sessions,
             ai::sessions::clear_ai_sessions_history,
+            commands::updater::prepare_for_install,
         ])
         .run(tauri::generate_context!());
 

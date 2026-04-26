@@ -1,20 +1,25 @@
 /**
- * UpdaterContext — orchestre la détection et l'installation des mises à jour
- * via `tauri-plugin-updater` v2.
+ * UpdaterContext — orchestre la détection, le téléchargement et l'application
+ * d'une mise à jour via `tauri-plugin-updater` v2.
  *
- * Au mount du Shell on déclenche `check()` une seule fois (ne bloque pas le
- * boot : `setTimeout` 0). Si une release plus récente est dispo sur l'endpoint
- * configuré (`tauri.conf.json` → plugins.updater.endpoints), on expose
- * { available: true, version, notes, install() } au reste de l'app.
+ * Flow utilisateur (cf. demande Tom) :
  *
- * `install()` télécharge l'artifact updater (NSIS pour Windows, .app.tar.gz
- * pour macOS, .deb pour Linux), vérifie la signature ed25519 contre la pubkey
- * embarquée dans le binaire, applique l'install puis relance l'app via
- * `tauri-plugin-process` → `relaunch()`.
+ *   1. `check()` au mount → si update dispo, expose `info` + `available=true`.
+ *   2. L'utilisateur clique « Mettre à jour » → `download()` ne fait QUE
+ *      télécharger l'artifact (event Started/Progress/Finished pour la
+ *      progress bar) et bascule la phase à `'ready'`. L'app reste ouverte
+ *      et utilisable.
+ *   3. L'utilisateur clique « Redémarrer maintenant » → `applyAndRestart()`
+ *      invoke d'abord la commande Rust `prepare_for_install` qui kill le
+ *      sidecar et attend ~1.5s que Windows libère le file handle (sans ça
+ *      NSIS échoue avec « Error opening file for writing fakt-api.exe »),
+ *      puis `update.install()` (Windows : NSIS prend la main et tue
+ *      l'app ; macOS/Linux : patch in-place + relaunch explicite).
  *
- * Tous les appels au plugin sont importés dynamiquement (`await import`) pour
- * que Vitest puisse mock le module facilement et que le bundle JS reste léger
- * en dev (le plugin n'est résolu que côté Tauri).
+ * Tous les imports de modules natifs (`@tauri-apps/plugin-updater`,
+ * `@tauri-apps/plugin-process`, `@tauri-apps/api/core`) sont dynamiques
+ * pour permettre au bundle web de les exclure et aux tests Vitest de les
+ * mocker via les props d'injection.
  */
 
 import type { ReactElement, ReactNode } from "react";
@@ -27,7 +32,7 @@ export interface UpdateInfo {
   date: string | null;
 }
 
-export type DownloadPhase = "idle" | "downloading" | "installing" | "done" | "error";
+export type DownloadPhase = "idle" | "downloading" | "ready" | "installing" | "done" | "error";
 
 export interface DownloadProgress {
   phase: DownloadPhase;
@@ -46,8 +51,17 @@ interface UpdaterContextValue {
   info: UpdateInfo | null;
   /** Progression du téléchargement / install (idle au boot). */
   progress: DownloadProgress;
-  /** Lance le DL + install + relaunch. Idempotent. */
-  install: () => Promise<void>;
+  /**
+   * Télécharge l'artifact updater dans un buffer Tauri sans l'appliquer.
+   * Phase finale : `'ready'` (l'app reste ouverte). Idempotent.
+   */
+  download: () => Promise<void>;
+  /**
+   * Applique l'update téléchargé : kill du sidecar, install NSIS/.app/.deb
+   * puis relaunch. Sur Windows, cette promise ne se résout généralement pas
+   * (le NSIS tue le process avant). Idempotent.
+   */
+  applyAndRestart: () => Promise<void>;
   /** Force un re-check manuel (settings, dev). */
   recheck: () => Promise<void>;
   /** Ferme la bannière sans installer (l'info reste mémorisée pour le prochain boot). */
@@ -67,7 +81,8 @@ const UpdaterContext = createContext<UpdaterContextValue>({
   available: false,
   info: null,
   progress: initialProgress,
-  install: async () => undefined,
+  download: async () => undefined,
+  applyAndRestart: async () => undefined,
   recheck: async () => undefined,
   dismiss: () => undefined,
   dismissed: false,
@@ -98,11 +113,22 @@ interface UpdaterProviderProps {
    * au boot). On override aussi pour éviter les requêtes réseau dans Vitest.
    */
   releaseFetcher?: (version: string, signal: AbortSignal) => Promise<string | null>;
+  /**
+   * Override de l'invoke Tauri pour tests. Sert à mocker la commande
+   * `prepare_for_install` (kill sidecar + sleep) sans dépendre du runtime
+   * Tauri. En prod, on tombe sur `@tauri-apps/api/core::invoke`.
+   */
+  tauriInvoke?: (cmd: string) => Promise<unknown>;
 }
 
 /**
  * Forme minimale du module `@tauri-apps/plugin-updater` qu'on consomme.
  * Permet de typer le mock dans les tests sans dépendre du module réel.
+ *
+ * Les méthodes `download` et `install` sont séparées pour le flow découplé
+ * (download au click "Mettre à jour", install au click "Redémarrer").
+ * `downloadAndInstall` reste exposé en optional pour compat avec les anciens
+ * mocks de tests qui peuvent ne pas avoir migré.
  */
 export interface UpdaterModuleLike {
   check: () => Promise<UpdateHandleLike | null>;
@@ -113,7 +139,8 @@ export interface UpdateHandleLike {
   currentVersion: string;
   body?: string | null;
   date?: string | null;
-  downloadAndInstall: (onEvent?: (event: UpdaterEvent) => void) => Promise<void>;
+  download: (onEvent?: (event: UpdaterEvent) => void) => Promise<void>;
+  install: () => Promise<void>;
 }
 
 export type UpdaterEvent =
@@ -162,15 +189,19 @@ export function UpdaterProvider({
   updaterModule,
   processModule,
   releaseFetcher,
+  tauriInvoke,
 }: UpdaterProviderProps): ReactElement {
   const [info, setInfo] = useState<UpdateInfo | null>(null);
   const [progress, setProgress] = useState<DownloadProgress>(initialProgress);
   const [dismissed, setDismissed] = useState(false);
   const checkInFlight = useRef(false);
-  const installInFlight = useRef(false);
-  // Handle Update conservé entre check() et install() : garantit que les notes
-  // affichées dans la modale correspondent EXACTEMENT à l'artifact téléchargé,
-  // même si la release GitHub est modifiée entre la détection et le clic.
+  const downloadInFlight = useRef(false);
+  const applyInFlight = useRef(false);
+  // Handle Update conservé entre check() / download() / install() : garantit
+  // que l'artifact appliqué correspond exactement aux notes affichées, même
+  // si la release GitHub est éditée entre la détection et le clic. Conservé
+  // aussi entre download() et applyAndRestart() pour réutiliser le buffer
+  // déjà téléchargé sans re-fetch.
   const updateHandleRef = useRef<UpdateHandleLike | null>(null);
 
   const loadUpdater = useCallback(async (): Promise<UpdaterModuleLike> => {
@@ -182,6 +213,17 @@ export function UpdaterProvider({
     if (processModule) return processModule;
     return (await import("@tauri-apps/plugin-process")) as unknown as ProcessModuleLike;
   }, [processModule]);
+
+  const invokeCmd = useCallback(
+    async (cmd: string): Promise<unknown> => {
+      if (tauriInvoke) return tauriInvoke(cmd);
+      const core = (await import("@tauri-apps/api/core")) as unknown as {
+        invoke: (c: string) => Promise<unknown>;
+      };
+      return core.invoke(cmd);
+    },
+    [tauriInvoke]
+  );
 
   const runCheck = useCallback(async (): Promise<void> => {
     if (checkInFlight.current) return;
@@ -229,15 +271,12 @@ export function UpdaterProvider({
     }
   }, [loadUpdater, releaseFetcher]);
 
-  const install = useCallback(async (): Promise<void> => {
-    if (installInFlight.current) return;
+  const download = useCallback(async (): Promise<void> => {
+    if (downloadInFlight.current) return;
     if (!info) return;
-    installInFlight.current = true;
+    downloadInFlight.current = true;
     setProgress({ phase: "downloading", total: null, downloaded: 0, error: null });
     try {
-      // Réutilise le handle obtenu lors du check initial : garantit que les
-      // notes affichées correspondent à l'artifact téléchargé. Si pas de handle
-      // (re-check forcé entre-temps, edge case tests), on refait un check.
       let update = updateHandleRef.current;
       if (!update) {
         const mod = await loadUpdater();
@@ -253,7 +292,7 @@ export function UpdaterProvider({
         });
         return;
       }
-      await update.downloadAndInstall((event) => {
+      await update.download((event) => {
         switch (event.event) {
           case "Started":
             setProgress((p) => ({
@@ -271,24 +310,55 @@ export function UpdaterProvider({
             }));
             break;
           case "Finished":
-            setProgress((p) => ({ ...p, phase: "installing" }));
+            // On ne bascule pas en 'ready' ici : on attend que le await
+            // au-dessus revienne, signe que le buffer est bien finalisé
+            // côté Rust. Sinon on aurait une race entre le dernier chunk
+            // reçu et la fin du write.
             break;
         }
       });
+      setProgress((p) => ({ ...p, phase: "ready" }));
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setProgress({ phase: "error", total: null, downloaded: 0, error: msg });
+    } finally {
+      downloadInFlight.current = false;
+    }
+  }, [info, loadUpdater]);
+
+  const applyAndRestart = useCallback(async (): Promise<void> => {
+    if (applyInFlight.current) return;
+    const update = updateHandleRef.current;
+    if (!update) {
+      // Edge case : on appelle applyAndRestart sans avoir téléchargé d'abord.
+      // Plutôt que de silently no-op, on signale une erreur visible.
+      setProgress({
+        phase: "error",
+        total: null,
+        downloaded: 0,
+        error: "Téléchargement requis avant l'installation",
+      });
+      return;
+    }
+    applyInFlight.current = true;
+    setProgress((p) => ({ ...p, phase: "installing", error: null }));
+    try {
+      // Étape critique Windows : kill du sidecar fakt-api.exe + grace period
+      // pour libérer le file handle avant que NSIS ne tente d'écraser le
+      // binaire. Sans ça : « Error opening file for writing » bloque l'install.
+      await invokeCmd("prepare_for_install");
+      await update.install();
+      // Atteint uniquement sur macOS/Linux (Windows : NSIS tue déjà le process).
       setProgress((p) => ({ ...p, phase: "done" }));
-      // Sur Windows en mode `passive`, NSIS lance l'installer qui tue le
-      // processus actuel et relance le binaire mis à jour : relaunch() est
-      // alors no-op (process déjà mort). Sur macOS/Linux, downloadAndInstall
-      // applique le patch à chaud et relaunch() est nécessaire pour redémarrer.
       const proc = await loadProcess();
       await proc.relaunch();
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       setProgress({ phase: "error", total: null, downloaded: 0, error: msg });
     } finally {
-      installInFlight.current = false;
+      applyInFlight.current = false;
     }
-  }, [info, loadUpdater, loadProcess]);
+  }, [invokeCmd, loadProcess]);
 
   const dismiss = useCallback((): void => {
     setDismissed(true);
@@ -310,7 +380,8 @@ export function UpdaterProvider({
         available: info !== null,
         info,
         progress,
-        install,
+        download,
+        applyAndRestart,
         recheck: runCheck,
         dismiss,
         dismissed,

@@ -1,7 +1,15 @@
 /**
- * UpdateModal — modale d'installation. Affiche les notes de release (markdown
- * via react-markdown) + un bouton « Installer et relancer ». Pendant le DL,
- * progress bar Brutal en escalier (pas de gradient, pas de blur).
+ * UpdateModal — modale de consultation des notes de release.
+ *
+ * Mode lecture seule : affiche le titre, le delta de version et les notes
+ * (markdown rendu via react-markdown). Les actions de mise à jour
+ * (download / restart) sont déclenchées depuis `UpdateBanner` — la modale
+ * n'a qu'un bouton « Fermer ».
+ *
+ * Ouverte par un click sur le titre de la bannière quand l'update est
+ * détectée (états idle / done). Pendant un download ou en phase 'ready',
+ * la bannière elle-même montre le statut, donc la modale n'est plus
+ * indispensable au flow et reste informative.
  */
 
 import { Modal } from "@fakt/ui";
@@ -16,18 +24,13 @@ interface UpdateModalProps {
 }
 
 export function UpdateModal({ open, onClose }: UpdateModalProps): ReactElement | null {
-  const { info, progress, install } = useUpdater();
+  const { info } = useUpdater();
   if (!info) return null;
-
-  const phase = progress.phase;
-  const isWorking = phase === "downloading" || phase === "installing";
-  const canClose = !isWorking;
-  const percent = computePercent(progress.downloaded, progress.total);
 
   const title = `Mise à jour v${info.version}`;
 
   return (
-    <Modal open={open} title={title} size="md" {...(canClose ? { onClose } : {})}>
+    <Modal open={open} title={title} size="md" onClose={onClose}>
       <div data-testid="update-modal" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         <p
           style={{
@@ -47,7 +50,7 @@ export function UpdateModal({ open, onClose }: UpdateModalProps): ReactElement |
           <div
             data-testid="update-modal-notes"
             style={{
-              maxHeight: 220,
+              maxHeight: 320,
               overflowY: "auto",
               border: "2px solid var(--ink)",
               padding: 12,
@@ -66,151 +69,31 @@ export function UpdateModal({ open, onClose }: UpdateModalProps): ReactElement |
           </p>
         )}
 
-        {(phase === "downloading" || phase === "installing") && (
-          <ProgressBlock phase={phase} percent={percent} />
-        )}
-        {phase === "error" && progress.error && <ErrorBlock message={progress.error} />}
-        {phase === "done" && (
-          <p
-            data-testid="update-modal-done"
-            style={{
-              margin: 0,
-              fontFamily: "var(--font-ui)",
-              fontWeight: 700,
-              fontSize: 13,
-              color: "var(--ink)",
-              textTransform: "uppercase",
-            }}
-          >
-            Installation terminée — FAKT redémarre…
-          </p>
-        )}
-
         <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 8 }}>
-          {canClose && phase !== "error" && phase !== "done" && (
-            <ModalButton variant="ghost" onClick={onClose} testId="update-modal-cancel">
-              Annuler
-            </ModalButton>
-          )}
-          {phase === "error" && (
-            <ModalButton variant="ghost" onClick={onClose} testId="update-modal-close">
-              Fermer
-            </ModalButton>
-          )}
-          {(phase === "idle" || phase === "error") && (
-            <ModalButton
-              variant="primary"
-              onClick={() => void install()}
-              testId="update-modal-install"
-            >
-              {phase === "error" ? "Réessayer" : "Installer et relancer"}
-            </ModalButton>
-          )}
+          <ModalButton onClick={onClose} testId="update-modal-close">
+            Fermer
+          </ModalButton>
         </div>
       </div>
     </Modal>
   );
 }
 
-function ProgressBlock({
-  phase,
-  percent,
-}: {
-  phase: "downloading" | "installing";
-  percent: number | null;
-}): ReactElement {
-  const label = phase === "installing" ? "Installation…" : "Téléchargement…";
-  const indeterminate = percent === null;
-  return (
-    <div
-      data-testid="update-modal-progress"
-      style={{ display: "flex", flexDirection: "column", gap: 6 }}
-    >
-      <span
-        style={{
-          fontFamily: "var(--font-ui)",
-          fontSize: 12,
-          fontWeight: 700,
-          textTransform: "uppercase",
-          letterSpacing: "0.05em",
-          color: "var(--ink)",
-        }}
-      >
-        {label}
-        {indeterminate ? "" : ` ${percent}%`}
-      </span>
-      <div
-        role="progressbar"
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={percent ?? 0}
-        aria-valuetext={indeterminate ? "Préparation" : `${percent}%`}
-        style={{
-          height: 14,
-          border: "2px solid var(--ink)",
-          background: "var(--surface)",
-          position: "relative",
-          overflow: "hidden",
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: indeterminate ? "30%" : `${percent}%`,
-            background: "#FFFF00",
-            borderRight: indeterminate ? "2px solid var(--ink)" : "none",
-            transition: indeterminate ? "none" : "width 120ms linear",
-            animation: indeterminate ? "fakt-updater-indeterminate 1.2s linear infinite" : "none",
-          }}
-        />
-      </div>
-      <style>
-        {
-          "@keyframes fakt-updater-indeterminate { 0% { transform: translateX(-100%); } 100% { transform: translateX(330%); } }"
-        }
-      </style>
-    </div>
-  );
-}
-
-function ErrorBlock({ message }: { message: string }): ReactElement {
-  return (
-    <div
-      role="alert"
-      data-testid="update-modal-error"
-      style={{
-        border: "2px solid var(--ink)",
-        background: "#FFFF00",
-        padding: 12,
-        fontFamily: "var(--font-ui)",
-        fontSize: 13,
-        color: "var(--ink)",
-        fontWeight: 700,
-      }}
-    >
-      Erreur — {message}
-    </div>
-  );
-}
-
 interface ModalButtonProps {
-  variant: "primary" | "ghost";
   onClick: () => void;
   testId: string;
   children: string;
 }
 
-function ModalButton({ variant, onClick, testId, children }: ModalButtonProps): ReactElement {
-  const isPrimary = variant === "primary";
+function ModalButton({ onClick, testId, children }: ModalButtonProps): ReactElement {
   return (
     <button
       type="button"
       data-testid={testId}
       onClick={onClick}
       style={{
-        background: isPrimary ? "var(--ink)" : "transparent",
-        color: isPrimary ? "var(--accent-soft)" : "var(--ink)",
+        background: "var(--ink)",
+        color: "var(--accent-soft)",
         border: "2px solid var(--ink)",
         padding: "8px 16px",
         fontFamily: "var(--font-ui)",
@@ -219,18 +102,10 @@ function ModalButton({ variant, onClick, testId, children }: ModalButtonProps): 
         textTransform: "uppercase",
         letterSpacing: "0.05em",
         cursor: "pointer",
-        boxShadow: isPrimary ? "3px 3px 0 var(--ink)" : "none",
+        boxShadow: "3px 3px 0 var(--ink)",
       }}
     >
       {children}
     </button>
   );
-}
-
-function computePercent(downloaded: number, total: number | null): number | null {
-  if (total === null || total === 0) return null;
-  const ratio = (downloaded / total) * 100;
-  if (ratio < 0) return 0;
-  if (ratio > 100) return 100;
-  return Math.round(ratio);
 }
