@@ -8,15 +8,22 @@ name: E2E Release Binary
 #               WKWebView. Le binaire macOS est validé manuellement avant tag.
 #   - Linux   : retiré post-v0.1.19 (hors scope MVP).
 #
-# Déclenché :
-#   - push main → smoke check continu
-#   - workflow_dispatch → debug local
-#   - workflow_call → consommé par release.yml comme gate informatif (non bloquant
-#     pour le MVP cf. note dans release.yml).
+# ⚠️ AUTO-TRIGGER PAUSÉ (post-v0.1.20) ⚠️
+# Le binaire produit par `bun tauri:build -- --no-bundle` reste sur
+# `about:blank` (origin null) en CI Windows — le frontend n'est pas embed
+# correctement quand on skip le bundle, donc tous les smoke tests timeout
+# sur "DOM React n'a pas mount" ou "SecurityError pushState".
+#
+# Le binaire publié via tauri-action (release.yml) est bundlé complètement
+# et fonctionne correctement — c'est purement un bug de l'infra de test
+# release, pas de l'app. À reprendre en v0.2.x : soit lever le `--no-bundle`,
+# soit utiliser le binaire installé depuis l'installeur NSIS.
+#
+# Déclenché actuellement :
+#   - workflow_dispatch → debug local manuel
+#   - workflow_call → consommé par release.yml (gate informatif, non bloquant)
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
   workflow_call:
 
