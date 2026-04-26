@@ -32,6 +32,13 @@ export interface SignatureModalProps {
   signerName: string;
   signerEmail: string;
   pdfBytes: Uint8Array | null;
+  /**
+   * Optionnel : callback qui regénère le PDF avec la signature manuscrite
+   * incrustée visuellement (Typst `image()`) avant que la couche PAdES B-T
+   * ne soit appliquée. L'ordre est strict — modifier le PDF après PAdES
+   * casserait l'intégrité crypto. Si absent, on signe `pdfBytes` tel quel.
+   */
+  renderPdfWithSignature?: (signaturePng: Uint8Array) => Promise<Uint8Array>;
   onSigned: (event: SignatureEvent, signedPdf: Uint8Array) => void | Promise<void>;
 }
 
@@ -47,6 +54,7 @@ export function SignatureModal({
   signerName,
   signerEmail,
   pdfBytes,
+  renderPdfWithSignature,
   onSigned,
 }: SignatureModalProps): ReactElement {
   const [mode, setMode] = useState<"draw" | "type">("draw");
@@ -162,13 +170,19 @@ export function SignatureModal({
     try {
       const events = await signatureApi.listEvents(docType, docId);
       const previous = events.length > 0 ? events[events.length - 1] : null;
+      // Si l'appelant fournit un re-rendu, on regénère le PDF avec la signature
+      // visuelle incrustée AVANT le scellement PAdES. Toute modification du
+      // PDF après PAdES casserait l'intégrité crypto.
+      const pdfToSign = renderPdfWithSignature
+        ? await renderPdfWithSignature(png)
+        : pdfBytes;
       setSubmitState("signing");
       const result = await signatureApi.sign({
         docId,
         docType,
         signerName,
         signerEmail,
-        pdfBytes,
+        pdfBytes: pdfToSign,
         signaturePng: png,
         previousEvent: previous ?? null,
       });

@@ -11,6 +11,10 @@ export interface RenderQuoteArgs {
   quote: QuoteInput;
   client: ClientInput;
   workspace: WorkspaceInput;
+  /** PNG d'une signature manuscrite/typée à incrustér dans le PDF (devis signés). */
+  signaturePng?: Uint8Array | null;
+  /** Niveau eIDAS affiché en mention sous la signature visible (ex "AdES-B-T"). */
+  padesLevel?: string | null;
 }
 
 export interface RenderInvoiceArgs {

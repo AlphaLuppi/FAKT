@@ -721,6 +721,20 @@ export function QuoteDetailRoute(): ReactElement {
         signerName={workspace?.name ?? "Signataire"}
         signerEmail={workspace?.email ?? "contact@local"}
         pdfBytes={pdfBytes}
+        {...(client && workspace
+          ? {
+              renderPdfWithSignature: async (
+                signaturePng: Uint8Array,
+              ): Promise<Uint8Array> =>
+                pdfApi.renderQuote({
+                  quote: toQuoteInput(quote),
+                  client,
+                  workspace,
+                  signaturePng,
+                  padesLevel: "AdES-B-T",
+                }),
+            }
+          : {})}
         onSigned={async () => {
           try {
             await quotesApi.updateStatus(quote.id, "signed");

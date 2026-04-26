@@ -145,4 +145,6 @@
   workspaceName: ctx.workspace.name,
   clientName: ctx.client.name,
   signedAt: ctx.at("signedAt", default: none),
+  signatureImage: ctx.at("signatureImage", default: none),
+  padesLevel: ctx.at("padesLevel", default: none),
 )

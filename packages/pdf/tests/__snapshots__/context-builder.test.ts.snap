@@ -69,6 +69,8 @@ exports[`snapshots JSON (déterminisme) > snapshot quoteSimple 1`] = `
   "kind": "quote",
   "notes": "Prestation incluant 2 allers-retours de révision.",
   "number": "D2026-001",
+  "padesLevel": null,
+  "signatureImage": null,
   "signedAt": null,
   "title": "Refonte site vitrine casamia-pizzeriatraiteur.fr",
   "total": "2 500,00 €",

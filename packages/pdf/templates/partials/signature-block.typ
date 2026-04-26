@@ -5,8 +5,9 @@
 // Attendu :
 //   - workspaceName (string)
 //   - clientName (string)
-//   - signatureImage : optionnel, string base64 data URI ou none
+//   - signatureImage : optionnel, chemin relatif PNG (ex "signature.png") ou none
 //   - signedAt : optionnel, string (date FR longue) ou none
+//   - padesLevel : optionnel, label de niveau eIDAS (ex "AdES-B-T") ou none
 
 #import "../base.typ": color-accent, color-dark, color-gray, size-sm, size-md
 
@@ -15,7 +16,10 @@
   clientName: "",
   signatureImage: none,
   signedAt: none,
+  padesLevel: none,
 ) = {
+  let has-signature = signatureImage != none and signatureImage != ""
+
   grid(
     columns: (1fr, 1fr),
     gutter: 20pt,
@@ -24,10 +28,26 @@
       #text(size: size-md, fill: color-accent, weight: "bold")[Le Prestataire]
       #v(4pt)
       #text(size: size-sm, fill: color-dark)[#workspaceName]
-      #v(20pt)
-      #text(size: size-sm, fill: color-gray)[Date :]
-      #v(20pt)
+      #v(8pt)
+      #if signedAt != none and signedAt != "" [
+        #text(size: size-sm, fill: color-gray)[Date : #signedAt]
+      ] else [
+        #text(size: size-sm, fill: color-gray)[Date :]
+      ]
+      #v(6pt)
       #text(size: size-sm, fill: color-gray)[Signature :]
+      #v(2pt)
+      #if has-signature [
+        #image(signatureImage, width: 60%)
+        #if padesLevel != none and padesLevel != "" [
+          #v(2pt)
+          #text(size: 7pt, fill: color-gray, style: "italic")[
+            Signature électronique avancée — eIDAS #padesLevel
+          ]
+        ]
+      ] else [
+        #v(20pt)
+      ]
     ],
     // Colonne droite — Client
     [
@@ -39,11 +59,7 @@
         « Bon pour accord »
       ]
       #v(8pt)
-      #if signedAt != none and signedAt != "" [
-        #text(size: size-sm, fill: color-gray)[Date : #signedAt]
-      ] else [
-        #text(size: size-sm, fill: color-gray)[Date :]
-      ]
+      #text(size: size-sm, fill: color-gray)[Date :]
       #v(20pt)
       #text(size: size-sm, fill: color-gray)[Signature :]
     ],

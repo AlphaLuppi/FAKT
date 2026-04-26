@@ -60,6 +60,8 @@ export interface QuoteCtx {
   conditions: string | null;
   notes: string | null;
   signedAt: string | null;
+  signatureImage: string | null;
+  padesLevel: string | null;
 }
 
 export interface InvoiceCtx {
@@ -138,6 +140,14 @@ export interface BuildQuoteCtxArgs {
   quote: QuoteInput;
   client: ClientInput;
   workspace: WorkspaceInput;
+  /**
+   * Bytes PNG d'une signature manuscrite/typée à incorporer visuellement.
+   * Si fourni, le rendu Rust écrira ces bytes dans le tempdir de compilation
+   * Typst (sous le nom `signature.png`) et le template y référera le fichier.
+   */
+  signaturePng?: Uint8Array | null;
+  /** Label eIDAS (ex "AdES-B-T") affiché en mention sous la signature. */
+  padesLevel?: string | null;
 }
 
 export interface BuildInvoiceCtxArgs {
@@ -161,6 +171,11 @@ export function buildQuoteContext(args: BuildQuoteCtxArgs): QuoteCtx {
     throw new Error("buildQuoteContext: le devis doit avoir une date d'émission");
   }
 
+  // Le rendu Rust écrit le PNG dans le tempdir Typst sous ce nom — voir
+  // pdf::render. Si pas de PNG fourni, le template Typst tombe sur la branche
+  // "Signature :" vide via #signature-block(signatureImage: none).
+  const hasSignaturePng = !!args.signaturePng && args.signaturePng.byteLength > 0;
+
   return {
     kind: "quote",
     number: quote.number,
@@ -174,6 +189,11 @@ export function buildQuoteContext(args: BuildQuoteCtxArgs): QuoteCtx {
     conditions: quote.conditions,
     notes: quote.notes,
     signedAt: quote.signedAt ? formatFrDateLong(quote.signedAt) : null,
+    // Le path commence par "/" car Typst résout `image()` relativement au
+    // fichier appelant (partials/) — un path absolu avec leading slash le
+    // rebase sur la racine du projet (--root).
+    signatureImage: hasSignaturePng ? "/signature.png" : null,
+    padesLevel: hasSignaturePng ? (args.padesLevel ?? null) : null,
   };
 }
 

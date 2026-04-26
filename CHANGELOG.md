@@ -17,11 +17,25 @@ et [Semantic Versioning 2.0.0](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
-### Nouveautés
-
 ### Améliorations
 
+- **Votre signature apparaît maintenant sur le PDF du devis signé** — quand
+  vous signez un devis, votre dessin (canvas ou clavier) est désormais
+  incrusté visuellement dans le bloc « Le Prestataire » du PDF, avec une
+  mention discrète « *Signature électronique avancée — eIDAS AdES-B-T* »
+  pour rassurer les clients sur la valeur juridique. La protection
+  cryptographique PAdES B-T (RSA 4096 + horodatage qualifié FreeTSA)
+  reste appliquée par-dessus, comme avant.
+
 ### Corrections
+
+- **Retrait du bouton « Signer » sur les factures** — il n'avait pas de
+  sens légal : en France, on signe un devis (acceptation contractuelle,
+  art. 1101 du Code civil) mais pas une facture (document de constatation
+  post-vente). Le bouton apparaît toujours sur les devis. Si vous avez
+  besoin d'un sceau d'intégrité crypto sur vos factures archivées, ce
+  sera un automatisme à l'émission dans une prochaine version, pas un
+  geste à faire vous-même.
 
 ---
 

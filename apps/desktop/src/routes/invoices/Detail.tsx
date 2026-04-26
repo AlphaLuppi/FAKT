@@ -7,11 +7,9 @@ import type { StatusKind } from "@fakt/ui";
 import type { ReactElement } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
-import { DesktopOnlyButton } from "../../components/DesktopOnlyButton.js";
 import { AuditTimeline, type BaseAuditEntry } from "../../components/audit-timeline/index.js";
 import { invalidateSearchIndex } from "../../components/command-palette/useCommandPaletteIndex.js";
 import { PrepareEmailModal } from "../../components/prepare-email-modal/index.js";
-import { SignatureModal } from "../../components/signature-modal/index.js";
 import { clientsApi } from "../../features/doc-editor/clients-api.js";
 import { invoiceApi } from "../../features/doc-editor/invoice-api.js";
 import { pdfApi } from "../../features/doc-editor/pdf-api.js";
@@ -71,8 +69,6 @@ export function InvoiceDetailRoute(): ReactElement {
   const [markPaidOpen, setMarkPaidOpen] = useState(false);
   const [markPaidSubmitting, setMarkPaidSubmitting] = useState(false);
   const [markPaidError, setMarkPaidError] = useState<string | null>(null);
-  const [signOpen, setSignOpen] = useState(false);
-  const [pdfBytes, setPdfBytes] = useState<Uint8Array | null>(null);
   const [emailOpen, setEmailOpen] = useState(false);
 
   useEffect(() => {
@@ -115,7 +111,6 @@ export function InvoiceDetailRoute(): ReactElement {
       })
       .then((bytes) => {
         if (cancelled) return;
-        setPdfBytes(bytes);
         const blob = new Blob([bytes as BlobPart], { type: "application/pdf" });
         const url = URL.createObjectURL(blob);
         revoke = url;
@@ -526,16 +521,6 @@ export function InvoiceDetailRoute(): ReactElement {
                 {fr.email.actions.openInMail}
               </Button>
             )}
-            {(isDraft || isSent) && (
-              <DesktopOnlyButton
-                variant="secondary"
-                onClick={() => setSignOpen(true)}
-                disabled={!invoice.number || !pdfBytes || pdfBytes.byteLength === 0}
-                data-testid="invoice-detail-sign"
-              >
-                {fr.quotes.actions.sign}
-              </DesktopOnlyButton>
-            )}
             {isDraft && (
               <Button
                 variant="ghost"
@@ -669,29 +654,6 @@ export function InvoiceDetailRoute(): ReactElement {
         onConfirm={handleMarkPaid}
         submitting={markPaidSubmitting}
         error={markPaidError}
-      />
-
-      <SignatureModal
-        open={signOpen}
-        onClose={() => setSignOpen(false)}
-        docId={invoice.id}
-        docType="invoice"
-        docNumber={invoice.number ?? null}
-        clientName={client?.name ?? "—"}
-        signerName={workspace?.name ?? "Signataire"}
-        signerEmail={workspace?.email ?? "contact@local"}
-        pdfBytes={pdfBytes}
-        onSigned={async () => {
-          if (invoice.status === "draft") {
-            try {
-              await invoiceApi.updateStatus(invoice.id, "sent");
-            } catch {
-              /* ignore — refetch pour mise à jour */
-            }
-          }
-          toast.success(fr.signature.modal.successBody);
-          refresh();
-        }}
       />
 
       {client && workspace && (

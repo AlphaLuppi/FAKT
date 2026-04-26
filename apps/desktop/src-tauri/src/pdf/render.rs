@@ -113,6 +113,9 @@ fn use_stub() -> bool {
 /// `doc_type` : "quote" ou "invoice".
 /// `data_json` : la chaîne JSON (pas un objet) produite côté TS via
 ///               JSON.stringify(ctx).
+/// `signature_png` : bytes PNG optionnels pour intégrer une signature visuelle
+///                   sur les devis. Écrits comme `signature.png` à côté du
+///                   ctx.json dans le tempdir Typst.
 ///
 /// Retourne les bytes bruts du PDF. En cas d'erreur, retourne un message FR
 /// prêt à afficher dans un toast UI.
@@ -120,8 +123,9 @@ fn use_stub() -> bool {
 pub async fn render_pdf(
     doc_type: String,
     data_json: String,
+    signature_png: Option<Vec<u8>>,
 ) -> Result<Vec<u8>, String> {
-    render_pdf_internal(&doc_type, &data_json)
+    render_pdf_internal(&doc_type, &data_json, signature_png.as_deref())
         .await
         .map_err(|e| e.to_message())
 }
@@ -129,6 +133,7 @@ pub async fn render_pdf(
 pub(crate) async fn render_pdf_internal(
     doc_type: &str,
     data_json: &str,
+    signature_png: Option<&[u8]>,
 ) -> Result<Vec<u8>, RenderError> {
     // Validate doc_type upfront.
     let main_tpl_content = match doc_type {
@@ -170,6 +175,16 @@ pub(crate) async fn render_pdf_internal(
     // Écrit le contexte.
     let ctx_path = root.join("ctx.json");
     write_file(&ctx_path, data_json).await?;
+
+    // Écrit le PNG signature (si fourni) — le template Typst le réfère via
+    // `image("signature.png")` quand `ctx.signatureImage == "signature.png"`.
+    if let Some(png) = signature_png {
+        if !png.is_empty() {
+            tokio::fs::write(root.join("signature.png"), png)
+                .await
+                .map_err(|e| RenderError::TempIo(format!("write signature.png: {e}")))?;
+        }
+    }
 
     // Chemin de sortie.
     let out_path = root.join("out.pdf");
@@ -272,13 +287,13 @@ mod tests {
     #[tokio::test]
     async fn render_rejects_unknown_doc_type() {
         // Pas de dépendance env — OK en parallèle.
-        let result = render_pdf_internal("foo", "{}").await;
+        let result = render_pdf_internal("foo", "{}", None).await;
         assert!(matches!(result, Err(RenderError::InvalidDocType(_))));
     }
 
     #[tokio::test]
     async fn render_rejects_invalid_json() {
-        let result = render_pdf_internal("quote", "not{json").await;
+        let result = render_pdf_internal("quote", "not{json", None).await;
         assert!(matches!(result, Err(RenderError::InvalidJson(_))));
     }
 
@@ -286,7 +301,7 @@ mod tests {
     async fn render_stub_mode_returns_bytes() {
         let _guard = ENV_LOCK.lock().unwrap();
         std::env::set_var("FAKT_PDF_STUB", "1");
-        let result = render_pdf_internal("quote", "{\"kind\":\"quote\"}").await;
+        let result = render_pdf_internal("quote", "{\"kind\":\"quote\"}", None).await;
         std::env::remove_var("FAKT_PDF_STUB");
         assert!(result.is_ok(), "stub mode should return bytes: {:?}", result);
         let bytes = result.unwrap();
@@ -299,7 +314,7 @@ mod tests {
         let _guard = ENV_LOCK.lock().unwrap();
         std::env::remove_var("FAKT_PDF_STUB");
         std::env::set_var("FAKT_TYPST_PATH", "/nonexistent/typst-xyz-abc");
-        let result = render_pdf_internal("quote", "{\"kind\":\"quote\"}").await;
+        let result = render_pdf_internal("quote", "{\"kind\":\"quote\"}", None).await;
         std::env::remove_var("FAKT_TYPST_PATH");
         match result {
             Err(RenderError::BinaryNotFound(_)) => {}
