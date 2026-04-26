@@ -47,7 +47,19 @@ jobs:
       # tauri-driver est un binaire CLI Rust qui wrap le binaire Tauri en
       # WebDriver server. Sur Windows, il télécharge automatiquement Edge
       # WebDriver au premier lancement.
-      - name: Install tauri-driver
+      #
+      # Cache du binaire compilé pour éviter ~3 min de `cargo install` à chaque
+      # run. Key épinglée sur la version de tauri-driver (à bumper si on
+      # update).
+      - name: Cache tauri-driver binary
+        id: cache-tauri-driver
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/tauri-driver.exe
+          key: tauri-driver-windows-2.0.5
+
+      - name: Install tauri-driver (si cache miss)
+        if: steps.cache-tauri-driver.outputs.cache-hit != 'true'
         run: cargo install tauri-driver --locked
 
       # Le sidecar Bun doit être compilé pour la cible Windows avant
