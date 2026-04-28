@@ -1,0 +1,12 @@
+<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <!-- App icon source — fond transparent, carte jaune centrée avec safe zone -->
+  <!-- Safe zone macOS ~824px / 1024px = 19.5% padding -->
+  <!-- ombre noire offset -->
+  <rect x="232" y="232" width="624" height="624" fill="#000000"/>
+  <!-- carte jaune principale -->
+  <rect x="168" y="168" width="624" height="624" fill="#FFFF00" stroke="#000000" stroke-width="32"/>
+  <!-- F brutal -->
+  <rect x="272" y="272" width="416" height="104" fill="#000000"/>
+  <rect x="272" y="272" width="104" height="416" fill="#000000"/>
+  <rect x="272" y="460" width="292" height="84" fill="#000000"/>
+</svg>

@@ -1,0 +1,16 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- Variante 5 : crochets brutalistes encadrant F -->
+  <rect x="0" y="0" width="100" height="100" fill="#F5F5F0"/>
+  <!-- left bracket -->
+  <rect x="14" y="22" width="14" height="4" fill="#000"/>
+  <rect x="14" y="22" width="4" height="56" fill="#000"/>
+  <rect x="14" y="74" width="14" height="4" fill="#000"/>
+  <!-- right bracket -->
+  <rect x="72" y="22" width="14" height="4" fill="#000"/>
+  <rect x="82" y="22" width="4" height="56" fill="#000"/>
+  <rect x="72" y="74" width="14" height="4" fill="#000"/>
+  <!-- F mark in yellow -->
+  <rect x="36" y="34" width="32" height="8" fill="#FFFF00" stroke="#000" stroke-width="2"/>
+  <rect x="36" y="34" width="8" height="32" fill="#FFFF00" stroke="#000" stroke-width="2"/>
+  <rect x="36" y="48" width="22" height="6" fill="#FFFF00" stroke="#000" stroke-width="2"/>
+</svg>

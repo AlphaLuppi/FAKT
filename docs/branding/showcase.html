@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FAKT — Logo Exploration</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #000;
+    --paper: #F5F5F0;
+    --yellow: #FFFF00;
+    --white: #FFF;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    padding: 40px 32px 80px;
+    min-height: 100vh;
+  }
+  header {
+    border: 2.5px solid var(--ink);
+    background: var(--ink);
+    color: var(--yellow);
+    padding: 24px 28px;
+    box-shadow: 8px 8px 0 var(--ink);
+    margin-bottom: 56px;
+    max-width: 1280px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  header h1 {
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    font-size: clamp(32px, 5vw, 56px);
+    line-height: 1;
+  }
+  header p {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+    font-size: 13px;
+    margin-top: 12px;
+    color: var(--paper);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 28px;
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+  .card {
+    background: var(--white);
+    border: 2.5px solid var(--ink);
+    box-shadow: 5px 5px 0 var(--ink);
+    transition: transform 120ms ease, box-shadow 120ms ease;
+    display: flex;
+    flex-direction: column;
+  }
+  .card:hover {
+    transform: translate(-3px, -3px);
+    box-shadow: 8px 8px 0 var(--ink);
+  }
+  .card .frame {
+    background: var(--paper);
+    border-bottom: 2.5px solid var(--ink);
+    aspect-ratio: 1 / 1;
+    display: grid;
+    place-items: center;
+    padding: 28px;
+  }
+  .card.dark .frame { background: var(--ink); }
+  .card.yellow .frame { background: var(--yellow); }
+  .card .frame svg,
+  .card .frame img,
+  .card .frame object { width: 100%; height: 100%; max-width: 260px; max-height: 260px; }
+  .meta {
+    padding: 18px 20px 22px;
+    border-top: 2.5px solid var(--ink);
+    background: var(--white);
+  }
+  .meta .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    background: var(--yellow);
+    border: 2px solid var(--ink);
+    padding: 2px 8px;
+    display: inline-block;
+    margin-bottom: 10px;
+  }
+  .meta h2 {
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+  .meta p {
+    font-size: 13px;
+    line-height: 1.45;
+    font-weight: 500;
+    color: #1a1a1a;
+  }
+  footer {
+    margin-top: 72px;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    border-top: 2.5px solid var(--ink);
+    padding-top: 24px;
+    max-width: 1280px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>FAKT // Logo Exploration</h1>
+  <p>Brutal Invoice Design System — 8 variantes</p>
+</header>
+
+<div class="grid">
+
+  <article class="card">
+    <div class="frame"><object data="logos/01-monogram-stack.svg" type="image/svg+xml"></object></div>
+    <div class="meta">
+      <span class="num">01</span>
+      <h2>Monogram Stack</h2>
+      <p>F brutal sur double-bloc papier + jaune avec ombre plate. Évoque la pile de documents et la solidité de l'archivage 10 ans.</p>
+    </div>
+  </article>
+
+  <article class="card dark">
+    <div class="frame"><object data="logos/02-wordmark-block.svg" type="image/svg+xml"></object></div>
+    <div class="meta">
+      <span class="num">02</span>
+      <h2>Wordmark Block</h2>
+      <p>Bandeau noir typographique pur Space Grotesk 800 jaune. Lecture immédiate du nom, idéal pour barre de titre app et favicon large.</p>
+    </div>
+  </article>
+
+  <article class="card">
+    <div class="frame"><object data="logos/03-stamp-validated.svg" type="image/svg+xml"></object></div>
+    <div class="meta">
+      <span class="num">03</span>
+      <h2>Stamp Validated</h2>
+      <p>Cachet jaune double-cadre. Référence directe au tampon "PAYÉ" et à la signature électronique PAdES — au cœur du produit.</p>
+    </div>
+  </article>
+
+  <article class="card">
+    <div class="frame"><object data="logos/04-folded-doc.svg" type="image/svg+xml"></object></div>
+    <div class="meta">
+      <span class="num">04</span>
+      <h2>Folded Document</h2>
+      <p>Page avec coin replié jaune, lignes de facture et total surligné. Le plus narratif, raconte la facture en un coup d'œil.</p>
+    </div>
+  </article>
+
+  <article class="card yellow">
+    <div class="frame"><object data="logos/05-bracket-mark.svg" type="image/svg+xml"></object></div>
+    <div class="meta">
+      <span class="num">05</span>
+      <h2>Bracket Mark</h2>
+      <p>Crochets typographiques encadrant un F jaune cerné. Code-friendly, cohérent avec l'ADN open-source / Tauri / dev-tool.</p>
+    </div>
+  </article>
+
+  <article class="card">
+    <div class="frame"><object data="logos/06-grid-ledger.svg" type="image/svg+xml"></object></div>
+    <div class="meta">
+      <span class="num">06</span>
+      <h2>Grid Ledger</h2>
+      <p>Grille comptable 4×4 avec cellules jaunes formant un F implicite. Évoque le tableur, le livre de comptes, la rigueur séquentielle CGI 289.</p>
+    </div>
+  </article>
+
+  <article class="card yellow">
+    <div class="frame"><object data="logos/07-barcode-signature.svg" type="image/svg+xml"></object></div>
+    <div class="meta">
+      <span class="num">07</span>
+      <h2>Barcode Signature</h2>
+      <p>Code-barres brutaliste sur base jaune. Fait le pont entre signature numérique, archivage et identification unique des factures.</p>
+    </div>
+  </article>
+
+  <article class="card">
+    <div class="frame"><object data="logos/08-checkmark-receipt.svg" type="image/svg+xml"></object></div>
+    <div class="meta">
+      <span class="num">08</span>
+      <h2>Checkmark Receipt</h2>
+      <p>Reçu vertical avec en-tête jaune FAKT et coche brutale. Direct, rassurant, parfait pour les réseaux sociaux et l'icône macOS rectangulaire.</p>
+    </div>
+  </article>
+
+</div>
+
+<footer>FAKT // BRUTAL INVOICE // 2026</footer>
+
+</body>
+</html>

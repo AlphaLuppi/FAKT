@@ -1,0 +1,9 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- 1D : mark serré favicon — F plus gros, frame plus large -->
+  <rect x="0" y="0" width="100" height="100" fill="#F5F5F0"/>
+  <rect x="14" y="14" width="76" height="76" fill="#FFFF00"/>
+  <rect x="8" y="8" width="76" height="76" fill="#F5F5F0" stroke="#000" stroke-width="4"/>
+  <rect x="20" y="20" width="52" height="14" fill="#000"/>
+  <rect x="20" y="20" width="14" height="52" fill="#000"/>
+  <rect x="20" y="42" width="36" height="12" fill="#000"/>
+</svg>

@@ -18,18 +18,19 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9",
-    "turbo": "^2.3",
-    "typescript": "^5.6",
     "@playwright/test": "^1.49",
+    "@resvg/resvg-js": "^2.6.2",
+    "@types/mocha": "^10.0",
+    "@types/node": "^22",
     "@wdio/cli": "^9.4",
     "@wdio/globals": "^9.4",
     "@wdio/local-runner": "^9.4",
     "@wdio/mocha-framework": "^9.4",
     "@wdio/spec-reporter": "^9.4",
     "@wdio/types": "^9.4",
-    "@types/mocha": "^10.0",
-    "@types/node": "^22",
     "expect-webdriverio": "^5.0",
+    "turbo": "^2.3",
+    "typescript": "^5.6",
     "webdriverio": "^9.4"
   },
   "dependencies": {

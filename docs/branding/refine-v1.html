@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FAKT — Refine V1 Monogram Stack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root { --ink:#000; --paper:#F5F5F0; --yellow:#FFFF00; --white:#FFF; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    padding: 40px 32px 80px;
+  }
+  header {
+    border: 2.5px solid var(--ink);
+    background: var(--ink);
+    color: var(--yellow);
+    padding: 24px 28px;
+    box-shadow: 8px 8px 0 var(--ink);
+    margin-bottom: 56px;
+    max-width: 1280px;
+    margin-left: auto; margin-right: auto;
+  }
+  header h1 {
+    font-weight: 800; text-transform: uppercase;
+    letter-spacing: 4px;
+    font-size: clamp(28px, 4vw, 48px);
+  }
+  header p {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500; font-size: 13px;
+    margin-top: 12px; color: var(--paper);
+    text-transform: uppercase; letter-spacing: 2px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 28px;
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+  .card {
+    background: var(--white);
+    border: 2.5px solid var(--ink);
+    box-shadow: 5px 5px 0 var(--ink);
+    transition: transform 120ms ease, box-shadow 120ms ease;
+  }
+  .card:hover { transform: translate(-3px,-3px); box-shadow: 8px 8px 0 var(--ink); }
+  .frame {
+    background: var(--paper);
+    border-bottom: 2.5px solid var(--ink);
+    aspect-ratio: 1 / 1;
+    display: grid; place-items: center;
+    padding: 32px;
+  }
+  .frame.wide { aspect-ratio: 5 / 3; }
+  .frame img { width: 100%; height: 100%; max-width: 280px; max-height: 280px; object-fit: contain; }
+  .meta { padding: 18px 20px 22px; border-top: 2.5px solid var(--ink); }
+  .meta .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; font-weight: 700; letter-spacing: 2px;
+    background: var(--yellow); border: 2px solid var(--ink);
+    padding: 2px 8px; display: inline-block; margin-bottom: 10px;
+  }
+  .meta h2 { font-weight: 800; text-transform: uppercase; letter-spacing: 2px; font-size: 16px; margin-bottom: 8px; }
+  .meta p { font-size: 13px; line-height: 1.45; font-weight: 500; }
+  /* favicon strip */
+  .favicons {
+    max-width: 1280px; margin: 56px auto 0;
+    border: 2.5px solid var(--ink);
+    background: var(--white);
+    padding: 28px;
+    box-shadow: 5px 5px 0 var(--ink);
+  }
+  .favicons h3 {
+    font-weight: 800; text-transform: uppercase;
+    letter-spacing: 3px; font-size: 14px;
+    margin-bottom: 20px;
+  }
+  .fav-row { display: flex; gap: 28px; align-items: flex-end; flex-wrap: wrap; }
+  .fav { display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .fav img { border: 2px solid var(--ink); }
+  .fav span {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .fav .s16 { width: 16px; height: 16px; }
+  .fav .s32 { width: 32px; height: 32px; }
+  .fav .s48 { width: 48px; height: 48px; }
+  .fav .s64 { width: 64px; height: 64px; }
+  .fav .s128 { width: 128px; height: 128px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>FAKT // Refine V1 — Monogram Stack</h1>
+  <p>6 déclinaisons + test favicon</p>
+</header>
+
+<div class="grid">
+
+  <article class="card">
+    <div class="frame"><img src="logos/v1-a-original.svg" alt=""></div>
+    <div class="meta">
+      <span class="num">1A</span>
+      <h2>Original</h2>
+      <p>Référence du chat précédent. Carte papier + ombre jaune offset 6px. Lecture douce, signature brutaliste.</p>
+    </div>
+  </article>
+
+  <article class="card">
+    <div class="frame"><img src="logos/v1-b-yellow-fill.svg" alt=""></div>
+    <div class="meta">
+      <span class="num">1B</span>
+      <h2>Yellow Fill</h2>
+      <p>Carte jaune + ombre noire pleine. Plus punchy, le jaune devient le héros — match parfait avec l'icône macOS / dock.</p>
+    </div>
+  </article>
+
+  <article class="card">
+    <div class="frame"><img src="logos/v1-c-inverse.svg" alt=""></div>
+    <div class="meta">
+      <span class="num">1C</span>
+      <h2>Inverse Dark</h2>
+      <p>Carte noire + F jaune. Version dark mode native, parfaite pour menubar Windows / titre app.</p>
+    </div>
+  </article>
+
+  <article class="card">
+    <div class="frame"><img src="logos/v1-d-tight-mark.svg" alt=""></div>
+    <div class="meta">
+      <span class="num">1D</span>
+      <h2>Tight Mark</h2>
+      <p>F gros, frame épaisse 4px, espacement réduit. Optimisé favicon 16/32px et icône installeur — lisible à toutes tailles.</p>
+    </div>
+  </article>
+
+  <article class="card">
+    <div class="frame"><img src="logos/v1-e-lockup-vertical.svg" alt=""></div>
+    <div class="meta">
+      <span class="num">1E</span>
+      <h2>Lockup Vertical</h2>
+      <p>Mark + wordmark FAKT + tagline mono. Pour splash screen, README, page GitHub.</p>
+    </div>
+  </article>
+
+  <article class="card">
+    <div class="frame wide"><img src="logos/v1-f-lockup-horizontal.svg" alt=""></div>
+    <div class="meta">
+      <span class="num">1F</span>
+      <h2>Lockup Horizontal</h2>
+      <p>Mark + barre + wordmark FAKT. Pour bandeau site web, signature email, header app.</p>
+    </div>
+  </article>
+
+</div>
+
+<section class="favicons">
+  <h3>Test favicon — variante 1D Tight Mark</h3>
+  <div class="fav-row">
+    <div class="fav"><img class="s16" src="logos/v1-d-tight-mark.svg" alt=""><span>16px</span></div>
+    <div class="fav"><img class="s32" src="logos/v1-d-tight-mark.svg" alt=""><span>32px</span></div>
+    <div class="fav"><img class="s48" src="logos/v1-d-tight-mark.svg" alt=""><span>48px</span></div>
+    <div class="fav"><img class="s64" src="logos/v1-d-tight-mark.svg" alt=""><span>64px</span></div>
+    <div class="fav"><img class="s128" src="logos/v1-d-tight-mark.svg" alt=""><span>128px</span></div>
+  </div>
+</section>
+
+</body>
+</html>
