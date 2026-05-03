@@ -19,6 +19,19 @@ et [Semantic Versioning 2.0.0](https://semver.org/lang/fr/).
 
 ### Nouveautés
 
+- **Rapport d'audit téléchargeable sur les devis signés** — un nouveau bouton
+  *Rapport d'audit* apparaît sur chaque devis signé. En un clic vous obtenez
+  un PDF présentable à un avocat ou un juge : métadonnées du document,
+  signataire, IP, horodatage TSA, hashes SHA-256 de la chaîne d'intégrité,
+  et journal complet des événements (création, envoi, signature). Pratique
+  pour les contestations clients ou les contrôles fiscaux.
+- **Clauses contractuelles cochables dans l'éditeur de devis** — un nouveau
+  panneau permet d'ajouter d'un clic des clauses pré-rédigées (acompte 30 %
+  ou 50 %, garantie 6 ou 12 mois, cession ou licence de propriété
+  intellectuelle, limitation de responsabilité, juridiction française). Les
+  options exclusives se désélectionnent automatiquement. Les clauses cochées
+  s'insèrent dans le PDF avant les CGV légales.
+
 ### Améliorations
 
 ### Corrections

@@ -80,7 +80,10 @@ async function computeBalanceItems(quote: Quote): Promise<EditableItem[]> {
 type BillingState = "unbilled" | "deposit-paid";
 type FilterMode = "all" | "unbilled" | "deposit-paid";
 
-function computeBillingState(quoteId: UUID, invoices: ReadonlyArray<Invoice>): BillingState | "billed" {
+function computeBillingState(
+  quoteId: UUID,
+  invoices: ReadonlyArray<Invoice>
+): BillingState | "billed" {
   // Une facture "active" = non annulée. On considère draft + sent + paid + overdue.
   const linked = invoices.filter((i) => i.quoteId === quoteId && i.status !== "cancelled");
   const hasFinal = linked.some((i) => i.kind === "total" || i.kind === "balance");
@@ -371,7 +374,7 @@ export function NewFromQuote(): ReactElement {
           ) : (
             <QuotePickerTrigger
               selected={selectedQuote}
-              billingState={selectedQuote ? billingByQuote.get(selectedQuote.id) ?? null : null}
+              billingState={selectedQuote ? (billingByQuote.get(selectedQuote.id) ?? null) : null}
               onOpen={() => setPickerOpen(true)}
             />
           )}

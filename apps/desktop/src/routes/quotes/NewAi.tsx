@@ -130,9 +130,7 @@ export function NewAi(): ReactElement {
             setExtracted((prev) => ({ ...(prev ?? {}), ...event.data }));
           } else {
             setRawOutput((prev) =>
-              prev === null
-                ? stringifyRawOutput(event.data)
-                : prev + stringifyRawOutput(event.data)
+              prev === null ? stringifyRawOutput(event.data) : prev + stringifyRawOutput(event.data)
             );
           }
         } else if (event.type === "done") {
@@ -192,9 +190,7 @@ export function NewAi(): ReactElement {
         if (cancelled) {
           setFiles((prev) =>
             prev.map((f) =>
-              f.id === attached.id
-                ? { ...f, status: "error", error: "Lecture annulée." }
-                : f
+              f.id === attached.id ? { ...f, status: "error", error: "Lecture annulée." } : f
             )
           );
           continue;
@@ -520,10 +516,7 @@ export function NewAi(): ReactElement {
       )}
 
       {extracted && (
-        <ExtractedEditor
-          extracted={extracted}
-          onApply={(edited) => void handleApply(edited)}
-        />
+        <ExtractedEditor extracted={extracted} onApply={(edited) => void handleApply(edited)} />
       )}
 
       {rawOutput !== null && (
@@ -644,12 +637,7 @@ interface FileInputPanelProps {
   disabled: boolean;
 }
 
-function FileInputPanel({
-  files,
-  onFiles,
-  onRemove,
-  disabled,
-}: FileInputPanelProps): ReactElement {
+function FileInputPanel({ files, onFiles, onRemove, disabled }: FileInputPanelProps): ReactElement {
   return (
     <div
       style={{ display: "flex", flexDirection: "column", gap: tokens.spacing[3] }}
@@ -968,10 +956,7 @@ function ExtractedEditor({ extracted, onApply }: ExtractedEditorProps): ReactEle
   }
 
   function addItem(): void {
-    setItems((prev) => [
-      ...prev,
-      { description: "", quantity: 1, unitPrice: 0, unit: "forfait" },
-    ]);
+    setItems((prev) => [...prev, { description: "", quantity: 1, unitPrice: 0, unit: "forfait" }]);
   }
 
   const canApply = clientName.trim().length > 0 && items.length > 0;
@@ -1135,9 +1120,7 @@ function ExtractedEditor({ extracted, onApply }: ExtractedEditorProps): ReactEle
                     min={0}
                     step={0.5}
                     value={it.quantity}
-                    onChange={(e) =>
-                      updateItem(idx, { quantity: Number(e.target.value) || 0 })
-                    }
+                    onChange={(e) => updateItem(idx, { quantity: Number(e.target.value) || 0 })}
                     data-testid={`ai-edit-item-${idx}-qty`}
                   />
                   <label
@@ -1161,9 +1144,7 @@ function ExtractedEditor({ extracted, onApply }: ExtractedEditorProps): ReactEle
                     </span>
                     <select
                       value={it.unit}
-                      onChange={(e) =>
-                        updateItem(idx, { unit: e.target.value as ExtractedUnit })
-                      }
+                      onChange={(e) => updateItem(idx, { unit: e.target.value as ExtractedUnit })}
                       data-testid={`ai-edit-item-${idx}-unit`}
                       style={{
                         height: 36,
@@ -1188,9 +1169,7 @@ function ExtractedEditor({ extracted, onApply }: ExtractedEditorProps): ReactEle
                     min={0}
                     step={1}
                     value={it.unitPrice}
-                    onChange={(e) =>
-                      updateItem(idx, { unitPrice: Number(e.target.value) || 0 })
-                    }
+                    onChange={(e) => updateItem(idx, { unitPrice: Number(e.target.value) || 0 })}
                     data-testid={`ai-edit-item-${idx}-price`}
                   />
                   <button

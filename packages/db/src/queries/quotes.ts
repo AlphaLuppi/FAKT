@@ -5,6 +5,7 @@
  */
 
 import { canTransitionQuote } from "@fakt/core";
+import { parseClauses, serializeClauses } from "@fakt/legal";
 import type { DocumentUnit, Quote, QuoteStatus } from "@fakt/shared";
 import { and, desc, eq, inArray, isNull, like, or } from "drizzle-orm";
 import type { DbInstance } from "../adapter.js";
@@ -38,6 +39,8 @@ export interface CreateQuoteInput {
   clientId: string;
   title: string;
   conditions?: string | null;
+  /** IDs de clauses pré-définies (catalogue `@fakt/legal/clauses`). */
+  clauses?: string[];
   validityDate?: number | null;
   notes?: string | null;
   totalHtCents: number;
@@ -48,6 +51,7 @@ export interface UpdateQuoteInput {
   clientId?: string;
   title?: string;
   conditions?: string | null;
+  clauses?: string[];
   validityDate?: number | null;
   notes?: string | null;
   totalHtCents?: number;
@@ -78,6 +82,7 @@ function rowToQuote(
     status: row.status as QuoteStatus,
     totalHtCents: row.totalHtCents,
     conditions: row.conditions ?? null,
+    clauses: parseClauses(row.clauses ?? null),
     validityDate: row.validityDate ? Number(row.validityDate) : null,
     notes: row.notes ?? null,
     issuedAt: row.issuedAt ? Number(row.issuedAt) : null,
@@ -185,6 +190,7 @@ export function createQuote(db: DbInstance, input: CreateQuoteInput): Quote {
       clientId: input.clientId,
       title: input.title,
       conditions: input.conditions ?? null,
+      clauses: serializeClauses(input.clauses ?? []),
       validityDate: input.validityDate ? new Date(input.validityDate) : null,
       notes: input.notes ?? null,
       totalHtCents: input.totalHtCents,
@@ -216,6 +222,7 @@ export function updateQuote(db: DbInstance, id: string, input: UpdateQuoteInput)
   if (input.clientId !== undefined) updates.clientId = input.clientId;
   if (input.title !== undefined) updates.title = input.title;
   if ("conditions" in input) updates.conditions = input.conditions ?? null;
+  if ("clauses" in input) updates.clauses = serializeClauses(input.clauses ?? []);
   if ("validityDate" in input) {
     updates.validityDate = input.validityDate ? new Date(input.validityDate) : null;
   }

@@ -30,7 +30,7 @@ import type { AppEnv } from "../types.js";
  */
 
 const renderSchema = z.object({
-  docType: z.enum(["quote", "invoice"]),
+  docType: z.enum(["quote", "invoice", "audit-trail"]),
   dataJson: z.string().min(2),
 });
 
@@ -40,6 +40,7 @@ const TEMPLATE_FILES: readonly string[] = [
   "base.typ",
   "quote.typ",
   "invoice.typ",
+  "audit-trail.typ",
   "partials/header-workspace.typ",
   "partials/header-client.typ",
   "partials/items-table.typ",

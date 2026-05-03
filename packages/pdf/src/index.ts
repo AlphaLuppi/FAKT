@@ -21,17 +21,21 @@
  */
 
 import {
+  type AuditTrailCtx,
+  type BuildAuditTrailCtxArgs,
   type BuildInvoiceCtxArgs,
   type BuildQuoteCtxArgs,
   type InvoiceCtx,
   type PdfCtx,
   type QuoteCtx,
+  buildAuditTrailContext,
   buildInvoiceContext,
   buildQuoteContext,
 } from "./context-builder.ts";
 
 // Public re-exports.
 export {
+  buildAuditTrailContext,
   buildInvoiceContext,
   buildQuoteContext,
   formatQuantity,
@@ -40,8 +44,14 @@ export {
   clientToCtx,
 } from "./context-builder.ts";
 export type {
+  AuditDocumentCtx,
+  AuditEventCtx,
+  AuditSignatureEventCtx,
+  AuditTrailCtx,
+  BuildAuditTrailCtxArgs,
   BuildInvoiceCtxArgs,
   BuildQuoteCtxArgs,
+  ClauseCtx,
   ClientCtx,
   InvoiceCtx,
   ItemCtx,
@@ -52,7 +62,7 @@ export type {
 
 // ─── Type de document ────────────────────────────────────────────────────────
 
-export type DocType = "quote" | "invoice";
+export type DocType = "quote" | "invoice" | "audit-trail";
 
 // ─── Strategy pattern ────────────────────────────────────────────────────────
 
@@ -76,7 +86,7 @@ export interface RenderOptions {
 export type RenderStrategy = (
   docType: DocType,
   dataJson: string,
-  options?: RenderOptions,
+  options?: RenderOptions
 ) => Promise<Uint8Array>;
 
 /**
@@ -86,15 +96,14 @@ export type RenderStrategy = (
 async function defaultStrategy(
   docType: DocType,
   dataJson: string,
-  options?: RenderOptions,
+  options?: RenderOptions
 ): Promise<Uint8Array> {
   const { invoke } = await import("@tauri-apps/api/core");
   const signaturePng = options?.signaturePng ?? null;
   const bytes = await invoke<number[]>("render_pdf", {
     docType,
     dataJson,
-    signaturePng:
-      signaturePng && signaturePng.byteLength > 0 ? Array.from(signaturePng) : null,
+    signaturePng: signaturePng && signaturePng.byteLength > 0 ? Array.from(signaturePng) : null,
   });
   return new Uint8Array(bytes);
 }
@@ -114,7 +123,7 @@ export function setRenderStrategy(strategy: RenderStrategy | null): void {
 async function invokeRender(
   docType: DocType,
   ctxJson: string,
-  options?: RenderOptions,
+  options?: RenderOptions
 ): Promise<Uint8Array> {
   return _strategy(docType, ctxJson, options);
 }
@@ -141,5 +150,16 @@ export async function renderQuotePdf(args: BuildQuoteCtxArgs): Promise<Uint8Arra
 /** Rend une facture en PDF à partir d'un InvoiceInput + client + workspace. */
 export async function renderInvoicePdf(args: BuildInvoiceCtxArgs): Promise<Uint8Array> {
   const ctx: InvoiceCtx = buildInvoiceContext(args);
+  return renderPdf(ctx);
+}
+
+/**
+ * Rend un rapport d'audit lisible en PDF.
+ * Le rapport combine les métadonnées document, la chaîne de signatures
+ * électroniques et le journal d'événements en un PDF présentable à un tiers
+ * (avocat, juge, expert).
+ */
+export async function renderAuditTrailPdf(args: BuildAuditTrailCtxArgs): Promise<Uint8Array> {
+  const ctx: AuditTrailCtx = buildAuditTrailContext(args);
   return renderPdf(ctx);
 }

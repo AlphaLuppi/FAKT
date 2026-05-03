@@ -229,6 +229,8 @@ export const quotes = pgTable(
       .default("draft"),
     totalHtCents: bigint("total_ht_cents", { mode: "number" }).notNull().default(0),
     conditions: text("conditions"),
+    /** JSON array d'IDs de clauses (catalogue `@fakt/legal/clauses`). NULL si aucune. */
+    clauses: text("clauses"),
     validityDate: timestamp("validity_date", { precision: 3, withTimezone: true }),
     notes: text("notes"),
     issuedAt: timestamp("issued_at", { precision: 3, withTimezone: true }),

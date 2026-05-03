@@ -1,5 +1,12 @@
 import { computeLinesTotal } from "@fakt/core";
 import { tokens } from "@fakt/design-tokens";
+import {
+  CLAUSE_CATEGORY_LABELS,
+  type ClauseCategory,
+  type ClauseDefinition,
+  clausesByCategory,
+  toggleClauseWithExclusions,
+} from "@fakt/legal";
 import { addDays, formatEur, formatFrDate, fr, today } from "@fakt/shared";
 import type { Quote, UUID } from "@fakt/shared";
 import { Button, Input, Textarea } from "@fakt/ui";
@@ -19,6 +26,8 @@ export interface QuoteFormValues {
   issuedAt: number;
   validityDate: number;
   notes: string;
+  /** IDs de clauses pré-définies (catalogue `@fakt/legal/clauses`). */
+  clauses: string[];
   items: EditableItem[];
 }
 
@@ -41,6 +50,7 @@ function initialFromPartial(partial: Partial<QuoteFormValues> | undefined): Quot
     issuedAt: today(),
     validityDate: addDays(today(), 30),
     notes: "",
+    clauses: [],
     items: [],
   };
   return { ...base, ...(partial ?? {}) };
@@ -244,6 +254,12 @@ export function QuoteForm(props: QuoteFormProps): ReactElement {
         </div>
       </section>
 
+      <ClausesPanel
+        selected={values.clauses}
+        onChange={(next) => setValues((v) => ({ ...v, clauses: next }))}
+        disabled={readOnly}
+      />
+
       <section
         style={{
           display: "flex",
@@ -353,6 +369,150 @@ export function QuoteForm(props: QuoteFormProps): ReactElement {
   );
 }
 
+interface ClausesPanelProps {
+  selected: string[];
+  onChange: (next: string[]) => void;
+  disabled?: boolean | undefined;
+}
+
+function ClausesPanel({ selected, onChange, disabled }: ClausesPanelProps): ReactElement {
+  const groups = useMemo(() => clausesByCategory(), []);
+  const selectedSet = useMemo(() => new Set(selected), [selected]);
+  const orderedCategories: ClauseCategory[] = [
+    "payment",
+    "warranty",
+    "ip",
+    "liability",
+    "jurisdiction",
+  ];
+
+  return (
+    <section
+      data-testid="quote-form-clauses"
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: tokens.spacing[3],
+        border: `${tokens.stroke.bold} solid ${tokens.color.ink}`,
+        padding: tokens.spacing[5],
+        background: tokens.color.surface,
+        boxShadow: tokens.shadow.sm,
+      }}
+    >
+      <SectionTitle>{fr.quotes.form.clausesTitle}</SectionTitle>
+      <p
+        style={{
+          margin: 0,
+          fontFamily: tokens.font.ui,
+          fontSize: tokens.fontSize.xs,
+          color: tokens.color.muted,
+          lineHeight: 1.5,
+        }}
+      >
+        {fr.quotes.form.clausesHelp}
+      </p>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: tokens.spacing[4],
+        }}
+      >
+        {orderedCategories.map((cat) => {
+          const list = groups[cat];
+          if (list.length === 0) return null;
+          return (
+            <div
+              key={cat}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: tokens.spacing[2],
+                border: `${tokens.stroke.base} solid ${tokens.color.ink}`,
+                padding: tokens.spacing[4],
+                background: tokens.color.paper2,
+              }}
+            >
+              <div
+                style={{
+                  fontFamily: tokens.font.ui,
+                  fontWeight: Number(tokens.fontWeight.bold),
+                  fontSize: tokens.fontSize.xs,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                  color: tokens.color.ink,
+                }}
+              >
+                {CLAUSE_CATEGORY_LABELS[cat]}
+              </div>
+              {list.map((clause) => (
+                <ClauseCheckbox
+                  key={clause.id}
+                  clause={clause}
+                  checked={selectedSet.has(clause.id)}
+                  disabled={disabled === true}
+                  onToggle={() => onChange(toggleClauseWithExclusions(selected, clause.id))}
+                />
+              ))}
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+interface ClauseCheckboxProps {
+  clause: ClauseDefinition;
+  checked: boolean;
+  disabled: boolean;
+  onToggle: () => void;
+}
+
+function ClauseCheckbox({
+  clause,
+  checked,
+  disabled,
+  onToggle,
+}: ClauseCheckboxProps): ReactElement {
+  return (
+    <label
+      style={{
+        display: "flex",
+        alignItems: "flex-start",
+        gap: tokens.spacing[2],
+        cursor: disabled ? "not-allowed" : "pointer",
+        opacity: disabled ? 0.6 : 1,
+      }}
+    >
+      <input
+        type="checkbox"
+        checked={checked}
+        disabled={disabled}
+        onChange={onToggle}
+        data-testid={`quote-form-clause-${clause.id}`}
+        style={{
+          width: 16,
+          height: 16,
+          marginTop: 2,
+          accentColor: tokens.color.ink,
+        }}
+      />
+      <span
+        style={{
+          fontFamily: tokens.font.ui,
+          fontSize: tokens.fontSize.sm,
+          color: tokens.color.ink,
+          lineHeight: 1.4,
+        }}
+        title={clause.body}
+      >
+        {clause.label}
+      </span>
+    </label>
+  );
+}
+
 function SectionTitle({ children }: { children: React.ReactNode }): ReactElement {
   return (
     <h2
@@ -376,6 +536,7 @@ export function quoteToFormValues(quote: Quote): QuoteFormValues {
     issuedAt: quote.issuedAt ?? quote.createdAt,
     validityDate: quote.validityDate ?? addDays(quote.issuedAt ?? quote.createdAt, 30),
     notes: quote.notes ?? "",
+    clauses: [...quote.clauses],
     items: quote.items.map((item) => ({
       id: item.id,
       position: item.position,

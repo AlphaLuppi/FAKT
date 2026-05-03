@@ -96,6 +96,12 @@ export interface Quote {
   status: QuoteStatus;
   totalHtCents: Cents;
   conditions: string | null;
+  /**
+   * IDs de clauses contractuelles cochées dans l'éditeur (catalogue figé
+   * `@fakt/legal/clauses`). Persisté en DB sous forme JSON string ; exposé
+   * ici en tableau d'IDs déjà parsé.
+   */
+  clauses: string[];
   validityDate: TimestampMs | null;
   notes: string | null;
   issuedAt: TimestampMs | null;
@@ -157,4 +163,20 @@ export interface NumberingState {
   year: number;
   type: "quote" | "invoice";
   lastSequence: number;
+}
+
+/**
+ * Événement d'activité — journal lisible (créations, envois, statuts, etc.).
+ * Distinct des `SignatureEvent` qui sont la chaîne d'intégrité crypto append-only.
+ * Le champ `type` est libre côté DB ; le mapping vers un label FR est fait côté UI
+ * via `activityTypeToKind` dans `audit-timeline/AuditTimeline.tsx`.
+ */
+export interface ActivityEvent {
+  id: UUID;
+  workspaceId: UUID;
+  type: string;
+  entityType: string | null;
+  entityId: string | null;
+  payload: string | null;
+  createdAt: TimestampMs;
 }

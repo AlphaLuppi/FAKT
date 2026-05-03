@@ -1,6 +1,6 @@
-import { Resvg } from "@resvg/resvg-js";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { Resvg } from "@resvg/resvg-js";
 
 const ROOT = join(import.meta.dir, "..");
 const SRC = join(ROOT, "docs/branding/logos/app-icon-source.svg");

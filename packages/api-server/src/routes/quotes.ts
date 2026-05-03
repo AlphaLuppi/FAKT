@@ -95,6 +95,7 @@ quotesRoutes.post("/", async (c) => {
     clientId: body.clientId,
     title: body.title,
     conditions: body.conditions ?? null,
+    clauses: body.clauses ?? [],
     validityDate: body.validityDate ?? null,
     notes: body.notes ?? null,
     totalHtCents: body.totalHtCents,
@@ -132,6 +133,7 @@ quotesRoutes.patch("/:id", async (c) => {
   if (body.clientId !== undefined) input.clientId = body.clientId;
   if (body.title !== undefined) input.title = body.title;
   if ("conditions" in body) input.conditions = body.conditions ?? null;
+  if ("clauses" in body) input.clauses = body.clauses ?? [];
   if ("validityDate" in body) input.validityDate = body.validityDate ?? null;
   if ("notes" in body) input.notes = body.notes ?? null;
   if (body.totalHtCents !== undefined) input.totalHtCents = body.totalHtCents;

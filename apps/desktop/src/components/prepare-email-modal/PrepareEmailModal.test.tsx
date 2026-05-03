@@ -37,6 +37,7 @@ const MOCK_QUOTE: Quote = {
   status: "sent",
   totalHtCents: 300000,
   conditions: null,
+  clauses: [],
   validityDate: null,
   notes: null,
   issuedAt: Date.now(),
@@ -83,6 +84,7 @@ beforeEach(() => {
   setPdfApi({
     renderQuote: vi.fn(async () => new Uint8Array([80, 68, 70])),
     renderInvoice: vi.fn(async () => new Uint8Array([80, 68, 70])),
+    renderAuditTrail: vi.fn(async () => new Uint8Array([80, 68, 70])),
     saveDialog: vi.fn(async () => null),
     writeFile: vi.fn(async () => undefined),
   });

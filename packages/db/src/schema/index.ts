@@ -115,6 +115,8 @@ export const quotes = sqliteTable(
       .default("draft"),
     totalHtCents: integer("total_ht_cents").notNull().default(0),
     conditions: text("conditions"),
+    /** JSON array d'IDs de clauses (catalogue `@fakt/legal/clauses`). NULL si aucune. */
+    clauses: text("clauses"),
     validityDate: integer("validity_date", { mode: "timestamp_ms" }),
     notes: text("notes"),
     issuedAt: integer("issued_at", { mode: "timestamp_ms" }),

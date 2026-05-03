@@ -13,7 +13,9 @@ import type {
   QuoteInput,
   WorkspaceInput,
 } from "@fakt/core";
-import { formatEur, formatFrDateLong } from "@fakt/shared";
+import { hydrateClauses } from "@fakt/legal";
+import type { ActivityEvent, SignatureEvent } from "@fakt/shared";
+import { formatEur, formatFrDateLong, formatFrDateTime } from "@fakt/shared";
 
 // ─── Types de contexte injectés dans Typst ──────────────────────────────────
 
@@ -47,6 +49,15 @@ export interface ItemCtx {
   total: string;
 }
 
+export interface ClauseCtx {
+  /** Identifiant stable (utile pour debug ; le PDF n'en affiche que `label` et `body`). */
+  id: string;
+  /** Libellé court (ex: "Acompte 30 % à la commande"). */
+  label: string;
+  /** Texte complet inséré dans le PDF. */
+  body: string;
+}
+
 export interface QuoteCtx {
   kind: "quote";
   number: string;
@@ -58,6 +69,8 @@ export interface QuoteCtx {
   client: ClientCtx;
   items: ItemCtx[];
   conditions: string | null;
+  /** Clauses contractuelles cochées dans l'éditeur, hydratées depuis le catalogue. */
+  clauses: ClauseCtx[];
   notes: string | null;
   signedAt: string | null;
   signatureImage: string | null;
@@ -79,7 +92,57 @@ export interface InvoiceCtx {
   quoteReference: string | null;
 }
 
-export type PdfCtx = QuoteCtx | InvoiceCtx;
+// ─── Audit trail ────────────────────────────────────────────────────────────
+
+export interface AuditDocumentCtx {
+  type: "quote" | "invoice";
+  /** Label FR pour le titre du rapport (ex: "Devis", "Facture"). */
+  label: string;
+  number: string;
+  title: string;
+  clientName: string;
+  /** Total HT pré-formaté (ex: "1 234,56 €"). */
+  totalHt: string;
+  /** Date d'émission longue FR (ex: "21 avril 2026") ou null si pas émis. */
+  issuedAt: string | null;
+  /** Date de signature longue FR ou null si pas encore signé. */
+  signedAt: string | null;
+}
+
+export interface AuditSignatureEventCtx {
+  /** Date+heure FR (ex: "21 avril 2026 — 14:32"). */
+  timestamp: string;
+  signerName: string;
+  signerEmail: string;
+  ipAddress: string | null;
+  userAgent: string | null;
+  docHashBefore: string;
+  docHashAfter: string;
+  previousEventHash: string | null;
+  tsaProvider: string | null;
+  /** Niveau eIDAS — ex "B-T". null si non communiqué. */
+  padesLevel: string | null;
+}
+
+export interface AuditEventCtx {
+  /** Date+heure FR. */
+  timestamp: string;
+  /** Label déjà traduit FR (ex: "Document créé"). */
+  label: string;
+}
+
+export interface AuditTrailCtx {
+  kind: "audit-trail";
+  document: AuditDocumentCtx;
+  workspace: WorkspaceCtx;
+  signatureEvents: AuditSignatureEventCtx[];
+  /** Chronologie fusionnée (signatures + activités) triée ASC. */
+  events: AuditEventCtx[];
+  /** Date de génération du rapport, FR longue avec heure. */
+  generatedAt: string;
+}
+
+export type PdfCtx = QuoteCtx | InvoiceCtx | AuditTrailCtx;
 
 // ─── Helpers pré-formatting FR ───────────────────────────────────────────────
 
@@ -187,6 +250,11 @@ export function buildQuoteContext(args: BuildQuoteCtxArgs): QuoteCtx {
     client: clientToCtx(client),
     items: quote.items.map(lineToItemCtx),
     conditions: quote.conditions,
+    clauses: hydrateClauses(quote.clauses).map((c) => ({
+      id: c.id,
+      label: c.label,
+      body: c.body,
+    })),
     notes: quote.notes,
     signedAt: quote.signedAt ? formatFrDateLong(quote.signedAt) : null,
     // Le path commence par "/" car Typst résout `image()` relativement au
@@ -194,6 +262,130 @@ export function buildQuoteContext(args: BuildQuoteCtxArgs): QuoteCtx {
     // rebase sur la racine du projet (--root).
     signatureImage: hasSignaturePng ? "/signature.png" : null,
     padesLevel: hasSignaturePng ? (args.padesLevel ?? null) : null,
+  };
+}
+
+// ─── Audit trail context ────────────────────────────────────────────────────
+
+export interface BuildAuditTrailCtxArgs {
+  document: {
+    type: "quote" | "invoice";
+    number: string;
+    title: string;
+    clientName: string;
+    totalHtCents: number;
+    issuedAt: number | null;
+    signedAt: number | null;
+  };
+  workspace: WorkspaceInput;
+  signatureEvents: SignatureEvent[];
+  activityEvents: ActivityEvent[];
+  /** Override de l'heure de génération (utile pour les tests déterministes). */
+  generatedAtMs?: number;
+}
+
+const DOC_TYPE_LABELS: Record<"quote" | "invoice", string> = {
+  quote: "Devis",
+  invoice: "Facture",
+};
+
+/**
+ * Mappe un `activity.type` brut vers un label FR lisible. Couvre les types
+ * actuellement émis par les routes du sidecar (cf. AuditTimeline.tsx).
+ * Les types non listés sont rendus tels quels (préfixés "Événement : ")
+ * pour éviter de cacher de l'information.
+ */
+function activityTypeToLabel(type: string): string {
+  switch (type) {
+    case "quote_created":
+    case "invoice.created":
+      return "Document créé";
+    case "quote_marked_sent":
+    case "invoice.issued":
+      return "Document envoyé";
+    case "quote_unmarked_sent":
+      return "Envoi annulé";
+    case "quote_signed":
+      return "Document signé";
+    case "quote_refused":
+      return "Devis refusé";
+    case "quote_expired":
+      return "Devis expiré";
+    case "quote_invoiced":
+      return "Devis facturé";
+    case "invoice.paid":
+      return "Facture payée";
+    case "invoice.cancelled":
+      return "Facture annulée";
+    case "invoice.archived":
+      return "Document archivé";
+    case "invoice.from_quote":
+      return "Facture créée depuis devis";
+    default:
+      return `Événement : ${type}`;
+  }
+}
+
+/**
+ * Construit le contexte Typst pour le rapport d'audit lisible.
+ * Tri chronologique strict ASC sur la chronologie fusionnée. Les hashes sont
+ * affichés intégralement (le PDF doit servir de preuve juridique — pas de
+ * troncature).
+ */
+export function buildAuditTrailContext(args: BuildAuditTrailCtxArgs): AuditTrailCtx {
+  const { document, workspace, signatureEvents, activityEvents } = args;
+  const generatedAtMs = args.generatedAtMs ?? Date.now();
+
+  const sigEventsCtx: AuditSignatureEventCtx[] = [...signatureEvents]
+    .sort((a, b) => a.timestamp - b.timestamp)
+    .map((ev) => ({
+      timestamp: formatFrDateTime(ev.timestamp),
+      signerName: ev.signerName,
+      signerEmail: ev.signerEmail,
+      ipAddress: ev.ipAddress,
+      userAgent: ev.userAgent,
+      docHashBefore: ev.docHashBefore,
+      docHashAfter: ev.docHashAfter,
+      previousEventHash: ev.previousEventHash,
+      tsaProvider: ev.tsaProvider,
+      // PAdES level n'est pas stocké dans signature_events mais déduit de
+      // signed_documents.padesLevel. On le laisse null ici — le bouton UI
+      // peut décider de le passer en override si besoin (champ futur).
+      padesLevel: ev.tsaProvider ? "B-T" : "B",
+    }));
+
+  const allEvents: AuditEventCtx[] = [
+    ...activityEvents.map((a) => ({
+      ts: a.createdAt,
+      label: activityTypeToLabel(a.type),
+    })),
+    ...signatureEvents.map((s) => ({
+      ts: s.timestamp,
+      label: `Signé par ${s.signerName}`,
+    })),
+  ]
+    .sort((a, b) => a.ts - b.ts)
+    .map((e) => ({
+      timestamp: formatFrDateTime(e.ts),
+      label: e.label,
+    }));
+
+  return {
+    kind: "audit-trail",
+    document: {
+      type: document.type,
+      label: DOC_TYPE_LABELS[document.type],
+      number: document.number,
+      title: document.title,
+      clientName: document.clientName,
+      totalHt: formatEur(document.totalHtCents),
+      issuedAt: document.issuedAt !== null ? formatFrDateLong(document.issuedAt) : null,
+      signedAt: document.signedAt !== null ? formatFrDateLong(document.signedAt) : null,
+    },
+    workspace: workspaceToCtx(workspace),
+    signatureEvents: sigEventsCtx,
+    events: allEvents,
+    generatedAt: formatFrDateTime(generatedAtMs),
   };
 }
 

@@ -39,6 +39,9 @@ const TPL_QUOTE: &str = include_str!(
 const TPL_INVOICE: &str = include_str!(
     "../../../../../packages/pdf/templates/invoice.typ"
 );
+const TPL_AUDIT_TRAIL: &str = include_str!(
+    "../../../../../packages/pdf/templates/audit-trail.typ"
+);
 const TPL_HEADER_WORKSPACE: &str = include_str!(
     "../../../../../packages/pdf/templates/partials/header-workspace.typ"
 );
@@ -139,6 +142,7 @@ pub(crate) async fn render_pdf_internal(
     let main_tpl_content = match doc_type {
         "quote" => TPL_QUOTE,
         "invoice" => TPL_INVOICE,
+        "audit-trail" => TPL_AUDIT_TRAIL,
         other => return Err(RenderError::InvalidDocType(other.to_string())),
     };
 

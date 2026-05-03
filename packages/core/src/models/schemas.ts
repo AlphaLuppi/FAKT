@@ -105,6 +105,12 @@ export const quoteSchema = z.object({
   status: quoteStatusSchema,
   totalHtCents: centSchema,
   conditions: z.string().nullable(),
+  /**
+   * IDs de clauses contractuelles cochées (catalogue `@fakt/legal/clauses`).
+   * Tableau vide quand aucune clause n'est sélectionnée — par défaut côté
+   * input pour rester rétrocompatible avec les anciens devis.
+   */
+  clauses: z.array(z.string()).default([]),
   validityDate: z.number().nullable(),
   notes: z.string().nullable(),
   issuedAt: z.number().nullable(),

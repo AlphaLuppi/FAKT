@@ -33,6 +33,7 @@ function quote(override: Partial<Quote>): Quote {
     status: "draft",
     totalHtCents: 100000,
     conditions: null,
+    clauses: [],
     validityDate: null,
     notes: null,
     issuedAt: null,

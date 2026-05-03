@@ -20,6 +20,7 @@ const DRAFT_QUOTE: Quote = {
   status: "draft",
   totalHtCents: 50000,
   conditions: null,
+  clauses: [],
   validityDate: now + 30 * 86400000,
   notes: "Note préexistante",
   issuedAt: null,

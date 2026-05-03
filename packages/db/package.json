@@ -29,6 +29,7 @@
     "vitest": "^4.1.5",
     "@vitest/coverage-v8": "^4.1.5",
     "@fakt/shared": "workspace:*",
-    "@fakt/core": "workspace:*"
+    "@fakt/core": "workspace:*",
+    "@fakt/legal": "workspace:*"
   }
 }

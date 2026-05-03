@@ -88,6 +88,7 @@ const SCHEMA_DDL = [
     status TEXT NOT NULL DEFAULT 'draft',
     total_ht_cents INTEGER NOT NULL DEFAULT 0,
     conditions TEXT,
+    clauses TEXT,
     validity_date INTEGER,
     notes TEXT,
     issued_at INTEGER,

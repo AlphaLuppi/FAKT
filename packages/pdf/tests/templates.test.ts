@@ -29,6 +29,7 @@ describe("arborescence templates Typst", () => {
     expect(exists("base.typ")).toBe(true);
     expect(exists("quote.typ")).toBe(true);
     expect(exists("invoice.typ")).toBe(true);
+    expect(exists("audit-trail.typ")).toBe(true);
   });
 
   it("contient tous les partials attendus", () => {
@@ -65,6 +66,17 @@ describe("charte Brutal Invoice héritée des skills legacy", () => {
   it("invoice.typ impose mention 'Pas d'escompte'", () => {
     const src = read("invoice.typ");
     expect(src).toContain("Pas d'escompte");
+  });
+
+  it("audit-trail.typ rend le titre RAPPORT D'AUDIT et les sections clés", () => {
+    const src = read("audit-trail.typ");
+    expect(src).toContain("RAPPORT D'AUDIT");
+    expect(src).toContain("Document");
+    expect(src).toContain("Signatures électroniques");
+    expect(src).toContain("Journal d'événements");
+    // Référence aux outils PAdES tiers (preuve juridique)
+    expect(src).toContain("Adobe Reader");
+    expect(src).toContain("pyHanko");
   });
 });
 
