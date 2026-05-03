@@ -221,6 +221,37 @@ export const fr = {
         "Les clauses cochées sont insérées textuellement dans le PDF. Les options exclusives se désélectionnent automatiquement (acompte 30 % vs 50 %, garantie 6 vs 12 mois, etc.).",
       clausesEmpty:
         "Aucune clause cochée. Le devis utilisera uniquement les CGV légales par défaut.",
+      importSigned: {
+        action: "Importer signature client",
+        tooltip:
+          "Importer le PDF que le client a signé (à la main + scan, Adobe Reader, DocuSign…) pour basculer le devis en signé.",
+        title: "Importer le devis signé par le client",
+        description:
+          "Sélectionnez le PDF que le client vous a renvoyé. FAKT vérifie que son contenu textuel correspond au devis original émis et bascule le statut en signé.",
+        filePickerLabel: "PDF signé",
+        filePickerHint: "Glissez ou choisissez le fichier PDF retourné.",
+        signerNameLabel: "Nom du signataire",
+        signerNamePlaceholder: "Nom du client signataire",
+        signerEmailLabel: "Email du signataire",
+        signerEmailPlaceholder: "client@exemple.fr",
+        submit: "Importer",
+        successToast: "Devis marqué signé — PDF client archivé",
+        errors: {
+          noFile: "Veuillez sélectionner un PDF.",
+          missingEmail: "L'email du signataire est requis.",
+          noOriginalHash:
+            "Ce devis n'a pas de hash de référence. Cette feature nécessite que le devis ait été émis depuis cette version de FAKT (ou plus récente).",
+          extractFailed: "Impossible d'extraire le texte du PDF importé.",
+          generic: "Échec de l'import. Vérifiez le PDF et réessayez.",
+        },
+        mismatchTitle: "Le contenu du PDF a été modifié",
+        mismatchBody:
+          "Le hash du PDF que le client a renvoyé diffère de celui du PDF original émis. Cas légitime : annotation manuscrite, scan déformé, ré-impression. Cas suspect : prix modifié, lignes ajoutées ou supprimées. Vérifiez visuellement le PDF avant de confirmer.",
+        mismatchHashExpected: "Hash attendu (PDF original)",
+        mismatchHashActual: "Hash trouvé (PDF importé)",
+        mismatchConfirm: "Confirmer l'import malgré la divergence",
+        mismatchCancel: "Annuler",
+      },
       emptyClientList: "Aucun client trouvé.",
       quickClientName: "Nom du client",
       quickClientEmail: "Email",
@@ -607,6 +638,7 @@ export const fr = {
       sent: "Document envoyé",
       unsent: "Envoi annulé",
       signed: "Document signé",
+      signed_by_client_imported: "Signé par le client (import retour)",
       paid: "Facture payée",
       cancelled: "Document annulé",
       refused: "Devis refusé",

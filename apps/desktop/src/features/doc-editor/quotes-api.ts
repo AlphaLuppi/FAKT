@@ -60,6 +60,12 @@ export interface QuotesApi {
   create(input: CreateQuoteInput): Promise<Quote>;
   update(id: UUID, input: UpdateQuoteInput): Promise<Quote>;
   updateStatus(id: UUID, status: QuoteStatus): Promise<Quote>;
+  /**
+   * Set le hash texte du PDF officiel à l'émission. Idempotent (la même
+   * valeur peut être ré-écrite), mais une valeur différente est refusée
+   * (intégrité). Voir `POST /api/quotes/:id/original-text-hash`.
+   */
+  setOriginalTextHash(id: UUID, hash: string): Promise<Quote>;
 }
 
 function genUuid(): string {
@@ -170,6 +176,9 @@ const httpQuotesApi: QuotesApi = {
         throw new Error(`quotesApi.updateStatus: transition non exposée vers ${status}`);
     }
   },
+  async setOriginalTextHash(id, hash): Promise<Quote> {
+    return httpApi.quotes.setOriginalTextHash(id, hash);
+  },
 };
 
 let _impl: QuotesApi = httpQuotesApi;
@@ -180,6 +189,7 @@ export const quotesApi: QuotesApi = {
   create: (input) => _impl.create(input),
   update: (id, input) => _impl.update(id, input),
   updateStatus: (id, status) => _impl.updateStatus(id, status),
+  setOriginalTextHash: (id, hash) => _impl.setOriginalTextHash(id, hash),
 };
 
 /** Injection pour tests. Passer `null` pour restaurer le défaut HTTP. */

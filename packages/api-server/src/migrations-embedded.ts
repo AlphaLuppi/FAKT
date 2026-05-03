@@ -37,4 +37,8 @@ export const EMBEDDED_MIGRATIONS: readonly EmbeddedMigration[] = [
     name: "0005_quote_clauses.sql",
     sql: '-- Clauses contractuelles cochées par l\'utilisateur dans l\'éditeur de devis.\n--\n-- Stocke un JSON array d\'IDs de clauses prédéfinies (catalogue figé dans\n-- `@fakt/legal/clauses`). Ex: `["deposit-30","warranty-12","ip-transfer"]`.\n--\n-- NULL = aucune clause cochée (état par défaut, devis pré-existants compatibles).\n--\n-- Le rendu Typst hydrate les IDs vers les libellés et bodies au moment du\n-- rendu PDF — la donnée canonique en DB reste l\'identifiant stable, pas le\n-- texte (qui peut évoluer entre versions de FAKT sans casser les anciens\n-- devis).\n\nALTER TABLE quotes ADD COLUMN clauses TEXT;\n',
   },
+  {
+    name: "0006_quote_original_text_hash.sql",
+    sql: "-- Hash SHA-256 du texte normalisé du PDF officiel à l'émission du devis.\n--\n-- Persisté pour vérifier l'intégrité d'un PDF retourné signé par le client\n-- (workflow V0.2 « Importer signature client ») : on extrait le texte du PDF\n-- importé, on hash, on compare. Identique → accept direct. Différent → modal\n-- de confirmation forcée.\n--\n-- NULL = devis créé avant cette feature ou jamais émis. L'import retournera\n-- une erreur explicite et l'utilisateur devra ré-émettre (impossible si déjà\n-- signé) ou utiliser le bouton signature classique.\n\nALTER TABLE quotes ADD COLUMN original_text_hash TEXT;\n",
+  },
 ];

@@ -26,3 +26,4 @@
 //! stays source-compatible because it only consults the binary path.
 
 pub mod render;
+pub mod text_hash;

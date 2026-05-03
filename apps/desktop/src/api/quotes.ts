@@ -117,6 +117,13 @@ export const quotesApi = {
   async markSent(id: string): Promise<Quote> {
     return getApiClient().post<Quote>(`/api/quotes/${id}/mark-sent`);
   },
+  /**
+   * Set le hash texte du PDF officiel après émission.
+   * @see POST /api/quotes/:id/original-text-hash
+   */
+  async setOriginalTextHash(id: string, hash: string): Promise<Quote> {
+    return getApiClient().post<Quote>(`/api/quotes/${id}/original-text-hash`, { hash });
+  },
   async unmarkSent(id: string): Promise<Quote> {
     return getApiClient().post<Quote>(`/api/quotes/${id}/unmark-sent`);
   },

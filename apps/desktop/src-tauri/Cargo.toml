@@ -70,6 +70,11 @@ hmac = "0.12"
 # PDF manipulation (PAdES)
 lopdf = "0.34"
 
+# Extraction texte PDF pour le hash de vérification d'intégrité (workflow
+# « Importer signature client »). pdf-extract est pure Rust (pas de FFI),
+# ~200ko compilé.
+pdf-extract = "0.7"
+
 # TSA RFC 3161 (blocking sync) + audit client / sidecar healthcheck (async client + JSON).
 # `http2` et `charset` permettent au client async par défaut de fonctionner sans enable
 # `default-features`, et `json` expose `.json()` sur RequestBuilder/Response.

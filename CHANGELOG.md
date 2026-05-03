@@ -31,6 +31,15 @@ et [Semantic Versioning 2.0.0](https://semver.org/lang/fr/).
   intellectuelle, limitation de responsabilité, juridiction française). Les
   options exclusives se désélectionnent automatiquement. Les clauses cochées
   s'insèrent dans le PDF avant les CGV légales.
+- **Import retour signé client sur les devis** — quand votre client renvoie
+  un PDF signé (à la main + scan, Adobe Reader, DocuSign…), un nouveau bouton
+  *Importer signature client* apparaît sur les devis émis. FAKT vérifie
+  automatiquement que le contenu textuel du PDF importé correspond au devis
+  original (hash SHA-256 calculé à l'émission). Si tout matche, le devis
+  bascule en signé et le bouton « Créer une facture » se débloque. Si le
+  contenu diffère (annotation manuscrite, prix modifié…), un avertissement
+  explicite affiche les deux empreintes et demande confirmation. Toute
+  divergence est consignée dans la chaîne d'audit.
 
 ### Améliorations
 

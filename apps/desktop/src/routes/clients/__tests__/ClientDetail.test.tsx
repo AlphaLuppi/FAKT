@@ -41,6 +41,7 @@ function makeQuote(id: string, number: string | null = null): Quote {
     totalHtCents: 100000,
     conditions: null,
     clauses: [],
+    originalTextHash: null,
     validityDate: null,
     notes: null,
     issuedAt: null,

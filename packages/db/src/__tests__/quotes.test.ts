@@ -220,6 +220,23 @@ describe("updateQuote", () => {
     updated = updateQuote(db, QUOTE_ID, { clauses: [] });
     expect(updated.clauses).toEqual([]);
   });
+
+  it("persiste originalTextHash (round-trip update→get)", () => {
+    const hash = "a".repeat(64);
+    const updated = updateQuote(db, QUOTE_ID, { originalTextHash: hash });
+    expect(updated.originalTextHash).toBe(hash);
+    expect(getQuote(db, QUOTE_ID)?.originalTextHash).toBe(hash);
+  });
+
+  it("retourne null pour originalTextHash quand jamais set", () => {
+    expect(getQuote(db, QUOTE_ID)?.originalTextHash).toBeNull();
+  });
+
+  it("permet de réinitialiser originalTextHash via null explicite", () => {
+    updateQuote(db, QUOTE_ID, { originalTextHash: "b".repeat(64) });
+    const reset = updateQuote(db, QUOTE_ID, { originalTextHash: null });
+    expect(reset.originalTextHash).toBeNull();
+  });
 });
 
 describe("deleteQuote", () => {

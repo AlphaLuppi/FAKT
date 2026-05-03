@@ -38,6 +38,7 @@ const MOCK_QUOTE: Quote = {
   totalHtCents: 300000,
   conditions: null,
   clauses: [],
+  originalTextHash: null,
   validityDate: null,
   notes: null,
   issuedAt: Date.now(),

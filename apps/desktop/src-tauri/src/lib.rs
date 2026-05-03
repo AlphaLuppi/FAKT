@@ -155,6 +155,8 @@ fn run_inner() -> Result<(), String> {
             commands::backend::get_backend_mode,
             commands::backend::set_backend_mode,
             pdf::render::render_pdf,
+            commands::pdf_hash::compute_pdf_text_hash,
+            commands::audit_chain::compute_signature_event_self_hash,
             crypto::generate_cert,
             crypto::get_cert_info,
             crypto::rotate_cert,

@@ -14,6 +14,7 @@ export type AuditEventKind =
   | "sent"
   | "unsent"
   | "signed"
+  | "signed_by_client_imported"
   | "paid"
   | "cancelled"
   | "refused"
@@ -42,6 +43,8 @@ function activityTypeToKind(type: string): AuditEventKind | null {
       return "unsent";
     case "quote_signed":
       return "signed";
+    case "quote_signed_by_client_imported":
+      return "signed_by_client_imported";
     case "quote_refused":
       return "refused";
     case "quote_expired":
@@ -147,6 +150,8 @@ function kindLabel(kind: AuditEventKind): string {
       return m.unsent;
     case "signed":
       return m.signed;
+    case "signed_by_client_imported":
+      return m.signed_by_client_imported;
     case "paid":
       return m.paid;
     case "cancelled":

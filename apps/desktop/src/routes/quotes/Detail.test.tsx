@@ -21,6 +21,7 @@ const ISSUED_QUOTE: Quote = {
   totalHtCents: 350000,
   conditions: null,
   clauses: [],
+  originalTextHash: null,
   validityDate: now + 30 * 86400000,
   notes: "Projet prioritaire",
   issuedAt: now,
@@ -149,6 +150,42 @@ describe("QuoteDetailRoute", () => {
       expect(screen.getByTestId("detail-download")).toBeInTheDocument();
     });
     expect(screen.queryByTestId("detail-download-audit")).not.toBeInTheDocument();
+  });
+
+  it("affiche le bouton « Importer signature client » sur un devis sent avec hash", async () => {
+    const sentWithHash: Quote = {
+      ...ISSUED_QUOTE,
+      id: "q-sent-with-hash",
+      originalTextHash: "a".repeat(64),
+    };
+    renderAt("/quotes/q-sent-with-hash", sentWithHash);
+    await waitFor(() => {
+      const btn = screen.getByTestId("detail-import-signed");
+      expect(btn).toBeInTheDocument();
+      expect(btn).not.toBeDisabled();
+    });
+  });
+
+  it("désactive le bouton « Importer signature client » si hash absent", async () => {
+    const sentNoHash: Quote = {
+      ...ISSUED_QUOTE,
+      id: "q-sent-no-hash",
+      originalTextHash: null,
+    };
+    renderAt("/quotes/q-sent-no-hash", sentNoHash);
+    await waitFor(() => {
+      const btn = screen.getByTestId("detail-import-signed");
+      expect(btn).toBeInTheDocument();
+      expect(btn).toBeDisabled();
+    });
+  });
+
+  it("ne rend pas le bouton « Importer signature client » sur un devis en draft", async () => {
+    renderAt("/quotes/q-draft", DRAFT_QUOTE);
+    await waitFor(() => {
+      expect(screen.getByTestId("detail-edit")).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId("detail-import-signed")).not.toBeInTheDocument();
   });
 
   it("expose le bouton Préparer email (Track K) hors draft", async () => {
