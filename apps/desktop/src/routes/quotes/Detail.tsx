@@ -10,10 +10,12 @@ import { useNavigate, useParams } from "react-router";
 import { activityApi } from "../../api/activity.js";
 import { DesktopOnlyButton } from "../../components/DesktopOnlyButton.js";
 import { AuditTimeline, type BaseAuditEntry } from "../../components/audit-timeline/index.js";
+import { ImportSignedModal } from "../../components/import-signed-modal/index.js";
 import { PrepareEmailModal } from "../../components/prepare-email-modal/index.js";
 import { SignatureModal } from "../../components/signature-modal/index.js";
 import { clientsApi } from "../../features/doc-editor/clients-api.js";
 import { pdfApi } from "../../features/doc-editor/pdf-api.js";
+import { persistQuoteOriginalTextHash } from "../../features/doc-editor/quote-text-hash.js";
 import { quotesApi } from "../../features/doc-editor/quotes-api.js";
 import { signatureApi } from "../../features/doc-editor/signature-api.js";
 import { useClientsList, useQuote, useWorkspace } from "./hooks.js";
@@ -70,6 +72,7 @@ export function QuoteDetailRoute(): ReactElement {
   const [signOpen, setSignOpen] = useState(false);
   const [pdfBytes, setPdfBytes] = useState<Uint8Array | null>(null);
   const [emailOpen, setEmailOpen] = useState(false);
+  const [importSignedOpen, setImportSignedOpen] = useState(false);
 
   useEffect(() => {
     if (!quote) return;
@@ -129,6 +132,29 @@ export function QuoteDetailRoute(): ReactElement {
     };
   }, [quote, client, workspace]);
 
+  // Auto-persist hash texte du PDF officiel quand un devis `sent` n'en a pas
+  // encore (cas : émis via "Créer et émettre", émis via "Marquer envoyé", ou
+  // vieux devis émis avant cette feature). Idempotent — l'API refuse une
+  // ré-écriture avec une valeur différente, accepte la même.
+  useEffect(() => {
+    if (!quote || !client || !workspace) return;
+    if (quote.status !== "sent") return;
+    if (quote.originalTextHash !== null) return;
+    if (!pdfBytes || pdfBytes.byteLength === 0) return;
+
+    let cancelled = false;
+    void persistQuoteOriginalTextHash({
+      quote: toQuoteInput(quote),
+      client,
+      workspace,
+    }).then(() => {
+      if (!cancelled) refresh();
+    });
+    return (): void => {
+      cancelled = true;
+    };
+  }, [quote, client, workspace, pdfBytes, refresh]);
+
   async function handleMarkSent(): Promise<void> {
     if (!quote) return;
     // Guard synchrone double-submit : un double-clic sur "Émettre" allouait
@@ -141,6 +167,9 @@ export function QuoteDetailRoute(): ReactElement {
       setMarkSentOpen(false);
       toast.success(fr.quotes.detail.markSentSuccess);
       refresh();
+      // Le hash texte du PDF officiel est calculé automatiquement par
+      // l'effet `auto-persist hash` ci-dessous quand le PDF est rendu et
+      // que `quote.originalTextHash === null`.
     } catch (err) {
       setMarkSentError(err instanceof Error ? err.message : fr.quotes.detail.markSentError);
     } finally {
@@ -619,6 +648,21 @@ export function QuoteDetailRoute(): ReactElement {
                 {fr.quotes.actions.sign}
               </DesktopOnlyButton>
             )}
+            {quote.status === "sent" && (
+              <Button
+                variant="secondary"
+                onClick={() => setImportSignedOpen(true)}
+                disabled={!quote.originalTextHash}
+                title={
+                  quote.originalTextHash
+                    ? fr.quotes.form.importSigned.tooltip
+                    : fr.quotes.form.importSigned.errors.noOriginalHash
+                }
+                data-testid="detail-import-signed"
+              >
+                {fr.quotes.form.importSigned.action}
+              </Button>
+            )}
             {(quote.status === "signed" || quote.status === "sent") && (
               <Button
                 variant="primary"
@@ -818,6 +862,18 @@ export function QuoteDetailRoute(): ReactElement {
           renderArgs={{ quote: toQuoteInput(quote), client, workspace }}
         />
       )}
+
+      <ImportSignedModal
+        open={importSignedOpen}
+        onClose={() => setImportSignedOpen(false)}
+        quoteId={quote.id}
+        expectedHash={quote.originalTextHash}
+        defaultSignerName={client?.contactName ?? client?.name ?? null}
+        defaultSignerEmail={client?.email ?? null}
+        onImported={() => {
+          refresh();
+        }}
+      />
     </div>
   );
 }

@@ -108,6 +108,7 @@ export function installMockApis(options?: {
         totalHtCents: input.totalHtCents,
         conditions: input.conditions ?? null,
         clauses: input.clauses ?? [],
+        originalTextHash: null,
         validityDate: input.validityDate ?? null,
         notes: input.notes ?? null,
         issuedAt: input.issueNumber ? now : null,
@@ -159,6 +160,13 @@ export function installMockApis(options?: {
       const existing = store.quotes.get(id);
       if (!existing) throw new Error(`updateStatus: quote not found ${id}`);
       const updated: Quote = { ...existing, status, updatedAt: Date.now() };
+      store.quotes.set(id, updated);
+      return updated;
+    },
+    async setOriginalTextHash(id, hash): Promise<Quote> {
+      const existing = store.quotes.get(id);
+      if (!existing) throw new Error(`setOriginalTextHash: quote not found ${id}`);
+      const updated: Quote = { ...existing, originalTextHash: hash, updatedAt: Date.now() };
       store.quotes.set(id, updated);
       return updated;
     },

@@ -25,6 +25,8 @@ export const quoteItemInputSchema = z.object({
 
 const optionalString = z.union([z.string().max(5000), z.null()]).optional();
 const optionalTimestamp = z.union([z.number().int(), z.null()]).optional();
+/** SHA-256 hex 64 chars, ou null pour réinitialiser. */
+const optionalSha256 = z.union([z.string().regex(/^[0-9a-f]{64}$/), z.null()]).optional();
 
 const optionalClauseIds = z.array(z.string().min(1).max(64)).optional();
 
@@ -46,6 +48,7 @@ export const updateQuoteSchema = z
     title: z.string().min(1).max(200),
     conditions: optionalString,
     clauses: optionalClauseIds,
+    originalTextHash: optionalSha256,
     validityDate: optionalTimestamp,
     notes: optionalString,
     totalHtCents: z.number().int().min(0),

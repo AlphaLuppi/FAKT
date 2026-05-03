@@ -272,3 +272,79 @@ describe("Quote lifecycle — numérotation par issue", () => {
     expect(body.number).toMatch(/^D\d{4}-002$/);
   });
 });
+
+describe("Quote — original-text-hash", () => {
+  const VALID_HASH = "a".repeat(64);
+  const OTHER_HASH = "b".repeat(64);
+
+  it("set le hash sur un devis émis (status=sent)", async () => {
+    const { app, authHeaders } = await setup();
+    await issueAndMarkSent(app, authHeaders(), QUOTE_ID);
+    const res = await app.request(`/api/quotes/${QUOTE_ID}/original-text-hash`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ hash: VALID_HASH }),
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { originalTextHash: string | null };
+    expect(body.originalTextHash).toBe(VALID_HASH);
+  });
+
+  it("idempotent : ré-écriture avec la même valeur acceptée", async () => {
+    const { app, authHeaders } = await setup();
+    await issueAndMarkSent(app, authHeaders(), QUOTE_ID);
+    await app.request(`/api/quotes/${QUOTE_ID}/original-text-hash`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ hash: VALID_HASH }),
+    });
+    const res = await app.request(`/api/quotes/${QUOTE_ID}/original-text-hash`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ hash: VALID_HASH }),
+    });
+    expect(res.status).toBe(200);
+  });
+
+  it("refuse une réécriture avec une valeur différente (422)", async () => {
+    const { app, authHeaders } = await setup();
+    await issueAndMarkSent(app, authHeaders(), QUOTE_ID);
+    await app.request(`/api/quotes/${QUOTE_ID}/original-text-hash`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ hash: VALID_HASH }),
+    });
+    const res = await app.request(`/api/quotes/${QUOTE_ID}/original-text-hash`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ hash: OTHER_HASH }),
+    });
+    expect(res.status).toBe(422);
+  });
+
+  it("refuse un hash sur un devis signé (422)", async () => {
+    const { app, authHeaders } = await setup();
+    await issueAndMarkSent(app, authHeaders(), QUOTE_ID);
+    await app.request(`/api/quotes/${QUOTE_ID}/mark-signed`, {
+      method: "POST",
+      headers: authHeaders(),
+    });
+    const res = await app.request(`/api/quotes/${QUOTE_ID}/original-text-hash`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ hash: VALID_HASH }),
+    });
+    expect(res.status).toBe(422);
+  });
+
+  it("rejette un hash mal formé (400)", async () => {
+    const { app, authHeaders } = await setup();
+    await issueAndMarkSent(app, authHeaders(), QUOTE_ID);
+    const res = await app.request(`/api/quotes/${QUOTE_ID}/original-text-hash`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ hash: "not-a-sha256" }),
+    });
+    expect(res.status).toBe(400);
+  });
+});

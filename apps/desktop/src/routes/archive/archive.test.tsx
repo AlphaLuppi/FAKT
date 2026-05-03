@@ -49,6 +49,9 @@ beforeEach(() => {
     updateStatus: vi.fn(async () => {
       throw new Error("not impl");
     }),
+    setOriginalTextHash: vi.fn(async () => {
+      throw new Error("not impl");
+    }),
   });
   setInvoiceApi({
     list: vi.fn(async () => []),

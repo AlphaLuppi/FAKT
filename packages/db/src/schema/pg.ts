@@ -231,6 +231,11 @@ export const quotes = pgTable(
     conditions: text("conditions"),
     /** JSON array d'IDs de clauses (catalogue `@fakt/legal/clauses`). NULL si aucune. */
     clauses: text("clauses"),
+    /**
+     * SHA-256 hex du texte normalisé du PDF officiel à l'émission. Utilisé
+     * pour vérifier l'intégrité d'un PDF retourné signé par le client.
+     */
+    originalTextHash: text("original_text_hash"),
     validityDate: timestamp("validity_date", { precision: 3, withTimezone: true }),
     notes: text("notes"),
     issuedAt: timestamp("issued_at", { precision: 3, withTimezone: true }),

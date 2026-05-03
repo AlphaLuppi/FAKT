@@ -89,6 +89,7 @@ const SCHEMA_DDL = [
     total_ht_cents INTEGER NOT NULL DEFAULT 0,
     conditions TEXT,
     clauses TEXT,
+    original_text_hash TEXT,
     validity_date INTEGER,
     notes TEXT,
     issued_at INTEGER,

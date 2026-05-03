@@ -17,6 +17,7 @@ import {
 } from "@fakt/db/queries";
 import type { QuoteStatus } from "@fakt/shared";
 import { Hono } from "hono";
+import { z } from "zod";
 import { conflict, invalidTransition, notFound } from "../errors.js";
 import { parseBody, parseParam, parseQuery } from "../middleware/zod.js";
 import { uuidSchema } from "../schemas/common.js";
@@ -199,6 +200,37 @@ quotesRoutes.post("/:id/issue", (c) => {
   });
   const updated = getQuote(c.var.db, id);
   if (!updated) throw notFound(`quote ${id} introuvable apres issue`);
+  return c.json(updated);
+});
+
+/**
+ * POST /api/quotes/:id/original-text-hash — set le hash texte du PDF officiel.
+ *
+ * Appelé par le frontend juste après l'émission (status=sent) avec le hash
+ * SHA-256 du texte normalisé du PDF rendu. Sert à la vérification d'intégrité
+ * lors de l'import retour signé (cf. `import_signed_quote` côté UI).
+ *
+ * Idempotent par sécurité : si le hash est déjà set et qu'on tente d'en
+ * réécrire un *différent*, on refuse (422). Réécrire la même valeur est OK.
+ *
+ * Autorisé sur tous les statuts sauf signed/invoiced (le PDF est figé après
+ * signature).
+ */
+quotesRoutes.post("/:id/original-text-hash", async (c) => {
+  const id = parseParam(c, "id", uuidSchema);
+  const existing = requireQuote(c.var.db, id);
+  if (existing.status === "signed" || existing.status === "invoiced") {
+    throw invalidTransition(
+      `quote ${id} déjà signé/facturé (status=${existing.status}) — hash figé`
+    );
+  }
+  const body = await parseBody(c, z.object({ hash: z.string().regex(/^[0-9a-f]{64}$/) }));
+  if (existing.originalTextHash !== null && existing.originalTextHash !== body.hash) {
+    throw invalidTransition(
+      `quote ${id} a déjà un hash différent — re-écriture interdite (intégrité)`
+    );
+  }
+  const updated = updateQuote(c.var.db, id, { originalTextHash: body.hash });
   return c.json(updated);
 });
 

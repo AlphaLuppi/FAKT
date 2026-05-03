@@ -117,6 +117,12 @@ export const quotes = sqliteTable(
     conditions: text("conditions"),
     /** JSON array d'IDs de clauses (catalogue `@fakt/legal/clauses`). NULL si aucune. */
     clauses: text("clauses"),
+    /**
+     * SHA-256 hex du texte normalisé du PDF officiel à l'émission. Utilisé
+     * pour vérifier l'intégrité d'un PDF retourné signé par le client
+     * (workflow « Importer signature client »).
+     */
+    originalTextHash: text("original_text_hash"),
     validityDate: integer("validity_date", { mode: "timestamp_ms" }),
     notes: text("notes"),
     issuedAt: integer("issued_at", { mode: "timestamp_ms" }),

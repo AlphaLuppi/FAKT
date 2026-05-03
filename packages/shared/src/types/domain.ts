@@ -102,6 +102,13 @@ export interface Quote {
    * ici en tableau d'IDs déjà parsé.
    */
   clauses: string[];
+  /**
+   * SHA-256 hex du texte normalisé du PDF officiel à l'émission.
+   * NULL pour les anciens devis ou les devis non émis. Utilisé par le
+   * workflow « Importer signature client » pour détecter une altération
+   * du contenu textuel entre l'émission et le retour client.
+   */
+  originalTextHash: string | null;
   validityDate: TimestampMs | null;
   notes: string | null;
   issuedAt: TimestampMs | null;

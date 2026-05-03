@@ -52,6 +52,8 @@ export interface UpdateQuoteInput {
   title?: string;
   conditions?: string | null;
   clauses?: string[];
+  /** SHA-256 hex (64 chars) — voir Quote.originalTextHash. */
+  originalTextHash?: string | null;
   validityDate?: number | null;
   notes?: string | null;
   totalHtCents?: number;
@@ -83,6 +85,7 @@ function rowToQuote(
     totalHtCents: row.totalHtCents,
     conditions: row.conditions ?? null,
     clauses: parseClauses(row.clauses ?? null),
+    originalTextHash: row.originalTextHash ?? null,
     validityDate: row.validityDate ? Number(row.validityDate) : null,
     notes: row.notes ?? null,
     issuedAt: row.issuedAt ? Number(row.issuedAt) : null,
@@ -223,6 +226,7 @@ export function updateQuote(db: DbInstance, id: string, input: UpdateQuoteInput)
   if (input.title !== undefined) updates.title = input.title;
   if ("conditions" in input) updates.conditions = input.conditions ?? null;
   if ("clauses" in input) updates.clauses = serializeClauses(input.clauses ?? []);
+  if ("originalTextHash" in input) updates.originalTextHash = input.originalTextHash ?? null;
   if ("validityDate" in input) {
     updates.validityDate = input.validityDate ? new Date(input.validityDate) : null;
   }

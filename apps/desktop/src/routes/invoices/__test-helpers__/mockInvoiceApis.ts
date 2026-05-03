@@ -78,6 +78,7 @@ export const FIXTURE_SIGNED_QUOTE: Quote = {
   totalHtCents: 500000,
   conditions: null,
   clauses: [],
+  originalTextHash: null,
   validityDate: null,
   notes: null,
   issuedAt: Date.now() - 86400000,
@@ -400,6 +401,13 @@ export function installInvoiceMockApis(options?: InstallOptions): {
       const existing = store.quotes.get(id);
       if (!existing) throw new Error(`updateStatus: quote not found ${id}`);
       const updated: Quote = { ...existing, status, updatedAt: Date.now() };
+      store.quotes.set(id, updated);
+      return updated;
+    },
+    async setOriginalTextHash(id, hash): Promise<Quote> {
+      const existing = store.quotes.get(id);
+      if (!existing) throw new Error(`setOriginalTextHash: quote not found ${id}`);
+      const updated: Quote = { ...existing, originalTextHash: hash, updatedAt: Date.now() };
       store.quotes.set(id, updated);
       return updated;
     },
