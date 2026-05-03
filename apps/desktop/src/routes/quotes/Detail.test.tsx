@@ -20,6 +20,7 @@ const ISSUED_QUOTE: Quote = {
   status: "sent",
   totalHtCents: 350000,
   conditions: null,
+  clauses: [],
   validityDate: now + 30 * 86400000,
   notes: "Projet prioritaire",
   issuedAt: now,
@@ -127,6 +128,27 @@ describe("QuoteDetailRoute", () => {
       expect(screen.getByTestId("detail-edit")).toBeInTheDocument();
     });
     expect(screen.queryByTestId("detail-duplicate")).not.toBeInTheDocument();
+  });
+
+  it("affiche le bouton Rapport d'audit uniquement sur un devis signé", async () => {
+    const signedQuote: Quote = {
+      ...ISSUED_QUOTE,
+      id: "q-signed",
+      status: "signed",
+      signedAt: now,
+    };
+    renderAt("/quotes/q-signed", signedQuote);
+    await waitFor(() => {
+      expect(screen.getByTestId("detail-download-audit")).toBeInTheDocument();
+    });
+  });
+
+  it("ne rend pas le bouton Rapport d'audit sur un devis non signé", async () => {
+    renderAt("/quotes/q-issued", ISSUED_QUOTE);
+    await waitFor(() => {
+      expect(screen.getByTestId("detail-download")).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId("detail-download-audit")).not.toBeInTheDocument();
   });
 
   it("expose le bouton Préparer email (Track K) hors draft", async () => {

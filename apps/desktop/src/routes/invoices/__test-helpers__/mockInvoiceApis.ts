@@ -77,6 +77,7 @@ export const FIXTURE_SIGNED_QUOTE: Quote = {
   status: "signed",
   totalHtCents: 500000,
   conditions: null,
+  clauses: [],
   validityDate: null,
   notes: null,
   issuedAt: Date.now() - 86400000,
@@ -430,6 +431,9 @@ export function installInvoiceMockApis(options?: InstallOptions): {
       return new Uint8Array([37, 80, 68, 70]);
     },
     async renderInvoice(): Promise<Uint8Array> {
+      return new Uint8Array([37, 80, 68, 70]);
+    },
+    async renderAuditTrail(): Promise<Uint8Array> {
       return new Uint8Array([37, 80, 68, 70]);
     },
     async saveDialog(): Promise<string | null> {

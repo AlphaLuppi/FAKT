@@ -173,9 +173,7 @@ export function SignatureModal({
       // Si l'appelant fournit un re-rendu, on regénère le PDF avec la signature
       // visuelle incrustée AVANT le scellement PAdES. Toute modification du
       // PDF après PAdES casserait l'intégrité crypto.
-      const pdfToSign = renderPdfWithSignature
-        ? await renderPdfWithSignature(png)
-        : pdfBytes;
+      const pdfToSign = renderPdfWithSignature ? await renderPdfWithSignature(png) : pdfBytes;
       setSubmitState("signing");
       const result = await signatureApi.sign({
         docId,

@@ -48,6 +48,7 @@ Une indemnité forfaitaire de 40 € sera due pour frais de recouvrement en cas 
 
 exports[`snapshots JSON (déterminisme) > snapshot quoteSimple 1`] = `
 {
+  "clauses": [],
   "client": {
     "address": "51 rue Laurent Bertrand, 84320 Entraigues-sur-la-Sorgue",
     "contactName": "Marco Bianchi",

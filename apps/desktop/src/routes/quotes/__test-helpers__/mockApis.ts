@@ -107,6 +107,7 @@ export function installMockApis(options?: {
         status: "draft",
         totalHtCents: input.totalHtCents,
         conditions: input.conditions ?? null,
+        clauses: input.clauses ?? [],
         validityDate: input.validityDate ?? null,
         notes: input.notes ?? null,
         issuedAt: input.issueNumber ? now : null,
@@ -201,6 +202,9 @@ export function installMockApis(options?: {
       return new Uint8Array([37, 80, 68, 70]); // "%PDF" magic bytes.
     },
     async renderInvoice(): Promise<Uint8Array> {
+      return new Uint8Array([37, 80, 68, 70]); // "%PDF" magic bytes.
+    },
+    async renderAuditTrail(): Promise<Uint8Array> {
       return new Uint8Array([37, 80, 68, 70]); // "%PDF" magic bytes.
     },
     async saveDialog(): Promise<string | null> {

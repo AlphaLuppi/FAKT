@@ -77,4 +77,33 @@ describe("NewManual", () => {
     const display = await screen.findByTestId("validity-date-display");
     expect(display.textContent).toMatch(/\d{2}\/\d{2}\/\d{4}/);
   });
+
+  it("affiche le panneau Clauses contractuelles avec les cases à cocher du catalogue", async () => {
+    renderRoute();
+    await waitFor(() => {
+      expect(screen.getByTestId("quote-form-clauses")).toBeInTheDocument();
+    });
+    expect(screen.getByTestId("quote-form-clause-deposit-30")).toBeInTheDocument();
+    expect(screen.getByTestId("quote-form-clause-deposit-50")).toBeInTheDocument();
+    expect(screen.getByTestId("quote-form-clause-warranty-6")).toBeInTheDocument();
+    expect(screen.getByTestId("quote-form-clause-warranty-12")).toBeInTheDocument();
+    expect(screen.getByTestId("quote-form-clause-jurisdiction-fr")).toBeInTheDocument();
+  });
+
+  it("applique les exclusions mutuelles (acompte 30 % vs 50 %)", async () => {
+    renderRoute();
+    await waitFor(() => {
+      expect(screen.getByTestId("quote-form-clause-deposit-30")).toBeInTheDocument();
+    });
+    const dep30 = screen.getByTestId("quote-form-clause-deposit-30") as HTMLInputElement;
+    const dep50 = screen.getByTestId("quote-form-clause-deposit-50") as HTMLInputElement;
+
+    fireEvent.click(dep30);
+    expect(dep30.checked).toBe(true);
+    expect(dep50.checked).toBe(false);
+
+    fireEvent.click(dep50);
+    expect(dep30.checked).toBe(false);
+    expect(dep50.checked).toBe(true);
+  });
 });

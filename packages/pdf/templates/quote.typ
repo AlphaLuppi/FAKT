@@ -116,6 +116,25 @@
   )
 ]
 
+// ─── Clauses contractuelles cochées (catalogue @fakt/legal) ─────────────────
+// Affichées avant les CGV légales — elles complètent ou précisent les
+// engagements du devis (acompte, garantie, PI, juridiction…).
+#if ctx.at("clauses", default: ()) != () and ctx.clauses.len() > 0 [
+  #v(14pt)
+  #h1("Clauses contractuelles")
+  #for clause in ctx.clauses [
+    #block(
+      above: 0.5em,
+      below: 0.5em,
+      [
+        #text(weight: "bold", size: size-sm, fill: color-dark)[#clause.label]
+        #v(2pt)
+        #text(size: size-sm, fill: color-dark)[#clause.body]
+      ],
+    )
+  ]
+]
+
 // ─── Notes libres ────────────────────────────────────────────────────────────
 #if ctx.at("notes", default: none) != none and ctx.notes != "" [
   #v(14pt)

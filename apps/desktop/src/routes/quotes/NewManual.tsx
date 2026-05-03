@@ -85,6 +85,7 @@ export function NewManual(): ReactElement {
         clientId: values.clientId,
         title: values.title.trim(),
         conditions: null,
+        clauses: values.clauses,
         validityDate: values.validityDate,
         notes: values.notes.trim().length > 0 ? values.notes : null,
         totalHtCents: totalHt,

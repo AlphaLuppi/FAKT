@@ -25,6 +25,8 @@ export interface CreateQuoteInput {
   clientId: UUID;
   title: string;
   conditions?: string | null;
+  /** IDs de clauses pré-définies (catalogue `@fakt/legal/clauses`). */
+  clauses?: string[];
   validityDate?: number | null;
   notes?: string | null;
   totalHtCents: number;
@@ -37,6 +39,7 @@ export interface UpdateQuoteInput {
   clientId?: UUID;
   title?: string;
   conditions?: string | null;
+  clauses?: string[];
   validityDate?: number | null;
   notes?: string | null;
   totalHtCents?: number;
@@ -98,6 +101,7 @@ const httpQuotesApi: QuotesApi = {
       clientId: input.clientId,
       title: input.title,
       conditions: input.conditions ?? null,
+      clauses: input.clauses ?? [],
       validityDate: input.validityDate ?? null,
       notes: input.notes ?? null,
       totalHtCents: input.totalHtCents,
@@ -128,6 +132,7 @@ const httpQuotesApi: QuotesApi = {
       ...(input.clientId !== undefined ? { clientId: input.clientId } : {}),
       ...(input.title !== undefined ? { title: input.title } : {}),
       ...("conditions" in input ? { conditions: input.conditions ?? null } : {}),
+      ...("clauses" in input ? { clauses: input.clauses ?? [] } : {}),
       ...("validityDate" in input ? { validityDate: input.validityDate ?? null } : {}),
       ...("notes" in input ? { notes: input.notes ?? null } : {}),
       ...(input.totalHtCents !== undefined ? { totalHtCents: input.totalHtCents } : {}),

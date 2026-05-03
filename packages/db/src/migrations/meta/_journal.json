@@ -8,6 +8,41 @@
       "when": 1776840825217,
       "tag": "0000_zippy_nextwave",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1714665600000,
+      "tag": "0001_triggers",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1714665601000,
+      "tag": "0002_signed_pdf",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1714665602000,
+      "tag": "0003_payment_notes",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1714665603000,
+      "tag": "0004_imports",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1714665604000,
+      "tag": "0005_quote_clauses",
+      "breakpoints": true
     }
   ]
 }

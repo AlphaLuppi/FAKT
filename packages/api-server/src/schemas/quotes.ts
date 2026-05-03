@@ -26,11 +26,14 @@ export const quoteItemInputSchema = z.object({
 const optionalString = z.union([z.string().max(5000), z.null()]).optional();
 const optionalTimestamp = z.union([z.number().int(), z.null()]).optional();
 
+const optionalClauseIds = z.array(z.string().min(1).max(64)).optional();
+
 export const createQuoteSchema = z.object({
   id: uuidSchema,
   clientId: uuidSchema,
   title: z.string().min(1, "titre requis").max(200),
   conditions: optionalString,
+  clauses: optionalClauseIds,
   validityDate: optionalTimestamp,
   notes: optionalString,
   totalHtCents: z.number().int().min(0),
@@ -42,6 +45,7 @@ export const updateQuoteSchema = z
     clientId: uuidSchema,
     title: z.string().min(1).max(200),
     conditions: optionalString,
+    clauses: optionalClauseIds,
     validityDate: optionalTimestamp,
     notes: optionalString,
     totalHtCents: z.number().int().min(0),

@@ -4,7 +4,8 @@
  */
 
 import type { ClientInput, InvoiceInput, QuoteInput, WorkspaceInput } from "@fakt/core";
-import { renderInvoicePdf, renderQuotePdf } from "@fakt/pdf";
+import type { BuildAuditTrailCtxArgs } from "@fakt/pdf";
+import { renderAuditTrailPdf, renderInvoicePdf, renderQuotePdf } from "@fakt/pdf";
 import { invoke } from "@tauri-apps/api/core";
 
 export interface RenderQuoteArgs {
@@ -25,9 +26,12 @@ export interface RenderInvoiceArgs {
   executionAt?: number | null;
 }
 
+export type RenderAuditTrailArgs = BuildAuditTrailCtxArgs;
+
 export interface PdfApi {
   renderQuote(args: RenderQuoteArgs): Promise<Uint8Array>;
   renderInvoice(args: RenderInvoiceArgs): Promise<Uint8Array>;
+  renderAuditTrail(args: RenderAuditTrailArgs): Promise<Uint8Array>;
   saveDialog(suggestedName: string): Promise<string | null>;
   writeFile(path: string, bytes: Uint8Array): Promise<void>;
 }
@@ -38,6 +42,9 @@ const tauriPdfApi: PdfApi = {
   },
   async renderInvoice(args): Promise<Uint8Array> {
     return renderInvoicePdf(args);
+  },
+  async renderAuditTrail(args): Promise<Uint8Array> {
+    return renderAuditTrailPdf(args);
   },
   async saveDialog(suggestedName): Promise<string | null> {
     // Le plugin-dialog Tauri expose la command plugin:dialog|save.
@@ -71,6 +78,7 @@ let _impl: PdfApi = tauriPdfApi;
 export const pdfApi: PdfApi = {
   renderQuote: (args) => _impl.renderQuote(args),
   renderInvoice: (args) => _impl.renderInvoice(args),
+  renderAuditTrail: (args) => _impl.renderAuditTrail(args),
   saveDialog: (name) => _impl.saveDialog(name),
   writeFile: (path, bytes) => _impl.writeFile(path, bytes),
 };

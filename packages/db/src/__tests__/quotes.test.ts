@@ -60,6 +60,33 @@ describe("createQuote", () => {
     });
     expect(q.items).toHaveLength(0);
   });
+
+  it("persiste les clauses contractuelles cochées (round-trip create→get)", () => {
+    const q = createQuote(db, {
+      id: QUOTE_ID,
+      workspaceId: WORKSPACE_ID,
+      clientId: CLIENT_ID_1,
+      title: "Devis avec clauses",
+      clauses: ["deposit-30", "warranty-12", "ip-transfer"],
+      totalHtCents: 100000,
+      items: [],
+    });
+    expect(q.clauses).toEqual(["deposit-30", "warranty-12", "ip-transfer"]);
+    const reloaded = getQuote(db, QUOTE_ID);
+    expect(reloaded?.clauses).toEqual(["deposit-30", "warranty-12", "ip-transfer"]);
+  });
+
+  it("retourne un tableau vide pour un devis sans clauses (NULL en DB)", () => {
+    const q = createQuote(db, {
+      id: QUOTE_ID,
+      workspaceId: WORKSPACE_ID,
+      clientId: CLIENT_ID_1,
+      title: "Devis sans clauses",
+      totalHtCents: 0,
+      items: [],
+    });
+    expect(q.clauses).toEqual([]);
+  });
 });
 
 describe("getQuote", () => {
@@ -179,6 +206,19 @@ describe("updateQuote", () => {
 
   it("lève une erreur pour un ID inexistant", () => {
     expect(() => updateQuote(db, "bad-id", { title: "X" })).toThrow();
+  });
+
+  it("met à jour la liste de clauses (remplace, pas append)", () => {
+    let updated = updateQuote(db, QUOTE_ID, {
+      clauses: ["deposit-30", "warranty-6"],
+    });
+    expect(updated.clauses).toEqual(["deposit-30", "warranty-6"]);
+
+    updated = updateQuote(db, QUOTE_ID, { clauses: ["jurisdiction-fr"] });
+    expect(updated.clauses).toEqual(["jurisdiction-fr"]);
+
+    updated = updateQuote(db, QUOTE_ID, { clauses: [] });
+    expect(updated.clauses).toEqual([]);
   });
 });
 

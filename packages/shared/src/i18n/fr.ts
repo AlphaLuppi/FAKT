@@ -216,6 +216,11 @@ export const fr = {
       prestationPickerHint: "Choisis une prestation pour remplir automatiquement la ligne.",
       notesPlaceholder: "Conditions, modalités, note interne au client…",
       notesLabel: "Notes libres affichées sur le devis",
+      clausesTitle: "Clauses contractuelles",
+      clausesHelp:
+        "Les clauses cochées sont insérées textuellement dans le PDF. Les options exclusives se désélectionnent automatiquement (acompte 30 % vs 50 %, garantie 6 vs 12 mois, etc.).",
+      clausesEmpty:
+        "Aucune clause cochée. Le devis utilisera uniquement les CGV légales par défaut.",
       emptyClientList: "Aucun client trouvé.",
       quickClientName: "Nom du client",
       quickClientEmail: "Email",
@@ -626,6 +631,15 @@ export const fr = {
     verifyCta: "Vérifier la signature",
     certRotatedWarning:
       "Les signatures antérieures utilisent un certificat différent. Elles restent valides via la chaîne d'audit.",
+    report: {
+      action: "Rapport d'audit",
+      tooltip:
+        "Génère un PDF lisible présentant la chaîne de signatures et le journal d'événements — utile en cas de litige.",
+      filenamePrefix: "Audit",
+      successToast: "Rapport d'audit téléchargé",
+      errorToast: "Impossible de générer le rapport d'audit",
+      unavailableTooltip: "Le rapport d'audit est disponible uniquement sur les documents signés.",
+    },
   },
 
   verify: {

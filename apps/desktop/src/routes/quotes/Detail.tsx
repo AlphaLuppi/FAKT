@@ -7,6 +7,7 @@ import type { StatusKind } from "@fakt/ui";
 import type { ReactElement } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
+import { activityApi } from "../../api/activity.js";
 import { DesktopOnlyButton } from "../../components/DesktopOnlyButton.js";
 import { AuditTimeline, type BaseAuditEntry } from "../../components/audit-timeline/index.js";
 import { PrepareEmailModal } from "../../components/prepare-email-modal/index.js";
@@ -14,6 +15,7 @@ import { SignatureModal } from "../../components/signature-modal/index.js";
 import { clientsApi } from "../../features/doc-editor/clients-api.js";
 import { pdfApi } from "../../features/doc-editor/pdf-api.js";
 import { quotesApi } from "../../features/doc-editor/quotes-api.js";
+import { signatureApi } from "../../features/doc-editor/signature-api.js";
 import { useClientsList, useQuote, useWorkspace } from "./hooks.js";
 
 function slugify(str: string): string {
@@ -37,6 +39,7 @@ function toQuoteInput(q: Quote): Parameters<typeof pdfApi.renderQuote>[0]["quote
     status: q.status,
     totalHtCents: q.totalHtCents,
     conditions: q.conditions,
+    clauses: [...q.clauses],
     validityDate: q.validityDate,
     notes: q.notes,
     issuedAt: q.issuedAt,
@@ -188,6 +191,46 @@ export function QuoteDetailRoute(): ReactElement {
     }
   }
 
+  async function handleDownloadAuditTrail(): Promise<void> {
+    if (!quote || !client || !workspace) return;
+    try {
+      const [signatureEvents, activityEvents] = await Promise.all([
+        signatureApi.listEvents("quote", quote.id),
+        activityApi.list({ entityType: "quote", entityId: quote.id, limit: 200 }),
+      ]);
+      const bytes = await pdfApi.renderAuditTrail({
+        document: {
+          type: "quote",
+          number: quote.number ?? "—",
+          title: quote.title,
+          clientName: client.name,
+          totalHtCents: quote.totalHtCents,
+          issuedAt: quote.issuedAt,
+          signedAt: quote.signedAt,
+        },
+        workspace,
+        signatureEvents,
+        activityEvents: activityEvents.map((a) => ({
+          id: a.id,
+          workspaceId: a.workspaceId,
+          type: a.type,
+          entityType: a.entityType,
+          entityId: a.entityId,
+          payload: a.payload,
+          createdAt: a.createdAt,
+        })),
+      });
+      const filename = `${fr.audit.report.filenamePrefix}-Devis-${quote.number ?? "draft"}-${slugify(client.name)}.pdf`;
+      const path = await pdfApi.saveDialog(filename);
+      if (!path) return;
+      await pdfApi.writeFile(path, bytes);
+      toast.success(fr.audit.report.successToast);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : fr.audit.report.errorToast;
+      toast.error(`${fr.audit.report.errorToast} — ${msg}`);
+    }
+  }
+
   const isDraft = quote?.status === "draft";
 
   const metadata = useMemo(() => {
@@ -309,6 +352,16 @@ export function QuoteDetailRoute(): ReactElement {
           >
             {fr.quotes.actions.downloadPdf}
           </Button>
+          {quote.status === "signed" && (
+            <Button
+              variant="secondary"
+              onClick={() => void handleDownloadAuditTrail()}
+              title={fr.audit.report.tooltip}
+              data-testid="detail-download-audit"
+            >
+              {fr.audit.report.action}
+            </Button>
+          )}
         </div>
       </header>
 
@@ -723,9 +776,7 @@ export function QuoteDetailRoute(): ReactElement {
         pdfBytes={pdfBytes}
         {...(client && workspace
           ? {
-              renderPdfWithSignature: async (
-                signaturePng: Uint8Array,
-              ): Promise<Uint8Array> =>
+              renderPdfWithSignature: async (signaturePng: Uint8Array): Promise<Uint8Array> =>
                 pdfApi.renderQuote({
                   quote: toQuoteInput(quote),
                   client,

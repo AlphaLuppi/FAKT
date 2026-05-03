@@ -25,6 +25,8 @@ export interface CreateQuoteInput {
   clientId: string;
   title: string;
   conditions?: string | null;
+  /** IDs de clauses pré-définies (catalogue `@fakt/legal/clauses`). */
+  clauses?: string[];
   validityDate?: TimestampMs | null;
   notes?: string | null;
   totalHtCents: Cents;
@@ -35,6 +37,7 @@ export interface UpdateQuoteInput {
   clientId?: string;
   title?: string;
   conditions?: string | null;
+  clauses?: string[];
   validityDate?: TimestampMs | null;
   notes?: string | null;
   totalHtCents?: Cents;

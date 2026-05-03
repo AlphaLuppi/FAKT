@@ -12,6 +12,11 @@ const FR_DATE_LONG_FMT = new Intl.DateTimeFormat("fr-FR", {
   year: "numeric",
 });
 
+const FR_TIME_FMT = new Intl.DateTimeFormat("fr-FR", {
+  hour: "2-digit",
+  minute: "2-digit",
+});
+
 /** Formate un timestamp en date FR courte (ex: 21/04/2026). */
 export function formatFrDate(ts: TimestampMs): string {
   return FR_DATE_FMT.format(new Date(ts));
@@ -20,6 +25,14 @@ export function formatFrDate(ts: TimestampMs): string {
 /** Formate un timestamp en date FR longue (ex: 21 avril 2026). */
 export function formatFrDateLong(ts: TimestampMs): string {
   return FR_DATE_LONG_FMT.format(new Date(ts));
+}
+
+/**
+ * Formate un timestamp en date+heure FR longue (ex: 21 avril 2026 — 14:32).
+ * Utilisé pour les rapports d'audit où la précision horaire compte.
+ */
+export function formatFrDateTime(ts: TimestampMs): string {
+  return `${FR_DATE_LONG_FMT.format(new Date(ts))} — ${FR_TIME_FMT.format(new Date(ts))}`;
 }
 
 /** Retourne le timestamp MS du début du jour (minuit UTC+local) pour une date donnée. */

@@ -39,6 +39,7 @@ export const quoteSimple: QuoteInput = {
   status: "sent",
   totalHtCents: 250000,
   conditions: "Acompte de 30 % à la commande. Solde à réception. Délai de paiement : 30 jours.",
+  clauses: [],
   validityDate: ts("2026-05-21T00:00:00Z"),
   notes: "Prestation incluant 2 allers-retours de révision.",
   issuedAt: ts("2026-04-21T00:00:00Z"),
@@ -63,6 +64,7 @@ export const quoteLong: QuoteInput = {
   status: "sent",
   totalHtCents: 0, // calculé plus bas
   conditions: "Acompte 1/3. Paiement 30j. 2 allers-retours par phase.",
+  clauses: [],
   validityDate: ts("2026-06-01T00:00:00Z"),
   notes: null,
   issuedAt: ts("2026-04-21T00:00:00Z"),
@@ -95,6 +97,7 @@ export const quoteIntl: QuoteInput = {
   status: "draft",
   totalHtCents: 720000,
   conditions: "Payment due within 30 days. Currency : EUR. Services invoiced from France.",
+  clauses: [],
   validityDate: ts("2026-07-01T00:00:00Z"),
   notes: "Outside-EU client — no VAT applicable (art. 293 B CGI).",
   issuedAt: ts("2026-04-21T00:00:00Z"),

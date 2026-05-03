@@ -42,6 +42,7 @@ export function QuoteEditRoute(): ReactElement {
       await quotesApi.update(id, {
         clientId: values.clientId,
         title: values.title.trim(),
+        clauses: values.clauses,
         validityDate: values.validityDate,
         notes: values.notes.trim().length > 0 ? values.notes : null,
         totalHtCents: values.items.reduce((s, i) => s + i.lineTotalCents, 0),

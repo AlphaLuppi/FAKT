@@ -16,7 +16,11 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
-import { buildInvoiceContext, buildQuoteContext } from "../src/context-builder.ts";
+import {
+  buildAuditTrailContext,
+  buildInvoiceContext,
+  buildQuoteContext,
+} from "../src/context-builder.ts";
 import { clientNominal } from "./fixtures/clients.ts";
 import { invoiceSimple } from "./fixtures/invoices.ts";
 import { quoteSimple } from "./fixtures/quotes.ts";
@@ -117,6 +121,89 @@ describe.skipIf(!shouldRun)("Intégration Typst CLI", () => {
     const bytes = readFileSync(out);
     expect(bytes.subarray(0, 5).toString()).toBe("%PDF-");
     // Taille raisonnable (> 1 KB car PDF Typst ≈ 60 KB).
+    expect(bytes.length).toBeGreaterThan(1024);
+  });
+
+  it("compile audit-trail.typ vers un PDF valide", () => {
+    const tmp = mkdtempSync(resolve(tmpdir(), "fakt-pdf-"));
+    const ctx = buildAuditTrailContext({
+      document: {
+        type: "quote",
+        number: "D2026-001",
+        title: "Refonte site",
+        clientName: clientNominal.name,
+        totalHtCents: 250000,
+        issuedAt: 1714485600000,
+        signedAt: 1714572000000,
+      },
+      workspace: fixtureWorkspace,
+      signatureEvents: [
+        {
+          id: "evt-1",
+          documentType: "quote",
+          documentId: "quote-1",
+          signerName: "Jean Prestataire",
+          signerEmail: "jean@example.fr",
+          ipAddress: "192.0.2.1",
+          userAgent: "FAKT/1.0",
+          timestamp: 1714572000000,
+          docHashBefore: "a".repeat(64),
+          docHashAfter: "b".repeat(64),
+          signaturePngBase64: "",
+          previousEventHash: null,
+          tsaResponse: null,
+          tsaProvider: "FreeTSA",
+        },
+      ],
+      activityEvents: [
+        {
+          id: "act-1",
+          workspaceId: fixtureWorkspace.id,
+          type: "quote_created",
+          entityType: "quote",
+          entityId: "quote-1",
+          payload: null,
+          createdAt: 1714485600000,
+        },
+      ],
+      generatedAtMs: 1714665600000,
+    });
+    const ctxPath = resolve(templatesDir, "_test-ctx-audit.json");
+    writeFileSync(ctxPath, JSON.stringify(ctx));
+
+    const out = resolve(tmp, "out.pdf");
+    const binary = process.env.FAKT_TYPST_PATH ?? "typst";
+    const r = spawnSync(
+      binary,
+      [
+        "compile",
+        "--root",
+        templatesDir,
+        "--input",
+        "ctx-path=_test-ctx-audit.json",
+        resolve(templatesDir, "audit-trail.typ"),
+        out,
+      ],
+      { stdio: "pipe", cwd: templatesDir }
+    );
+
+    try {
+      if (existsSync(ctxPath)) {
+        const { unlinkSync } = require("node:fs");
+        unlinkSync(ctxPath);
+      }
+    } catch {
+      /* non bloquant */
+    }
+
+    if (r.status !== 0) {
+      // Logger le stderr Typst pour debug si le test échoue
+      const stderr = r.stderr?.toString() ?? "";
+      throw new Error(`typst exit ${r.status}: ${stderr}`);
+    }
+    expect(existsSync(out)).toBe(true);
+    const bytes = readFileSync(out);
+    expect(bytes.subarray(0, 5).toString()).toBe("%PDF-");
     expect(bytes.length).toBeGreaterThan(1024);
   });
 });

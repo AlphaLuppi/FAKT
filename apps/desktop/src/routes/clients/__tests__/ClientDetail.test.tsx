@@ -40,6 +40,7 @@ function makeQuote(id: string, number: string | null = null): Quote {
     status: "draft",
     totalHtCents: 100000,
     conditions: null,
+    clauses: [],
     validityDate: null,
     notes: null,
     issuedAt: null,

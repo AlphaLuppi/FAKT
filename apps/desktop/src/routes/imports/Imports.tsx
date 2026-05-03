@@ -139,9 +139,7 @@ export function ImportsRoute(): ReactElement {
     if (!extracted) return;
     if (extracted.client?.name && title.length === 0) {
       setTitle(
-        type === "quote"
-          ? `Devis — ${extracted.client.name}`
-          : `Facture — ${extracted.client.name}`
+        type === "quote" ? `Devis — ${extracted.client.name}` : `Facture — ${extracted.client.name}`
       );
     }
     if (extracted.items && lines.length === 0) {
@@ -740,12 +738,7 @@ export function ImportsRoute(): ReactElement {
           </div>
         )}
 
-        <LinesEditor
-          lines={lines}
-          onUpdate={updateLine}
-          onRemove={removeLine}
-          onAdd={addLine}
-        />
+        <LinesEditor lines={lines} onUpdate={updateLine} onRemove={removeLine} onAdd={addLine} />
 
         <div
           style={{
@@ -778,7 +771,7 @@ export function ImportsRoute(): ReactElement {
             }}
             data-testid="imports-total"
           >
-            {(total).toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €
+            {total.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €
           </span>
         </div>
 
@@ -1141,9 +1134,7 @@ function LinesEditor({ lines, onUpdate, onRemove, onAdd }: LinesEditorProps): Re
               </span>
               <select
                 value={l.unit}
-                onChange={(e) =>
-                  onUpdate(idx, { unit: e.target.value as EditableLine["unit"] })
-                }
+                onChange={(e) => onUpdate(idx, { unit: e.target.value as EditableLine["unit"] })}
                 style={{
                   height: 36,
                   padding: `0 ${tokens.spacing[2]}`,
